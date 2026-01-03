@@ -3,9 +3,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 // Initialize Gemini client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-// Use Gemini 1.5 Flash (correct model name for current API)
+// Use Gemini 2.0 Flash - newest model with billing enabled
 const model = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash-latest'
+  model: 'gemini-2.0-flash-exp'
 })
 
 export interface GeminiChatOptions {

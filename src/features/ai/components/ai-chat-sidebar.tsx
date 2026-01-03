@@ -141,7 +141,8 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
           </div>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 p-4" ref={scrollRef}>
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full p-4"  ref={scrollRef as any}>
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center px-4">
                 <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />
@@ -228,7 +229,8 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                 )}
               </div>
             )}
-          </ScrollArea>
+            </ScrollArea>
+          </div>
 
           {/* Input */}
           <div className="p-4 border-t">
