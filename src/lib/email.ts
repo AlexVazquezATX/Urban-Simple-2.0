@@ -14,9 +14,15 @@ interface SendInvoiceEmailParams {
 export async function sendInvoiceEmail({
   invoiceId,
   to,
-  from = 'invoices@urbansimple.net',
+  from = 'onboarding@resend.dev', // Use Resend's test domain for development
 }: SendInvoiceEmailParams) {
   try {
+    // Check if Resend API key is configured
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error(
+        'RESEND_API_KEY not configured. Please add it to your .env.local file. Get one at https://resend.com/api-keys'
+      )
+    }
     // Fetch invoice with all related data
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
@@ -91,7 +97,8 @@ export async function sendInvoiceEmail({
     })
 
     if (error) {
-      throw new Error(`Resend API error: ${error.message}`)
+      console.error('Resend API Error:', error)
+      throw new Error(`Failed to send email: ${error.message || JSON.stringify(error)}`)
     }
 
     // Log the email
