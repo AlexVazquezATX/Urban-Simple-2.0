@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Plus, Send, Search, Users, Loader2 } from 'lucide-react'
+import { Hash, Plus, Send, Search, Users, Loader2, Star, Lock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { CreateChannelDialog } from './create-channel-dialog'
+import { ChannelMembersDialog } from './channel-members-dialog'
 
 interface Channel {
   id: string
@@ -19,6 +20,9 @@ interface Channel {
   slug: string
   description?: string
   type: string
+  isFavorite?: boolean
+  memberRole?: string | null
+  isMember?: boolean
   unreadCount?: number
 }
 
@@ -42,6 +46,7 @@ export function TeamChat() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false)
+  const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Fetch channels on mount
@@ -130,6 +135,33 @@ export function TeamChat() {
     }
   }
 
+  const toggleFavorite = async (channelId: string, currentFavorite: boolean) => {
+    try {
+      const response = await fetch(`/api/chat/channels/${channelId}/favorite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isFavorite: !currentFavorite }),
+      })
+
+      if (response.ok) {
+        // Update local state
+        setChannels((prev) =>
+          prev.map((ch) =>
+            ch.id === channelId ? { ...ch, isFavorite: !currentFavorite } : ch
+          )
+        )
+        toast.success(
+          !currentFavorite ? 'Added to favorites' : 'Removed from favorites'
+        )
+      } else {
+        throw new Error('Failed to toggle favorite')
+      }
+    } catch (error) {
+      console.error('Failed to toggle favorite:', error)
+      toast.error('Failed to update favorite')
+    }
+  }
+
   const getInitials = (firstName: string, lastName: string) => {
     return `${firstName[0]}${lastName[0]}`.toUpperCase()
   }
@@ -178,26 +210,64 @@ export function TeamChat() {
                 No channels yet
               </div>
             ) : (
-              channels.map((channel) => (
-                <button
-                  key={channel.id}
-                  onClick={() => setActiveChannel(channel)}
-                  className={cn(
-                    'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors',
-                    activeChannel?.id === channel.id
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-accent'
-                  )}
-                >
-                  <Hash className="h-4 w-4 flex-shrink-0" />
-                  <span className="flex-1 text-left truncate">{channel.name}</span>
-                  {channel.unreadCount && channel.unreadCount > 0 && (
-                    <Badge variant="secondary" className="ml-auto">
-                      {channel.unreadCount}
-                    </Badge>
-                  )}
-                </button>
-              ))
+              // Sort favorites first, then by name
+              [...channels]
+                .sort((a, b) => {
+                  if (a.isFavorite === b.isFavorite) {
+                    return a.name.localeCompare(b.name)
+                  }
+                  return a.isFavorite ? -1 : 1
+                })
+                .map((channel) => (
+                  <div
+                    key={channel.id}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group',
+                      activeChannel?.id === channel.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
+                    )}
+                  >
+                    <button
+                      onClick={() => setActiveChannel(channel)}
+                      className="flex-1 flex items-center gap-2 text-left"
+                    >
+                      {channel.type === 'private' ? (
+                        <Lock className="h-4 w-4 flex-shrink-0" />
+                      ) : (
+                        <Hash className="h-4 w-4 flex-shrink-0" />
+                      )}
+                      <span className="flex-1 truncate">{channel.name}</span>
+                      {channel.unreadCount && channel.unreadCount > 0 && (
+                        <Badge variant="secondary" className="ml-auto">
+                          {channel.unreadCount}
+                        </Badge>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(channel.id, channel.isFavorite || false)
+                      }}
+                      className={cn(
+                        'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
+                        channel.isFavorite && 'opacity-100'
+                      )}
+                      title={
+                        channel.isFavorite
+                          ? 'Remove from favorites'
+                          : 'Add to favorites'
+                      }
+                    >
+                      <Star
+                        className={cn(
+                          'h-4 w-4',
+                          channel.isFavorite && 'fill-yellow-400 text-yellow-400'
+                        )}
+                      />
+                    </button>
+                  </div>
+                ))
             )}
           </div>
         </ScrollArea>
@@ -220,7 +290,12 @@ export function TeamChat() {
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="icon">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsMembersDialogOpen(true)}
+                title="View members"
+              >
                 <Users className="h-5 w-5" />
               </Button>
             </div>
@@ -319,6 +394,14 @@ export function TeamChat() {
         open={isCreateChannelOpen}
         onOpenChange={setIsCreateChannelOpen}
         onChannelCreated={fetchChannels}
+      />
+
+      {/* Channel Members Dialog */}
+      <ChannelMembersDialog
+        channelId={activeChannel?.id || null}
+        channelName={activeChannel?.name || ''}
+        isOpen={isMembersDialogOpen}
+        onOpenChange={setIsMembersDialogOpen}
       />
     </div>
   )

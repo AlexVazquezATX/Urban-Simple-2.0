@@ -12,8 +12,9 @@ export async function GET(request: NextRequest) {
     // TODO: Get user from session/auth
     // For now, we'll fetch all channels from the first company
     const company = await prisma.company.findFirst()
+    const user = await prisma.user.findFirst()
 
-    if (!company) {
+    if (!company || !user) {
       return NextResponse.json(
         { error: 'No company found. Please create a company first.' },
         { status: 404 }
@@ -25,22 +26,38 @@ export async function GET(request: NextRequest) {
         companyId: company.id,
         isArchived: false,
       },
+      include: {
+        members: {
+          where: {
+            userId: user.id,
+          },
+          select: {
+            isFavorite: true,
+            role: true,
+          },
+        },
+      },
       orderBy: {
         name: 'asc',
       },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        description: true,
-        type: true,
-        createdAt: true,
-      },
     })
+
+    // Transform to include favorite status and member info
+    const channelsWithMemberInfo = channels.map((channel) => ({
+      id: channel.id,
+      name: channel.name,
+      slug: channel.slug,
+      description: channel.description,
+      type: channel.type,
+      createdAt: channel.createdAt,
+      isFavorite: channel.members[0]?.isFavorite || false,
+      memberRole: channel.members[0]?.role || null,
+      isMember: channel.members.length > 0,
+    }))
 
     return NextResponse.json({
       success: true,
-      channels,
+      channels: channelsWithMemberInfo,
     })
   } catch (error: any) {
     console.error('Failed to fetch channels:', error)

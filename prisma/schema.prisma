@@ -637,6 +637,7 @@ model ChannelMember {
   userId         String    @map("user_id")
   role           String    @default("member") // owner, admin, member
   notifications  String    @default("all") // all, mentions, none
+  isFavorite     Boolean   @default(false) @map("is_favorite")
   lastReadAt     DateTime? @map("last_read_at")
   joinedAt       DateTime  @default(now()) @map("joined_at")
 
