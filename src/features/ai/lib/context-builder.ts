@@ -45,8 +45,8 @@ export async function buildBusinessContext(
 
       // MRR from service agreements
       prisma.serviceAgreement.aggregate({
-        _sum: { billingAmount: true },
-        where: { status: 'active' },
+        _sum: { monthlyAmount: true },
+        where: { isActive: true },
       }),
     ])
 
@@ -181,7 +181,7 @@ export async function buildBusinessContext(
         clientCount: clientCount,
         invoiceCount: invoiceCount,
         avgInvoiceAmount: Number(avgInvoiceData._avg.totalAmount || 0),
-        mrrAmount: Number(mrrData._sum.billingAmount || 0),
+        mrrAmount: Number(mrrData._sum.monthlyAmount || 0),
       },
       recentInvoices: recentInvoices.map((inv) => ({
         id: inv.id,

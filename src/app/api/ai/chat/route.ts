@@ -15,8 +15,14 @@ interface ChatRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[AI Chat] Received request')
+    console.log('[AI Chat] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY)
+    console.log('[AI Chat] GEMINI_API_KEY length:', process.env.GEMINI_API_KEY?.length || 0)
+
     const body: ChatRequest = await request.json()
     const { message, includeContext = true } = body
+
+    console.log('[AI Chat] Message:', message)
 
     if (!message || message.trim().length === 0) {
       return NextResponse.json(
@@ -28,12 +34,16 @@ export async function POST(request: NextRequest) {
     // Build business context if requested
     let contextString: string | undefined
     if (includeContext) {
+      console.log('[AI Chat] Building business context...')
       const context = await buildBusinessContext()
       contextString = formatContextForAI(context)
+      console.log('[AI Chat] Context built successfully')
     }
 
     // Get AI response
+    console.log('[AI Chat] Calling Gemini API...')
     const response = await sendChatMessage(message, contextString)
+    console.log('[AI Chat] Got response from Gemini')
 
     return NextResponse.json({
       success: true,
