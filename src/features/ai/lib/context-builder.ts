@@ -126,6 +126,20 @@ export async function buildBusinessContext(
         (monthlyRevenue[monthKey] || 0) + Number(inv.totalAmount)
     })
 
+    // Get overdue invoices with client details
+    const overdueInvoices = await prisma.invoice.findMany({
+      where: {
+        balanceDue: { gt: 0 },
+        dueDate: { lt: new Date() },
+      },
+      include: {
+        client: {
+          select: { name: true },
+        },
+      },
+      orderBy: { dueDate: 'asc' },
+    })
+
     // Calculate AR aging buckets
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
@@ -206,6 +220,16 @@ export async function buildBusinessContext(
         days90: Number(days90._sum.balanceDue || 0),
         days90Plus: Number(days90Plus._sum.balanceDue || 0),
       },
+      overdueInvoices: overdueInvoices.map((inv) => ({
+        id: inv.id,
+        invoiceNumber: inv.invoiceNumber,
+        clientName: inv.client.name,
+        amount: Number(inv.balanceDue),
+        dueDate: inv.dueDate,
+        daysOverdue: Math.floor(
+          (now.getTime() - inv.dueDate.getTime()) / (1000 * 60 * 60 * 24)
+        ),
+      })),
     }
   } catch (error) {
     console.error('Error building business context:', error)
@@ -237,6 +261,9 @@ AR AGING:
 - 1-2 Months Late: $${context.agingBuckets.days30.toLocaleString('en-US', { minimumFractionDigits: 2 })}
 - 2-3 Months Late: $${context.agingBuckets.days60.toLocaleString('en-US', { minimumFractionDigits: 2 })}
 - 3+ Months Late: $${context.agingBuckets.days90Plus.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+
+OVERDUE INVOICES (sorted by oldest first):
+${context.overdueInvoices.slice(0, 10).map((inv) => `- ${inv.clientName}: $${inv.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })} (${inv.invoiceNumber}, ${inv.daysOverdue} days overdue)`).join('\n')}
 
 MONTHLY REVENUE TREND:
 ${Object.entries(context.monthlyRevenue)

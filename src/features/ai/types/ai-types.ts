@@ -61,6 +61,16 @@ export interface BusinessContext {
     days90Plus: number
   }
 
+  // Overdue invoices with details
+  overdueInvoices: Array<{
+    id: string
+    invoiceNumber: string
+    clientName: string
+    amount: number
+    dueDate: Date
+    daysOverdue: number
+  }>
+
   // Current page context
   currentPage?: string
   currentEntity?: {
