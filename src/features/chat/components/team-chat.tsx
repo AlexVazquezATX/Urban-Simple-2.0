@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Plus, Send, Search, Users, Settings, Loader2 } from 'lucide-react'
+import { Hash, Plus, Send, Search, Users, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { CreateChannelDialog } from './create-channel-dialog'
 
 interface Channel {
   id: string
@@ -40,6 +41,7 @@ export function TeamChat() {
   const [messageInput, setMessageInput] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
+  const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Fetch channels on mount
@@ -151,7 +153,12 @@ export function TeamChat() {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Channels</h2>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsCreateChannelOpen(true)}
+              title="Create new channel"
+            >
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -194,13 +201,6 @@ export function TeamChat() {
             )}
           </div>
         </ScrollArea>
-
-        <div className="p-2 border-t">
-          <Button variant="ghost" size="sm" className="w-full justify-start">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
-          </Button>
-        </div>
       </div>
 
       {/* Main Chat Area */}
@@ -313,6 +313,13 @@ export function TeamChat() {
           </div>
         )}
       </div>
+
+      {/* Create Channel Dialog */}
+      <CreateChannelDialog
+        open={isCreateChannelOpen}
+        onOpenChange={setIsCreateChannelOpen}
+        onChannelCreated={fetchChannels}
+      />
     </div>
   )
 }
