@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { CreateChannelDialog } from './create-channel-dialog'
 import { ChannelMembersDialog } from './channel-members-dialog'
+import { StartDMDialog } from './start-dm-dialog'
 
 interface Channel {
   id: string
@@ -47,6 +48,7 @@ export function TeamChat() {
   const [isSending, setIsSending] = useState(false)
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false)
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false)
+  const [isStartDMOpen, setIsStartDMOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Fetch channels on mount
@@ -170,6 +172,27 @@ export function TeamChat() {
     return message.user.displayName || `${message.user.firstName} ${message.user.lastName}`
   }
 
+  const handleDMCreated = async (channelId: string) => {
+    // Refresh channels to show the new DM
+    await fetchChannels()
+    // Find and set the newly created DM as active
+    const newChannel = channels.find((ch) => ch.id === channelId)
+    if (newChannel) {
+      setActiveChannel(newChannel)
+    } else {
+      // If not in current channels list yet, fetch again and retry
+      const response = await fetch('/api/chat/channels')
+      const data = await response.json()
+      if (data.success) {
+        setChannels(data.channels)
+        const dmChannel = data.channels.find((ch: Channel) => ch.id === channelId)
+        if (dmChannel) {
+          setActiveChannel(dmChannel)
+        }
+      }
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-4rem)]">
@@ -204,14 +227,101 @@ export function TeamChat() {
         </div>
 
         <ScrollArea className="flex-1">
+          {/* Direct Messages Section */}
+          <div className="p-2">
+            <div className="flex items-center justify-between px-2 py-1 mb-1">
+              <span className="text-xs font-semibold text-muted-foreground uppercase">
+                Direct Messages
+              </span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-5 w-5"
+                onClick={() => setIsStartDMOpen(true)}
+                title="Start new DM"
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="space-y-1">
+              {channels
+                .filter((ch) => ch.type === 'direct_message')
+                .sort((a, b) => {
+                  if (a.isFavorite === b.isFavorite) {
+                    return a.name.localeCompare(b.name)
+                  }
+                  return a.isFavorite ? -1 : 1
+                })
+                .map((channel) => (
+                  <div
+                    key={channel.id}
+                    className={cn(
+                      'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group',
+                      activeChannel?.id === channel.id
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
+                    )}
+                  >
+                    <button
+                      onClick={() => setActiveChannel(channel)}
+                      className="flex-1 flex items-center gap-2 text-left"
+                    >
+                      <Avatar className="h-5 w-5">
+                        <AvatarFallback className="text-xs">
+                          {channel.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="flex-1 truncate">{channel.name}</span>
+                      {channel.unreadCount && channel.unreadCount > 0 && (
+                        <Badge variant="secondary" className="ml-auto">
+                          {channel.unreadCount}
+                        </Badge>
+                      )}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleFavorite(channel.id, channel.isFavorite || false)
+                      }}
+                      className={cn(
+                        'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
+                        channel.isFavorite && 'opacity-100'
+                      )}
+                      title={
+                        channel.isFavorite
+                          ? 'Remove from favorites'
+                          : 'Add to favorites'
+                      }
+                    >
+                      <Star
+                        className={cn(
+                          'h-4 w-4',
+                          channel.isFavorite && 'fill-yellow-400 text-yellow-400'
+                        )}
+                      />
+                    </button>
+                  </div>
+                ))}
+            </div>
+          </div>
+
+          <Separator className="my-2" />
+
+          {/* Channels Section */}
           <div className="p-2 space-y-1">
-            {channels.length === 0 ? (
+            {channels.filter((ch) => ch.type !== 'direct_message').length === 0 ? (
               <div className="text-center p-4 text-sm text-muted-foreground">
                 No channels yet
               </div>
             ) : (
               // Sort favorites first, then by name
               [...channels]
+                .filter((ch) => ch.type !== 'direct_message')
                 .sort((a, b) => {
                   if (a.isFavorite === b.isFavorite) {
                     return a.name.localeCompare(b.name)
@@ -402,6 +512,13 @@ export function TeamChat() {
         channelName={activeChannel?.name || ''}
         isOpen={isMembersDialogOpen}
         onOpenChange={setIsMembersDialogOpen}
+      />
+
+      {/* Start DM Dialog */}
+      <StartDMDialog
+        open={isStartDMOpen}
+        onOpenChange={setIsStartDMOpen}
+        onDMCreated={handleDMCreated}
       />
     </div>
   )
