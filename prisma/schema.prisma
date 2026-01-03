@@ -609,6 +609,69 @@ model LoyaltyTransaction {
 // COMMUNICATIONS
 // ============================================
 
+// Team Chat (Slack Replacement)
+model Channel {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  name         String   // e.g., "general", "austin-storage", "operations"
+  slug         String   // URL-friendly name
+  description  String?
+  type         String   @default("public") // public, private, direct_message
+  clientId     String?  @map("client_id") // if client-specific channel
+  locationId   String?  @map("location_id") // if location-specific channel
+  isArchived   Boolean  @default(false) @map("is_archived")
+  createdById  String   @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  members      ChannelMember[]
+  messages     Message[]
+
+  @@unique([companyId, slug])
+  @@map("channels")
+}
+
+model ChannelMember {
+  id             String    @id @default(cuid())
+  channelId      String    @map("channel_id")
+  userId         String    @map("user_id")
+  role           String    @default("member") // owner, admin, member
+  notifications  String    @default("all") // all, mentions, none
+  lastReadAt     DateTime? @map("last_read_at")
+  joinedAt       DateTime  @default(now()) @map("joined_at")
+
+  channel        Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@map("channel_members")
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  channelId      String    @map("channel_id")
+  userId         String    @map("user_id")
+  content        String
+  contentType    String    @default("text") @map("content_type") // text, file, image, system
+  attachments    Json?     @default("[]") // array of file URLs/metadata
+  mentions       String[]  @default([]) // user IDs mentioned
+  parentId       String?   @map("parent_id") // for threaded replies
+  isEdited       Boolean   @default(false) @map("is_edited")
+  editedAt       DateTime? @map("edited_at")
+  isDeleted      Boolean   @default(false) @map("is_deleted")
+  deletedAt      DateTime? @map("deleted_at")
+  reactions      Json?     @default("{}") // { "👍": ["userId1", "userId2"], "❤️": ["userId3"] }
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  channel        Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  parent         Message?  @relation("MessageReplies", fields: [parentId], references: [id])
+  replies        Message[] @relation("MessageReplies")
+
+  @@index([channelId, createdAt])
+  @@index([userId])
+  @@map("messages")
+}
+
 model EmailTemplate {
   id        String   @id @default(cuid())
   companyId String   @map("company_id")

@@ -17,6 +17,7 @@ import {
   Users,
   FileText,
   DollarSign,
+  MessageSquare,
   LogOut,
 } from 'lucide-react'
 
@@ -66,6 +67,14 @@ export function AppSidebar() {
                   <a href="/billing">
                     <DollarSign />
                     <span>Billing & AR</span>
+                  </a>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <a href="/chat">
+                    <MessageSquare />
+                    <span>Team Chat</span>
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
