@@ -14,22 +14,38 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { GenerateInvoicesDialog } from '@/components/forms/generate-invoices-dialog'
-import { getApiUrl } from '@/lib/api'
+import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 async function InvoicesList() {
-  const response = await fetch(getApiUrl('/api/invoices'), {
-    cache: 'no-store',
-  })
-
-  if (!response.ok) {
+  const user = await getCurrentUser()
+  if (!user) {
     return (
       <div className="text-destructive">
-        Failed to load invoices. Please try again.
+        Please log in to view invoices.
       </div>
     )
   }
 
-  const invoices = await response.json()
+  const invoices = await prisma.invoice.findMany({
+    where: {
+      client: {
+        companyId: user.companyId,
+        ...(user.branchId && { branchId: user.branchId }),
+      },
+    },
+    include: {
+      client: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      issueDate: 'desc',
+    },
+  })
 
   // Calculate totals
   const totalOutstanding = invoices

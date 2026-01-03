@@ -5,23 +5,105 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ARagingTable } from '@/components/billing/ar-aging-table'
-import { getApiUrl } from '@/lib/api'
+import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 async function ARDashboard() {
-  const response = await fetch(getApiUrl('/api/billing/ar-aging'), {
-    cache: 'no-store',
-  })
-
-  if (!response.ok) {
+  const user = await getCurrentUser()
+  if (!user) {
     return (
       <div className="text-destructive">
-        Failed to load AR aging report. Please try again.
+        Please log in to view AR aging report.
       </div>
     )
   }
 
-  const data = await response.json()
-  const { totals, counts } = data
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  // Get all outstanding invoices
+  const invoices = await prisma.invoice.findMany({
+    where: {
+      client: {
+        companyId: user.companyId,
+        ...(user.branchId && { branchId: user.branchId }),
+      },
+      status: {
+        in: ['draft', 'sent', 'partial'],
+      },
+      balanceDue: {
+        gt: 0,
+      },
+    },
+    include: {
+      client: {
+        select: {
+          id: true,
+          name: true,
+          billingEmail: true,
+          phone: true,
+        },
+      },
+    },
+    orderBy: {
+      dueDate: 'asc',
+    },
+  })
+
+  // Calculate aging for each invoice
+  const invoicesWithAging = invoices.map((invoice) => {
+    const dueDate = new Date(invoice.dueDate)
+    const daysPastDue = Math.floor(
+      (today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    let agingBucket = 'current'
+    if (daysPastDue > 90) {
+      agingBucket = 'overdue_90_plus'
+    } else if (daysPastDue > 60) {
+      agingBucket = 'overdue_61_90'
+    } else if (daysPastDue > 30) {
+      agingBucket = 'overdue_31_60'
+    } else if (daysPastDue >= 0) {
+      agingBucket = 'current'
+    }
+
+    return {
+      ...invoice,
+      daysPastDue,
+      agingBucket,
+    }
+  })
+
+  // Calculate totals by bucket
+  const totals = {
+    current: 0,
+    overdue_31_60: 0,
+    overdue_61_90: 0,
+    overdue_90_plus: 0,
+    total: 0,
+  }
+
+  const counts = {
+    current: 0,
+    overdue_31_60: 0,
+    overdue_61_90: 0,
+    overdue_90_plus: 0,
+    total: invoicesWithAging.length,
+  }
+
+  invoicesWithAging.forEach((invoice) => {
+    const amount = Number(invoice.balanceDue)
+    totals[invoice.agingBucket as keyof typeof totals] += amount
+    totals.total += amount
+    counts[invoice.agingBucket as keyof typeof counts]++
+  })
+
+  const data = {
+    invoices: invoicesWithAging,
+    totals,
+    counts,
+  }
 
   return (
     <div className="space-y-6">
