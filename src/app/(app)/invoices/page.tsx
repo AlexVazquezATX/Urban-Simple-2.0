@@ -14,6 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { GenerateInvoicesDialog } from '@/components/forms/generate-invoices-dialog'
+import { SendInvoiceDialog } from '@/components/invoices/send-invoice-dialog'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -39,6 +40,7 @@ async function InvoicesList() {
         select: {
           id: true,
           name: true,
+          billingEmail: true,
         },
       },
     },
@@ -209,11 +211,18 @@ async function InvoicesList() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/app/invoices/${invoice.id}`}>
-                          <Button variant="ghost" size="sm">
-                            View
-                          </Button>
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <SendInvoiceDialog
+                            invoiceId={invoice.id}
+                            invoiceNumber={invoice.invoiceNumber}
+                            defaultEmail={invoice.client.billingEmail || ''}
+                          />
+                          <Link href={`/invoices/${invoice.id}`}>
+                            <Button variant="ghost" size="sm">
+                              View
+                            </Button>
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

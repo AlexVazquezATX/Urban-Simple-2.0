@@ -108,17 +108,17 @@ async function ARDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Accounts Receivable</h1>
+        <h1 className="text-3xl font-bold">Outstanding Payments</h1>
         <p className="text-muted-foreground">
-          Track outstanding invoices and payment status
+          Track unpaid invoices and how long they've been waiting
         </p>
       </div>
 
-      {/* AR Aging Buckets */}
+      {/* Payment Status by Age */}
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current (0-30)</CardTitle>
+            <CardTitle className="text-sm font-medium">On Time (0-30 days)</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -136,7 +136,7 @@ async function ARDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">31-60 Days</CardTitle>
+            <CardTitle className="text-sm font-medium">1-2 Months Late</CardTitle>
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -155,7 +155,7 @@ async function ARDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">61-90 Days</CardTitle>
+            <CardTitle className="text-sm font-medium">2-3 Months Late</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
@@ -174,7 +174,7 @@ async function ARDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">90+ Days</CardTitle>
+            <CardTitle className="text-sm font-medium">3+ Months Late</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
