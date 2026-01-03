@@ -2,7 +2,41 @@
 
 ## Common Issues and Solutions
 
-### 1. "500 Internal Server Error" When Sending
+### 1. "You can only send testing emails to your own email address" ⭐ MOST COMMON
+
+**Error Message:**
+```
+You can only send testing emails to your own email address (youremail@gmail.com).
+To send emails to other recipients, please verify a domain at resend.com/domains
+```
+
+**Why This Happens:**
+Resend's free tier only allows sending test emails to the email address you signed up with until you verify a domain. This is totally normal and expected!
+
+**Solution A - Quick Testing (2 minutes) ✅ RECOMMENDED FOR NOW:**
+1. Click "Send Invoice" on any invoice
+2. **Change the recipient email to YOUR email** (`avazquez2121@gmail.com`)
+3. Click Send
+4. Check your inbox - you'll see the beautiful invoice email!
+
+This lets you test that everything works perfectly before setting up for production.
+
+**Solution B - Send to Real Clients (10 minutes):**
+1. Go to https://resend.com/domains
+2. Click "Add Domain"
+3. Enter your domain (e.g., `urbansimple.net` or `yourbusiness.com`)
+4. Add the DNS records they provide (TXT, MX, CNAME records)
+5. Wait for verification (usually 5-10 minutes)
+6. Add to `.env.local`:
+   ```
+   RESEND_FROM_EMAIL=invoices@yourdomain.com
+   ```
+7. Restart dev server
+8. Now you can send to any client email address!
+
+---
+
+### 2. "500 Internal Server Error" When Sending
 
 **Check Your Terminal**
 Look at your `npm run dev` terminal output. You should see a detailed error message.

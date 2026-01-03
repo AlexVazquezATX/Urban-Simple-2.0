@@ -14,7 +14,7 @@ interface SendInvoiceEmailParams {
 export async function sendInvoiceEmail({
   invoiceId,
   to,
-  from = 'onboarding@resend.dev', // Use Resend's test domain for development
+  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
 }: SendInvoiceEmailParams) {
   try {
     // Check if Resend API key is configured
