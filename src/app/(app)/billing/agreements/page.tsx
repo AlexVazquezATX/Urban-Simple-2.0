@@ -13,22 +13,57 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ServiceAgreementForm } from '@/components/forms/service-agreement-form'
-import { getApiUrl } from '@/lib/api'
+import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 async function ServiceAgreementsList() {
-  const response = await fetch(getApiUrl('/api/service-agreements?active=true'), {
-    cache: 'no-store',
-  })
-
-  if (!response.ok) {
+  const user = await getCurrentUser()
+  if (!user) {
     return (
       <div className="text-destructive">
-        Failed to load service agreements. Please try again.
+        Please log in to view service agreements.
       </div>
     )
   }
 
-  const agreements = await response.json()
+  const agreements = await prisma.serviceAgreement.findMany({
+    where: {
+      location: {
+        branchId: user.branchId || undefined,
+        client: {
+          companyId: user.companyId,
+        },
+      },
+      isActive: true,
+    },
+    include: {
+      location: {
+        include: {
+          client: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      contract: {
+        select: {
+          id: true,
+          contractNumber: true,
+          status: true,
+        },
+      },
+      _count: {
+        select: {
+          invoiceLineItems: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
 
   if (agreements.length === 0) {
     return (
@@ -138,7 +173,7 @@ async function ServiceAgreementsList() {
               {agreements.map((agreement: any) => (
                 <TableRow key={agreement.id}>
                   <TableCell className="font-medium">
-                    {agreement.client.name}
+                    {agreement.location.client.name}
                   </TableCell>
                   <TableCell>{agreement.location.name}</TableCell>
                   <TableCell className="max-w-xs truncate">

@@ -156,6 +156,7 @@ model Client {
   locations              Location[]
   contacts               ClientContact[]
   contracts              Contract[]
+  serviceAgreements      ServiceAgreement[]
   invoices               Invoice[]
   payments               Payment[]
   issues                 Issue[]
@@ -415,6 +416,7 @@ model ServiceAgreement {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
+  client       Client    @relation(fields: [clientId], references: [id])
   location     Location  @relation(fields: [locationId], references: [id])
   contract     Contract? @relation(fields: [contractId], references: [id])
 

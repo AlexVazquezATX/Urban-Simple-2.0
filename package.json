@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx prisma/seed.ts",
-    "db:seed-demo": "tsx scripts/seed-demo-data.ts"
+    "db:seed-demo": "tsx scripts/seed-demo-data.ts",
+    "db:seed-agreements": "tsx scripts/seed-service-agreements.ts",
+    "generate-invoices": "tsx scripts/generate-recurring-invoices.ts",
+    "generate-invoices:dry": "tsx scripts/generate-recurring-invoices.ts --dryRun"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

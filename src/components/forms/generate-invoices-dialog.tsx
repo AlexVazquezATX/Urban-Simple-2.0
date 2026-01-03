@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Dialog,
@@ -14,7 +14,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 interface GenerateInvoicesDialogProps {
   children: React.ReactNode
@@ -25,23 +27,25 @@ export function GenerateInvoicesDialog({
 }: GenerateInvoicesDialogProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [month, setMonth] = useState(
-    String(new Date().getMonth() + 1).padStart(2, '0')
+  const [dryRun, setDryRun] = useState(true)
+  const [billingDay, setBillingDay] = useState(String(new Date().getDate()))
+  const [targetDate, setTargetDate] = useState(
+    new Date().toISOString().split('T')[0]
   )
-  const [year, setYear] = useState(String(new Date().getFullYear()))
   const router = useRouter()
 
   const handleGenerate = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/invoices/generate', {
+      const response = await fetch('/api/billing/generate-invoices', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          month: parseInt(month),
-          year: parseInt(year),
+          dryRun,
+          billingDay: parseInt(billingDay),
+          targetDate,
         }),
       })
 
@@ -51,11 +55,26 @@ export function GenerateInvoicesDialog({
       }
 
       const data = await response.json()
-      toast.success(
-        `Generated ${data.invoices.length} invoice(s) for ${month}/${year}`
-      )
-      setOpen(false)
-      router.refresh()
+
+      if (dryRun) {
+        toast.info(
+          data.message || `Preview: Would generate ${data.generated} invoice(s)`,
+          {
+            description: `Found ${data.total} service agreements for billing day ${billingDay}`,
+            duration: 5000,
+          }
+        )
+      } else {
+        toast.success(
+          data.message || `Generated ${data.generated} invoice(s)`,
+          {
+            description: `Processed ${data.total} service agreements`,
+            duration: 5000,
+          }
+        )
+        setOpen(false)
+        router.refresh()
+      }
     } catch (error: any) {
       toast.error(error.message || 'Something went wrong')
     } finally {
@@ -68,43 +87,66 @@ export function GenerateInvoicesDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Generate Invoices</DialogTitle>
+          <DialogTitle>Generate Recurring Invoices</DialogTitle>
           <DialogDescription>
-            Generate invoices from active service agreements for a specific month
+            Automatically generate invoices from active service agreements based on billing day
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="month">Month</Label>
+              <Label htmlFor="billingDay">Billing Day</Label>
               <Input
-                id="month"
+                id="billingDay"
                 type="number"
                 min="1"
-                max="12"
-                value={month}
-                onChange={(e) =>
-                  setMonth(String(parseInt(e.target.value) || 1).padStart(2, '0'))
-                }
+                max="28"
+                value={billingDay}
+                onChange={(e) => setBillingDay(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Day of month (1-28)
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="year">Year</Label>
+              <Label htmlFor="targetDate">Target Date</Label>
               <Input
-                id="year"
-                type="number"
-                min="2020"
-                max="2100"
-                value={year}
-                onChange={(e) => setYear(e.target.value)}
+                id="targetDate"
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Date for invoice generation
+              </p>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Invoices will be generated for all active service agreements that
-            haven't been invoiced for {month}/{year}. Each client will receive
-            one invoice with all their agreements.
-          </p>
+
+          <div className="flex items-center space-x-2 rounded-md border p-3 bg-muted/50">
+            <Checkbox
+              id="dryRun"
+              checked={dryRun}
+              onCheckedChange={(checked) => setDryRun(checked as boolean)}
+            />
+            <div className="grid gap-1.5 leading-none">
+              <label
+                htmlFor="dryRun"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Preview Mode (Dry Run)
+              </label>
+              <p className="text-xs text-muted-foreground">
+                Preview which invoices would be generated without actually creating them
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-sm">
+            <p className="text-blue-900 dark:text-blue-100">
+              <strong>How it works:</strong> This will find all active service agreements with billing day {billingDay} and generate invoices for them.
+              Invoices that already exist for this month will be skipped.
+            </p>
+          </div>
         </div>
         <DialogFooter>
           <Button
@@ -116,7 +158,14 @@ export function GenerateInvoicesDialog({
             Cancel
           </Button>
           <Button onClick={handleGenerate} disabled={loading}>
-            {loading ? 'Generating...' : 'Generate Invoices'}
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {dryRun ? 'Previewing...' : 'Generating...'}
+              </>
+            ) : (
+              <>{dryRun ? 'Preview Invoices' : 'Generate Invoices'}</>
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>
