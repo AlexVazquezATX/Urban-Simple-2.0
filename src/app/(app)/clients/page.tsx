@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { Plus, Mail, Phone, MapPin, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -14,22 +14,29 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ClientForm } from '@/components/forms/client-form'
-import { getApiUrl } from '@/lib/api'
+import { getCurrentUser } from '@/lib/auth'
+import { prisma } from '@/lib/db'
 
 async function ClientsList() {
-  const response = await fetch(getApiUrl('/api/clients'), {
-    cache: 'no-store',
-  })
+  const user = await getCurrentUser()
 
-  if (!response.ok) {
-    return (
-      <div className="text-destructive">
-        Failed to load clients. Please try again.
-      </div>
-    )
+  if (!user) {
+    return <div>Please log in</div>
   }
 
-  const clients = await response.json()
+  const clients = await prisma.client.findMany({
+    where: {
+      companyId: user.companyId,
+      ...(user.branchId && { branchId: user.branchId }),
+    },
+    include: {
+      branch: true,
+      locations: true,
+    },
+    orderBy: {
+      name: 'asc',
+    },
+  })
 
   if (clients.length === 0) {
     return (
@@ -89,7 +96,7 @@ async function ClientsList() {
                 <TableRow key={client.id}>
                   <TableCell className="font-medium">
                     <Link
-                      href={`/app/clients/${client.id}`}
+                      href={`/clients/${client.id}`}
                       className="hover:underline"
                     >
                       {client.name}
@@ -111,7 +118,7 @@ async function ClientsList() {
                   </TableCell>
                   <TableCell>{client.paymentTerms}</TableCell>
                   <TableCell className="text-right">
-                    <Link href={`/app/clients/${client.id}`}>
+                    <Link href={`/clients/${client.id}`}>
                       <Button variant="ghost" size="sm">
                         View
                       </Button>

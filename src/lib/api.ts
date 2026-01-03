@@ -12,3 +12,4 @@ export function getApiUrl(path: string = '') {
   return `${baseUrl}${path.startsWith('/') ? path : `/${path}`}`
 }
 
+

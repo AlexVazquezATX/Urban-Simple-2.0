@@ -146,3 +146,44 @@ export async function PATCH(
   }
 }
 
+// DELETE /api/clients/[id] - Delete client
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { id } = await params
+
+    // Verify client belongs to user's company
+    const existingClient = await prisma.client.findFirst({
+      where: {
+        id,
+        companyId: user.companyId,
+      },
+    })
+
+    if (!existingClient) {
+      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+    }
+
+    // Delete client (cascade will handle related records)
+    await prisma.client.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('Error deleting client:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete client' },
+      { status: 500 }
+    )
+  }
+}
+
+

@@ -31,3 +31,4 @@ export async function generateInvoiceNumber(): Promise<string> {
   return `${datePrefix}-${sequenceStr}`
 }
 
+
