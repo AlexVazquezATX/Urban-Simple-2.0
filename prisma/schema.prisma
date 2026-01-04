@@ -616,13 +616,19 @@ model Channel {
   name         String   // e.g., "general", "austin-storage", "operations"
   slug         String   // URL-friendly name
   description  String?
-  type         String   @default("public") // public, private, direct_message
+  type         String   @default("public") // public, private, direct_message, ai_assistant
   clientId     String?  @map("client_id") // if client-specific channel
   locationId   String?  @map("location_id") // if location-specific channel
   isArchived   Boolean  @default(false) @map("is_archived")
   createdById  String   @map("created_by_id")
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // AI Assistant fields
+  isAiEnabled  Boolean  @default(false) @map("is_ai_enabled") // if this channel has AI assistant
+  aiPersona    String?  @map("ai_persona") // hr, payroll, operations, time_off, general
+  aiLanguages  String[] @default(["en"]) @map("ai_languages") // ["en", "es"]
+  aiSystemPrompt String? @map("ai_system_prompt") @db.Text // custom system prompt for this AI
 
   members      ChannelMember[]
   messages     Message[]
@@ -652,7 +658,7 @@ model Message {
   channelId      String    @map("channel_id")
   userId         String    @map("user_id")
   content        String
-  contentType    String    @default("text") @map("content_type") // text, file, image, system
+  contentType    String    @default("text") @map("content_type") // text, file, image, system, ai_response
   attachments    Json?     @default("[]") // array of file URLs/metadata
   mentions       String[]  @default([]) // user IDs mentioned
   parentId       String?   @map("parent_id") // for threaded replies
@@ -661,6 +667,12 @@ model Message {
   isDeleted      Boolean   @default(false) @map("is_deleted")
   deletedAt      DateTime? @map("deleted_at")
   reactions      Json?     @default("{}") // { "👍": ["userId1", "userId2"], "❤️": ["userId3"] }
+
+  // AI-specific fields
+  isAiGenerated  Boolean   @default(false) @map("is_ai_generated")
+  aiModel        String?   @map("ai_model") // "gemini-2.0-flash-exp", etc.
+  aiMetadata     Json?     @map("ai_metadata") // tokens used, latency, etc.
+
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 

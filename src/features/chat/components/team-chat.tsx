@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Hash, Plus, Send, Search, Users, Loader2, Star, Lock } from 'lucide-react'
+import { Hash, Plus, Send, Search, Users, Loader2, Star, Lock, Settings, Bot } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -14,6 +14,9 @@ import { toast } from 'sonner'
 import { CreateChannelDialog } from './create-channel-dialog'
 import { ChannelMembersDialog } from './channel-members-dialog'
 import { StartDMDialog } from './start-dm-dialog'
+import { ChannelSettingsDialog } from './channel-settings-dialog'
+import { InviteMembersDialog } from './invite-members-dialog'
+import { CreateAIChannelDialog } from './create-ai-channel-dialog'
 
 interface Channel {
   id: string
@@ -25,6 +28,9 @@ interface Channel {
   memberRole?: string | null
   isMember?: boolean
   unreadCount?: number
+  isAiEnabled?: boolean
+  aiPersona?: string
+  aiLanguages?: string[]
 }
 
 interface Message {
@@ -32,11 +38,81 @@ interface Message {
   userId: string
   content: string
   createdAt: Date
+  isAiGenerated?: boolean
+  aiModel?: string
   user: {
     firstName: string
     lastName: string
     displayName?: string
   }
+}
+
+// Channel Item Component
+function ChannelItem({
+  channel,
+  isActive,
+  onSelect,
+  onToggleFavorite,
+}: {
+  channel: Channel
+  isActive: boolean
+  onSelect: () => void
+  onToggleFavorite: () => void
+}) {
+  return (
+    <div
+      className={cn(
+        'flex items-center gap-1 px-2 py-1.5 rounded-md text-sm transition-colors group',
+        isActive
+          ? 'bg-primary text-primary-foreground'
+          : 'hover:bg-accent'
+      )}
+    >
+      <button
+        onClick={onSelect}
+        className="flex-1 flex items-center gap-2 text-left min-w-0 overflow-hidden"
+      >
+        {channel.isAiEnabled ? (
+          <Bot className="h-4 w-4 flex-shrink-0 text-ocean-600" />
+        ) : channel.type === 'private' ? (
+          <Lock className="h-4 w-4 flex-shrink-0" />
+        ) : (
+          <Hash className="h-4 w-4 flex-shrink-0" />
+        )}
+        <span className="truncate">{channel.name}</span>
+        {channel.isAiEnabled && (
+          <Badge variant="secondary" className="ml-1 bg-ocean-100 text-ocean-700 text-xs">AI</Badge>
+        )}
+      </button>
+      {channel.unreadCount && channel.unreadCount > 0 && (
+        <Badge variant="secondary" className="flex-shrink-0">
+          {channel.unreadCount}
+        </Badge>
+      )}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleFavorite()
+        }}
+        className={cn(
+          'p-0.5 rounded flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
+          channel.isFavorite && 'opacity-100'
+        )}
+        title={
+          channel.isFavorite
+            ? 'Remove from favorites'
+            : 'Add to favorites'
+        }
+      >
+        <Star
+          className={cn(
+            'h-3.5 w-3.5',
+            channel.isFavorite && 'fill-yellow-400 text-yellow-400'
+          )}
+        />
+      </button>
+    </div>
+  )
 }
 
 export function TeamChat() {
@@ -47,8 +123,13 @@ export function TeamChat() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const [isCreateChannelOpen, setIsCreateChannelOpen] = useState(false)
+  const [isCreateAIChannelOpen, setIsCreateAIChannelOpen] = useState(false)
   const [isMembersDialogOpen, setIsMembersDialogOpen] = useState(false)
   const [isStartDMOpen, setIsStartDMOpen] = useState(false)
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [memberCount, setMemberCount] = useState<number>(0)
+  const [userRole, setUserRole] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Fetch channels on mount
@@ -56,10 +137,11 @@ export function TeamChat() {
     fetchChannels()
   }, [])
 
-  // Fetch messages when active channel changes
+  // Fetch messages and member count when active channel changes
   useEffect(() => {
     if (activeChannel) {
       fetchMessages(activeChannel.id)
+      fetchMemberCount(activeChannel.id)
     }
   }, [activeChannel])
 
@@ -102,25 +184,62 @@ export function TeamChat() {
     }
   }
 
+  const fetchMemberCount = async (channelId: string) => {
+    try {
+      const response = await fetch(`/api/chat/channels/${channelId}/members`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setMemberCount(data.members?.length || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch member count:', error)
+    }
+  }
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !activeChannel || isSending) return
 
     setIsSending(true)
     try {
-      const response = await fetch(`/api/chat/channels/${activeChannel.id}/messages`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: messageInput.trim() }),
-      })
+      // Use AI endpoint if this is an AI-enabled channel
+      if (activeChannel.isAiEnabled) {
+        const response = await fetch('/api/chat/ai', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            channelId: activeChannel.id,
+            message: messageInput.trim(),
+            language: 'en', // TODO: Detect language from input or user preference
+          }),
+        })
 
-      const data = await response.json()
+        const data = await response.json()
 
-      if (response.ok) {
-        // Add new message to list
-        setMessages((prev) => [...prev, data.message])
-        setMessageInput('')
+        if (response.ok) {
+          // Add both user message and AI response to list
+          setMessages((prev) => [...prev, data.userMessage, data.aiMessage])
+          setMessageInput('')
+        } else {
+          throw new Error(data.error || 'Failed to get AI response')
+        }
       } else {
-        throw new Error(data.error || 'Failed to send message')
+        // Regular message sending for non-AI channels
+        const response = await fetch(`/api/chat/channels/${activeChannel.id}/messages`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: messageInput.trim() }),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          // Add new message to list
+          setMessages((prev) => [...prev, data.message])
+          setMessageInput('')
+        } else {
+          throw new Error(data.error || 'Failed to send message')
+        }
       }
     } catch (error: any) {
       console.error('Failed to send message:', error)
@@ -208,14 +327,25 @@ export function TeamChat() {
         <div className="p-4 border-b">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Channels</h2>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsCreateChannelOpen(true)}
-              title="Create new channel"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCreateChannelOpen(true)}
+                title="Create new channel"
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsCreateAIChannelOpen(true)}
+                title="Create AI assistant channel (Admin only)"
+                className="text-ocean-600 hover:text-ocean-700 hover:bg-ocean-50"
+              >
+                <Bot className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -256,7 +386,7 @@ export function TeamChat() {
                   <div
                     key={channel.id}
                     className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group',
+                      'flex items-center gap-1 px-2 py-1.5 rounded-md text-sm transition-colors group',
                       activeChannel?.id === channel.id
                         ? 'bg-primary text-primary-foreground'
                         : 'hover:bg-accent'
@@ -264,10 +394,10 @@ export function TeamChat() {
                   >
                     <button
                       onClick={() => setActiveChannel(channel)}
-                      className="flex-1 flex items-center gap-2 text-left"
+                      className="flex-1 flex items-center gap-2 text-left min-w-0 overflow-hidden"
                     >
-                      <Avatar className="h-5 w-5">
-                        <AvatarFallback className="text-xs">
+                      <Avatar className="h-5 w-5 flex-shrink-0">
+                        <AvatarFallback className="text-xs bg-bronze-100 text-bronze-700 font-semibold">
                           {channel.name
                             .split(' ')
                             .map((n) => n[0])
@@ -276,20 +406,20 @@ export function TeamChat() {
                             .toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="flex-1 truncate">{channel.name}</span>
-                      {channel.unreadCount && channel.unreadCount > 0 && (
-                        <Badge variant="secondary" className="ml-auto">
-                          {channel.unreadCount}
-                        </Badge>
-                      )}
+                      <span className="truncate">{channel.name}</span>
                     </button>
+                    {channel.unreadCount && channel.unreadCount > 0 && (
+                      <Badge variant="secondary" className="flex-shrink-0">
+                        {channel.unreadCount}
+                      </Badge>
+                    )}
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
                         toggleFavorite(channel.id, channel.isFavorite || false)
                       }}
                       className={cn(
-                        'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
+                        'p-0.5 rounded flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity',
                         channel.isFavorite && 'opacity-100'
                       )}
                       title={
@@ -300,7 +430,7 @@ export function TeamChat() {
                     >
                       <Star
                         className={cn(
-                          'h-4 w-4',
+                          'h-3.5 w-3.5',
                           channel.isFavorite && 'fill-yellow-400 text-yellow-400'
                         )}
                       />
@@ -312,72 +442,114 @@ export function TeamChat() {
 
           <Separator className="my-2" />
 
-          {/* Channels Section */}
-          <div className="p-2 space-y-1">
+          {/* Categorized Channels Section */}
+          <div className="p-2">
             {channels.filter((ch) => ch.type !== 'direct_message').length === 0 ? (
               <div className="text-center p-4 text-sm text-muted-foreground">
                 No channels yet
               </div>
             ) : (
-              // Sort favorites first, then by name
-              [...channels]
-                .filter((ch) => ch.type !== 'direct_message')
-                .sort((a, b) => {
-                  if (a.isFavorite === b.isFavorite) {
-                    return a.name.localeCompare(b.name)
-                  }
-                  return a.isFavorite ? -1 : 1
-                })
-                .map((channel) => (
-                  <div
-                    key={channel.id}
-                    className={cn(
-                      'w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors group',
-                      activeChannel?.id === channel.id
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-accent'
-                    )}
-                  >
-                    <button
-                      onClick={() => setActiveChannel(channel)}
-                      className="flex-1 flex items-center gap-2 text-left"
-                    >
-                      {channel.type === 'private' ? (
-                        <Lock className="h-4 w-4 flex-shrink-0" />
-                      ) : (
-                        <Hash className="h-4 w-4 flex-shrink-0" />
-                      )}
-                      <span className="flex-1 truncate">{channel.name}</span>
-                      {channel.unreadCount && channel.unreadCount > 0 && (
-                        <Badge variant="secondary" className="ml-auto">
-                          {channel.unreadCount}
-                        </Badge>
-                      )}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        toggleFavorite(channel.id, channel.isFavorite || false)
-                      }}
-                      className={cn(
-                        'p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity',
-                        channel.isFavorite && 'opacity-100'
-                      )}
-                      title={
-                        channel.isFavorite
-                          ? 'Remove from favorites'
-                          : 'Add to favorites'
-                      }
-                    >
-                      <Star
-                        className={cn(
-                          'h-4 w-4',
-                          channel.isFavorite && 'fill-yellow-400 text-yellow-400'
-                        )}
-                      />
-                    </button>
+              <>
+                {/* Favorites */}
+                {channels.filter((ch) => ch.type !== 'direct_message' && ch.isFavorite).length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center px-2 py-1 mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">
+                        Favorites
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {channels
+                        .filter((ch) => ch.type !== 'direct_message' && ch.isFavorite)
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((channel) => (
+                          <ChannelItem
+                            key={channel.id}
+                            channel={channel}
+                            isActive={activeChannel?.id === channel.id}
+                            onSelect={() => setActiveChannel(channel)}
+                            onToggleFavorite={() => toggleFavorite(channel.id, channel.isFavorite || false)}
+                          />
+                        ))}
+                    </div>
                   </div>
-                ))
+                )}
+
+                {/* AI Assistants */}
+                {channels.filter((ch) => ch.isAiEnabled).length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center px-2 py-1 mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">
+                        AI Assistants
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {channels
+                        .filter((ch) => ch.isAiEnabled)
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((channel) => (
+                          <ChannelItem
+                            key={channel.id}
+                            channel={channel}
+                            isActive={activeChannel?.id === channel.id}
+                            onSelect={() => setActiveChannel(channel)}
+                            onToggleFavorite={() => toggleFavorite(channel.id, channel.isFavorite || false)}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Private Channels */}
+                {channels.filter((ch) => ch.type === 'private' && !ch.isFavorite).length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center px-2 py-1 mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">
+                        Private Channels
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {channels
+                        .filter((ch) => ch.type === 'private' && !ch.isFavorite)
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((channel) => (
+                          <ChannelItem
+                            key={channel.id}
+                            channel={channel}
+                            isActive={activeChannel?.id === channel.id}
+                            onSelect={() => setActiveChannel(channel)}
+                            onToggleFavorite={() => toggleFavorite(channel.id, channel.isFavorite || false)}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Public Channels */}
+                {channels.filter((ch) => ch.type === 'public' && !ch.isAiEnabled && !ch.isFavorite).length > 0 && (
+                  <div className="mb-4">
+                    <div className="flex items-center px-2 py-1 mb-1">
+                      <span className="text-xs font-semibold text-muted-foreground uppercase">
+                        Public Channels
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      {channels
+                        .filter((ch) => ch.type === 'public' && !ch.isAiEnabled && !ch.isFavorite)
+                        .sort((a, b) => a.name.localeCompare(b.name))
+                        .map((channel) => (
+                          <ChannelItem
+                            key={channel.id}
+                            channel={channel}
+                            isActive={activeChannel?.id === channel.id}
+                            onSelect={() => setActiveChannel(channel)}
+                            onToggleFavorite={() => toggleFavorite(channel.id, channel.isFavorite || false)}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </ScrollArea>
@@ -390,9 +562,31 @@ export function TeamChat() {
             {/* Channel Header */}
             <div className="h-14 border-b px-4 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Hash className="h-5 w-5 text-muted-foreground" />
+                {activeChannel.type === 'direct_message' ? (
+                  <Avatar className="h-6 w-6">
+                    <AvatarFallback className="text-xs bg-bronze-100 text-bronze-700 font-semibold">
+                      {activeChannel.name
+                        .split(' ')
+                        .map((n) => n[0])
+                        .join('')
+                        .slice(0, 2)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                ) : activeChannel.type === 'private' ? (
+                  <Lock className="h-5 w-5 text-muted-foreground" />
+                ) : (
+                  <Hash className="h-5 w-5 text-muted-foreground" />
+                )}
                 <div>
-                  <h3 className="font-semibold">{activeChannel.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold">{activeChannel.name}</h3>
+                    {memberCount > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        • {memberCount} {memberCount === 1 ? 'member' : 'members'}
+                      </span>
+                    )}
+                  </div>
                   {activeChannel.description && (
                     <p className="text-xs text-muted-foreground">
                       {activeChannel.description}
@@ -400,14 +594,24 @@ export function TeamChat() {
                   )}
                 </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMembersDialogOpen(true)}
-                title="View members"
-              >
-                <Users className="h-5 w-5" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMembersDialogOpen(true)}
+                  title="View members"
+                >
+                  <Users className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsSettingsOpen(true)}
+                  title="Channel settings"
+                >
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Messages */}
@@ -423,19 +627,35 @@ export function TeamChat() {
                 ) : (
                   messages.map((message) => (
                     <div key={message.id} className="flex gap-3">
-                      <Avatar className="h-8 w-8 mt-1">
-                        <AvatarFallback className="text-xs">
-                          {getInitials(
-                            message.user.firstName,
-                            message.user.lastName
+                      <Avatar className="h-8 w-8 mt-1 flex-shrink-0">
+                        <AvatarFallback className={cn(
+                          "text-xs font-semibold",
+                          message.isAiGenerated
+                            ? "bg-ocean-100 text-ocean-700"
+                            : "bg-bronze-100 text-bronze-700"
+                        )}>
+                          {message.isAiGenerated ? (
+                            <Bot className="h-4 w-4" />
+                          ) : message.user ? (
+                            getInitials(
+                              message.user.firstName,
+                              message.user.lastName
+                            )
+                          ) : (
+                            'U'
                           )}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-baseline gap-2">
                           <span className="font-semibold text-sm">
-                            {getDisplayName(message)}
+                            {message.user ? getDisplayName(message) : 'Unknown User'}
                           </span>
+                          {message.isAiGenerated && (
+                            <Badge variant="secondary" className="bg-ocean-100 text-ocean-700 text-xs">
+                              AI
+                            </Badge>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             {new Date(message.createdAt).toLocaleTimeString(
                               'en-US',
@@ -464,7 +684,11 @@ export function TeamChat() {
                   value={messageInput}
                   onChange={(e) => setMessageInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={`Message #${activeChannel.name}`}
+                  placeholder={
+                    activeChannel.isAiEnabled
+                      ? `Ask ${activeChannel.name} a question...`
+                      : `Message #${activeChannel.name}`
+                  }
                   className="min-h-[60px] max-h-[120px] resize-none"
                   disabled={isSending}
                 />
@@ -506,12 +730,20 @@ export function TeamChat() {
         onChannelCreated={fetchChannels}
       />
 
+      {/* Create AI Channel Dialog */}
+      <CreateAIChannelDialog
+        open={isCreateAIChannelOpen}
+        onOpenChange={setIsCreateAIChannelOpen}
+        onChannelCreated={fetchChannels}
+      />
+
       {/* Channel Members Dialog */}
       <ChannelMembersDialog
         channelId={activeChannel?.id || null}
         channelName={activeChannel?.name || ''}
         isOpen={isMembersDialogOpen}
         onOpenChange={setIsMembersDialogOpen}
+        onInviteMembers={() => setIsInviteOpen(true)}
       />
 
       {/* Start DM Dialog */}
@@ -519,6 +751,28 @@ export function TeamChat() {
         open={isStartDMOpen}
         onOpenChange={setIsStartDMOpen}
         onDMCreated={handleDMCreated}
+      />
+
+      {/* Channel Settings Dialog */}
+      <ChannelSettingsDialog
+        channel={activeChannel}
+        isOpen={isSettingsOpen}
+        onOpenChange={setIsSettingsOpen}
+        onChannelUpdated={fetchChannels}
+        onChannelDeleted={() => {
+          setActiveChannel(null)
+          fetchChannels()
+        }}
+        onViewMembers={() => setIsMembersDialogOpen(true)}
+        onInviteMembers={() => setIsInviteOpen(true)}
+      />
+
+      {/* Invite Members Dialog */}
+      <InviteMembersDialog
+        channelId={activeChannel?.id || null}
+        isOpen={isInviteOpen}
+        onOpenChange={setIsInviteOpen}
+        onMembersInvited={fetchChannels}
       />
     </div>
   )

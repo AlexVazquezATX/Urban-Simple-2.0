@@ -71,7 +71,7 @@ export async function GET(
 
 /**
  * POST /api/chat/channels/[channelId]/members
- * Add a member to a channel
+ * Add member(s) to a channel (supports batch invite)
  */
 export async function POST(
   request: NextRequest,
@@ -80,49 +80,59 @@ export async function POST(
   try {
     const { channelId } = await params
     const body = await request.json()
-    const { userId, role = 'member' } = body
+    const { userId, userIds, role = 'member' } = body
 
-    if (!userId) {
+    // Support both single user and batch invite
+    const targetUserIds = userIds || (userId ? [userId] : [])
+
+    if (targetUserIds.length === 0) {
       return NextResponse.json(
-        { error: 'User ID is required' },
+        { error: 'At least one user ID is required' },
         { status: 400 }
       )
     }
 
-    // Check if member already exists
-    const existing = await prisma.channelMember.findUnique({
+    // Get existing members to check for duplicates
+    const existingMembers = await prisma.channelMember.findMany({
       where: {
-        channelId_userId: {
-          channelId,
-          userId,
-        },
+        channelId,
+        userId: { in: targetUserIds },
       },
     })
 
-    if (existing) {
+    const existingUserIds = new Set(existingMembers.map((m) => m.userId))
+    const newUserIds = targetUserIds.filter((id) => !existingUserIds.has(id))
+
+    if (newUserIds.length === 0) {
       return NextResponse.json(
-        { error: 'User is already a member of this channel' },
+        {
+          error:
+            targetUserIds.length === 1
+              ? 'User is already a member of this channel'
+              : 'All users are already members of this channel',
+        },
         { status: 409 }
       )
     }
 
-    // Add member
-    const member = await prisma.channelMember.create({
-      data: {
+    // Add members (batch create)
+    const members = await prisma.channelMember.createMany({
+      data: newUserIds.map((id) => ({
         channelId,
-        userId,
+        userId: id,
         role,
-      },
+      })),
     })
 
     return NextResponse.json({
       success: true,
-      member,
+      added: members.count,
+      skipped: existingUserIds.size,
     })
   } catch (error: any) {
-    console.error('Failed to add member:', error)
+    console.error('Failed to add member(s):', error)
     return NextResponse.json(
-      { error: 'Failed to add member', details: error.message },
+      { error: 'Failed to add member(s)', details: error.message },
       { status: 500 }
     )
   }

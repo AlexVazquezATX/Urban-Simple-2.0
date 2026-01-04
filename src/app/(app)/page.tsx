@@ -177,16 +177,16 @@ async function DashboardStats() {
           <CardContent className="space-y-2">
             <Link
               href="/clients"
-              className="block p-3 rounded-lg border hover:bg-accent/5 hover:border-accent transition-colors"
+              className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
             >
-              <div className="font-medium">Add a Client</div>
+              <div className="font-medium group-hover:text-ocean-700">Add a Client</div>
               <div className="text-xs text-muted-foreground">Create your first client account</div>
             </Link>
             <Link
               href="/invoices"
-              className="block p-3 rounded-lg border hover:bg-accent/5 hover:border-accent transition-colors"
+              className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
             >
-              <div className="font-medium">Generate Invoice</div>
+              <div className="font-medium group-hover:text-ocean-700">Generate Invoice</div>
               <div className="text-xs text-muted-foreground">Create and send an invoice</div>
             </Link>
           </CardContent>

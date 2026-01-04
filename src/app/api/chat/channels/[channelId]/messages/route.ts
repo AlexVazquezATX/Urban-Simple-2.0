@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { AI_PERSONAS } from '@/lib/ai/prompts'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +38,9 @@ export async function GET(
         contentType: true,
         createdAt: true,
         isEdited: true,
+        isAiGenerated: true,
+        aiModel: true,
+        aiMetadata: true,
       },
       take: 100, // Limit to last 100 messages
     })
@@ -55,8 +59,33 @@ export async function GET(
       },
     })
 
+    // Get channel info to determine AI persona
+    const channel = await prisma.channel.findUnique({
+      where: { id: channelId },
+      select: {
+        aiPersona: true,
+        isAiEnabled: true,
+      },
+    })
+
     // Map users to messages
     const messagesWithUsers = messages.map((message) => {
+      // If it's an AI-generated message, use the AI persona's name
+      if (message.isAiGenerated && channel?.aiPersona) {
+        const personaConfig = AI_PERSONAS[channel.aiPersona as keyof typeof AI_PERSONAS]
+        if (personaConfig) {
+          return {
+            ...message,
+            user: {
+              firstName: personaConfig.aiName,
+              lastName: '',
+              displayName: personaConfig.aiName,
+            },
+          }
+        }
+      }
+
+      // Otherwise, use the actual user's info
       const user = users.find((u) => u.id === message.userId)
       return {
         ...message,

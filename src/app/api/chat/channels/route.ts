@@ -53,6 +53,9 @@ export async function GET(request: NextRequest) {
       isFavorite: channel.members[0]?.isFavorite || false,
       memberRole: channel.members[0]?.role || null,
       isMember: channel.members.length > 0,
+      isAiEnabled: channel.isAiEnabled,
+      aiPersona: channel.aiPersona,
+      aiLanguages: channel.aiLanguages,
     }))
 
     return NextResponse.json({

@@ -56,18 +56,18 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-cream-50">
         <AppSidebar />
-        <main className="flex-1 p-6">{children}</main>
+        <main className="flex-1 p-6 lg:p-8">{children}</main>
 
-        {/* AI Chat Button - Floating */}
+        {/* AI Chat Button - Floating with UrbanCognitive styling */}
         <Button
           onClick={() => setIsAIChatOpen(true)}
           size="lg"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all z-30"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-bronze-400 to-bronze-500 text-white shadow-glow hover:shadow-glow-lg hover:from-bronze-500 hover:to-bronze-600 hover:-translate-y-1 transition-all duration-300 z-30 group"
           title="Open AI Assistant"
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
         </Button>
 
         {/* AI Chat Sidebar */}

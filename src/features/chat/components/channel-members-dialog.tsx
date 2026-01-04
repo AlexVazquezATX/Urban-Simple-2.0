@@ -33,6 +33,7 @@ interface ChannelMembersDialogProps {
   channelName: string
   isOpen: boolean
   onOpenChange: (open: boolean) => void
+  onInviteMembers?: () => void
 }
 
 export function ChannelMembersDialog({
@@ -40,6 +41,7 @@ export function ChannelMembersDialog({
   channelName,
   isOpen,
   onOpenChange,
+  onInviteMembers,
 }: ChannelMembersDialogProps) {
   const [members, setMembers] = useState<ChannelMember[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -196,10 +198,20 @@ export function ChannelMembersDialog({
               <p className="text-sm text-muted-foreground">
                 {members.length} {members.length === 1 ? 'member' : 'members'}
               </p>
-              <Button variant="outline" size="sm" className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Add Member
-              </Button>
+              {onInviteMembers && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => {
+                    onInviteMembers()
+                    onOpenChange(false)
+                  }}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Add Member
+                </Button>
+              )}
             </div>
           </>
         )}
