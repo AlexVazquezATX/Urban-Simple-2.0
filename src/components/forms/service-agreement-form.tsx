@@ -63,7 +63,7 @@ export function ServiceAgreementForm({
   const router = useRouter()
 
   const form = useForm<AgreementFormValues>({
-    resolver: zodResolver(agreementSchema),
+    resolver: zodResolver(agreementSchema) as any,
     defaultValues: {
       clientId: agreement?.clientId || '',
       locationId: agreement?.locationId || '',
@@ -391,5 +391,7 @@ export function ServiceAgreementForm({
     </Dialog>
   )
 }
+
+
 
 

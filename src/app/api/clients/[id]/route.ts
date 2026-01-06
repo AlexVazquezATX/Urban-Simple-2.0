@@ -104,6 +104,7 @@ export async function PATCH(
       phone,
       address,
       billingAddress,
+      logoUrl,
       paymentTerms,
       preferredPaymentMethod,
       taxExempt,
@@ -120,6 +121,7 @@ export async function PATCH(
         ...(phone !== undefined && { phone }),
         ...(address !== undefined && { address }),
         ...(billingAddress !== undefined && { billingAddress }),
+        ...(logoUrl !== undefined && { logoUrl: logoUrl || null }),
         ...(paymentTerms !== undefined && { paymentTerms }),
         ...(preferredPaymentMethod !== undefined && { preferredPaymentMethod }),
         ...(taxExempt !== undefined && { taxExempt }),
@@ -185,5 +187,6 @@ export async function DELETE(
     )
   }
 }
+
 
 

@@ -440,4 +440,54 @@
   .shadow-inner-warm {
     box-shadow: var(--shadow-inner-warm);
   }
+
+  /* Elegant custom scrollbar */
+  .scrollbar-elegant {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-cream-400) transparent;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-thumb {
+    background: var(--color-cream-400);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+    transition: background 0.2s ease;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+    background: var(--color-cream-500);
+    background-clip: padding-box;
+  }
+
+  .scrollbar-elegant::-webkit-scrollbar-thumb:active {
+    background: var(--color-bronze-400);
+    background-clip: padding-box;
+  }
+
+  /* Sidebar-specific elegant scrollbar */
+  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
+    background: var(--color-cream-400);
+    border-radius: 10px;
+    border: 1px solid transparent;
+    background-clip: padding-box;
+  }
+
+  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb:hover {
+    background: var(--color-bronze-400);
+    background-clip: padding-box;
+  }
 }

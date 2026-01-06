@@ -109,7 +109,7 @@ export const InvoiceEmail = ({
                 <Text style={totalLabel}>Total Amount</Text>
               </Column>
               <Column style={{ width: '30%', textAlign: 'right' }}>
-                <Text style={totalAmount}>{totalAmount}</Text>
+                <Text style={totalAmountStyle}>{totalAmount}</Text>
               </Column>
             </Row>
             <Row>
@@ -251,7 +251,7 @@ const totalLabel = {
   margin: '0',
 }
 
-const totalAmount = {
+const totalAmountStyle = {
   fontSize: '16px',
   color: '#1f2937',
   fontWeight: '600',

@@ -207,7 +207,7 @@ async function main() {
       where: { invoiceId: invoice.id },
     })
 
-    if (!existing && invoice.amountPaid > 0) {
+    if (!existing && Number(invoice.amountPaid) > 0) {
       await prisma.payment.create({
         data: {
           clientId: invoice.clientId,

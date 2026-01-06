@@ -31,8 +31,12 @@ export async function POST(
     const {
       name,
       address,
+      logoUrl,
       accessInstructions,
       serviceNotes,
+      painPoints,
+      checklistTemplateId,
+      equipmentInventory,
       branchId,
     } = body
 
@@ -45,8 +49,12 @@ export async function POST(
         branchId: targetBranchId,
         name,
         address: address || {},
+        logoUrl: logoUrl || null,
         accessInstructions,
         serviceNotes,
+        painPoints,
+        checklistTemplateId: checklistTemplateId || null,
+        equipmentInventory: equipmentInventory || [],
         isActive: true,
       },
       include: {
@@ -68,5 +76,6 @@ export async function POST(
     )
   }
 }
+
 
 

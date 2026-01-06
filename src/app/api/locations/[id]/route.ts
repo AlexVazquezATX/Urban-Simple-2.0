@@ -83,19 +83,50 @@ export async function PATCH(
     const {
       name,
       address,
+      logoUrl,
       accessInstructions,
       serviceNotes,
+      painPoints,
+      checklistTemplateId,
+      equipmentInventory,
       isActive,
+      clientId,
     } = body
+
+    // If clientId is being changed, verify the new client belongs to user's company
+    if (clientId !== undefined && clientId !== existingLocation.clientId) {
+      const newClient = await prisma.client.findFirst({
+        where: {
+          id: clientId,
+          companyId: user.companyId,
+        },
+      })
+
+      if (!newClient) {
+        return NextResponse.json(
+          { error: 'Client not found or access denied' },
+          { status: 404 }
+        )
+      }
+    }
 
     const location = await prisma.location.update({
       where: { id },
       data: {
         ...(name !== undefined && { name }),
         ...(address !== undefined && { address }),
+        ...(logoUrl !== undefined && { logoUrl: logoUrl || null }),
         ...(accessInstructions !== undefined && { accessInstructions }),
         ...(serviceNotes !== undefined && { serviceNotes }),
+        ...(painPoints !== undefined && { painPoints }),
+        ...(checklistTemplateId !== undefined && {
+          checklistTemplateId: checklistTemplateId || null,
+        }),
+        ...(equipmentInventory !== undefined && { equipmentInventory }),
         ...(isActive !== undefined && { isActive }),
+        ...(clientId !== undefined && clientId !== existingLocation.clientId && {
+          clientId,
+        }),
       },
       include: {
         client: {
@@ -167,5 +198,6 @@ export async function DELETE(
     )
   }
 }
+
 
 

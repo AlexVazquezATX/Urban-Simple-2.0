@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       phone,
       address,
       billingAddress,
+      logoUrl,
       paymentTerms = 'NET_30',
       preferredPaymentMethod,
       taxExempt = false,
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         phone,
         address: address || null,
         billingAddress: billingAddress || null,
+        logoUrl: logoUrl || null,
         paymentTerms,
         preferredPaymentMethod,
         taxExempt,
@@ -121,5 +123,6 @@ export async function POST(request: NextRequest) {
     )
   }
 }
+
 
 

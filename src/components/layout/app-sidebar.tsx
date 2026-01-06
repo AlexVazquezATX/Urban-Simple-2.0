@@ -22,6 +22,11 @@ import {
   MessageSquare,
   BarChart3,
   LogOut,
+  ClipboardList,
+  Calendar,
+  UserCheck,
+  Building2,
+  UserCog,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -39,18 +44,30 @@ export function AppSidebar() {
   const navItems = [
     { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { href: '/clients', icon: Users, label: 'Clients' },
+    { href: '/locations', icon: Building2, label: 'Locations' },
     { href: '/invoices', icon: FileText, label: 'Invoices' },
     { href: '/billing', icon: DollarSign, label: 'Billing & AR' },
+    { href: '/team', icon: UserCog, label: 'Team' },
     { href: '/chat', icon: MessageSquare, label: 'Team Chat' },
+  ]
+
+  const operationsItems = [
+    { href: '/operations', icon: ClipboardList, label: 'Operations', exact: true },
+    { href: '/operations/checklists', icon: ClipboardList, label: 'Checklists' },
+    { href: '/operations/schedule', icon: Calendar, label: 'Schedule' },
+    { href: '/operations/assignments', icon: UserCheck, label: 'Assignments' },
   ]
 
   const adminItems = [
     { href: '/chat-analytics', icon: BarChart3, label: 'Chat Analytics' },
   ]
 
-  const isActive = (href: string) => {
+  const isActive = (href: string, exact?: boolean) => {
     if (href === '/') {
       return pathname === '/'
+    }
+    if (exact) {
+      return pathname === href
     }
     return pathname?.startsWith(href)
   }
@@ -92,6 +109,46 @@ export function AppSidebar() {
                         'h-11 px-3 rounded-xl transition-all duration-200 group',
                         active
                           ? 'bg-gradient-to-br from-bronze-400 to-bronze-500 text-white shadow-md hover:shadow-lg hover:from-bronze-500 hover:to-bronze-600'
+                          : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
+                      )}
+                    >
+                      <a href={item.href} className="flex items-center gap-3">
+                        <Icon
+                          className={cn(
+                            'h-5 w-5 transition-transform duration-200',
+                            active
+                              ? 'text-white'
+                              : 'text-charcoal-500 group-hover:text-ocean-600 group-hover:scale-110'
+                          )}
+                        />
+                        <span className="font-medium text-sm">{item.label}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-4">
+          <SidebarGroupLabel className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2">
+            Operations
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
+              {operationsItems.map((item) => {
+                const Icon = item.icon
+                const active = isActive(item.href, item.exact)
+
+                return (
+                  <SidebarMenuItem key={item.href}>
+                    <SidebarMenuButton
+                      asChild
+                      className={cn(
+                        'h-11 px-3 rounded-xl transition-all duration-200 group',
+                        active
+                          ? 'bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-md hover:shadow-lg hover:from-ocean-600 hover:to-ocean-700'
                           : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
                       )}
                     >

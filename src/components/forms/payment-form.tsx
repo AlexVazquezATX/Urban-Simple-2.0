@@ -64,7 +64,7 @@ export function PaymentForm({
   const router = useRouter()
 
   const form = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentSchema),
+    resolver: zodResolver(paymentSchema) as any,
     defaultValues: {
       invoiceId: invoiceId || '',
       amount: invoiceBalance ? invoiceBalance.toString() : '',
@@ -254,5 +254,7 @@ export function PaymentForm({
     </Dialog>
   )
 }
+
+
 
 

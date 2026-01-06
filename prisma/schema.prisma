@@ -16,39 +16,39 @@ datasource db {
 // ============================================
 
 model Company {
-  id         String   @id @default(cuid())
-  name       String
-  legalName  String?  @map("legal_name")
-  taxId      String?  @map("tax_id")
-  address    Json?
-  phone      String?
-  email      String?
-  website    String?
-  logoUrl    String?  @map("logo_url")
-  settings   Json?    @default("{}")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  name      String
+  legalName String?  @map("legal_name")
+  taxId     String?  @map("tax_id")
+  address   Json?
+  phone     String?
+  email     String?
+  website   String?
+  logoUrl   String?  @map("logo_url")
+  settings  Json?    @default("{}")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  branches   Branch[]
-  users      User[]
+  branches Branch[]
+  users    User[]
 
   @@map("companies")
 }
 
 model Branch {
-  id         String   @id @default(cuid())
-  companyId  String   @map("company_id")
-  name       String   // Austin, Dallas, San Antonio
-  code       String   // AUS, DAL, SA
-  address    Json?
-  phone      String?
-  email      String?
-  timezone   String   @default("America/Chicago")
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  name      String // Austin, Dallas, San Antonio
+  code      String // AUS, DAL, SA
+  address   Json?
+  phone     String?
+  email     String?
+  timezone  String   @default("America/Chicago")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  company    Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company    Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
   users      User[]
   clients    Client[]
   locations  Location[]
@@ -67,60 +67,61 @@ enum UserRole {
 }
 
 model User {
-  id              String    @id @default(cuid())
-  authId          String?   @unique @map("auth_id") // Supabase auth user id
-  companyId       String    @map("company_id")
-  branchId        String?   @map("branch_id") // null for super admin
-  email           String    @unique
-  firstName       String    @map("first_name")
-  lastName        String    @map("last_name")
-  displayName     String?   @map("display_name")
-  phone           String?
-  role            UserRole  @default(ASSOCIATE)
-  secondaryRoles  String[]  @default([]) @map("secondary_roles")
-  avatarUrl       String?   @map("avatar_url")
-  isActive        Boolean   @default(true) @map("is_active")
-  lastLogin       DateTime? @map("last_login")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(cuid())
+  authId         String?   @unique @map("auth_id") // Supabase auth user id
+  companyId      String    @map("company_id")
+  branchId       String?   @map("branch_id") // null for super admin
+  email          String    @unique
+  firstName      String    @map("first_name")
+  lastName       String    @map("last_name")
+  displayName    String?   @map("display_name")
+  phone          String?
+  role           UserRole  @default(ASSOCIATE)
+  secondaryRoles String[]  @default([]) @map("secondary_roles")
+  avatarUrl      String?   @map("avatar_url")
+  isActive       Boolean   @default(true) @map("is_active")
+  lastLogin      DateTime? @map("last_login")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  company         Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  branch          Branch?   @relation(fields: [branchId], references: [id])
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branch  Branch? @relation(fields: [branchId], references: [id])
 
   // Associate-specific
-  associate       Associate?
+  associate Associate?
 
   // Relationships
   assignedLocations LocationAssignment[]
-  shiftsAsAssociate Shift[]        @relation("ShiftAssociate")
-  shiftsAsManager   Shift[]        @relation("ShiftManager")
+  shiftsAsAssociate Shift[]              @relation("ShiftAssociate")
+  shiftsAsManager   Shift[]              @relation("ShiftManager")
   serviceLogs       ServiceLog[]
-  reviewsGiven      ServiceReview[] @relation("ReviewerReviews")
-  reviewsReceived   ServiceReview[] @relation("AssociateReviews")
-  issuesReported    Issue[]        @relation("IssueReporter")
-  issuesAssigned    Issue[]        @relation("IssueAssignee")
+  reviewsGiven      ServiceReview[]      @relation("ReviewerReviews")
+  reviewsReceived   ServiceReview[]      @relation("AssociateReviews")
+  issuesReported    Issue[]              @relation("IssueReporter")
+  issuesAssigned    Issue[]              @relation("IssueAssignee")
   issueComments     IssueComment[]
   notifications     Notification[]
   badgesEarned      BadgeEarned[]
   payrollEntries    PayrollEntry[]
   auditLogs         AuditLog[]
+  aiConversations   AIConversation[]
 
   @@map("users")
 }
 
 model Associate {
-  id                     String    @id @default(cuid())
-  userId                 String    @unique @map("user_id")
-  startDate              DateTime? @map("start_date")
-  emergencyContact       Json?     @map("emergency_contact")
-  documents              Json?     @default("[]") // contracts, IDs, etc.
-  onboardingStatus       String    @default("pending") @map("onboarding_status")
-  onboardingCompletedAt  DateTime? @map("onboarding_completed_at")
-  totalPoints            Int       @default(0) @map("total_points")
-  createdAt              DateTime  @default(now()) @map("created_at")
-  updatedAt              DateTime  @updatedAt @map("updated_at")
+  id                    String    @id @default(cuid())
+  userId                String    @unique @map("user_id")
+  startDate             DateTime? @map("start_date")
+  emergencyContact      Json?     @map("emergency_contact")
+  documents             Json?     @default("[]") // contracts, IDs, etc.
+  onboardingStatus      String    @default("pending") @map("onboarding_status")
+  onboardingCompletedAt DateTime? @map("onboarding_completed_at")
+  totalPoints           Int       @default(0) @map("total_points")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
-  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("associates")
 }
@@ -130,37 +131,38 @@ model Associate {
 // ============================================
 
 model Client {
-  id                     String    @id @default(cuid())
-  companyId              String    @map("company_id")
-  branchId               String    @map("branch_id")
+  id                     String   @id @default(cuid())
+  companyId              String   @map("company_id")
+  branchId               String   @map("branch_id")
   name                   String
-  legalName              String?   @map("legal_name")
-  billingEmail           String?   @map("billing_email")
+  legalName              String?  @map("legal_name")
+  billingEmail           String?  @map("billing_email")
   phone                  String?
   address                Json?
-  billingAddress         Json?     @map("billing_address")
-  paymentTerms           String    @default("NET_30") @map("payment_terms") // NET_15, NET_30, DUE_ON_RECEIPT
-  preferredPaymentMethod String?   @map("preferred_payment_method") // ach, credit_card, check
-  taxExempt              Boolean   @default(false) @map("tax_exempt")
+  billingAddress         Json?    @map("billing_address")
+  logoUrl                String?  @map("logo_url")
+  paymentTerms           String   @default("NET_30") @map("payment_terms") // NET_15, NET_30, DUE_ON_RECEIPT
+  preferredPaymentMethod String?  @map("preferred_payment_method") // ach, credit_card, check
+  taxExempt              Boolean  @default(false) @map("tax_exempt")
   notes                  String?
-  status                 String    @default("active") // active, inactive, churned
-  healthScore            Int?      @map("health_score") // 0-100
-  loyaltyPoints          Int       @default(0) @map("loyalty_points")
-  loyaltyTier            String    @default("bronze") @map("loyalty_tier") // bronze, silver, gold, platinum
-  qbCustomerId           String?   @map("qb_customer_id") // QuickBooks sync
-  createdAt              DateTime  @default(now()) @map("created_at")
-  updatedAt              DateTime  @updatedAt @map("updated_at")
+  status                 String   @default("active") // active, inactive, churned
+  healthScore            Int?     @map("health_score") // 0-100
+  loyaltyPoints          Int      @default(0) @map("loyalty_points")
+  loyaltyTier            String   @default("bronze") @map("loyalty_tier") // bronze, silver, gold, platinum
+  qbCustomerId           String?  @map("qb_customer_id") // QuickBooks sync
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
-  branch                 Branch    @relation(fields: [branchId], references: [id])
+  branch Branch @relation(fields: [branchId], references: [id])
 
-  locations              Location[]
-  contacts               ClientContact[]
-  contracts              Contract[]
-  serviceAgreements      ServiceAgreement[]
-  invoices               Invoice[]
-  payments               Payment[]
-  issues                 Issue[]
-  loyaltyTransactions    LoyaltyTransaction[]
+  locations           Location[]
+  contacts            ClientContact[]
+  contracts           Contract[]
+  serviceAgreements   ServiceAgreement[]
+  invoices            Invoice[]
+  payments            Payment[]
+  issues              Issue[]
+  loyaltyTransactions LoyaltyTransaction[]
 
   @@map("clients")
 }
@@ -179,54 +181,56 @@ model ClientContact {
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
-  client              Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("client_contacts")
 }
 
 model Location {
-  id                  String    @id @default(cuid())
-  clientId            String    @map("client_id")
-  branchId            String    @map("branch_id")
+  id                  String   @id @default(cuid())
+  clientId            String   @map("client_id")
+  branchId            String   @map("branch_id")
   name                String
   address             Json
-  accessInstructions  String?   @map("access_instructions")
-  checklistTemplateId String?   @map("checklist_template_id")
-  equipmentInventory  Json?     @default("[]") @map("equipment_inventory")
-  serviceNotes        String?   @map("service_notes")
-  painPoints          String?   @map("pain_points")
-  photos              String[]  @default([])
-  isActive            Boolean   @default(true) @map("is_active")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  logoUrl             String?  @map("logo_url")
+  accessInstructions  String?  @map("access_instructions")
+  checklistTemplateId String?  @map("checklist_template_id")
+  equipmentInventory  Json?    @default("[]") @map("equipment_inventory")
+  serviceNotes        String?  @map("service_notes")
+  painPoints          String?  @map("pain_points")
+  photos              String[] @default([])
+  isActive            Boolean  @default(true) @map("is_active")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-  client              Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  branch              Branch    @relation(fields: [branchId], references: [id])
-  checklistTemplate   ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
+  client            Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  branch            Branch             @relation(fields: [branchId], references: [id])
+  checklistTemplate ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
 
-  assignments         LocationAssignment[]
-  shifts              Shift[]
-  serviceLogs         ServiceLog[]
-  reviews             ServiceReview[]
-  issues              Issue[]
-  serviceAgreements   ServiceAgreement[]
+  assignments       LocationAssignment[]
+  shifts            Shift[]
+  shiftLocations    ShiftLocation[]
+  serviceLogs       ServiceLog[]
+  reviews           ServiceReview[]
+  issues            Issue[]
+  serviceAgreements ServiceAgreement[]
 
   @@map("locations")
 }
 
 model LocationAssignment {
-  id          String    @id @default(cuid())
-  locationId  String    @map("location_id")
-  userId      String    @map("user_id") // associate
-  monthlyPay  Decimal   @map("monthly_pay") @db.Decimal(10, 2)
-  startDate   DateTime  @map("start_date")
-  endDate     DateTime? @map("end_date")
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  id         String    @id @default(cuid())
+  locationId String    @map("location_id")
+  userId     String    @map("user_id") // associate
+  monthlyPay Decimal   @map("monthly_pay") @db.Decimal(10, 2)
+  startDate  DateTime  @map("start_date")
+  endDate    DateTime? @map("end_date")
+  isActive   Boolean   @default(true) @map("is_active")
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  location    Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  user        User      @relation(fields: [userId], references: [id])
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
 
   @@map("location_assignments")
 }
@@ -236,15 +240,15 @@ model LocationAssignment {
 // ============================================
 
 model ChecklistTemplate {
-  id          String    @id @default(cuid())
-  companyId   String    @map("company_id")
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
   name        String
-  nameEs      String?   @map("name_es") // Spanish
+  nameEs      String?  @map("name_es") // Spanish
   description String?
-  sections    Json      // array of sections with items
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
+  sections    Json // array of sections with items
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   locations   Location[]
   serviceLogs ServiceLog[]
@@ -252,30 +256,83 @@ model ChecklistTemplate {
   @@map("checklist_templates")
 }
 
+model ChecklistSectionType {
+  id          String   @id @default(cuid())
+  companyId   String?  @map("company_id") // null = built-in
+  name        String   // "Back of House (Kitchen)"
+  nameEs      String?  @map("name_es")
+  code        String   // "BOH", "BATHROOM", "DINING", "PATIO"
+  icon        String?  // lucide icon name
+  sortOrder   Int      @default(0) @map("sort_order")
+  isBuiltIn   Boolean  @default(false) @map("is_built_in")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  items       ChecklistItemLibrary[]
+
+  @@map("checklist_section_types")
+}
+
+model ChecklistItemLibrary {
+  id            String   @id @default(cuid())
+  sectionTypeId String   @map("section_type_id")
+  companyId     String?  @map("company_id") // null = built-in
+  text          String   // "Sweep and mop all floor areas"
+  textEs        String?  @map("text_es")
+  frequency     String   @default("daily") // daily, weekly, monthly
+  requiresPhoto Boolean  @default(false) @map("requires_photo")
+  priority      String   @default("normal") // normal, high
+  isBuiltIn     Boolean  @default(false) @map("is_built_in")
+  isActive      Boolean  @default(true) @map("is_active")
+  usageCount    Int      @default(0) @map("usage_count") // for popularity sorting
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  sectionType   ChecklistSectionType @relation(fields: [sectionTypeId], references: [id], onDelete: Cascade)
+
+  @@map("checklist_item_library")
+}
+
 model Shift {
-  id               String    @id @default(cuid())
-  locationId       String    @map("location_id")
-  branchId         String    @map("branch_id")
-  associateId      String    @map("associate_id")
-  managerId        String?   @map("manager_id")
-  date             DateTime  @db.Date
-  startTime        String    @map("start_time") // "21:00"
-  endTime          String    @map("end_time")   // "02:00"
-  status           String    @default("scheduled") // scheduled, in_progress, completed, missed, cancelled
-  isRecurring      Boolean   @default(false) @map("is_recurring")
-  recurringPattern Json?     @map("recurring_pattern")
+  id               String   @id @default(cuid())
+  locationId       String?  @map("location_id") // Nullable - use shiftLocations for multiple locations
+  branchId         String   @map("branch_id")
+  associateId      String   @map("associate_id")
+  managerId        String?  @map("manager_id")
+  date             DateTime @db.Date
+  startTime        String   @map("start_time") // "21:00"
+  endTime          String   @map("end_time") // "02:00"
+  status           String   @default("scheduled") // scheduled, in_progress, completed, missed, cancelled
+  isRecurring      Boolean  @default(false) @map("is_recurring")
+  recurringPattern Json?    @map("recurring_pattern")
   notes            String?
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
 
-  location         Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  branch           Branch    @relation(fields: [branchId], references: [id])
-  associate        User      @relation("ShiftAssociate", fields: [associateId], references: [id])
-  manager          User?     @relation("ShiftManager", fields: [managerId], references: [id])
+  location       Location?       @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  branch         Branch          @relation(fields: [branchId], references: [id])
+  associate      User            @relation("ShiftAssociate", fields: [associateId], references: [id])
+  manager        User?           @relation("ShiftManager", fields: [managerId], references: [id])
+  shiftLocations ShiftLocation[]
 
-  serviceLogs      ServiceLog[]
+  serviceLogs ServiceLog[]
 
   @@map("shifts")
+}
+
+model ShiftLocation {
+  id         String   @id @default(cuid())
+  shiftId    String   @map("shift_id")
+  locationId String   @map("location_id")
+  sortOrder  Int      @default(0) @map("sort_order") // For ordering locations in a route
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  shift    Shift    @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, locationId])
+  @@map("shift_locations")
 }
 
 model ServiceLog {
@@ -297,80 +354,80 @@ model ServiceLog {
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  shift                  Shift?    @relation(fields: [shiftId], references: [id])
-  location               Location  @relation(fields: [locationId], references: [id])
-  associate              User      @relation(fields: [associateId], references: [id])
-  checklistTemplate      ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
+  shift             Shift?             @relation(fields: [shiftId], references: [id])
+  location          Location           @relation(fields: [locationId], references: [id])
+  associate         User               @relation(fields: [associateId], references: [id])
+  checklistTemplate ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
 
-  reviews                ServiceReview[]
-  issues                 Issue[]
+  reviews ServiceReview[]
+  issues  Issue[]
 
   @@map("service_logs")
 }
 
 model ServiceReview {
-  id            String    @id @default(cuid())
-  serviceLogId  String?   @map("service_log_id")
-  locationId    String    @map("location_id")
-  associateId   String    @map("associate_id")
-  reviewerId    String    @map("reviewer_id") // manager
-  reviewDate    DateTime  @map("review_date") @db.Date
-  ratingItems   Json?     @default("[]") @map("rating_items") // per-item ratings
-  overallRating Decimal   @map("overall_rating") @db.Decimal(2, 1) // 1.0 - 5.0
-  photos        String[]  @default([])
+  id            String   @id @default(cuid())
+  serviceLogId  String?  @map("service_log_id")
+  locationId    String   @map("location_id")
+  associateId   String   @map("associate_id")
+  reviewerId    String   @map("reviewer_id") // manager
+  reviewDate    DateTime @map("review_date") @db.Date
+  ratingItems   Json?    @default("[]") @map("rating_items") // per-item ratings
+  overallRating Decimal  @map("overall_rating") @db.Decimal(2, 1) // 1.0 - 5.0
+  photos        String[] @default([])
   notes         String?
-  issuesFound   Boolean   @default(false) @map("issues_found")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  issuesFound   Boolean  @default(false) @map("issues_found")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  serviceLog    ServiceLog? @relation(fields: [serviceLogId], references: [id])
-  location      Location  @relation(fields: [locationId], references: [id])
-  associate     User      @relation("AssociateReviews", fields: [associateId], references: [id])
-  reviewer      User      @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  serviceLog ServiceLog? @relation(fields: [serviceLogId], references: [id])
+  location   Location    @relation(fields: [locationId], references: [id])
+  associate  User        @relation("AssociateReviews", fields: [associateId], references: [id])
+  reviewer   User        @relation("ReviewerReviews", fields: [reviewerId], references: [id])
 
   @@map("service_reviews")
 }
 
 model Issue {
-  id                    String    @id @default(cuid())
-  locationId            String    @map("location_id")
-  clientId              String    @map("client_id")
-  reportedById          String    @map("reported_by_id")
-  assignedToId          String?   @map("assigned_to_id")
-  serviceLogId          String?   @map("service_log_id")
-  category              String    // quality, equipment, communication, safety, other
-  severity              String    @default("medium") // low, medium, high, critical
-  title                 String
-  description           String?
-  photos                String[]  @default([])
-  status                String    @default("open") // open, in_progress, resolved, closed
-  resolution            String?
-  implicatedAssociateIds String[] @default([]) @map("implicated_associate_ids")
-  resolvedAt            DateTime? @map("resolved_at")
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  id                     String    @id @default(cuid())
+  locationId             String    @map("location_id")
+  clientId               String    @map("client_id")
+  reportedById           String    @map("reported_by_id")
+  assignedToId           String?   @map("assigned_to_id")
+  serviceLogId           String?   @map("service_log_id")
+  category               String // quality, equipment, communication, safety, other
+  severity               String    @default("medium") // low, medium, high, critical
+  title                  String
+  description            String?
+  photos                 String[]  @default([])
+  status                 String    @default("open") // open, in_progress, resolved, closed
+  resolution             String?
+  implicatedAssociateIds String[]  @default([]) @map("implicated_associate_ids")
+  resolvedAt             DateTime? @map("resolved_at")
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @updatedAt @map("updated_at")
 
-  location              Location  @relation(fields: [locationId], references: [id])
-  client                Client    @relation(fields: [clientId], references: [id])
-  reportedBy            User      @relation("IssueReporter", fields: [reportedById], references: [id])
-  assignedTo            User?     @relation("IssueAssignee", fields: [assignedToId], references: [id])
-  serviceLog            ServiceLog? @relation(fields: [serviceLogId], references: [id])
+  location   Location    @relation(fields: [locationId], references: [id])
+  client     Client      @relation(fields: [clientId], references: [id])
+  reportedBy User        @relation("IssueReporter", fields: [reportedById], references: [id])
+  assignedTo User?       @relation("IssueAssignee", fields: [assignedToId], references: [id])
+  serviceLog ServiceLog? @relation(fields: [serviceLogId], references: [id])
 
-  comments              IssueComment[]
+  comments IssueComment[]
 
   @@map("issues")
 }
 
 model IssueComment {
-  id          String   @id @default(cuid())
-  issueId     String   @map("issue_id")
-  userId      String   @map("user_id")
-  comment     String
-  isInternal  Boolean  @default(false) @map("is_internal") // hidden from client
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String   @id @default(cuid())
+  issueId    String   @map("issue_id")
+  userId     String   @map("user_id")
+  comment    String
+  isInternal Boolean  @default(false) @map("is_internal") // hidden from client
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  issue       Issue    @relation(fields: [issueId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id])
+  issue Issue @relation(fields: [issueId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id])
 
   @@map("issue_comments")
 }
@@ -380,45 +437,45 @@ model IssueComment {
 // ============================================
 
 model Contract {
-  id              String    @id @default(cuid())
-  clientId        String    @map("client_id")
-  contractNumber  String    @unique @map("contract_number")
-  type            String    // service_agreement, associate_employment, other
-  status          String    @default("draft") // draft, sent, signed, active, expired, terminated
-  startDate       DateTime? @map("start_date")
-  endDate         DateTime? @map("end_date")
-  autoRenew       Boolean   @default(false) @map("auto_renew")
-  renewalTerms    String?   @map("renewal_terms")
-  documentUrl     String?   @map("document_url")
-  signedAt        DateTime? @map("signed_at")
-  signatureData   Json?     @map("signature_data") // e-signature info
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id             String    @id @default(cuid())
+  clientId       String    @map("client_id")
+  contractNumber String    @unique @map("contract_number")
+  type           String // service_agreement, associate_employment, other
+  status         String    @default("draft") // draft, sent, signed, active, expired, terminated
+  startDate      DateTime? @map("start_date")
+  endDate        DateTime? @map("end_date")
+  autoRenew      Boolean   @default(false) @map("auto_renew")
+  renewalTerms   String?   @map("renewal_terms")
+  documentUrl    String?   @map("document_url")
+  signedAt       DateTime? @map("signed_at")
+  signatureData  Json?     @map("signature_data") // e-signature info
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
 
-  client          Client    @relation(fields: [clientId], references: [id])
+  client            Client             @relation(fields: [clientId], references: [id])
   serviceAgreements ServiceAgreement[]
 
   @@map("contracts")
 }
 
 model ServiceAgreement {
-  id           String    @id @default(cuid())
-  clientId     String    @map("client_id")
-  locationId   String    @map("location_id")
-  contractId   String?   @map("contract_id")
-  description  String
-  monthlyAmount Decimal  @map("monthly_amount") @db.Decimal(10, 2)
-  billingDay   Int       @default(1) @map("billing_day") // 1-28
-  paymentTerms String    @default("NET_30") @map("payment_terms")
-  startDate    DateTime  @map("start_date")
-  endDate      DateTime? @map("end_date")
-  isActive     Boolean   @default(true) @map("is_active")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id            String    @id @default(cuid())
+  clientId      String    @map("client_id")
+  locationId    String    @map("location_id")
+  contractId    String?   @map("contract_id")
+  description   String
+  monthlyAmount Decimal   @map("monthly_amount") @db.Decimal(10, 2)
+  billingDay    Int       @default(1) @map("billing_day") // 1-28
+  paymentTerms  String    @default("NET_30") @map("payment_terms")
+  startDate     DateTime  @map("start_date")
+  endDate       DateTime? @map("end_date")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  client       Client    @relation(fields: [clientId], references: [id])
-  location     Location  @relation(fields: [locationId], references: [id])
-  contract     Contract? @relation(fields: [contractId], references: [id])
+  client   Client    @relation(fields: [clientId], references: [id])
+  location Location  @relation(fields: [locationId], references: [id])
+  contract Contract? @relation(fields: [contractId], references: [id])
 
   invoiceLineItems InvoiceLineItem[]
 
@@ -451,48 +508,48 @@ model Invoice {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  client        Client    @relation(fields: [clientId], references: [id])
-  lineItems     InvoiceLineItem[]
-  payments      Payment[]
-  reminders     PaymentReminder[]
+  client    Client            @relation(fields: [clientId], references: [id])
+  lineItems InvoiceLineItem[]
+  payments  Payment[]
+  reminders PaymentReminder[]
 
   @@map("invoices")
 }
 
 model InvoiceLineItem {
-  id                 String    @id @default(cuid())
-  invoiceId          String    @map("invoice_id")
-  serviceAgreementId String?   @map("service_agreement_id")
+  id                 String   @id @default(cuid())
+  invoiceId          String   @map("invoice_id")
+  serviceAgreementId String?  @map("service_agreement_id")
   description        String
-  quantity           Decimal   @default(1) @db.Decimal(10, 2)
-  unitPrice          Decimal   @map("unit_price") @db.Decimal(10, 2)
-  amount             Decimal   @db.Decimal(10, 2)
-  sortOrder          Int       @default(0) @map("sort_order")
-  createdAt          DateTime  @default(now()) @map("created_at")
+  quantity           Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice          Decimal  @map("unit_price") @db.Decimal(10, 2)
+  amount             Decimal  @db.Decimal(10, 2)
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at")
 
-  invoice            Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  serviceAgreement   ServiceAgreement? @relation(fields: [serviceAgreementId], references: [id])
+  invoice          Invoice           @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  serviceAgreement ServiceAgreement? @relation(fields: [serviceAgreementId], references: [id])
 
   @@map("invoice_line_items")
 }
 
 model Payment {
-  id              String    @id @default(cuid())
-  clientId        String    @map("client_id")
-  invoiceId       String?   @map("invoice_id")
-  amount          Decimal   @db.Decimal(10, 2)
-  paymentMethod   String    @map("payment_method") // ach, credit_card, check, cash, other
-  referenceNumber String?   @map("reference_number") // check number, transaction ID
-  paymentDate     DateTime  @map("payment_date") @db.Date
-  status          String    @default("completed") // pending, completed, failed, refunded
-  processorResponse Json?   @map("processor_response")
-  notes           String?
-  qbPaymentId     String?   @map("qb_payment_id") // QuickBooks sync
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  id                String   @id @default(cuid())
+  clientId          String   @map("client_id")
+  invoiceId         String?  @map("invoice_id")
+  amount            Decimal  @db.Decimal(10, 2)
+  paymentMethod     String   @map("payment_method") // ach, credit_card, check, cash, other
+  referenceNumber   String?  @map("reference_number") // check number, transaction ID
+  paymentDate       DateTime @map("payment_date") @db.Date
+  status            String   @default("completed") // pending, completed, failed, refunded
+  processorResponse Json?    @map("processor_response")
+  notes             String?
+  qbPaymentId       String?  @map("qb_payment_id") // QuickBooks sync
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
-  client          Client    @relation(fields: [clientId], references: [id])
-  invoice         Invoice?  @relation(fields: [invoiceId], references: [id])
+  client  Client   @relation(fields: [clientId], references: [id])
+  invoice Invoice? @relation(fields: [invoiceId], references: [id])
 
   @@map("payments")
 }
@@ -506,7 +563,7 @@ model PaymentReminder {
   emailLogId   String?   @map("email_log_id")
   createdAt    DateTime  @default(now()) @map("created_at")
 
-  invoice      Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 
   @@map("payment_reminders")
 }
@@ -516,38 +573,38 @@ model PaymentReminder {
 // ============================================
 
 model PayPeriod {
-  id          String    @id @default(cuid())
-  branchId    String    @map("branch_id")
-  startDate   DateTime  @map("start_date") @db.Date
-  endDate     DateTime  @map("end_date") @db.Date
-  status      String    @default("open") // open, calculating, approved, paid
-  approvedBy  String?   @map("approved_by")
-  approvedAt  DateTime? @map("approved_at")
-  paidAt      DateTime? @map("paid_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  id         String    @id @default(cuid())
+  branchId   String    @map("branch_id")
+  startDate  DateTime  @map("start_date") @db.Date
+  endDate    DateTime  @map("end_date") @db.Date
+  status     String    @default("open") // open, calculating, approved, paid
+  approvedBy String?   @map("approved_by")
+  approvedAt DateTime? @map("approved_at")
+  paidAt     DateTime? @map("paid_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
 
-  branch      Branch    @relation(fields: [branchId], references: [id])
-  entries     PayrollEntry[]
+  branch  Branch         @relation(fields: [branchId], references: [id])
+  entries PayrollEntry[]
 
   @@map("pay_periods")
 }
 
 model PayrollEntry {
-  id           String    @id @default(cuid())
-  payPeriodId  String    @map("pay_period_id")
-  userId       String    @map("user_id") // associate
-  basePay      Decimal   @map("base_pay") @db.Decimal(10, 2)
-  deductions   Decimal   @default(0) @db.Decimal(10, 2)
-  additions    Decimal   @default(0) @db.Decimal(10, 2)
-  netPay       Decimal   @map("net_pay") @db.Decimal(10, 2)
-  lineItems    Json?     @default("[]") @map("line_items") // breakdown by location
-  status       String    @default("pending") // pending, approved, paid
-  notes        String?
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  payPeriodId String   @map("pay_period_id")
+  userId      String   @map("user_id") // associate
+  basePay     Decimal  @map("base_pay") @db.Decimal(10, 2)
+  deductions  Decimal  @default(0) @db.Decimal(10, 2)
+  additions   Decimal  @default(0) @db.Decimal(10, 2)
+  netPay      Decimal  @map("net_pay") @db.Decimal(10, 2)
+  lineItems   Json?    @default("[]") @map("line_items") // breakdown by location
+  status      String   @default("pending") // pending, approved, paid
+  notes       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
-  payPeriod    PayPeriod @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
-  user         User      @relation(fields: [userId], references: [id])
+  payPeriod PayPeriod @relation(fields: [payPeriodId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
 
   @@map("payroll_entries")
 }
@@ -557,17 +614,17 @@ model PayrollEntry {
 // ============================================
 
 model Badge {
-  id          String    @id @default(cuid())
-  companyId   String    @map("company_id")
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
   name        String
   description String?
-  iconUrl     String?   @map("icon_url")
-  badgeType   String    @map("badge_type") // milestone, engagement, quality, loyalty, special
-  rarity      String    @default("common") // common, uncommon, rare, epic, legendary
-  criteria    Json?     // rules for auto-award
-  pointsValue Int       @default(0) @map("points_value")
-  isActive    Boolean   @default(true) @map("is_active")
-  createdAt   DateTime  @default(now()) @map("created_at")
+  iconUrl     String?  @map("icon_url")
+  badgeType   String   @map("badge_type") // milestone, engagement, quality, loyalty, special
+  rarity      String   @default("common") // common, uncommon, rare, epic, legendary
+  criteria    Json? // rules for auto-award
+  pointsValue Int      @default(0) @map("points_value")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   earnedBadges BadgeEarned[]
 
@@ -575,32 +632,32 @@ model Badge {
 }
 
 model BadgeEarned {
-  id        String    @id @default(cuid())
-  badgeId   String    @map("badge_id")
-  userId    String    @map("user_id")
-  earnedAt  DateTime  @default(now()) @map("earned_at")
+  id        String   @id @default(cuid())
+  badgeId   String   @map("badge_id")
+  userId    String   @map("user_id")
+  earnedAt  DateTime @default(now()) @map("earned_at")
   notes     String?
-  createdAt DateTime  @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
-  badge     Badge     @relation(fields: [badgeId], references: [id])
-  user      User      @relation(fields: [userId], references: [id])
+  badge Badge @relation(fields: [badgeId], references: [id])
+  user  User  @relation(fields: [userId], references: [id])
 
   @@unique([badgeId, userId])
   @@map("badges_earned")
 }
 
 model LoyaltyTransaction {
-  id            String    @id @default(cuid())
-  clientId      String    @map("client_id")
-  type          String    // earned, redeemed, expired, adjusted
+  id            String   @id @default(cuid())
+  clientId      String   @map("client_id")
+  type          String // earned, redeemed, expired, adjusted
   points        Int
-  balanceAfter  Int       @map("balance_after")
+  balanceAfter  Int      @map("balance_after")
   description   String
-  referenceType String?   @map("reference_type") // payment, referral, review, etc.
-  referenceId   String?   @map("reference_id")
-  createdAt     DateTime  @default(now()) @map("created_at")
+  referenceType String?  @map("reference_type") // payment, referral, review, etc.
+  referenceId   String?  @map("reference_id")
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  client        Client    @relation(fields: [clientId], references: [id])
+  client Client @relation(fields: [clientId], references: [id])
 
   @@map("loyalty_transactions")
 }
@@ -611,74 +668,74 @@ model LoyaltyTransaction {
 
 // Team Chat (Slack Replacement)
 model Channel {
-  id           String   @id @default(cuid())
-  companyId    String   @map("company_id")
-  name         String   // e.g., "general", "austin-storage", "operations"
-  slug         String   // URL-friendly name
-  description  String?
-  type         String   @default("public") // public, private, direct_message, ai_assistant
-  clientId     String?  @map("client_id") // if client-specific channel
-  locationId   String?  @map("location_id") // if location-specific channel
-  isArchived   Boolean  @default(false) @map("is_archived")
-  createdById  String   @map("created_by_id")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  name        String // e.g., "general", "austin-storage", "operations"
+  slug        String // URL-friendly name
+  description String?
+  type        String   @default("public") // public, private, direct_message, ai_assistant
+  clientId    String?  @map("client_id") // if client-specific channel
+  locationId  String?  @map("location_id") // if location-specific channel
+  isArchived  Boolean  @default(false) @map("is_archived")
+  createdById String   @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // AI Assistant fields
-  isAiEnabled  Boolean  @default(false) @map("is_ai_enabled") // if this channel has AI assistant
-  aiPersona    String?  @map("ai_persona") // hr, payroll, operations, time_off, general
-  aiLanguages  String[] @default(["en"]) @map("ai_languages") // ["en", "es"]
-  aiSystemPrompt String? @map("ai_system_prompt") @db.Text // custom system prompt for this AI
+  isAiEnabled    Boolean  @default(false) @map("is_ai_enabled") // if this channel has AI assistant
+  aiPersona      String?  @map("ai_persona") // hr, payroll, operations, time_off, general
+  aiLanguages    String[] @default(["en"]) @map("ai_languages") // ["en", "es"]
+  aiSystemPrompt String?  @map("ai_system_prompt") @db.Text // custom system prompt for this AI
 
-  members      ChannelMember[]
-  messages     Message[]
+  members  ChannelMember[]
+  messages Message[]
 
   @@unique([companyId, slug])
   @@map("channels")
 }
 
 model ChannelMember {
-  id             String    @id @default(cuid())
-  channelId      String    @map("channel_id")
-  userId         String    @map("user_id")
-  role           String    @default("member") // owner, admin, member
-  notifications  String    @default("all") // all, mentions, none
-  isFavorite     Boolean   @default(false) @map("is_favorite")
-  lastReadAt     DateTime? @map("last_read_at")
-  joinedAt       DateTime  @default(now()) @map("joined_at")
+  id            String    @id @default(cuid())
+  channelId     String    @map("channel_id")
+  userId        String    @map("user_id")
+  role          String    @default("member") // owner, admin, member
+  notifications String    @default("all") // all, mentions, none
+  isFavorite    Boolean   @default(false) @map("is_favorite")
+  lastReadAt    DateTime? @map("last_read_at")
+  joinedAt      DateTime  @default(now()) @map("joined_at")
 
-  channel        Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 
   @@unique([channelId, userId])
   @@map("channel_members")
 }
 
 model Message {
-  id             String    @id @default(cuid())
-  channelId      String    @map("channel_id")
-  userId         String    @map("user_id")
-  content        String
-  contentType    String    @default("text") @map("content_type") // text, file, image, system, ai_response
-  attachments    Json?     @default("[]") // array of file URLs/metadata
-  mentions       String[]  @default([]) // user IDs mentioned
-  parentId       String?   @map("parent_id") // for threaded replies
-  isEdited       Boolean   @default(false) @map("is_edited")
-  editedAt       DateTime? @map("edited_at")
-  isDeleted      Boolean   @default(false) @map("is_deleted")
-  deletedAt      DateTime? @map("deleted_at")
-  reactions      Json?     @default("{}") // { "👍": ["userId1", "userId2"], "❤️": ["userId3"] }
+  id          String    @id @default(cuid())
+  channelId   String    @map("channel_id")
+  userId      String    @map("user_id")
+  content     String
+  contentType String    @default("text") @map("content_type") // text, file, image, system, ai_response
+  attachments Json?     @default("[]") // array of file URLs/metadata
+  mentions    String[]  @default([]) // user IDs mentioned
+  parentId    String?   @map("parent_id") // for threaded replies
+  isEdited    Boolean   @default(false) @map("is_edited")
+  editedAt    DateTime? @map("edited_at")
+  isDeleted   Boolean   @default(false) @map("is_deleted")
+  deletedAt   DateTime? @map("deleted_at")
+  reactions   Json?     @default("{}") // { "👍": ["userId1", "userId2"], "❤️": ["userId3"] }
 
   // AI-specific fields
-  isAiGenerated  Boolean   @default(false) @map("is_ai_generated")
-  aiModel        String?   @map("ai_model") // "gemini-2.0-flash-exp", etc.
-  aiMetadata     Json?     @map("ai_metadata") // tokens used, latency, etc.
+  isAiGenerated Boolean @default(false) @map("is_ai_generated")
+  aiModel       String? @map("ai_model") // "gemini-2.0-flash-exp", etc.
+  aiMetadata    Json?   @map("ai_metadata") // tokens used, latency, etc.
 
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  channel        Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
-  parent         Message?  @relation("MessageReplies", fields: [parentId], references: [id])
-  replies        Message[] @relation("MessageReplies")
+  channel Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  parent  Message?  @relation("MessageReplies", fields: [parentId], references: [id])
+  replies Message[] @relation("MessageReplies")
 
   @@index([channelId, createdAt])
   @@index([userId])
@@ -689,7 +746,7 @@ model EmailTemplate {
   id        String   @id @default(cuid())
   companyId String   @map("company_id")
   name      String
-  category  String   // invoice, reminder, welcome, notification, marketing
+  category  String // invoice, reminder, welcome, notification, marketing
   subject   String
   bodyHtml  String   @map("body_html")
   bodyText  String?  @map("body_text")
@@ -704,20 +761,20 @@ model EmailTemplate {
 }
 
 model EmailLog {
-  id           String    @id @default(cuid())
-  templateId   String?   @map("template_id")
-  recipientEmail String  @map("recipient_email")
-  recipientUserId String? @map("recipient_user_id")
-  subject      String
-  body         String
-  status       String    @default("queued") // queued, sent, delivered, bounced, failed
-  sentAt       DateTime? @map("sent_at")
-  openedAt     DateTime? @map("opened_at")
-  clickedAt    DateTime? @map("clicked_at")
-  errorMessage String?   @map("error_message")
-  createdAt    DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(cuid())
+  templateId      String?   @map("template_id")
+  recipientEmail  String    @map("recipient_email")
+  recipientUserId String?   @map("recipient_user_id")
+  subject         String
+  body            String
+  status          String    @default("queued") // queued, sent, delivered, bounced, failed
+  sentAt          DateTime? @map("sent_at")
+  openedAt        DateTime? @map("opened_at")
+  clickedAt       DateTime? @map("clicked_at")
+  errorMessage    String?   @map("error_message")
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  template     EmailTemplate? @relation(fields: [templateId], references: [id])
+  template EmailTemplate? @relation(fields: [templateId], references: [id])
 
   @@map("email_logs")
 }
@@ -725,15 +782,15 @@ model EmailLog {
 model Notification {
   id        String    @id @default(cuid())
   userId    String    @map("user_id")
-  type      String    // info, warning, action_required, success
+  type      String // info, warning, action_required, success
   title     String
   message   String
-  link      String?   // in-app navigation
+  link      String? // in-app navigation
   isRead    Boolean   @default(false) @map("is_read")
   readAt    DateTime? @map("read_at")
   createdAt DateTime  @default(now()) @map("created_at")
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
@@ -743,21 +800,74 @@ model Notification {
 // ============================================
 
 model AuditLog {
-  id          String   @id @default(cuid())
-  userId      String   @map("user_id")
-  action      String   // create, update, delete, login, logout, export, etc.
-  entityType  String   @map("entity_type")
-  entityId    String   @map("entity_id")
-  oldValues   Json?    @map("old_values")
-  newValues   Json?    @map("new_values")
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  action     String // create, update, delete, login, logout, export, etc.
+  entityType String   @map("entity_type")
+  entityId   String   @map("entity_id")
+  oldValues  Json?    @map("old_values")
+  newValues  Json?    @map("new_values")
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
 
-  user        User     @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id])
 
   @@index([entityType, entityId])
   @@index([userId])
   @@index([createdAt])
   @@map("audit_logs")
+}
+
+// ============================================
+// AI ASSISTANT
+// ============================================
+
+model AIConversation {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  title     String? // Auto-generated from first message or user-provided
+  summary   String? // AI-generated summary of conversation
+  isActive  Boolean  @default(true) @map("is_active") // false when archived
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages AIConversationMessage[]
+
+  @@index([userId, isActive])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+model AIConversationMessage {
+  id             String   @id @default(cuid())
+  conversationId String   @map("conversation_id")
+  role           String // user, assistant
+  content        String
+  language       String   @default("en") // en, es
+
+  // Query metadata
+  intent         String? // finance, schedule, team, issues, etc.
+  confidence     Float? // 0-1
+  timeframe      String? // today, week, month, etc.
+
+  // Response metadata
+  aiModel        String? @map("ai_model") // gemini-2.0-flash-exp
+  responseTime   Int? @map("response_time") // milliseconds
+  tokensUsed     Int? @map("tokens_used")
+
+  // Rich attachments (for future use)
+  attachments    Json? @default("[]") // charts, tables, actions
+
+  // Feedback
+  feedback       String? // thumbs_up, thumbs_down
+  feedbackNote   String? @map("feedback_note")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("ai_conversation_messages")
 }

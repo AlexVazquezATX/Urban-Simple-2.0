@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
       where: {
         companyId: user.companyId,
         isActive: true,
-        ...(allowedRoles && { role: { in: allowedRoles } }),
+        ...(allowedRoles && { role: { in: allowedRoles as any } }),
       },
       select: { id: true },
     })

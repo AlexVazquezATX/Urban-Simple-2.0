@@ -579,8 +579,26 @@ export function TeamChat() {
                   <Hash className="h-5 w-5 text-muted-foreground" />
                 )}
                 <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{activeChannel.name}</h3>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {activeChannel.type === 'direct_message' ? (
+                      <div className="flex items-center gap-1.5">
+                        {activeChannel.name.split(',').map((name, index) => (
+                          <span
+                            key={index}
+                            className="text-sm font-medium text-bronze-600"
+                          >
+                            {name.trim()}
+                            {index < activeChannel.name.split(',').length - 1 && (
+                              <span className="text-muted-foreground mx-1">,</span>
+                            )}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <h3 className="text-base font-semibold text-charcoal-900">
+                        {activeChannel.name}
+                      </h3>
+                    )}
                     {memberCount > 0 && (
                       <span className="text-xs text-muted-foreground">
                         • {memberCount} {memberCount === 1 ? 'member' : 'members'}

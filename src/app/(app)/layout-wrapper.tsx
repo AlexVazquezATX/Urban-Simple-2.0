@@ -64,7 +64,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <Button
           onClick={() => setIsAIChatOpen(true)}
           size="lg"
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-bronze-400 to-bronze-500 text-white shadow-glow hover:shadow-glow-lg hover:from-bronze-500 hover:to-bronze-600 hover:-translate-y-1 transition-all duration-300 z-30 group"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-glow hover:shadow-glow-lg hover:from-ocean-600 hover:to-ocean-700 hover:-translate-y-1 transition-all duration-300 z-30 group"
           title="Open AI Assistant"
         >
           <Sparkles className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />

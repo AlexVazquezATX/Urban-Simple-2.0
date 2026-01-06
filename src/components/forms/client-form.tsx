@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { ImageUpload } from '@/components/ui/image-upload'
 import { toast } from 'sonner'
 
 const clientSchema = z.object({
@@ -41,6 +42,7 @@ const clientSchema = z.object({
   legalName: z.string().optional(),
   billingEmail: z.string().email('Invalid email').optional().or(z.literal('')),
   phone: z.string().optional(),
+  logoUrl: z.string().optional().or(z.literal('')),
   paymentTerms: z.enum(['NET_15', 'NET_30', 'DUE_ON_RECEIPT']),
   preferredPaymentMethod: z.enum(['ach', 'credit_card', 'check']).optional(),
   taxExempt: z.boolean().default(false),
@@ -61,12 +63,13 @@ export function ClientForm({ client, children }: ClientFormProps) {
   const router = useRouter()
 
   const form = useForm<ClientFormValues>({
-    resolver: zodResolver(clientSchema),
+    resolver: zodResolver(clientSchema) as any,
     defaultValues: {
       name: client?.name || '',
       legalName: client?.legalName || '',
       billingEmail: client?.billingEmail || '',
       phone: client?.phone || '',
+      logoUrl: client?.logoUrl || '',
       paymentTerms: client?.paymentTerms || 'NET_30',
       preferredPaymentMethod: client?.preferredPaymentMethod || undefined,
       taxExempt: client?.taxExempt || false,
@@ -120,6 +123,24 @@ export function ClientForm({ client, children }: ClientFormProps) {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="logoUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Logo</FormLabel>
+                  <FormControl>
+                    <ImageUpload
+                      value={field.value || undefined}
+                      onChange={field.onChange}
+                      folder="clients"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -320,5 +341,6 @@ export function ClientForm({ client, children }: ClientFormProps) {
     </Dialog>
   )
 }
+
 
 

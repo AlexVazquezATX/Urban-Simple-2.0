@@ -101,7 +101,7 @@ export async function POST(
     })
 
     const existingUserIds = new Set(existingMembers.map((m) => m.userId))
-    const newUserIds = targetUserIds.filter((id) => !existingUserIds.has(id))
+    const newUserIds = targetUserIds.filter((id: string) => !existingUserIds.has(id))
 
     if (newUserIds.length === 0) {
       return NextResponse.json(
@@ -117,7 +117,7 @@ export async function POST(
 
     // Add members (batch create)
     const members = await prisma.channelMember.createMany({
-      data: newUserIds.map((id) => ({
+      data: newUserIds.map((id: string) => ({
         channelId,
         userId: id,
         role,
