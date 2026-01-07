@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Sidebar,
   SidebarContent,
@@ -31,37 +32,89 @@ import {
   ChevronDown,
   ChevronRight,
   Moon,
+  Rocket,
+  Search,
+  Mail,
+  TrendingUp,
+  Sunrise,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// Storage key for sidebar state
+const SIDEBAR_STATE_KEY = 'urbansimple-sidebar-state'
+
+interface SidebarState {
+  admin: boolean
+  operations: boolean
+  clientRelations: boolean
+  growth: boolean
+  administrative: boolean
+}
+
+function loadSidebarState(): SidebarState {
+  if (typeof window === 'undefined') {
+    return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true }
+  }
+  try {
+    const saved = localStorage.getItem(SIDEBAR_STATE_KEY)
+    if (saved) {
+      return JSON.parse(saved)
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true }
+}
+
+function saveSidebarState(state: SidebarState) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(SIDEBAR_STATE_KEY, JSON.stringify(state))
+  }
+}
 
 export function AppSidebar() {
   const router = useRouter()
   const pathname = usePathname()
 
-  // Collapsible state for each category
-  const [isAdminOpen, setIsAdminOpen] = useState(true)
-  const [isOperationsOpen, setIsOperationsOpen] = useState(true)
-  const [isClientRelationsOpen, setIsClientRelationsOpen] = useState(true)
-  const [isAdministrativeOpen, setIsAdministrativeOpen] = useState(true)
+  // Load initial state from localStorage
+  const [sidebarState, setSidebarState] = useState<SidebarState>(() => loadSidebarState())
 
-  // User role state
-  const [userRole, setUserRole] = useState<string | null>(null)
+  // User role state - cached to avoid refetching
+  const [userRole, setUserRole] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('user-role')
+    }
+    return null
+  })
+
+  // Toggle handlers that persist state
+  const toggleSection = useCallback((section: keyof SidebarState) => {
+    setSidebarState(prev => {
+      const newState = { ...prev, [section]: !prev[section] }
+      saveSidebarState(newState)
+      return newState
+    })
+  }, [])
 
   useEffect(() => {
-    // Fetch user role
+    // Only fetch if we don't have the role cached
+    if (userRole) return
+
     const fetchUserRole = async () => {
       try {
         const response = await fetch('/api/users/me', { credentials: 'include' })
         if (response.ok) {
           const userData = await response.json()
           setUserRole(userData.role)
+          // Cache in sessionStorage
+          sessionStorage.setItem('user-role', userData.role)
         }
       } catch (error) {
         console.error('Failed to fetch user role:', error)
       }
     }
     fetchUserRole()
-  }, [])
+  }, [userRole])
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -78,6 +131,7 @@ export function AppSidebar() {
 
   const adminItems = [
     { href: '/', icon: LayoutDashboard, label: 'Dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE', 'CLIENT_USER'] },
+    { href: '/pulse', icon: Sunrise, label: 'Pulse', roles: ['SUPER_ADMIN'] },
     { href: '/chat-analytics', icon: BarChart3, label: 'Chat Analytics', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
 
@@ -94,6 +148,14 @@ export function AppSidebar() {
   const clientRelationsItems = [
     { href: '/clients', icon: Users, label: 'Clients', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     { href: '/locations', icon: Building2, label: 'Locations', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+  ]
+
+  const growthItems = [
+    { href: '/growth', icon: Rocket, label: 'Daily Planner', exact: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/pipeline', icon: TrendingUp, label: 'Pipeline', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/discovery', icon: Search, label: 'AI Discovery', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
 
   const administrativeItems = [
@@ -135,16 +197,16 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel
             className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
-            onClick={() => setIsAdminOpen(!isAdminOpen)}
+            onClick={() => toggleSection('admin')}
           >
             <span>Admin Tools</span>
-            {isAdminOpen ? (
+            {sidebarState.admin ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
           </SidebarGroupLabel>
-          {isAdminOpen && (
+          {sidebarState.admin && (
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {adminItems.filter((item) => hasAccess(item.roles)).map((item) => {
@@ -162,7 +224,7 @@ export function AppSidebar() {
                             : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
                         )}
                       >
-                        <a href={item.href} className="flex items-center gap-3">
+                        <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
                               'h-5 w-5 transition-transform duration-200',
@@ -172,7 +234,60 @@ export function AppSidebar() {
                             )}
                           />
                           <span className="font-medium text-sm">{item.label}</span>
-                        </a>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
+        )}
+
+        {/* Growth */}
+        {growthItems.filter((item) => hasAccess(item.roles)).length > 0 && (
+        <SidebarGroup className="mt-2">
+          <SidebarGroupLabel
+            className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
+            onClick={() => toggleSection('growth')}
+          >
+            <span>Growth</span>
+            {sidebarState.growth ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </SidebarGroupLabel>
+          {sidebarState.growth && (
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-1">
+                {growthItems.filter((item) => hasAccess(item.roles)).map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href, item.exact)
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        className={cn(
+                          'h-11 px-3 rounded-xl transition-all duration-200 group',
+                          active
+                            ? 'bg-gradient-to-br from-bronze-500 to-bronze-600 text-white shadow-md hover:shadow-lg hover:from-bronze-600 hover:to-bronze-700'
+                            : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-bronze-50 hover:text-bronze-700 hover:border-bronze-200'
+                        )}
+                      >
+                        <Link href={item.href} className="flex items-center gap-3">
+                          <Icon
+                            className={cn(
+                              'h-5 w-5 transition-transform duration-200',
+                              active
+                                ? 'text-white'
+                                : 'text-charcoal-500 group-hover:text-bronze-600 group-hover:scale-110'
+                            )}
+                          />
+                          <span className="font-medium text-sm">{item.label}</span>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
@@ -185,19 +300,19 @@ export function AppSidebar() {
 
         {/* Operations */}
         {operationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
-            onClick={() => setIsOperationsOpen(!isOperationsOpen)}
+            onClick={() => toggleSection('operations')}
           >
             <span>Operations</span>
-            {isOperationsOpen ? (
+            {sidebarState.operations ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
           </SidebarGroupLabel>
-          {isOperationsOpen && (
+          {sidebarState.operations && (
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {operationsItems.filter((item) => hasAccess(item.roles)).map((item) => {
@@ -215,7 +330,7 @@ export function AppSidebar() {
                             : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
                         )}
                       >
-                        <a href={item.href} className="flex items-center gap-3">
+                        <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
                               'h-5 w-5 transition-transform duration-200',
@@ -225,7 +340,7 @@ export function AppSidebar() {
                             )}
                           />
                           <span className="font-medium text-sm">{item.label}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
@@ -238,19 +353,19 @@ export function AppSidebar() {
 
         {/* Client Relations */}
         {clientRelationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
-            onClick={() => setIsClientRelationsOpen(!isClientRelationsOpen)}
+            onClick={() => toggleSection('clientRelations')}
           >
             <span>Client Relations</span>
-            {isClientRelationsOpen ? (
+            {sidebarState.clientRelations ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
           </SidebarGroupLabel>
-          {isClientRelationsOpen && (
+          {sidebarState.clientRelations && (
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {clientRelationsItems.filter((item) => hasAccess(item.roles)).map((item) => {
@@ -268,7 +383,7 @@ export function AppSidebar() {
                             : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
                         )}
                       >
-                        <a href={item.href} className="flex items-center gap-3">
+                        <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
                               'h-5 w-5 transition-transform duration-200',
@@ -278,7 +393,7 @@ export function AppSidebar() {
                             )}
                           />
                           <span className="font-medium text-sm">{item.label}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )
@@ -291,19 +406,19 @@ export function AppSidebar() {
 
         {/* Administrative */}
         {administrativeItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
-            onClick={() => setIsAdministrativeOpen(!isAdministrativeOpen)}
+            onClick={() => toggleSection('administrative')}
           >
             <span>Administrative</span>
-            {isAdministrativeOpen ? (
+            {sidebarState.administrative ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
           </SidebarGroupLabel>
-          {isAdministrativeOpen && (
+          {sidebarState.administrative && (
             <SidebarGroupContent>
               <SidebarMenu className="space-y-1">
                 {administrativeItems.filter((item) => hasAccess(item.roles)).map((item) => {
@@ -321,7 +436,7 @@ export function AppSidebar() {
                             : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
                         )}
                       >
-                        <a href={item.href} className="flex items-center gap-3">
+                        <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
                               'h-5 w-5 transition-transform duration-200',
@@ -331,7 +446,7 @@ export function AppSidebar() {
                             )}
                           />
                           <span className="font-medium text-sm">{item.label}</span>
-                        </a>
+                        </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   )

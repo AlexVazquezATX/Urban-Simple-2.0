@@ -111,7 +111,7 @@ export async function GET() {
   } catch (error: any) {
     console.error('Tonight route fetch error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch tonight\\'s route', details: error.message },
+      { error: "Failed to fetch tonight's route", details: error.message },
       { status: 500 }
     )
   }

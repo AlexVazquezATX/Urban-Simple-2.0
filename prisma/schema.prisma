@@ -32,6 +32,12 @@ model Company {
   branches Branch[]
   users    User[]
 
+  // Business Development
+  prospects         Prospect[]
+  outreachCampaigns OutreachCampaign[]
+  discoveryJobs     AIDiscoveryJob[]
+  contentTemplates  ContentTemplate[]
+
   @@map("companies")
 }
 
@@ -54,6 +60,7 @@ model Branch {
   locations  Location[]
   shifts     Shift[]
   payPeriods PayPeriod[]
+  prospects  Prospect[]
 
   @@map("branches")
 }
@@ -106,6 +113,17 @@ model User {
   auditLogs         AuditLog[]
   aiConversations   AIConversation[]
 
+  // Business Development
+  assignedProspects    Prospect[]         @relation("ProspectAssignee")
+  prospectActivities   ProspectActivity[]
+  createdCampaigns     OutreachCampaign[] @relation("CampaignCreator")
+  createdDiscoveryJobs AIDiscoveryJob[]   @relation("DiscoveryJobCreator")
+  createdTemplates     ContentTemplate[]  @relation("TemplateCreator")
+
+  // Pulse - Daily Briefings
+  pulseTopics    PulseTopic[]
+  pulseBriefings PulseBriefing[]
+
   @@map("users")
 }
 
@@ -155,14 +173,15 @@ model Client {
 
   branch Branch @relation(fields: [branchId], references: [id])
 
-  locations           Location[]
-  contacts            ClientContact[]
-  contracts           Contract[]
-  serviceAgreements   ServiceAgreement[]
-  invoices            Invoice[]
-  payments            Payment[]
-  issues              Issue[]
-  loyaltyTransactions LoyaltyTransaction[]
+  locations             Location[]
+  contacts              ClientContact[]
+  contracts             Contract[]
+  serviceAgreements     ServiceAgreement[]
+  invoices              Invoice[]
+  payments              Payment[]
+  issues                Issue[]
+  loyaltyTransactions   LoyaltyTransaction[]
+  convertedFromProspect Prospect?            @relation("ProspectToClient")
 
   @@map("clients")
 }
@@ -257,19 +276,19 @@ model ChecklistTemplate {
 }
 
 model ChecklistSectionType {
-  id          String   @id @default(cuid())
-  companyId   String?  @map("company_id") // null = built-in
-  name        String   // "Back of House (Kitchen)"
-  nameEs      String?  @map("name_es")
-  code        String   // "BOH", "BATHROOM", "DINING", "PATIO"
-  icon        String?  // lucide icon name
-  sortOrder   Int      @default(0) @map("sort_order")
-  isBuiltIn   Boolean  @default(false) @map("is_built_in")
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  companyId String?  @map("company_id") // null = built-in
+  name      String // "Back of House (Kitchen)"
+  nameEs    String?  @map("name_es")
+  code      String // "BOH", "BATHROOM", "DINING", "PATIO"
+  icon      String? // lucide icon name
+  sortOrder Int      @default(0) @map("sort_order")
+  isBuiltIn Boolean  @default(false) @map("is_built_in")
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  items       ChecklistItemLibrary[]
+  items ChecklistItemLibrary[]
 
   @@map("checklist_section_types")
 }
@@ -278,7 +297,7 @@ model ChecklistItemLibrary {
   id            String   @id @default(cuid())
   sectionTypeId String   @map("section_type_id")
   companyId     String?  @map("company_id") // null = built-in
-  text          String   // "Sweep and mop all floor areas"
+  text          String // "Sweep and mop all floor areas"
   textEs        String?  @map("text_es")
   frequency     String   @default("daily") // daily, weekly, monthly
   requiresPhoto Boolean  @default(false) @map("requires_photo")
@@ -289,7 +308,7 @@ model ChecklistItemLibrary {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  sectionType   ChecklistSectionType @relation(fields: [sectionTypeId], references: [id], onDelete: Cascade)
+  sectionType ChecklistSectionType @relation(fields: [sectionTypeId], references: [id], onDelete: Cascade)
 
   @@map("checklist_item_library")
 }
@@ -832,7 +851,7 @@ model AIConversation {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages AIConversationMessage[]
 
   @@index([userId, isActive])
@@ -841,33 +860,401 @@ model AIConversation {
 }
 
 model AIConversationMessage {
-  id             String   @id @default(cuid())
-  conversationId String   @map("conversation_id")
+  id             String @id @default(cuid())
+  conversationId String @map("conversation_id")
   role           String // user, assistant
   content        String
-  language       String   @default("en") // en, es
+  language       String @default("en") // en, es
 
   // Query metadata
-  intent         String? // finance, schedule, team, issues, etc.
-  confidence     Float? // 0-1
-  timeframe      String? // today, week, month, etc.
+  intent     String? // finance, schedule, team, issues, etc.
+  confidence Float? // 0-1
+  timeframe  String? // today, week, month, etc.
 
   // Response metadata
-  aiModel        String? @map("ai_model") // gemini-2.0-flash-exp
-  responseTime   Int? @map("response_time") // milliseconds
-  tokensUsed     Int? @map("tokens_used")
+  aiModel      String? @map("ai_model") // gemini-2.0-flash-exp
+  responseTime Int?    @map("response_time") // milliseconds
+  tokensUsed   Int?    @map("tokens_used")
 
   // Rich attachments (for future use)
-  attachments    Json? @default("[]") // charts, tables, actions
+  attachments Json? @default("[]") // charts, tables, actions
 
   // Feedback
-  feedback       String? // thumbs_up, thumbs_down
-  feedbackNote   String? @map("feedback_note")
+  feedback     String? // thumbs_up, thumbs_down
+  feedbackNote String? @map("feedback_note")
 
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   conversation AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
 
   @@index([conversationId, createdAt])
   @@map("ai_conversation_messages")
+}
+
+// ============================================
+// BUSINESS DEVELOPMENT & GROWTH
+// ============================================
+
+model Prospect {
+  id           String  @id @default(cuid())
+  companyId    String  @map("company_id")
+  branchId     String? @map("branch_id")
+  assignedToId String? @map("assigned_to_id")
+
+  // Company Information
+  companyName  String  @map("company_name")
+  legalName    String? @map("legal_name")
+  industry     String? // restaurant, hospitality, retail, etc.
+  businessType String? @map("business_type") // restaurant, bar, hotel, etc.
+
+  // Location
+  address Json? // street, city, state, zip
+  website String?
+  phone   String?
+
+  // Business Details
+  estimatedSize String?  @map("estimated_size") // small, medium, large
+  employeeCount Int?     @map("employee_count")
+  annualRevenue Decimal? @map("annual_revenue") @db.Decimal(12, 2)
+  priceLevel    String?  @map("price_level") // $, $$, $$$, $$$$
+
+  // Status & Pipeline
+  status         String   @default("new") // prospect (holding area), new, researching, contacted, engaged, qualified, proposal_sent, won, lost, nurturing
+  stage          String? // custom stage name
+  priority       String   @default("medium") // low, medium, high, urgent
+  estimatedValue Decimal? @map("estimated_value") @db.Decimal(12, 2)
+
+  // Source Attribution
+  source       String  @default("manual") // manual, csv_import, ai_discovery, referral, website, meta, other
+  sourceDetail String? @map("source_detail") // campaign name, referrer, etc.
+
+  // AI Discovery Data
+  discoveryData  Json?     @map("discovery_data") // raw data from APIs
+  aiEnriched     Boolean   @default(false) @map("ai_enriched")
+  enrichmentDate DateTime? @map("enrichment_date")
+
+  // Metadata
+  tags                String[] @default([])
+  notes               String?  @db.Text
+  lostReason          String?  @map("lost_reason") @db.Text
+  convertedToClientId String?  @unique @map("converted_to_client_id")
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  lastContactedAt DateTime? @map("last_contacted_at")
+
+  company           Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branch            Branch? @relation(fields: [branchId], references: [id])
+  assignedTo        User?   @relation("ProspectAssignee", fields: [assignedToId], references: [id])
+  convertedToClient Client? @relation("ProspectToClient", fields: [convertedToClientId], references: [id])
+
+  contacts         ProspectContact[]
+  activities       ProspectActivity[]
+  campaigns        OutreachCampaign[]
+  outreachMessages OutreachMessage[]
+
+  @@index([companyId, status])
+  @@index([assignedToId])
+  @@index([source])
+  @@index([createdAt])
+  @@map("prospects")
+}
+
+model ProspectContact {
+  id         String @id @default(cuid())
+  prospectId String @map("prospect_id")
+
+  firstName       String  @map("first_name")
+  lastName        String  @map("last_name")
+  email           String?
+  phone           String?
+  title           String? // GM, Owner, Facilities Manager, etc.
+  role            String  @default("primary") // primary, billing, operations, other
+  isDecisionMaker Boolean @default(false) @map("is_decision_maker")
+
+  notes     String?  @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([prospectId])
+  @@map("prospect_contacts")
+}
+
+model ProspectActivity {
+  id         String @id @default(cuid())
+  prospectId String @map("prospect_id")
+  userId     String @map("user_id")
+
+  type    String // call, email, meeting, note, status_change, task, linkedin, sms, instagram_dm
+  channel String? // email, phone, linkedin, sms, instagram, in_person
+
+  title       String?
+  description String? @db.Text
+  outcome     String? // connected, voicemail, no_answer, interested, not_interested, follow_up
+
+  // For scheduled activities
+  scheduledAt DateTime? @map("scheduled_at")
+  completedAt DateTime? @map("completed_at")
+
+  // For emails/messages
+  subject     String?
+  messageBody String?   @map("message_body") @db.Text
+  sentAt      DateTime? @map("sent_at")
+  openedAt    DateTime? @map("opened_at")
+  clickedAt   DateTime? @map("clicked_at")
+
+  // For calls
+  duration Int? // seconds
+
+  // Metadata
+  metadata Json? // additional channel-specific data
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([prospectId, createdAt])
+  @@index([userId])
+  @@index([type])
+  @@map("prospect_activities")
+}
+
+model OutreachCampaign {
+  id          String  @id @default(cuid())
+  companyId   String  @map("company_id")
+  prospectId  String? @map("prospect_id") // null for broadcast campaigns
+  createdById String  @map("created_by_id")
+
+  name        String
+  description String? @db.Text
+  status      String  @default("draft") // draft, active, paused, completed, cancelled
+
+  // Campaign settings
+  startDate DateTime? @map("start_date")
+  endDate   DateTime? @map("end_date")
+
+  // Targeting
+  targetCriteria Json? @map("target_criteria") // filters for prospects
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  prospect  Prospect? @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  createdBy User      @relation("CampaignCreator", fields: [createdById], references: [id])
+
+  messages OutreachMessage[]
+
+  @@index([companyId, status])
+  @@index([prospectId])
+  @@map("outreach_campaigns")
+}
+
+model OutreachMessage {
+  id         String @id @default(cuid())
+  campaignId String @map("campaign_id")
+  prospectId String @map("prospect_id")
+
+  step      Int // order in sequence (1, 2, 3...)
+  delayDays Int @default(0) @map("delay_days") // days after previous step
+
+  channel String // email, phone, sms, linkedin, instagram_dm
+  subject String?
+  body    String  @db.Text
+
+  // AI-generated content
+  isAiGenerated Boolean @default(false) @map("is_ai_generated")
+  aiPrompt      String? @map("ai_prompt") @db.Text
+
+  // Status
+  status      String    @default("pending") // pending, sent, delivered, opened, clicked, replied, failed
+  scheduledAt DateTime? @map("scheduled_at")
+  sentAt      DateTime? @map("sent_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  campaign OutreachCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  prospect Prospect         @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, step])
+  @@index([prospectId])
+  @@index([status, scheduledAt])
+  @@map("outreach_messages")
+}
+
+model AIDiscoveryJob {
+  id          String @id @default(cuid())
+  companyId   String @map("company_id")
+  createdById String @map("created_by_id")
+
+  name        String
+  description String? @db.Text
+
+  // Search Criteria
+  searchCriteria Json @map("search_criteria") // location, type, filters, etc.
+
+  // Source Configuration
+  sources String[] @default([]) // google_places, yelp, web_scraper
+
+  // Status
+  status   String @default("pending") // pending, running, completed, failed, cancelled
+  progress Int    @default(0) // 0-100
+
+  // Results
+  resultsFound Int @default(0) @map("results_found")
+  resultsAdded Int @default(0) @map("results_added")
+
+  // Scheduling
+  isRecurring      Boolean   @default(false) @map("is_recurring")
+  recurringPattern Json?     @map("recurring_pattern")
+  nextRunAt        DateTime? @map("next_run_at")
+
+  startedAt    DateTime? @map("started_at")
+  completedAt  DateTime? @map("completed_at")
+  errorMessage String?   @map("error_message") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("DiscoveryJobCreator", fields: [createdById], references: [id])
+
+  @@index([companyId, status])
+  @@index([nextRunAt])
+  @@map("ai_discovery_jobs")
+}
+
+model ContentTemplate {
+  id          String @id @default(cuid())
+  companyId   String @map("company_id")
+  createdById String @map("created_by_id")
+
+  name     String
+  category String @default("general") // email, sms, linkedin, instagram, phone_script
+  channel  String // email, phone, sms, linkedin, instagram
+
+  subject String? // for email
+  body    String  @db.Text
+
+  // AI Settings
+  isAiTemplate   Boolean @default(false) @map("is_ai_template")
+  aiInstructions String? @map("ai_instructions") @db.Text
+
+  // Variables
+  variables String[] @default([]) // {{company_name}}, {{contact_name}}, etc.
+
+  // Usage
+  useCount   Int       @default(0) @map("use_count")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("TemplateCreator", fields: [createdById], references: [id])
+
+  @@index([companyId, category])
+  @@index([channel])
+  @@map("content_templates")
+}
+
+// ============================================
+// PULSE - AI-POWERED DAILY BRIEFINGS
+// ============================================
+
+model PulseTopic {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  name        String // "AI & Machine Learning", "Austin Tech Scene"
+  description String?  @db.Text
+  keywords    String[] @default([]) // Search keywords for content sourcing
+  category    String   @default("general") // tech, business, local, industry, personal
+  priority    Int      @default(0) // Higher = more content in briefing
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user          User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  briefingItems PulseBriefingItem[]
+
+  @@index([userId, isActive])
+  @@map("pulse_topics")
+}
+
+model PulseBriefing {
+  id             String    @id @default(cuid())
+  userId         String    @map("user_id")
+  date           DateTime  @db.Date
+  status         String    @default("generating") // generating, ready, failed
+  title          String? // AI-generated title for the day
+  greeting       String?   @db.Text // Personalized AI greeting
+  summary        String?   @db.Text // AI-generated executive summary
+  inspirationQuote String? @map("inspiration_quote") @db.Text // Daily motivational quote
+  generatedAt    DateTime? @map("generated_at")
+  readAt         DateTime? @map("read_at")
+  aiModel        String?   @map("ai_model") // gemini-2.0-flash-exp
+  generationTime Int?      @map("generation_time") // milliseconds
+  errorMessage   String?   @map("error_message") @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  user  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items PulseBriefingItem[]
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("pulse_briefings")
+}
+
+model PulseBriefingItem {
+  id             String    @id @default(cuid())
+  briefingId     String    @map("briefing_id")
+  topicId        String?   @map("topic_id")
+  title          String
+  summary        String    @db.Text // AI-generated summary
+  content        String?   @db.Text // Full AI-generated content
+  sourceUrl      String?   @map("source_url")
+  sourceName     String?   @map("source_name")
+  imageUrl       String?   @map("image_url") // Gemini 3 Pro Image generated
+  imagePrompt    String?   @map("image_prompt") @db.Text // Prompt used for image
+  imageBase64    String?   @map("image_base64") @db.Text // Base64 encoded image data
+  itemType       String    @default("article") @map("item_type") // article, insight, action, business_kpi
+  category       String? // tech, business, local, etc.
+  sentiment      String? // positive, neutral, negative
+  relevanceScore Float?    @map("relevance_score") // 0-1
+  sortOrder      Int       @default(0) @map("sort_order")
+  isBookmarked   Boolean   @default(false) @map("is_bookmarked")
+  isRead         Boolean   @default(false) @map("is_read")
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  briefing PulseBriefing @relation(fields: [briefingId], references: [id], onDelete: Cascade)
+  topic    PulseTopic?   @relation(fields: [topicId], references: [id])
+
+  @@index([briefingId, sortOrder])
+  @@index([topicId])
+  @@map("pulse_briefing_items")
+}
+
+model PulseGenerationLog {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  briefingId   String?  @map("briefing_id")
+  type         String // text_generation, image_generation, content_fetch, web_search
+  status       String // started, completed, failed
+  aiModel      String?  @map("ai_model")
+  tokensUsed   Int?     @map("tokens_used")
+  duration     Int? // milliseconds
+  cost         Decimal? @db.Decimal(10, 6) // Estimated cost
+  errorMessage String?  @map("error_message") @db.Text
+  metadata     Json? // Additional generation details
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([type, status])
+  @@map("pulse_generation_logs")
 }

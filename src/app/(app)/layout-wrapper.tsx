@@ -1,9 +1,9 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { SidebarProvider, Sidebar, SidebarContent } from '@/components/ui/sidebar'
+import { SidebarProvider } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AIChatSidebar } from '@/features/ai/components/ai-chat-sidebar'
 import { RoleSwitcher } from '@/components/layout/role-switcher'
@@ -16,44 +16,74 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const [isLoginPage, setIsLoginPage] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isAIChatOpen, setIsAIChatOpen] = useState(false)
-  const [userRole, setUserRole] = useState<string | null>(null)
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(() => {
+    // Load cached role from sessionStorage on initial render
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('user-role')
+    }
+    return null
+  })
+  const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('user-role') === 'SUPER_ADMIN'
+    }
+    return false
+  })
+  
+  // Track if initial auth check has completed
+  const hasCheckedAuth = useRef(false)
 
+  // Only check if current path is login page
   useEffect(() => {
+    const isLogin = pathname === '/login' || pathname === '/app/login'
+    setIsLoginPage(isLogin)
+  }, [pathname])
+
+  // Auth check runs only once on mount
+  useEffect(() => {
+    if (hasCheckedAuth.current) return
+    
     const checkAuth = async () => {
       const isLogin = pathname === '/login' || pathname === '/app/login'
-      setIsLoginPage(isLogin)
+      
+      if (isLogin) {
+        setIsCheckingAuth(false)
+        return
+      }
 
-      // If not on login page, check if user is authenticated
-      if (!isLogin) {
-        try {
-          const supabase = createClient()
-          const { data: { user } } = await supabase.auth.getUser()
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-          if (!user) {
-            router.push('/login')
-            return
-          }
+        if (!user) {
+          router.push('/login')
+          return
+        }
 
-          // Fetch user role from database
+        // Only fetch role if not cached
+        if (!userRole) {
           const response = await fetch('/api/users/me', { credentials: 'include' })
           if (response.ok) {
             const userData = await response.json()
             setUserRole(userData.role)
             setIsSuperAdmin(userData.role === 'SUPER_ADMIN')
+            // Cache in sessionStorage
+            sessionStorage.setItem('user-role', userData.role)
           }
-        } catch (error) {
-          console.error('Auth check failed:', error)
-          router.push('/login')
-          return
         }
+        
+        hasCheckedAuth.current = true
+      } catch (error) {
+        console.error('Auth check failed:', error)
+        router.push('/login')
+        return
       }
       
       setIsCheckingAuth(false)
     }
 
     checkAuth()
-  }, [pathname, router])
+  }, [pathname, router, userRole])
 
   // Show nothing while checking auth (prevents flash)
   if (isCheckingAuth && !isLoginPage) {
@@ -69,14 +99,14 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-cream-50">
         <AppSidebar />
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Header with Role Switcher */}
           {userRole && isSuperAdmin && (
-            <div className="sticky top-0 z-20 bg-white border-b border-cream-200 px-6 py-3 flex justify-end">
+            <div className="sticky top-0 z-10 bg-white border-b border-cream-200 px-6 py-3 flex justify-end">
               <RoleSwitcher currentRole={userRole} isSuperAdmin={isSuperAdmin} />
             </div>
           )}
-          <main className="flex-1 p-6 lg:p-8">{children}</main>
+          <main className="flex-1 p-6 lg:p-8 overflow-auto">{children}</main>
         </div>
 
         {/* AI Chat Button - Floating with UrbanCognitive styling */}
