@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion, useInView } from 'framer-motion'
+import { PublicNav } from '@/components/landing/public-nav'
 import {
   Sparkles,
   Users,
@@ -11,13 +13,13 @@ import {
   BarChart3,
   Check,
   ArrowRight,
-  Menu,
-  X,
   Star,
   ChefHat,
   UtensilsCrossed,
   Hotel,
   Droplets,
+  Calendar,
+  Home,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -32,19 +34,19 @@ const features = [
   {
     icon: <Hotel className="w-6 h-6" />,
     title: 'Hotel & Resort Cleaning',
-    description: 'Immaculate rooms, lobbies, and common areas. Our trained teams maintain 5-star standards with eco-friendly products.',
+    description: 'Kitchen facilities, dining rooms, bathrooms, lobbies, and common areas. Our specialty is kitchen cleaning with comprehensive support services.',
     color: 'ocean',
   },
   {
     icon: <UtensilsCrossed className="w-6 h-6" />,
     title: 'Restaurant & Bar Services',
-    description: 'Deep kitchen cleaning, dining area sanitation, and health code compliance. We work around your hours.',
+    description: 'Deep kitchen cleaning is our specialty. Plus dining area sanitation, bathrooms, and health code compliance. We work around your hours.',
     color: 'bronze',
   },
   {
     icon: <ChefHat className="w-6 h-6" />,
     title: 'Commercial Kitchen Deep Cleaning',
-    description: 'Hood systems, equipment degreasing, and floor care. Certified for food service environments.',
+    description: 'Hood systems, equipment degreasing, and floor care. Certified for food service environments. Our core specialty.',
     color: 'terracotta',
   },
   {
@@ -173,108 +175,14 @@ function CountUp({ value, suffix = '' }: { value: string; suffix?: string }) {
 // ============================================
 
 export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-
   return (
     <div className="min-h-screen bg-cream-50">
-      {/* ============================================
-          NAVIGATION
-          ============================================ */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-cream-50/80 backdrop-blur-xl border-b border-cream-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-18 py-4">
-            {/* Logo */}
-            <Link href="/" className="flex items-baseline gap-1">
-              <span className="font-bold text-2xl tracking-tight text-charcoal-900">
-                Urban
-              </span>
-              <span className="font-display italic font-normal text-2xl text-bronze-600">
-                Simple
-              </span>
-            </Link>
-
-            {/* Desktop Nav */}
-            <div className="hidden md:flex items-center gap-8">
-              <a href="#services" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
-                Services
-              </a>
-              <a href="#industries" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
-                Industries
-              </a>
-              <a href="#testimonials" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
-                Testimonials
-              </a>
-              <a href="#contact" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
-                Contact
-              </a>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="hidden md:flex items-center gap-3">
-              <Link href="/login">
-                <Button variant="ghost" size="default">
-                  Client Login
-                </Button>
-              </Link>
-              <a href="#contact">
-                <Button
-                  size="default"
-                  className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-md hover:shadow-lg"
-                >
-                  Get a Quote
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </a>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 text-charcoal-600 hover:text-charcoal-900"
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-        </div>
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-t border-cream-200"
-          >
-            <div className="px-4 py-6 space-y-4">
-              <a href="#services" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
-                Services
-              </a>
-              <a href="#industries" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
-                Industries
-              </a>
-              <a href="#testimonials" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
-                Testimonials
-              </a>
-              <a href="#contact" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
-                Contact
-              </a>
-              <div className="pt-4 space-y-3">
-                <Link href="/login" className="block">
-                  <Button variant="secondary" className="w-full">Client Login</Button>
-                </Link>
-                <a href="#contact" className="block">
-                  <Button className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700">Get a Quote</Button>
-                </a>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </nav>
+      <PublicNav />
 
       {/* ============================================
           HERO SECTION
           ============================================ */}
-      <section className="relative pt-32 pb-20 lg:pt-40 lg:pb-32 overflow-hidden">
+      <section className="relative pt-24 pb-12 lg:pt-32 lg:pb-16 overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-20">
           <div className="absolute top-0 left-0 w-full h-full"
@@ -317,8 +225,8 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 className="text-lg sm:text-xl text-charcoal-600 leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0"
               >
-                Specialized commercial cleaning for hotels, resorts, restaurants, and commercial kitchens.
-                We maintain the pristine standards your guests expect.
+                Specialized commercial kitchen cleaning for hotels, resorts, restaurants, and event venues.
+                Plus dining rooms, bathrooms, lobbies, and common areas. We maintain the pristine standards your guests expect.
               </motion.p>
 
               <motion.div
@@ -370,10 +278,15 @@ export default function LandingPage() {
               transition={{ duration: 0.8, delay: 0.3 }}
               className="relative"
             >
-              {/* Placeholder for hero image - replace with actual image */}
               <div className="relative rounded-3xl overflow-hidden shadow-lifted">
-                <div className="aspect-[4/3] bg-gradient-to-br from-ocean-100 via-cream-100 to-plum-100 flex items-center justify-center">
-                  <Building2 className="w-32 h-32 text-ocean-400" />
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&h=900&fit=crop&q=80"
+                    alt="Luxury hotel lobby with elegant interior design"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/20 via-transparent to-transparent" />
               </div>
@@ -385,14 +298,14 @@ export default function LandingPage() {
       {/* ============================================
           SERVICES SECTION
           ============================================ */}
-      <section id="services" className="py-24 lg:py-32 bg-white">
+      <section id="services" className="py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
             variants={staggerContainer}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
             <motion.div variants={fadeInUp}>
               <Badge variant="secondary" className="mb-4 bg-ocean-100 text-ocean-700 border-ocean-200">
@@ -402,7 +315,7 @@ export default function LandingPage() {
                 Comprehensive hospitality cleaning
               </h2>
               <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
-                From guest rooms to commercial kitchens, we deliver spotless results with eco-friendly practices and health code compliance.
+                Commercial kitchen cleaning is our specialty. We also service dining rooms, bathrooms, lobbies, common areas, and provide pressure washing and ballroom carpet cleaning.
               </p>
             </motion.div>
           </motion.div>
@@ -440,9 +353,214 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
+          INDUSTRIES SECTION
+          ============================================ */}
+      <section id="industries" className="py-16 lg:py-20 bg-cream-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={staggerContainer}
+            className="text-center mb-12"
+          >
+            <motion.div variants={fadeInUp}>
+              <Badge variant="secondary" className="mb-4 bg-bronze-100 text-bronze-700 border-bronze-200">
+                Industries We Serve
+              </Badge>
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
+                Specialized cleaning for every hospitality space
+              </h2>
+              <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
+                Commercial kitchen cleaning is our specialty. We also service dining rooms, bathrooms, lobbies, common areas, and provide pressure washing and carpet cleaning services.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          >
+            {/* Hotel */}
+            <motion.div variants={fadeInUp} className="group">
+              <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop&q=80"
+                    alt="Hotel kitchen facilities and common areas"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-ocean-500/90 backdrop-blur-sm flex items-center justify-center">
+                      <Hotel className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-white">Hotels & Resorts</h3>
+                  </div>
+                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                    Kitchen facilities, dining rooms, bathrooms, lobbies, and common areas.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Restaurant */}
+            <motion.div variants={fadeInUp} className="group">
+              <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=800&h=600&fit=crop&q=80"
+                    alt="Upscale restaurant dining area with elegant ambiance"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-bronze-500/90 backdrop-blur-sm flex items-center justify-center">
+                      <UtensilsCrossed className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-white">Restaurants & Bars</h3>
+                  </div>
+                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                    Kitchen cleaning, dining areas, bars, and front-of-house spaces.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Kitchen */}
+            <motion.div variants={fadeInUp} className="group">
+              <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=800&h=600&fit=crop&q=80"
+                    alt="Professional commercial kitchen with stainless steel equipment"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-terracotta-500/90 backdrop-blur-sm flex items-center justify-center">
+                      <ChefHat className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-white">Commercial Kitchens</h3>
+                  </div>
+                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                    Deep cleaning, degreasing, and health code compliance for food service environments.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Event Venues */}
+            <motion.div variants={fadeInUp} className="group">
+              <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1519167758481-83f550bb49b3?w=800&h=600&fit=crop&q=80"
+                    alt="Elegant event venue with banquet hall setup"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-plum-500/90 backdrop-blur-sm flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-white">Event Venues</h3>
+                  </div>
+                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                    Banquet halls, ballrooms, and event spaces. Carpet cleaning and pressure washing services.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Spas & Wellness */}
+            <motion.div variants={fadeInUp} className="group">
+              <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop&q=80"
+                    alt="Luxury spa and wellness center with serene atmosphere"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-sage-500/90 backdrop-blur-sm flex items-center justify-center">
+                      <Droplets className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-white">Spas & Wellness</h3>
+                  </div>
+                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                    Kitchen facilities, treatment rooms, relaxation areas, and wellness facilities.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Boutique Hotels */}
+            <motion.div variants={fadeInUp} className="group">
+              <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
+                <div className="aspect-[4/3] relative">
+                  <Image
+                    src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&h=600&fit=crop&q=80"
+                    alt="Charming boutique hotel with unique character and design"
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-8">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-12 h-12 rounded-xl bg-honey-500/90 backdrop-blur-sm flex items-center justify-center">
+                      <Home className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-semibold text-white">Boutique Hotels</h3>
+                  </div>
+                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                    Kitchen facilities, dining rooms, bathrooms, and common areas for intimate properties.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ============================================
           STATS SECTION
           ============================================ */}
-      <section className="py-24 lg:py-32 bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900 relative overflow-hidden">
+      <section className="py-16 lg:py-20 bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900 relative overflow-hidden">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1920&h=1080&fit=crop&q=80"
+            alt="Restaurant kitchen"
+            fill
+            className="object-cover opacity-30"
+            priority={false}
+          />
+        </div>
+        
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-charcoal-900/85 via-charcoal-800/85 to-charcoal-900/85" />
+        
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0"
@@ -463,7 +581,7 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
             variants={staggerContainer}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
             <motion.div variants={fadeInUp}>
               <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-white leading-tight tracking-tight mb-4">
@@ -501,14 +619,14 @@ export default function LandingPage() {
       {/* ============================================
           TESTIMONIALS SECTION
           ============================================ */}
-      <section id="testimonials" className="py-24 lg:py-32 bg-cream-50">
+      <section id="testimonials" className="py-16 lg:py-20 bg-cream-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: '-100px' }}
             variants={staggerContainer}
-            className="text-center mb-16"
+            className="text-center mb-12"
           >
             <motion.div variants={fadeInUp}>
               <Badge variant="secondary" className="mb-4 bg-plum-100 text-plum-700 border-plum-200">
@@ -570,7 +688,21 @@ export default function LandingPage() {
       {/* ============================================
           CTA SECTION
           ============================================ */}
-      <section id="contact" className="relative py-24 lg:py-32 overflow-hidden bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900">
+      <section id="contact" className="relative py-16 lg:py-20 overflow-hidden bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900">
+        {/* Background Image */}
+        <div className="absolute inset-0">
+          <Image
+            src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1920&h=1080&fit=crop&q=80"
+            alt="Boutique hotel"
+            fill
+            className="object-cover opacity-30"
+            priority={false}
+          />
+        </div>
+        
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-charcoal-900/85 via-charcoal-800/85 to-charcoal-900/85" />
+        
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div className="absolute inset-0"
@@ -658,7 +790,7 @@ export default function LandingPage() {
       {/* ============================================
           FOOTER
           ============================================ */}
-      <footer className="bg-charcoal-950 text-white py-16 lg:py-20">
+      <footer className="bg-charcoal-950 text-white py-12 lg:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
             {/* Brand */}
