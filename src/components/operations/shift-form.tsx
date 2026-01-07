@@ -94,12 +94,13 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
       fetch(getApiUrl('/api/users'))
         .then((res) => res.json())
         .then((data) => {
-          const associateUsers = data.filter(
+          const users = data.users || data
+          const associateUsers = users.filter(
             (u: any) => u.role === 'ASSOCIATE' && u.isActive
           )
           setAssociates(associateUsers)
 
-          const managerUsers = data.filter(
+          const managerUsers = users.filter(
             (u: any) => (u.role === 'MANAGER' || u.role === 'ADMIN') && u.isActive
           )
           setManagers(managerUsers)
@@ -178,6 +179,32 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
       }
 
       toast.success(shift ? 'Shift updated' : 'Shift created')
+      setOpen(false)
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error.message || 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const onDelete = async () => {
+    if (!shift || !confirm('Are you sure you want to delete this shift?')) {
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/shifts/${shift.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete shift')
+      }
+
+      toast.success('Shift deleted')
       setOpen(false)
       router.refresh()
     } catch (error: any) {
@@ -535,18 +562,30 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
               )}
             />
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Saving...' : shift ? 'Update Shift' : 'Create Shift'}
-              </Button>
+            <DialogFooter className={shift ? "justify-between" : ""}>
+              {shift && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={onDelete}
+                  disabled={loading}
+                >
+                  Delete
+                </Button>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOpen(false)}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Saving...' : shift ? 'Update Shift' : 'Create Shift'}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </Form>

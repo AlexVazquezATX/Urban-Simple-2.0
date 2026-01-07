@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { SidebarProvider, Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AIChatSidebar } from '@/features/ai/components/ai-chat-sidebar'
+import { RoleSwitcher } from '@/components/layout/role-switcher'
 import { Button } from '@/components/ui/button'
 import { Sparkles } from 'lucide-react'
 
@@ -15,6 +16,8 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const [isLoginPage, setIsLoginPage] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [isAIChatOpen, setIsAIChatOpen] = useState(false)
+  const [userRole, setUserRole] = useState<string | null>(null)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -26,10 +29,18 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         try {
           const supabase = createClient()
           const { data: { user } } = await supabase.auth.getUser()
-          
+
           if (!user) {
             router.push('/login')
             return
+          }
+
+          // Fetch user role from database
+          const response = await fetch('/api/users/me', { credentials: 'include' })
+          if (response.ok) {
+            const userData = await response.json()
+            setUserRole(userData.role)
+            setIsSuperAdmin(userData.role === 'SUPER_ADMIN')
           }
         } catch (error) {
           console.error('Auth check failed:', error)
@@ -58,7 +69,15 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <div className="flex min-h-screen w-full bg-cream-50">
         <AppSidebar />
-        <main className="flex-1 p-6 lg:p-8">{children}</main>
+        <div className="flex-1 flex flex-col">
+          {/* Header with Role Switcher */}
+          {userRole && isSuperAdmin && (
+            <div className="sticky top-0 z-20 bg-white border-b border-cream-200 px-6 py-3 flex justify-end">
+              <RoleSwitcher currentRole={userRole} isSuperAdmin={isSuperAdmin} />
+            </div>
+          )}
+          <main className="flex-1 p-6 lg:p-8">{children}</main>
+        </div>
 
         {/* AI Chat Button - Floating with UrbanCognitive styling */}
         <Button

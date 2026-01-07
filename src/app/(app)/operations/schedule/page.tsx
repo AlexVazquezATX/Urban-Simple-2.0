@@ -60,26 +60,25 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
           },
         },
       },
-      // shiftLocations will be available after Prisma client regeneration
-      // shiftLocations: {
-      //   include: {
-      //     location: {
-      //       select: {
-      //         id: true,
-      //         name: true,
-      //         client: {
-      //           select: {
-      //             id: true,
-      //             name: true,
-      //           },
-      //         },
-      //       },
-      //     },
-      //   },
-      //   orderBy: {
-      //     sortOrder: 'asc',
-      //   },
-      // },
+      shiftLocations: {
+        include: {
+          location: {
+            select: {
+              id: true,
+              name: true,
+              client: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          sortOrder: 'asc',
+        },
+      },
       associate: {
         select: {
           id: true,
@@ -215,7 +214,8 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          {/* Week Grid - 7 columns (Mon-Sun) */}
+          <div className="grid grid-cols-7 gap-2">
             {weekDays.map((day) => {
               const dateKey = day.toISOString().split('T')[0]
               const dayShifts = shiftsByDate[dateKey] || []
@@ -225,7 +225,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
               return (
                 <div
                   key={dateKey}
-                  className={`border rounded-lg p-4 ${
+                  className={`border rounded-lg flex flex-col min-h-[400px] ${
                     isToday
                       ? 'bg-muted/50 border-primary'
                       : isPast
@@ -233,58 +233,72 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                         : ''
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <h3 className="font-semibold">
-                        {format(day, 'EEEE, MMMM d')}
-                        {isToday && (
-                          <Badge variant="default" className="ml-2">
-                            Today
-                          </Badge>
-                        )}
-                        {isPast && (
-                          <Badge variant="secondary" className="ml-2">
-                            Past
-                          </Badge>
-                        )}
-                      </h3>
+                  {/* Day Header */}
+                  <div className="p-3 border-b bg-muted/30">
+                    <div className="text-center">
+                      <div className="text-xs font-medium text-muted-foreground uppercase">
+                        {format(day, 'EEE')}
+                      </div>
+                      <div className="text-2xl font-bold mt-1">
+                        {format(day, 'd')}
+                      </div>
+                      {isToday && (
+                        <Badge variant="default" className="mt-1 text-xs">
+                          Today
+                        </Badge>
+                      )}
                     </div>
-                    {!isPast && (
-                      <ShiftForm defaultDate={dateKey}>
-                        <Button variant="outline" size="sm">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Schedule Manager
-                        </Button>
-                      </ShiftForm>
-                    )}
                   </div>
 
-                  {/* Manager Shifts */}
-                  <div className="mb-4">
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                      Manager Reviews Scheduled
-                    </h4>
+                  {/* Day Content */}
+                  <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+                    {/* Manager Shifts */}
                     {dayShifts.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">
-                        No manager reviews scheduled
-                      </p>
+                      <div className="text-center py-4">
+                        <p className="text-xs text-muted-foreground italic">
+                          No shifts
+                        </p>
+                        {!isPast && (
+                          <ShiftForm defaultDate={dateKey}>
+                            <Button variant="ghost" size="sm" className="mt-2">
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add
+                            </Button>
+                          </ShiftForm>
+                        )}
+                      </div>
                     ) : (
-                      <div className="space-y-2">
-                      {dayShifts.map((shift: any) => {
-                        // Get locations from shiftLocations if available, otherwise fall back to location
-                        // TODO: After Prisma migration, uncomment shiftLocations include above
-                        const locations = shift.location ? [shift.location] : []
+                      <>
+                        {dayShifts.map((shift: any) => {
+                          // Get locations from shiftLocations if available, otherwise fall back to single location
+                          const locations =
+                            shift.shiftLocations && shift.shiftLocations.length > 0
+                              ? shift.shiftLocations.map((sl: any) => sl.location)
+                              : shift.location
+                                ? [shift.location]
+                                : []
 
-                        return (
-                          <div
-                            key={shift.id}
-                            className="flex items-start justify-between p-3 bg-background border rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
-                                <span className="font-medium">
-                                  {shift.manager.firstName} {shift.manager.lastName}
-                                </span>
+                          return (
+                            <div
+                              key={shift.id}
+                              className="p-2 bg-background border rounded hover:bg-muted/50 transition-colors text-xs"
+                            >
+                              <div className="font-medium text-sm mb-1">
+                                {shift.manager.firstName} {shift.manager.lastName}
+                              </div>
+                              <div className="text-muted-foreground mb-1">
+                                {shift.startTime} - {shift.endTime}
+                              </div>
+                              {locations.length > 0 && (
+                                <div className="text-muted-foreground space-y-0.5">
+                                  {locations.map((loc: any) => (
+                                    <div key={loc.id} className="truncate" title={`${loc.client.name} - ${loc.name}`}>
+                                      • {loc.name}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="flex gap-1 mt-2">
                                 <Badge
                                   variant={
                                     shift.status === 'completed'
@@ -293,86 +307,66 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                                         ? 'destructive'
                                         : 'secondary'
                                   }
+                                  className="text-xs"
                                 >
                                   {shift.status}
                                 </Badge>
-                                <Badge variant="outline">
-                                  {locations.length} location{locations.length === 1 ? '' : 's'}
-                                </Badge>
+                                {locations.length > 1 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {locations.length} stops
+                                  </Badge>
+                                )}
                               </div>
-                              <div className="text-sm text-muted-foreground space-y-1">
-                                <div>
-                                  <span className="font-medium">Locations:</span>
-                                  <ul className="list-disc list-inside ml-2 mt-1">
-                                    {locations.map((loc: any, idx: number) => (
-                                      <li key={loc.id}>
-                                        {loc.client.name} - {loc.name}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                                <div>
-                                  <span>
-                                    {shift.startTime} - {shift.endTime}
-                                  </span>
-                                  {shift.associate && (
-                                    <>
-                                      <span className="mx-2">•</span>
-                                      <span>
-                                        Reviewing: {shift.associate.firstName}{' '}
-                                        {shift.associate.lastName}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              </div>
+                              {!isPast && (
+                                <ShiftForm shift={shift}>
+                                  <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs">
+                                    Edit
+                                  </Button>
+                                </ShiftForm>
+                              )}
                             </div>
-                            {!isPast && (
-                              <ShiftForm shift={shift}>
-                                <Button variant="ghost" size="sm">
-                                  Edit
-                                </Button>
-                              </ShiftForm>
-                            )}
-                          </div>
-                        )
-                      })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Associate Assignments - Show who's assigned to locations */}
-                  <div className="pt-3 border-t">
-                    <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                      Associate Assignments (Recurring)
-                    </h4>
-                    {assignments.length === 0 ? (
-                      <p className="text-sm text-muted-foreground italic">
-                        No active assignments
-                      </p>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                        {assignments.map((assignment: any) => (
-                          <div
-                            key={assignment.id}
-                            className="text-sm p-2 bg-muted/30 rounded border"
-                          >
-                            <span className="font-medium">
-                              {assignment.user.firstName} {assignment.user.lastName}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {' '}
-                              → {assignment.location.client.name} - {assignment.location.name}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                          )
+                        })}
+                        {!isPast && (
+                          <ShiftForm defaultDate={dateKey}>
+                            <Button variant="outline" size="sm" className="w-full text-xs">
+                              <Plus className="h-3 w-3 mr-1" />
+                              Add Shift
+                            </Button>
+                          </ShiftForm>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
               )
             })}
           </div>
+
+          {/* Associate Assignments - Show below the week grid */}
+          {assignments.length > 0 && (
+            <div className="mt-6 pt-6 border-t">
+              <h4 className="text-sm font-medium text-muted-foreground mb-3">
+                Associate Assignments (Recurring)
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                {assignments.map((assignment: any) => (
+                  <div
+                    key={assignment.id}
+                    className="text-sm p-2 bg-muted/30 rounded border"
+                  >
+                    <span className="font-medium">
+                      {assignment.user.firstName} {assignment.user.lastName}
+                    </span>
+                    <span className="text-muted-foreground">
+                      {' '}
+                      → {assignment.location.client.name} - {assignment.location.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

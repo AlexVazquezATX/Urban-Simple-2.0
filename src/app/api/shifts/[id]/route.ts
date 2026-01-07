@@ -34,26 +34,25 @@ export async function GET(
             },
           },
         },
-        // shiftLocations will be available after Prisma client regeneration
-        // shiftLocations: {
-        //   include: {
-        //     location: {
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         client: {
-        //           select: {
-        //             id: true,
-        //             name: true,
-        //           },
-        //         },
-        //       },
-        //     },
-        //   },
-        //   orderBy: {
-        //     sortOrder: 'asc',
-        //   },
-        // },
+        shiftLocations: {
+          include: {
+            location: {
+              select: {
+                id: true,
+                name: true,
+                client: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
         associate: {
           select: {
             id: true,
@@ -140,67 +139,47 @@ export async function PUT(
       status,
     } = body
 
-    // Handle locationIds update if provided
-    // TODO: Uncomment after Prisma migration
-    // let shiftLocationsUpdate: any = undefined
-    // if (locationIds !== undefined) {
-    //   // Delete existing shift locations and create new ones
-    //   await prisma.shiftLocation.deleteMany({
-    //     where: { shiftId: id },
-    //   })
+    // Determine locationIds for update
+    const finalLocationIds = locationIds || (locationId ? [locationId] : undefined)
+    const firstLocationId = finalLocationIds && finalLocationIds.length > 0 ? finalLocationIds[0] : null
 
-    //   if (locationIds.length > 0) {
-    //     // Verify all locations belong to user's company
-    //     const locations = await prisma.location.findMany({
-    //       where: {
-    //         id: { in: locationIds },
-    //         client: {
-    //           branch: {
-    //             companyId: user.companyId,
-    //           },
-    //         },
-    //       },
-    //     })
-
-    //     if (locations.length !== locationIds.length) {
-    //       return NextResponse.json(
-    //         { error: 'One or more locations not found or not accessible' },
-    //         { status: 404 }
-    //       )
-    //     }
-
-    //     shiftLocationsUpdate = {
-    //       create: locationIds.map((locId: string, index: number) => ({
-    //         locationId: locId,
-    //         sortOrder: index,
-    //       })),
-    //     }
-    //   }
-    // }
-
-    // Determine locationId for backward compatibility
-    // For now, store first location in locationId (after migration, we'll use shiftLocations)
-    const finalLocationIds = locationIds || (locationId ? [locationId] : [])
-    const firstLocationId = finalLocationIds.length > 0 ? finalLocationIds[0] : null
-
-    // If locationIds provided, verify all locations belong to user's company
-    if (locationIds && locationIds.length > 0) {
-      const locations = await prisma.location.findMany({
-        where: {
-          id: { in: locationIds },
-          client: {
-            branch: {
-              companyId: user.companyId,
+    // If locationIds provided, verify all locations belong to user's company and update shiftLocations
+    if (finalLocationIds !== undefined) {
+      // Verify locations belong to user's company
+      if (finalLocationIds.length > 0) {
+        const locations = await prisma.location.findMany({
+          where: {
+            id: { in: finalLocationIds },
+            client: {
+              branch: {
+                companyId: user.companyId,
+              },
             },
           },
-        },
+        })
+
+        if (locations.length !== finalLocationIds.length) {
+          return NextResponse.json(
+            { error: 'One or more locations not found or not accessible' },
+            { status: 404 }
+          )
+        }
+      }
+
+      // Delete existing shift locations
+      await prisma.shiftLocation.deleteMany({
+        where: { shiftId: id },
       })
 
-      if (locations.length !== locationIds.length) {
-        return NextResponse.json(
-          { error: 'One or more locations not found or not accessible' },
-          { status: 404 }
-        )
+      // Create new shift locations
+      if (finalLocationIds.length > 0) {
+        await prisma.shiftLocation.createMany({
+          data: finalLocationIds.map((locId: string, index: number) => ({
+            shiftId: id,
+            locationId: locId,
+            sortOrder: index,
+          })),
+        })
       }
     }
 
@@ -235,26 +214,25 @@ export async function PUT(
             },
           },
         },
-        // shiftLocations will be available after Prisma client regeneration
-        // shiftLocations: {
-        //   include: {
-        //     location: {
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         client: {
-        //           select: {
-        //             id: true,
-        //             name: true,
-        //           },
-        //         },
-        //       },
-        //     },
-        //   },
-        //   orderBy: {
-        //     sortOrder: 'asc',
-        //   },
-        // },
+        shiftLocations: {
+          include: {
+            location: {
+              select: {
+                id: true,
+                name: true,
+                client: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
         associate: {
           select: {
             id: true,

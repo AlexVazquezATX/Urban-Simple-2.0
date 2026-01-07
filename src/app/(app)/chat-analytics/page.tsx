@@ -244,24 +244,36 @@ export default function ChatAnalyticsPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Chat Analytics</h1>
-          <p className="text-muted-foreground">
-            Insights powered by Insight, your AI analytics assistant
+          <h1 className="text-3xl font-bold tracking-tight">Chat Analytics</h1>
+          <p className="text-muted-foreground mt-1">
+            Insights powered by <span className="font-medium text-ocean-600">Insight</span>, your AI analytics assistant
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setDays(1)}>
+          <Button
+            variant={days === 1 ? "default" : "outline"}
+            onClick={() => setDays(1)}
+            className="text-sm"
+          >
             Last 24h
           </Button>
-          <Button variant="outline" onClick={() => setDays(7)}>
+          <Button
+            variant={days === 7 ? "default" : "outline"}
+            onClick={() => setDays(7)}
+            className="text-sm"
+          >
             7 Days
           </Button>
-          <Button variant="outline" onClick={() => setDays(30)}>
+          <Button
+            variant={days === 30 ? "default" : "outline"}
+            onClick={() => setDays(30)}
+            className="text-sm"
+          >
             30 Days
           </Button>
-          <Button variant="outline" size="icon" onClick={fetchAnalytics}>
+          <Button variant="outline" size="icon" onClick={fetchAnalytics} title="Refresh data">
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
@@ -269,53 +281,61 @@ export default function ChatAnalyticsPage() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Messages</CardTitle>
-            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-ocean-100 rounded-lg">
+              <MessageSquare className="h-4 w-4 text-ocean-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.overview.totalMessages.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              {analytics.overview.userMessages} from users, {analytics.overview.aiMessages} from AI
+            <p className="text-xs text-muted-foreground mt-1">
+              {analytics.overview.userMessages.toLocaleString()} from users, {analytics.overview.aiMessages.toLocaleString()} from AI
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.overview.activeUsers}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
               {analytics.overview.last24h.users} in last 24 hours
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">AI Interactions</CardTitle>
-            <Bot className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Bot className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.overview.aiMessages.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
               {analytics.overview.aiChannels} AI assistants active
             </p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="hover:shadow-md transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Channels</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.overview.totalChannels}</div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground mt-1">
               {analytics.topChannels.length} with activity
             </p>
           </CardContent>
@@ -343,22 +363,34 @@ export default function ChatAnalyticsPage() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Top Channels */}
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>Top Active Channels</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-ocean-600" />
+                  Top Active Channels
+                </CardTitle>
                 <CardDescription>Most active channels by message count</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {analytics.topChannels.slice(0, 5).map((channel, index) => (
-                    <div key={channel.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{index + 1}</Badge>
-                        <span className="font-medium">{channel.name}</span>
-                        <Badge variant="secondary" className="text-xs">{channel.type}</Badge>
+                    <div key={channel.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                          index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                          index === 1 ? 'bg-gray-100 text-gray-700' :
+                          index === 2 ? 'bg-orange-100 text-orange-700' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <span className="font-medium block">{channel.name}</span>
+                          <Badge variant="secondary" className="text-xs mt-1">{channel.type}</Badge>
+                        </div>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {channel.messageCount} messages
+                      <span className="text-sm font-semibold text-muted-foreground">
+                        {channel.messageCount.toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -367,52 +399,78 @@ export default function ChatAnalyticsPage() {
             </Card>
 
             {/* AI Assistant Usage */}
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>AI Assistant Usage</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Bot className="h-5 w-5 text-purple-600" />
+                  AI Assistant Usage
+                </CardTitle>
                 <CardDescription>Questions asked to each AI assistant</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {analytics.aiUsage.length > 0 ? (
                     analytics.aiUsage.map((ai, index) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Bot className="h-4 w-4 text-ocean-600" />
+                      <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-purple-100 rounded-full">
+                            <Bot className="h-4 w-4 text-purple-600" />
+                          </div>
                           <span className="font-medium">{ai.name}</span>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                          <span>{ai.questions} questions</span>
-                          <span>{ai.uniqueUsers} users</span>
+                        <div className="flex items-center gap-4 text-sm">
+                          <div className="text-right">
+                            <div className="font-semibold">{ai.questions}</div>
+                            <div className="text-xs text-muted-foreground">questions</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold">{ai.uniqueUsers}</div>
+                            <div className="text-xs text-muted-foreground">users</div>
+                          </div>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      No AI assistant usage in this period
-                    </p>
+                    <div className="text-center py-8">
+                      <Bot className="h-12 w-12 mx-auto text-muted-foreground/50 mb-2" />
+                      <p className="text-sm text-muted-foreground">
+                        No AI assistant usage in this period
+                      </p>
+                    </div>
                   )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Top Contributors */}
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>Top Contributors</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-blue-600" />
+                  Top Contributors
+                </CardTitle>
                 <CardDescription>Most active team members</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {analytics.topUsers.map((user, index) => (
-                    <div key={user.id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{index + 1}</Badge>
-                        <span className="font-medium">{user.name}</span>
-                        <Badge variant="secondary" className="text-xs">{user.role}</Badge>
+                    <div key={user.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                          index === 0 ? 'bg-yellow-100 text-yellow-700' :
+                          index === 1 ? 'bg-gray-100 text-gray-700' :
+                          index === 2 ? 'bg-orange-100 text-orange-700' :
+                          'bg-muted text-muted-foreground'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <span className="font-medium block">{user.name}</span>
+                          <Badge variant="secondary" className="text-xs mt-1">{user.role}</Badge>
+                        </div>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        {user.messageCount} messages
+                      <span className="text-sm font-semibold text-muted-foreground">
+                        {user.messageCount.toLocaleString()}
                       </span>
                     </div>
                   ))}
@@ -421,24 +479,34 @@ export default function ChatAnalyticsPage() {
             </Card>
 
             {/* Daily Activity */}
-            <Card>
+            <Card className="hover:shadow-md transition-shadow">
               <CardHeader>
-                <CardTitle>Daily Activity</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Daily Activity
+                </CardTitle>
                 <CardDescription>Message activity over time</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
                   {analytics.dailyActivity.slice(-7).map((day) => (
-                    <div key={day.date} className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">
+                    <div key={day.date} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                      <span className="text-sm font-medium">
                         {new Date(day.date).toLocaleDateString('en-US', {
+                          weekday: 'short',
                           month: 'short',
                           day: 'numeric'
                         })}
                       </span>
-                      <div className="flex items-center gap-3">
-                        <span>{day.messages} msgs</span>
-                        <span className="text-muted-foreground">{day.users} users</span>
+                      <div className="flex items-center gap-4 text-sm">
+                        <div className="text-right">
+                          <div className="font-semibold">{day.messages}</div>
+                          <div className="text-xs text-muted-foreground">msgs</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">{day.users}</div>
+                          <div className="text-xs text-muted-foreground">users</div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -450,51 +518,74 @@ export default function ChatAnalyticsPage() {
 
         {/* Ask Insight Tab */}
         <TabsContent value="chat">
-          <Card className="h-[600px] flex flex-col">
-            <CardHeader>
+          <Card className="h-[700px] flex flex-col shadow-lg">
+            <CardHeader className="border-b bg-gradient-to-r from-ocean-50 to-blue-50">
               <CardTitle className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-ocean-600" />
+                <div className="p-2 bg-ocean-600 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
                 Ask Insight
               </CardTitle>
               <CardDescription>
                 Chat with Insight, your AI analytics assistant, about team communication patterns
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex-1 flex flex-col">
-              <ScrollArea className="flex-1 pr-4">
+            <CardContent className="flex-1 flex flex-col p-0">
+              <ScrollArea className="flex-1 px-6 pt-4">
                 {chatMessages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                    <Bot className="h-16 w-16 text-ocean-600 mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">Hi! I'm Insight</h3>
-                    <p className="text-sm text-muted-foreground mb-4">
+                    <div className="p-4 bg-gradient-to-br from-ocean-100 to-blue-100 rounded-full mb-4">
+                      <Bot className="h-16 w-16 text-ocean-600" />
+                    </div>
+                    <h3 className="font-semibold text-xl mb-2">Hi! I'm Insight</h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-md">
                       Ask me anything about your team's chat activity, engagement patterns, or AI assistant usage.
                     </p>
-                    <div className="text-left space-y-2 text-sm text-muted-foreground">
-                      <p>Try asking:</p>
-                      <ul className="list-disc list-inside space-y-1">
-                        <li>"What are the most common questions employees ask?"</li>
-                        <li>"Which channels have the most engagement?"</li>
-                        <li>"How are people using the AI assistants?"</li>
-                        <li>"What topics are trending this week?"</li>
+                    <div className="text-left space-y-3 text-sm bg-muted/50 rounded-lg p-4 max-w-md">
+                      <p className="font-medium">Try asking:</p>
+                      <ul className="space-y-2">
+                        <li className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-ocean-600 mt-0.5 flex-shrink-0" />
+                          <span>"What are the most common questions employees ask?"</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <TrendingUp className="h-4 w-4 text-ocean-600 mt-0.5 flex-shrink-0" />
+                          <span>"Which channels have the most engagement?"</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Bot className="h-4 w-4 text-ocean-600 mt-0.5 flex-shrink-0" />
+                          <span>"How are people using the AI assistants?"</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Sparkles className="h-4 w-4 text-ocean-600 mt-0.5 flex-shrink-0" />
+                          <span>"What topics are trending this week?"</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-6 pb-4">
                     {chatMessages.map((msg, idx) => (
-                      <div key={idx} className="flex gap-3">
-                        <div className={`flex-1 ${msg.role === 'user' ? 'text-right' : ''}`}>
+                      <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        {msg.role === 'assistant' && (
+                          <div className="flex-shrink-0">
+                            <div className="p-2 bg-ocean-100 rounded-full">
+                              <Bot className="h-5 w-5 text-ocean-600" />
+                            </div>
+                          </div>
+                        )}
+                        <div className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} max-w-[75%]`}>
                           <div
-                            className={`inline-block rounded-lg px-4 py-2 max-w-[80%] ${
+                            className={`rounded-2xl px-4 py-3 shadow-sm ${
                               msg.role === 'user'
                                 ? 'bg-ocean-600 text-white'
-                                : 'bg-muted'
+                                : 'bg-muted border'
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                           </div>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {msg.timestamp.toLocaleTimeString()}
+                          <p className="text-xs text-muted-foreground mt-1 px-2">
+                            {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
@@ -504,34 +595,36 @@ export default function ChatAnalyticsPage() {
                 )}
               </ScrollArea>
 
-              <Separator className="my-4" />
+              <Separator />
 
-              <div className="flex gap-2">
-                <Textarea
-                  value={chatInput}
-                  onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault()
-                      handleSendMessage()
-                    }
-                  }}
-                  placeholder="Ask Insight about your team's chat activity..."
-                  className="min-h-[60px] max-h-[120px] resize-none"
-                  disabled={isChatting}
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  disabled={!chatInput.trim() || isChatting}
-                  size="icon"
-                  className="h-[60px] w-[60px]"
-                >
-                  {isChatting ? (
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                  ) : (
-                    <Send className="h-5 w-5" />
-                  )}
-                </Button>
+              <div className="p-4 bg-muted/20">
+                <div className="flex gap-2">
+                  <Textarea
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleSendMessage()
+                      }
+                    }}
+                    placeholder="Ask Insight about your team's chat activity..."
+                    className="min-h-[60px] max-h-[120px] resize-none bg-background"
+                    disabled={isChatting}
+                  />
+                  <Button
+                    onClick={handleSendMessage}
+                    disabled={!chatInput.trim() || isChatting}
+                    size="icon"
+                    className="h-[60px] w-[60px] bg-ocean-600 hover:bg-ocean-700"
+                  >
+                    {isChatting ? (
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                    ) : (
+                      <Send className="h-5 w-5" />
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -539,31 +632,40 @@ export default function ChatAnalyticsPage() {
 
         {/* Digest Tab */}
         <TabsContent value="digest">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Activity Digest</CardTitle>
+          <Card className="shadow-lg">
+            <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-pink-50">
+              <CardTitle className="flex items-center gap-2">
+                <div className="p-2 bg-purple-600 rounded-lg">
+                  <Calendar className="h-5 w-5 text-white" />
+                </div>
+                Team Activity Digest
+              </CardTitle>
               <CardDescription>
                 AI-generated summary of team communication and activity
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center gap-2">
+            <CardContent className="space-y-6 pt-6">
+              <div className="flex flex-wrap items-center gap-3">
                 <Button
                   variant={digestType === 'daily' ? 'default' : 'outline'}
                   onClick={() => setDigestType('daily')}
+                  className={digestType === 'daily' ? 'bg-purple-600 hover:bg-purple-700' : ''}
                 >
+                  <Calendar className="h-4 w-4 mr-2" />
                   Daily Digest
                 </Button>
                 <Button
                   variant={digestType === 'weekly' ? 'default' : 'outline'}
                   onClick={() => setDigestType('weekly')}
+                  className={digestType === 'weekly' ? 'bg-purple-600 hover:bg-purple-700' : ''}
                 >
+                  <BarChart3 className="h-4 w-4 mr-2" />
                   Weekly Digest
                 </Button>
                 <Button
                   onClick={generateDigest}
                   disabled={isGeneratingDigest}
-                  className="ml-auto"
+                  className="ml-auto bg-purple-600 hover:bg-purple-700"
                 >
                   {isGeneratingDigest ? (
                     <>
@@ -580,49 +682,69 @@ export default function ChatAnalyticsPage() {
               </div>
 
               {digest && (
-                <div className="space-y-4 mt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">
-                        {digest.type.charAt(0).toUpperCase() + digest.type.slice(1)} Digest
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        {new Date(digest.period.start).toLocaleDateString()} -{' '}
-                        {new Date(digest.period.end).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex gap-4 text-sm">
-                      <div className="text-center">
-                        <div className="font-semibold">{digest.metrics.totalMessages}</div>
-                        <div className="text-muted-foreground">Messages</div>
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 border">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <h3 className="font-semibold text-lg">
+                          {digest.type.charAt(0).toUpperCase() + digest.type.slice(1)} Digest
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(digest.period.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} -{' '}
+                          {new Date(digest.period.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
                       </div>
-                      <div className="text-center">
-                        <div className="font-semibold">{digest.metrics.activeUsers}</div>
-                        <div className="text-muted-foreground">Users</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="font-semibold">{digest.metrics.activeChannels}</div>
-                        <div className="text-muted-foreground">Channels</div>
+                      <div className="flex gap-6">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-purple-600">{digest.metrics.totalMessages.toLocaleString()}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Messages</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{digest.metrics.activeUsers}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Users</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">{digest.metrics.activeChannels}</div>
+                          <div className="text-xs text-muted-foreground mt-1">Channels</div>
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <Separator />
 
-                  <div className="prose prose-sm max-w-none">
-                    <div className="whitespace-pre-wrap">{digest.content}</div>
+                  <div className="bg-muted/30 rounded-lg p-6">
+                    <div className="prose prose-sm max-w-none">
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">{digest.content}</div>
+                    </div>
                   </div>
 
-                  <div className="text-xs text-muted-foreground text-right">
-                    Generated {new Date(digest.generatedAt).toLocaleString()}
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Bot className="h-3 w-3" />
+                      Generated by Insight AI
+                    </span>
+                    <span>
+                      {new Date(digest.generatedAt).toLocaleString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
                   </div>
                 </div>
               )}
 
               {!digest && !isGeneratingDigest && (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Click "Generate Digest" to create a summary of team activity</p>
+                <div className="text-center py-16">
+                  <div className="p-4 bg-purple-100 rounded-full inline-block mb-4">
+                    <Calendar className="h-12 w-12 text-purple-600" />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-2">No Digest Generated Yet</h3>
+                  <p className="text-muted-foreground">
+                    Click "Generate Digest" to create a summary of team activity
+                  </p>
                 </div>
               )}
             </CardContent>

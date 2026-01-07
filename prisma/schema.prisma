@@ -298,7 +298,7 @@ model Shift {
   id               String   @id @default(cuid())
   locationId       String?  @map("location_id") // Nullable - use shiftLocations for multiple locations
   branchId         String   @map("branch_id")
-  associateId      String   @map("associate_id")
+  associateId      String?  @map("associate_id") // Nullable - supports manager-only shifts
   managerId        String?  @map("manager_id")
   date             DateTime @db.Date
   startTime        String   @map("start_time") // "21:00"
@@ -312,7 +312,7 @@ model Shift {
 
   location       Location?       @relation(fields: [locationId], references: [id], onDelete: Cascade)
   branch         Branch          @relation(fields: [branchId], references: [id])
-  associate      User            @relation("ShiftAssociate", fields: [associateId], references: [id])
+  associate      User?           @relation("ShiftAssociate", fields: [associateId], references: [id])
   manager        User?           @relation("ShiftManager", fields: [managerId], references: [id])
   shiftLocations ShiftLocation[]
 

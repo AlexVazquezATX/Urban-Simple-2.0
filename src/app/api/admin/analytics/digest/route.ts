@@ -188,11 +188,18 @@ SAMPLE CONVERSATIONS (for context):
 ${interestingMessages.slice(0, 5).map((m) => `[${m.channel}] ${m.user}: "${m.content}..."`).join('\n\n')}
 
 TASK: Create a friendly, professional digest summary for the administrator. Include:
-1. **Overview**: Brief summary of overall activity
-2. **Highlights**: Notable conversations, trends, or engagement patterns
-3. **AI Insights**: How employees are using AI assistants and common questions
-4. **Engagement**: Which channels and team members are most active
-5. **Recommendations**: Any suggestions for improving communication or addressing concerns
+1. Overview: Brief summary of overall activity
+2. Highlights: Notable conversations, trends, or engagement patterns
+3. AI Insights: How employees are using AI assistants and common questions
+4. Engagement: Which channels and team members are most active
+5. Recommendations: Any suggestions for improving communication or addressing concerns
+
+FORMATTING INSTRUCTIONS:
+- Use plain text only - NO markdown formatting
+- Do not use asterisks, hashtags, or other formatting symbols
+- Write naturally in clear, conversational English
+- Use proper paragraphs and line breaks for readability
+- Use section labels followed by colons (e.g., "Overview:" instead of "## Overview")
 
 Keep it concise but informative (300-500 words). Focus on actionable insights.
 `

@@ -173,10 +173,24 @@ export async function POST(request: NextRequest) {
     // After migration, we'll create ShiftLocation entries for all locations
     const shift = await prisma.shift.create({
       data: {
-        locationId: finalLocationIds[0] || null, // Store first location for now
-        branchId,
-        associateId: associateId || null,
-        managerId: managerId || null,
+        ...(finalLocationIds[0] && {
+          location: {
+            connect: { id: finalLocationIds[0] },
+          },
+        }),
+        branch: {
+          connect: { id: branchId },
+        },
+        ...(associateId && {
+          associate: {
+            connect: { id: associateId },
+          },
+        }),
+        ...(managerId && {
+          manager: {
+            connect: { id: managerId },
+          },
+        }),
         date: new Date(date),
         startTime,
         endTime,
@@ -184,13 +198,12 @@ export async function POST(request: NextRequest) {
         recurringPattern: recurringPattern || null,
         notes: notes || null,
         status,
-        // TODO: After migration, uncomment to create ShiftLocation entries
-        // shiftLocations: {
-        //   create: finalLocationIds.map((locId: string, index: number) => ({
-        //     locationId: locId,
-        //     sortOrder: index,
-        //   })),
-        // },
+        shiftLocations: {
+          create: finalLocationIds.map((locId: string, index: number) => ({
+            locationId: locId,
+            sortOrder: index,
+          })),
+        },
       },
       include: {
         location: {
@@ -205,26 +218,25 @@ export async function POST(request: NextRequest) {
             },
           },
         },
-        // shiftLocations will be available after Prisma client regeneration
-        // shiftLocations: {
-        //   include: {
-        //     location: {
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         client: {
-        //           select: {
-        //             id: true,
-        //             name: true,
-        //           },
-        //         },
-        //       },
-        //     },
-        //   },
-        //   orderBy: {
-        //     sortOrder: 'asc',
-        //   },
-        // },
+        shiftLocations: {
+          include: {
+            location: {
+              select: {
+                id: true,
+                name: true,
+                client: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
         associate: {
           select: {
             id: true,
@@ -243,10 +255,19 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(shift, { status: 201 })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating shift:', error)
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    })
     return NextResponse.json(
-      { error: 'Failed to create shift' },
+      {
+        error: 'Failed to create shift',
+        details: error.message,
+        code: error.code,
+      },
       { status: 500 }
     )
   }
