@@ -598,3 +598,12 @@
 .dark .pulse-article-content strong {
   color: var(--color-cream-50);
 }
+
+/* Custom input styling to use bronze color instead of browser default red */
+input[type="range"] {
+  accent-color: #A67C52; /* bronze-500 - only changes color, keeps default style */
+}
+
+input[type="checkbox"] {
+  accent-color: #A67C52; /* bronze-500 */
+}

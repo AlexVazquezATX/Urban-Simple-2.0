@@ -24,6 +24,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { ROICalculator } from '@/components/landing/roi-calculator'
+import { FloatingQuoteCTA } from '@/components/landing/floating-quote-cta'
 import { cn } from '@/lib/utils'
 
 // ============================================
@@ -281,8 +283,8 @@ export default function LandingPage() {
               <div className="relative rounded-3xl overflow-hidden shadow-lifted">
                 <div className="aspect-[4/3] relative">
                   <Image
-                    src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=1200&h=900&fit=crop&q=80"
-                    alt="Luxury hotel lobby with elegant interior design"
+                    src="/images/Services-1767818882/service_Kitchen-Cleaning-01.jpg"
+                    alt="Professional commercial kitchen cleaning"
                     fill
                     className="object-cover"
                     priority
@@ -395,15 +397,15 @@ export default function LandingPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/95 via-charcoal-900/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-6">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 rounded-xl bg-ocean-500/90 backdrop-blur-sm flex items-center justify-center">
                       <Hotel className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-2xl font-semibold text-white">Hotels & Resorts</h3>
                   </div>
-                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                  <p className="text-white/90 leading-relaxed min-h-[3rem]">
                     Kitchen facilities, dining rooms, bathrooms, lobbies, and common areas.
                   </p>
                 </div>
@@ -421,16 +423,16 @@ export default function LandingPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/95 via-charcoal-900/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-6">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 rounded-xl bg-bronze-500/90 backdrop-blur-sm flex items-center justify-center">
                       <UtensilsCrossed className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-2xl font-semibold text-white">Restaurants & Bars</h3>
                   </div>
-                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
-                    Kitchen cleaning, dining areas, bars, and front-of-house spaces.
+                  <p className="text-white/90 leading-relaxed min-h-[3rem]">
+                    Kitchen cleaning, dining areas, bars, and front-of-house spaces that impress guests.
                   </p>
                 </div>
               </div>
@@ -447,15 +449,15 @@ export default function LandingPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/95 via-charcoal-900/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-6">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 rounded-xl bg-terracotta-500/90 backdrop-blur-sm flex items-center justify-center">
                       <ChefHat className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-2xl font-semibold text-white">Commercial Kitchens</h3>
                   </div>
-                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                  <p className="text-white/90 leading-relaxed min-h-[3rem]">
                     Deep cleaning, degreasing, and health code compliance for food service environments.
                   </p>
                 </div>
@@ -473,15 +475,15 @@ export default function LandingPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/95 via-charcoal-900/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-6">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 rounded-xl bg-plum-500/90 backdrop-blur-sm flex items-center justify-center">
                       <Calendar className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-2xl font-semibold text-white">Event Venues</h3>
                   </div>
-                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                  <p className="text-white/90 leading-relaxed min-h-[3rem]">
                     Banquet halls, ballrooms, and event spaces. Carpet cleaning and pressure washing services.
                   </p>
                 </div>
@@ -493,22 +495,22 @@ export default function LandingPage() {
               <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
                 <div className="aspect-[4/3] relative">
                   <Image
-                    src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop&q=80"
+                    src="/images/Services-1767818882/service_Hotels-Hospitality-01.jpg"
                     alt="Luxury spa and wellness center with serene atmosphere"
                     fill
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/95 via-charcoal-900/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-6">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 rounded-xl bg-sage-500/90 backdrop-blur-sm flex items-center justify-center">
                       <Droplets className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-2xl font-semibold text-white">Spas & Wellness</h3>
                   </div>
-                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
-                    Kitchen facilities, treatment rooms, relaxation areas, and wellness facilities.
+                  <p className="text-white/90 leading-relaxed min-h-[3rem]">
+                    Kitchen facilities, treatment rooms, relaxation areas, and wellness facilities kept pristine.
                   </p>
                 </div>
               </div>
@@ -525,15 +527,15 @@ export default function LandingPage() {
                     className="object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/80 via-charcoal-900/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-8">
-                  <div className="flex items-center gap-3 mb-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/95 via-charcoal-900/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 pb-6">
+                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-12 h-12 rounded-xl bg-honey-500/90 backdrop-blur-sm flex items-center justify-center">
                       <Home className="w-6 h-6 text-white" />
                     </div>
                     <h3 className="text-2xl font-semibold text-white">Boutique Hotels</h3>
                   </div>
-                  <p className="text-charcoal-200 leading-relaxed min-h-[3rem]">
+                  <p className="text-white/90 leading-relaxed min-h-[3rem]">
                     Kitchen facilities, dining rooms, bathrooms, and common areas for intimate properties.
                   </p>
                 </div>
@@ -612,6 +614,83 @@ export default function LandingPage() {
                 <p className="text-charcoal-400">{stat.label}</p>
               </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ============================================
+          CLIENT LOGOS SECTION
+          ============================================ */}
+      <section className="py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={staggerContainer}
+            className="text-center mb-12"
+          >
+            <motion.div variants={fadeInUp}>
+              <Badge variant="secondary" className="mb-4 bg-cream-200 text-charcoal-700 border-cream-300">
+                Trusted By
+              </Badge>
+              <h2 className="font-display text-2xl sm:text-3xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
+                Notable Hospitality Brands
+              </h2>
+              <p className="text-base text-charcoal-600 max-w-xl mx-auto">
+                We're proud to serve some of the most recognized names in hospitality.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={staggerContainer}
+            className="grid grid-cols-3 md:grid-cols-7 gap-6 lg:gap-8 items-center justify-items-center opacity-60 hover:opacity-100 transition-opacity"
+          >
+            {[
+              { name: 'Facebook', image: '/images/Clients-1767818842/current client logos/client-brand_Facebook.jpg' },
+              { name: 'Darden Group', image: '/images/Clients-1767818842/current client logos/client-brand_Darden-Group.png' },
+              { name: 'Chameleon Group', image: '/images/Clients-1767818842/current client logos/client-brand_Chameleon-Group.png' },
+              { name: 'Horseshoe Bay Resort', image: '/images/Clients-1767818842/current client logos/client-brand-horseshoe-bay-resort.png' },
+              { name: 'The Loren', image: '/images/Clients-1767818842/current client logos/client-brand-the-loren-hotel.png' },
+              { name: 'Tarka', image: '/images/Clients-1767818842/current client logos/client-brand_Tarka.png' },
+              { name: 'Wu Chow', image: '/images/Clients-1767818842/current client logos/client-brand_Wu-Chow.png' },
+            ].map((client, index) => (
+              <motion.div
+                key={index}
+                variants={fadeInUp}
+                className="flex items-center justify-center h-16 lg:h-20 w-full grayscale hover:grayscale-0 transition-all duration-300"
+              >
+                <Image
+                  src={client.image}
+                  alt={client.name}
+                  width={180}
+                  height={80}
+                  className="object-contain max-h-full max-w-full w-auto"
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ============================================
+          ROI CALCULATOR SECTION
+          ============================================ */}
+      <section className="py-16 lg:py-20 bg-cream-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={staggerContainer}
+          >
+            <motion.div variants={fadeInUp}>
+              <ROICalculator />
+            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -844,6 +923,8 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <FloatingQuoteCTA />
     </div>
   )
 }
