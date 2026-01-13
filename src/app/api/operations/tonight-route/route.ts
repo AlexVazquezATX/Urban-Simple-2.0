@@ -32,7 +32,7 @@ export async function GET() {
     const shifts = await prisma.shift.findMany({
       where: {
         managerId: user.id,
-        startTime: {
+        date: {
           gte: today,
           lt: tomorrow,
         },
