@@ -47,6 +47,7 @@ export function TaskList({ tasks, scheduledMessages }: TaskListProps) {
       channel: t.channel,
       subject: t.title || undefined,
       scheduledAt: t.scheduledAt,
+      campaignName: undefined,
     })),
   ].sort((a, b) => {
     const aTime = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0
