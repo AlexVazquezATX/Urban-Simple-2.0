@@ -45,6 +45,7 @@ export function TaskList({ tasks, scheduledMessages }: TaskListProps) {
       prospectId: t.prospectId,
       prospectName: t.prospect?.companyName || 'Unknown',
       channel: t.channel,
+      subject: t.title || undefined,
       scheduledAt: t.scheduledAt,
     })),
   ].sort((a, b) => {
