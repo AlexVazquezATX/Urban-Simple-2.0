@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 export const dynamic = 'force-dynamic'
 
 // POST /api/quote-request - Create quote request from public form
@@ -157,6 +155,7 @@ ${message ? `\nAdditional Notes:\n${message}` : ''}`,
 
       const recipientEmail = process.env.QUOTE_REQUEST_EMAIL || companyRecord.email || 'info@urbansimple.net'
 
+      const resend = new Resend(process.env.RESEND_API_KEY || '')
       await resend.emails.send({
         from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
         to: recipientEmail,

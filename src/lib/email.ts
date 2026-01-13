@@ -2,9 +2,6 @@ import { Resend } from 'resend'
 import { InvoiceEmail } from '@/emails/invoice-email'
 import { prisma } from '@/lib/db'
 
-// Initialize Resend with API key from environment
-const resend = new Resend(process.env.RESEND_API_KEY)
-
 interface SendInvoiceEmailParams {
   invoiceId: string
   to: string
@@ -79,6 +76,7 @@ export async function sendInvoiceEmail({
     })}`
 
     // Send email using Resend
+    const resend = new Resend(process.env.RESEND_API_KEY || '')
     const { data, error } = await resend.emails.send({
       from,
       to,
@@ -160,6 +158,7 @@ export async function sendInvoiceEmail({
 // Test email function (for development)
 export async function sendTestEmail(to: string) {
   try {
+    const resend = new Resend(process.env.RESEND_API_KEY || '')
     const { data, error } = await resend.emails.send({
       from: 'test@urbansimple.net',
       to,
