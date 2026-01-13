@@ -19,6 +19,7 @@ export interface ProspectData {
     lastName?: string
     title?: string
     email?: string
+    phone?: string
   }>
   notes?: string
   aiScore?: number
