@@ -86,37 +86,42 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // Create pain points with auto-notification for critical issues
+    // Create issues from pain points
     if (painPoints && painPoints.length > 0) {
       const criticalPainPoints = painPoints.filter(
         (p: any) => p.severity === 'critical' || p.severity === 'high'
       )
 
-      await prisma.painPoint.createMany({
-        data: painPoints.map((point: any) => ({
-          serviceReviewId: serviceReview.id,
-          category: point.category.toUpperCase(),
-          severity: point.severity.toUpperCase(),
-          description: point.description,
-          photos: point.photos || [],
-          status: 'REPORTED',
-        })),
+      // Get location and client info for creating issues
+      const location = await prisma.location.findUnique({
+        where: { id: locationId },
+        include: { client: true },
       })
 
-      // TODO: Send notification to client if there are critical pain points
-      if (criticalPainPoints.length > 0) {
-        // Get location and client info
-        const location = await prisma.location.findUnique({
-          where: { id: locationId },
-          include: { client: true },
+      if (location) {
+        await prisma.issue.createMany({
+          data: painPoints.map((point: any) => ({
+            locationId: locationId,
+            clientId: location.clientId,
+            reportedById: user.id,
+            serviceLogId: null, // Could link to service log if available
+            category: point.category.toLowerCase(), // quality, equipment, communication, safety, other
+            severity: point.severity.toLowerCase(), // low, medium, high, critical
+            title: point.description.substring(0, 100) || 'Issue reported',
+            description: point.description,
+            photos: point.photos || [],
+            status: 'open',
+          })),
         })
 
-        console.log(
-          `[NOTIFICATION] Critical issues found at ${location?.name}:`,
-          criticalPainPoints.map((p: any) => p.description)
-        )
+        // TODO: Send notification to client if there are critical issues
+        if (criticalPainPoints.length > 0) {
+          console.log(
+            `[NOTIFICATION] Critical issues found at ${location.name}:`,
+            criticalPainPoints.map((p: any) => p.description)
+          )
 
-        // TODO: Implement actual notification system (email, SMS, in-app)
+          // TODO: Implement actual notification system (email, SMS, in-app)
         // For now, we'll create a service log entry
         await prisma.serviceLog.create({
           data: {
