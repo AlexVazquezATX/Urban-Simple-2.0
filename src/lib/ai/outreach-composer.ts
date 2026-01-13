@@ -1,0 +1,281 @@
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+const genAI = new GoogleGenerativeAI(
+  process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''
+)
+
+export interface ProspectData {
+  companyName: string
+  businessType?: string
+  industry?: string
+  address?: {
+    city?: string
+    state?: string
+  }
+  website?: string
+  priceLevel?: string
+  contacts?: Array<{
+    firstName?: string
+    lastName?: string
+    title?: string
+    email?: string
+  }>
+  notes?: string
+  aiScore?: number
+  aiScoreReason?: string
+}
+
+export interface TemplateData {
+  name: string
+  category: string
+  channel: string
+  subject?: string
+  body: string
+  variables?: string[]
+  aiInstructions?: string
+}
+
+export interface ComposerOptions {
+  channel: 'email' | 'sms' | 'linkedin' | 'instagram_dm'
+  prospect: ProspectData
+  template?: TemplateData
+  tone?: 'professional' | 'friendly' | 'casual' | 'warm'
+  purpose?: 'cold_outreach' | 'follow_up' | 're_engagement'
+  customInstructions?: string
+}
+
+export interface GeneratedMessage {
+  subject?: string
+  body: string
+  channel: string
+  personalizationNotes?: string
+}
+
+/**
+ * Generate a personalized outreach message using AI
+ */
+export async function generateOutreachMessage(
+  options: ComposerOptions
+): Promise<GeneratedMessage> {
+  const { channel, prospect, template, tone = 'friendly', purpose = 'cold_outreach', customInstructions } = options
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+
+    // Build context about the prospect
+    const prospectContext = buildProspectContext(prospect)
+    
+    // Build template context if provided
+    const templateContext = template ? buildTemplateContext(template) : ''
+
+    // Build the prompt
+    const prompt = buildComposerPrompt({
+      channel,
+      prospectContext,
+      templateContext,
+      tone,
+      purpose,
+      customInstructions,
+    })
+
+    const result = await model.generateContent(prompt)
+    const response = result.response
+    const text = response.text()
+
+    // Parse the response
+    const parsed = parseAIResponse(text, channel)
+
+    return {
+      subject: parsed.subject,
+      body: parsed.body,
+      channel,
+      personalizationNotes: parsed.notes,
+    }
+  } catch (error) {
+    console.error('Error generating outreach message:', error)
+    throw new Error('Failed to generate outreach message')
+  }
+}
+
+function buildProspectContext(prospect: ProspectData): string {
+  let context = `PROSPECT INFORMATION:
+Company Name: ${prospect.companyName}
+`
+
+  if (prospect.businessType) {
+    context += `Business Type: ${prospect.businessType}\n`
+  }
+
+  if (prospect.industry) {
+    context += `Industry: ${prospect.industry}\n`
+  }
+
+  if (prospect.address?.city) {
+    context += `Location: ${prospect.address.city}`
+    if (prospect.address.state) {
+      context += `, ${prospect.address.state}`
+    }
+    context += '\n'
+  }
+
+  if (prospect.priceLevel) {
+    context += `Price Level: ${prospect.priceLevel}\n`
+  }
+
+  if (prospect.contacts && prospect.contacts.length > 0) {
+    const contact = prospect.contacts[0]
+    context += `\nCONTACT PERSON:\n`
+    if (contact.firstName) context += `First Name: ${contact.firstName}\n`
+    if (contact.lastName) context += `Last Name: ${contact.lastName}\n`
+    if (contact.title) context += `Title: ${contact.title}\n`
+  }
+
+  if (prospect.website) {
+    context += `Website: ${prospect.website}\n`
+  }
+
+  if (prospect.notes) {
+    context += `\nNOTES:\n${prospect.notes}\n`
+  }
+
+  if (prospect.aiScoreReason) {
+    context += `\nAI INSIGHTS:\n${prospect.aiScoreReason}\n`
+  }
+
+  return context
+}
+
+function buildTemplateContext(template: TemplateData): string {
+  let context = `\nTEMPLATE TO USE AS REFERENCE:
+Name: ${template.name}
+Category: ${template.category}
+Channel: ${template.channel}
+`
+
+  if (template.subject) {
+    context += `Subject: ${template.subject}\n`
+  }
+
+  context += `Body:\n${template.body}\n`
+
+  if (template.aiInstructions) {
+    context += `\nTemplate Instructions: ${template.aiInstructions}\n`
+  }
+
+  if (template.variables && template.variables.length > 0) {
+    context += `\nAvailable Variables: ${template.variables.join(', ')}\n`
+  }
+
+  return context
+}
+
+function buildComposerPrompt(options: {
+  channel: string
+  prospectContext: string
+  templateContext: string
+  tone: string
+  purpose: string
+  customInstructions?: string
+}): string {
+  const { channel, prospectContext, templateContext, tone, purpose, customInstructions } = options
+
+  const channelGuidelines = {
+    email: 'Professional email format with clear subject line. Keep body concise (3-4 paragraphs max).',
+    sms: 'Short, friendly text message. Maximum 160 characters. No subject line.',
+    linkedin: 'Professional LinkedIn message. 2-3 short paragraphs. Personal and conversational.',
+    instagram_dm: 'Casual, friendly Instagram DM. Keep it brief and authentic. Use emojis sparingly.',
+  }
+
+  const toneGuidelines = {
+    professional: 'Formal, business-like, respectful',
+    friendly: 'Warm, approachable, personable',
+    casual: 'Relaxed, conversational, authentic',
+    warm: 'Very friendly, enthusiastic, personal',
+  }
+
+  const purposeGuidelines = {
+    cold_outreach: 'First contact - introduce Urban Simple and our commercial cleaning services',
+    follow_up: 'Follow-up message - reference previous contact and provide additional value',
+    re_engagement: 'Re-engagement - reconnect with prospect who went cold',
+  }
+
+  return `You are an expert outreach copywriter for Urban Simple, a commercial cleaning company specializing in hospitality services (restaurants, hotels, bars, commercial kitchens).
+
+${prospectContext}
+
+${templateContext ? templateContext : 'No template provided - create original message.'}
+
+TASK: Write a personalized ${channel} message for ${purpose}.
+
+REQUIREMENTS:
+- Channel: ${channel}
+- Tone: ${toneGuidelines[tone as keyof typeof toneGuidelines]}
+- Purpose: ${purposeGuidelines[purpose as keyof typeof purposeGuidelines]}
+- ${channelGuidelines[channel as keyof typeof channelGuidelines]}
+
+${customInstructions ? `\nADDITIONAL INSTRUCTIONS:\n${customInstructions}\n` : ''}
+
+IMPORTANT GUIDELINES:
+- Personalize using prospect's company name, location, and business type
+- Mention specific benefits relevant to their industry (hospitality)
+- Keep it concise and scannable
+- Include a clear call-to-action
+- Sound human, not robotic
+- Don't use generic phrases like "I hope this email finds you well"
+- Show you've done research about their business
+
+OUTPUT FORMAT:
+${channel === 'email' ? 'Subject: [subject line]\n\n' : ''}Body:
+[message body]
+
+${channel === 'email' ? 'Provide both subject and body.' : 'Provide only the message body (no subject line).'}`
+}
+
+function parseAIResponse(text: string, channel: string): {
+  subject?: string
+  body: string
+  notes?: string
+} {
+  let subject: string | undefined
+  let body = text
+
+  // Try to extract subject if it's an email
+  if (channel === 'email') {
+    const subjectMatch = text.match(/Subject:\s*(.+?)(?:\n|$)/i)
+    if (subjectMatch) {
+      subject = subjectMatch[1].trim()
+      body = text.replace(/Subject:\s*.+?\n/i, '').trim()
+    }
+  }
+
+  // Remove "Body:" prefix if present
+  body = body.replace(/^Body:\s*/i, '').trim()
+
+  return {
+    subject,
+    body,
+  }
+}
+
+/**
+ * Determine the best channel for a prospect based on available contact info
+ */
+export function determineBestChannel(prospect: ProspectData): 'email' | 'sms' | 'linkedin' | 'instagram_dm' {
+  // Check for email first
+  if (prospect.contacts?.some((c) => c.email)) {
+    return 'email'
+  }
+
+  // Check for phone (SMS)
+  if (prospect.contacts?.some((c) => c.phone)) {
+    return 'sms'
+  }
+
+  // For restaurants/hospitality, prefer Instagram
+  if (prospect.businessType === 'restaurant' || prospect.businessType === 'bar') {
+    return 'instagram_dm'
+  }
+
+  // Default to LinkedIn for B2B
+  return 'linkedin'
+}

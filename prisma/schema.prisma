@@ -37,6 +37,7 @@ model Company {
   outreachCampaigns OutreachCampaign[]
   discoveryJobs     AIDiscoveryJob[]
   contentTemplates  ContentTemplate[]
+  automationLogs    GrowthAutomationLog[]
 
   @@map("companies")
 }
@@ -933,6 +934,12 @@ model Prospect {
   aiEnriched     Boolean   @default(false) @map("ai_enriched")
   enrichmentDate DateTime? @map("enrichment_date")
 
+  // AI Scoring
+  aiScore       Int?    @map("ai_score") // 0-100 fit score
+  aiScoreReason String? @map("ai_score_reason") @db.Text // AI explanation
+  autoEnriched  Boolean @default(false) @map("auto_enriched")
+  enrichedData  Json?   @map("enriched_data") // LinkedIn URL, decision maker, etc.
+
   // Metadata
   tags                String[] @default([])
   notes               String?  @db.Text
@@ -1074,6 +1081,11 @@ model OutreachMessage {
   scheduledAt DateTime? @map("scheduled_at")
   sentAt      DateTime? @map("sent_at")
 
+  // Approval workflow
+  approvalStatus String    @default("pending") @map("approval_status") // pending, approved, rejected
+  approvedAt     DateTime? @map("approved_at")
+  approvedById   String?   @map("approved_by_id")
+
   createdAt DateTime @default(now()) @map("created_at")
 
   campaign OutreachCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -1186,21 +1198,21 @@ model PulseTopic {
 }
 
 model PulseBriefing {
-  id             String    @id @default(cuid())
-  userId         String    @map("user_id")
-  date           DateTime  @db.Date
-  status         String    @default("generating") // generating, ready, failed
-  title          String? // AI-generated title for the day
-  greeting       String?   @db.Text // Personalized AI greeting
-  summary        String?   @db.Text // AI-generated executive summary
-  inspirationQuote String? @map("inspiration_quote") @db.Text // Daily motivational quote
-  generatedAt    DateTime? @map("generated_at")
-  readAt         DateTime? @map("read_at")
-  aiModel        String?   @map("ai_model") // gemini-2.0-flash-exp
-  generationTime Int?      @map("generation_time") // milliseconds
-  errorMessage   String?   @map("error_message") @db.Text
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @updatedAt @map("updated_at")
+  id               String    @id @default(cuid())
+  userId           String    @map("user_id")
+  date             DateTime  @db.Date
+  status           String    @default("generating") // generating, ready, failed
+  title            String? // AI-generated title for the day
+  greeting         String?   @db.Text // Personalized AI greeting
+  summary          String?   @db.Text // AI-generated executive summary
+  inspirationQuote String?   @map("inspiration_quote") @db.Text // Daily motivational quote
+  generatedAt      DateTime? @map("generated_at")
+  readAt           DateTime? @map("read_at")
+  aiModel          String?   @map("ai_model") // gemini-2.0-flash-exp
+  generationTime   Int?      @map("generation_time") // milliseconds
+  errorMessage     String?   @map("error_message") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   user  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   items PulseBriefingItem[]
@@ -1238,6 +1250,22 @@ model PulseBriefingItem {
   @@index([briefingId, sortOrder])
   @@index([topicId])
   @@map("pulse_briefing_items")
+}
+
+model GrowthAutomationLog {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  type         String // discovery, enrichment, sequence, pipeline
+  status       String // running, completed, failed
+  details      Json     @default("{}")
+  errorMessage String?  @map("error_message") @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([type, status])
+  @@map("growth_automation_logs")
 }
 
 model PulseGenerationLog {

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ActivityFeed } from './activity-feed'
 import { TaskList } from './task-list'
+import { CommandCenter } from './command-center'
 import {
   Send,
   TrendingUp,
@@ -97,6 +98,9 @@ export function OutreachDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Command Center */}
+      <CommandCenter />
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>

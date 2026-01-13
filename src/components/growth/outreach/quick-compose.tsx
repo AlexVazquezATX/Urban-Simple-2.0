@@ -48,6 +48,7 @@ export function QuickCompose() {
   const [scheduleFor, setScheduleFor] = useState<string>('')
   const [templates, setTemplates] = useState<any[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
   useEffect(() => {
     if (prospectId) {
@@ -85,21 +86,22 @@ export function QuickCompose() {
   }, [selectedTemplate, templates])
 
   const handleGenerateContent = async () => {
-    if (!prospect) {
+    if (!prospectId) {
       toast.error('Please select a prospect first')
       return
     }
 
-    setIsGenerating(true)
+    setIsGeneratingAI(true)
     try {
-      const response = await fetch('/api/growth/ai/generate-content', {
+      const response = await fetch('/api/growth/outreach/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prospectData: prospect,
+          prospectId,
           channel,
           tone,
           purpose,
+          templateId: selectedTemplate || undefined,
         }),
       })
 
@@ -110,19 +112,31 @@ export function QuickCompose() {
 
       const data = await response.json()
       
-      if (channel === 'email') {
-        setSubject(data.content.subject || '')
-        setBody(data.content.body || '')
-      } else {
-        setBody(data.content.message || '')
+      if (data.message) {
+        if (channel === 'email' && data.message.subject) {
+          setSubject(data.message.subject)
+        }
+        if (data.message.body) {
+          setBody(data.message.body)
+        }
+        
+        // Auto-fill contact info if available
+        if (prospect && prospect.contacts && prospect.contacts.length > 0) {
+          const contact = prospect.contacts[0]
+          if (channel === 'email' && contact.email) {
+            setTo(contact.email)
+          } else if (channel === 'sms' && contact.phone) {
+            setTo(contact.phone)
+          }
+        }
       }
 
-      toast.success('Content generated successfully')
+      toast.success('AI-generated content ready!')
     } catch (error: any) {
       console.error('Error generating content:', error)
       toast.error(error.message || 'Failed to generate content')
     } finally {
-      setIsGenerating(false)
+      setIsGeneratingAI(false)
     }
   }
 
@@ -343,11 +357,11 @@ export function QuickCompose() {
                   </div>
                   <Button
                     onClick={handleGenerateContent}
-                    disabled={isGenerating}
+                    disabled={isGeneratingAI}
                     variant="outline"
                     size="sm"
                   >
-                    {isGenerating ? (
+                    {isGeneratingAI ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         Generating...
@@ -355,7 +369,7 @@ export function QuickCompose() {
                     ) : (
                       <>
                         <Sparkles className="mr-2 h-4 w-4" />
-                        Generate Content
+                        Generate with AI
                       </>
                     )}
                   </Button>
