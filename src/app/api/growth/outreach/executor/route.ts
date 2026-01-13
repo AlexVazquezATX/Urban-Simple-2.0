@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             status: true,
+            createdById: true,
           },
         },
       },
