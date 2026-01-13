@@ -98,7 +98,9 @@ export async function GET() {
           checklistName: sl.location.checklistTemplate?.name || 'Standard Checklist',
           status: review ? 'completed' : 'pending',
           reviewId: review?.id,
-          associateName: `${shift.associate.firstName} ${shift.associate.lastName}`,
+          associateName: shift.associate
+            ? `${shift.associate.firstName} ${shift.associate.lastName}`
+            : 'Unassigned',
         }
       })
     )
