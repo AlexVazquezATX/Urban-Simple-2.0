@@ -122,16 +122,7 @@ export async function POST(request: NextRequest) {
           )
 
           // TODO: Implement actual notification system (email, SMS, in-app)
-        // For now, we'll create a service log entry
-        await prisma.serviceLog.create({
-          data: {
-            shiftLocationId: shiftLocation.id,
-            type: 'ISSUE_REPORTED',
-            description: `${criticalPainPoints.length} critical/high severity issue(s) reported`,
-            severity: 'HIGH',
-            status: 'PENDING',
-          },
-        })
+        }
       }
     }
 
