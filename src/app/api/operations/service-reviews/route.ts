@@ -73,23 +73,18 @@ export async function POST(request: NextRequest) {
         reviewerId: user.id,
         reviewDate: new Date(),
         overallRating,
+        ratingItems: checklistItems && checklistItems.length > 0 
+          ? checklistItems.map((item: any) => ({
+              id: item.id,
+              status: item.status.toUpperCase(),
+              notes: item.notes || null,
+              photos: item.photos || [],
+            }))
+          : [],
         notes,
         photos: photos || [],
       },
     })
-
-    // Create checklist item verifications
-    if (checklistItems && checklistItems.length > 0) {
-      await prisma.checklistVerification.createMany({
-        data: checklistItems.map((item: any) => ({
-          serviceReviewId: serviceReview.id,
-          checklistItemId: item.id,
-          status: item.status.toUpperCase(),
-          notes: item.notes || null,
-          photos: item.photos || [],
-        })),
-      })
-    }
 
     // Create pain points with auto-notification for critical issues
     if (painPoints && painPoints.length > 0) {
