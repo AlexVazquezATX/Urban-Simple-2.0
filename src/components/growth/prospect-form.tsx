@@ -51,10 +51,10 @@ const prospectSchema = z.object({
   estimatedSize: z.string().optional(),
   employeeCount: z.number().optional(),
   annualRevenue: z.string().optional(),
-  status: z.string().min(1).default('new'),
-  priority: z.string().min(1).default('medium'),
+  status: z.string().min(1),
+  priority: z.string().min(1),
   estimatedValue: z.string().optional(),
-  source: z.string().min(1).default('manual'),
+  source: z.string().min(1),
   sourceDetail: z.string().optional(),
   tags: z.string().optional(), // comma-separated
   notes: z.string().optional(),
