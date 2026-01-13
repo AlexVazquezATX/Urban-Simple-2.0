@@ -65,10 +65,12 @@ async function ProspectsList() {
     ],
   })
 
-  // Serialize Decimal fields to numbers for client component
+  // Serialize Decimal fields to numbers and Date fields to strings for client component
   const serializedProspects = prospects.map(prospect => ({
     ...prospect,
     estimatedValue: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
+    lastContactedAt: prospect.lastContactedAt ? prospect.lastContactedAt.toISOString() : null,
+    createdAt: prospect.createdAt.toISOString(),
   }))
 
   return <ProspectsListClient prospects={serializedProspects} />
