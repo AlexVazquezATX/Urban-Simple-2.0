@@ -43,6 +43,11 @@ export async function GET() {
             location: {
               include: {
                 client: true,
+                checklistTemplate: {
+                  select: {
+                    name: true,
+                  },
+                },
               },
             },
           },
@@ -90,7 +95,7 @@ export async function GET() {
           clientName: sl.location.client.name,
           address: formatAddress(sl.location.address),
           scheduledTime: shift.startTime, // Already formatted as "21:00"
-          checklistName: sl.location.defaultChecklistTemplate || 'Standard Checklist',
+          checklistName: sl.location.checklistTemplate?.name || 'Standard Checklist',
           status: review ? 'completed' : 'pending',
           reviewId: review?.id,
           associateName: `${shift.associate.firstName} ${shift.associate.lastName}`,
