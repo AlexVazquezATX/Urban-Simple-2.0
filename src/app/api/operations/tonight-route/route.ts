@@ -89,10 +89,7 @@ export async function GET() {
           locationName: sl.location.name,
           clientName: sl.location.client.name,
           address: formatAddress(sl.location.address),
-          scheduledTime: shift.startTime.toLocaleTimeString('en-US', {
-            hour: '2-digit',
-            minute: '2-digit',
-          }),
+          scheduledTime: shift.startTime, // Already formatted as "21:00"
           checklistName: sl.location.defaultChecklistTemplate || 'Standard Checklist',
           status: review ? 'completed' : 'pending',
           reviewId: review?.id,
