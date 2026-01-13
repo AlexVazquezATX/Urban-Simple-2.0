@@ -68,12 +68,13 @@ export async function POST(request: NextRequest) {
     // Create the service review
     const serviceReview = await prisma.serviceReview.create({
       data: {
-        shiftLocationId: shiftLocation.id,
+        locationId: shiftLocation.locationId,
+        associateId: shift.associateId || '',
         reviewerId: user.id,
+        reviewDate: new Date(),
         overallRating,
         notes,
         photos: photos || [],
-        status: 'COMPLETED',
       },
     })
 
