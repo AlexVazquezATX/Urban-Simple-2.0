@@ -450,7 +450,9 @@ export async function buildBusinessContext(
           date: shift.date,
           startTime: shift.startTime,
           endTime: shift.endTime,
-          associateName: `${shift.associate.firstName} ${shift.associate.lastName}`,
+          associateName: shift.associate
+            ? `${shift.associate.firstName} ${shift.associate.lastName}`
+            : 'Unassigned',
           locationNames,
           status: shift.status,
         }
