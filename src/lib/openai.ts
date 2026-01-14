@@ -2,11 +2,12 @@ import OpenAI from 'openai'
 
 // Initialize OpenAI client lazily to avoid build-time errors
 function getOpenAIClient() {
-  if (!process.env.OPENAI_API_KEY) {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) {
     throw new Error('OPENAI_API_KEY is not set in environment variables')
   }
   return new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
+    apiKey: apiKey,
   })
 }
 
