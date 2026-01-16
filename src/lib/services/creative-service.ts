@@ -56,7 +56,7 @@ export interface CreateContentInput {
   imageId?: string
   isAiGenerated?: boolean
   aiModel?: string
-  aiGenerationData?: Record<string, unknown>
+  aiGenerationData?: Prisma.InputJsonValue
   variationGroup?: string
   variationLabel?: string
 }
