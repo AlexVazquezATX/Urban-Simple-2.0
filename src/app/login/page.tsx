@@ -32,7 +32,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/') // Dashboard is at root (route group (app)/page.tsx)
+    router.push('/dashboard')
     router.refresh()
   }
 

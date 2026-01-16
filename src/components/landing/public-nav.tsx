@@ -14,7 +14,7 @@ export function PublicNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 py-4">
           {/* Logo */}
-          <Link href="/landing" className="flex items-baseline gap-1">
+          <Link href="/" className="flex items-baseline gap-1">
             <span className="font-bold text-2xl tracking-tight text-charcoal-900">
               Urban
             </span>
@@ -25,19 +25,22 @@ export function PublicNav() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link href="/landing#services" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+            <Link href="/#services" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Services
             </Link>
-            <Link href="/landing#industries" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+            <Link href="/#industries" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Industries
+            </Link>
+            <Link href="/blog" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+              Blog
             </Link>
             <Link href="/our-team" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Our Team
             </Link>
-            <Link href="/landing#testimonials" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+            <Link href="/#testimonials" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Testimonials
             </Link>
-            <Link href="/landing#contact" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+            <Link href="/#contact" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Contact
             </Link>
           </div>
@@ -49,7 +52,7 @@ export function PublicNav() {
                 Client Login
               </Button>
             </Link>
-            <Link href="/landing#contact">
+            <Link href="/#contact">
               <Button
                 size="default"
                 className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-md hover:shadow-lg"
@@ -79,26 +82,29 @@ export function PublicNav() {
           className="md:hidden bg-white border-t border-cream-200"
         >
           <div className="px-4 py-6 space-y-4">
-            <Link href="/landing#services" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+            <Link href="/#services" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Services
             </Link>
-            <Link href="/landing#industries" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+            <Link href="/#industries" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Industries
+            </Link>
+            <Link href="/blog" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+              Blog
             </Link>
             <Link href="/our-team" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Our Team
             </Link>
-            <Link href="/landing#testimonials" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+            <Link href="/#testimonials" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Testimonials
             </Link>
-            <Link href="/landing#contact" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+            <Link href="/#contact" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Contact
             </Link>
             <div className="pt-4 space-y-3">
               <Link href="/login" className="block">
                 <Button variant="secondary" className="w-full">Client Login</Button>
               </Link>
-              <Link href="/landing#contact" className="block">
+              <Link href="/#contact" className="block">
                 <Button className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700">Get a Quote</Button>
               </Link>
             </div>

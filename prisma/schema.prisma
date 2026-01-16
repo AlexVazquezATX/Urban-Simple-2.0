@@ -125,6 +125,9 @@ model User {
   pulseTopics    PulseTopic[]
   pulseBriefings PulseBriefing[]
 
+  // Blog
+  blogPosts BlogPost[]
+
   @@map("users")
 }
 
@@ -1285,4 +1288,100 @@ model PulseGenerationLog {
   @@index([userId, createdAt])
   @@index([type, status])
   @@map("pulse_generation_logs")
+}
+
+// ============================================
+// BLOG & CONTENT
+// ============================================
+
+model BlogCategory {
+  id          String   @id @default(cuid())
+  name        String   @unique // "Austin Events", "Restaurant News", "Food Scene", "Hospitality Tips"
+  slug        String   @unique
+  description String?  @db.Text
+  color       String?  @default("#A67C52") // Hex color for category badge
+  icon        String? // lucide icon name
+  sortOrder   Int      @default(0) @map("sort_order")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  posts BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogPost {
+  id         String @id @default(cuid())
+  categoryId String @map("category_id")
+  authorId   String @map("author_id")
+
+  // Core Content
+  title   String
+  slug    String  @unique
+  excerpt String? @db.Text // Short description
+  content String  @db.Text // Full HTML content
+
+  // SEO
+  metaTitle       String? @map("meta_title")
+  metaDescription String? @map("meta_description") @db.Text
+  keywords        String[] @default([])
+
+  // Media
+  featuredImage       String? @map("featured_image") // URL or base64
+  featuredImagePrompt String? @map("featured_image_prompt") @db.Text // AI prompt used
+  imageAltText        String? @map("image_alt_text")
+
+  // Publishing
+  status      String   @default("draft") // draft, published, archived
+  publishedAt DateTime? @map("published_at")
+
+  // Analytics
+  viewCount    Int      @default(0) @map("view_count")
+  readTime     Int?     @map("read_time") // estimated minutes
+  lastViewedAt DateTime? @map("last_viewed_at")
+
+  // AI Generation
+  isAiGenerated    Boolean @default(false) @map("is_ai_generated")
+  aiModel          String? @map("ai_model") // gemini-2.0-flash-exp
+  aiGenerationData Json?   @map("ai_generation_data") // prompt, params, etc.
+
+  // Content Focus (for AI generation)
+  targetArea     String? @map("target_area") // "Austin, TX"
+  contentFocus   String? @map("content_focus") // "new_openings", "events", "best_of", etc.
+  targetAudience String? @map("target_audience") // "Foodies", "Industry Pros"
+  tone           String? // "Buzzy", "Professional", "Fun"
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  category BlogCategory @relation(fields: [categoryId], references: [id])
+  author   User         @relation(fields: [authorId], references: [id])
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+  @@index([slug])
+  @@map("blog_posts")
+}
+
+model BlogGenerationIdea {
+  id String @id @default(cuid())
+
+  // Generation Parameters
+  targetArea     String @map("target_area")
+  category       String
+  contentFocus   String @map("content_focus")
+  targetAudience String @map("target_audience")
+  tone           String
+
+  // Generated Ideas (4 options)
+  ideas Json // Array of { title, angle, hook, keywords }
+
+  // AI Metadata
+  aiModel   String @map("ai_model")
+  usedForId String? @map("used_for_id") // BlogPost ID if one was created
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("blog_generation_ideas")
 }

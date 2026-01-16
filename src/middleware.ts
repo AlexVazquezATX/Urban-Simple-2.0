@@ -31,32 +31,40 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/app/login'
   response.headers.set('x-is-login-page', isLoginPage ? 'true' : 'false')
 
-  // Protect /app routes - require login
-  if (request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing')) {
+  // Protect authenticated routes - require login
+  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing')) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user && !isLoginPage) {
-      // Redirect to login - try /login first (route group), fallback to /app/login
       return NextResponse.redirect(new URL('/login', request.url))
     }
   }
   
-  // Also protect root routes that are part of the app
-  if (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/login') {
+  // Handle root route - redirect authenticated users to dashboard
+  if (request.nextUrl.pathname === '/') {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    
-    // If on login page, allow it
-    if (request.nextUrl.pathname === '/login') {
-      return response
+
+    // If logged in, redirect to dashboard
+    if (user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-    
-    // If on root and not logged in, redirect to login
-    if (!user && request.nextUrl.pathname === '/') {
-      return NextResponse.redirect(new URL('/login', request.url))
+
+    // Otherwise show landing page (handled by (public)/page.tsx)
+  }
+
+  // Handle login page - redirect authenticated users to dashboard
+  if (request.nextUrl.pathname === '/login') {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // If already logged in, redirect to dashboard
+    if (user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 
