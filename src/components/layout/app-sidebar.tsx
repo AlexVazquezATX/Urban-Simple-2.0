@@ -38,6 +38,7 @@ import {
   TrendingUp,
   Sunrise,
   Sparkles,
+  Palette,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -158,6 +159,7 @@ export function AppSidebar() {
     { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/discovery', icon: Search, label: 'AI Discovery', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/creative-hub', icon: Palette, label: 'Creative Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
 
   const administrativeItems = [

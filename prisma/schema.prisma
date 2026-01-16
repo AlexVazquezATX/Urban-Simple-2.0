@@ -1385,3 +1385,271 @@ model BlogGenerationIdea {
 
   @@map("blog_generation_ideas")
 }
+
+// ============================================
+// CREATIVE HUB - MARKETING CONTENT GENERATOR
+// ============================================
+
+model CreativeProject {
+  id          String  @id @default(cuid())
+  companyId   String  @map("company_id")
+  createdById String  @map("created_by_id")
+
+  name        String
+  description String? @db.Text
+  status      String  @default("active") // active, archived
+
+  // Campaign context
+  campaignGoal   String? @map("campaign_goal") // awareness, engagement, leads, sales
+  targetAudience String? @map("target_audience") @db.Text
+  brandVoice     String? @map("brand_voice") // professional, friendly, authoritative
+
+  // Defaults for content generation
+  defaultTone     String? @default("professional")
+  defaultIndustry String? @default("commercial_cleaning") @map("default_industry")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  contentItems CreativeContent[]
+  imageAssets  CreativeImage[]
+
+  @@index([companyId, status])
+  @@map("creative_projects")
+}
+
+model CreativeContent {
+  id        String @id @default(cuid())
+  projectId String @map("project_id")
+
+  // Content type
+  contentType String @map("content_type") // social_post, ad_creative
+  platform    String // linkedin, instagram, facebook, twitter, meta_ad, google_display, linkedin_ad
+
+  // Generated content
+  headline     String?  @db.Text
+  primaryText  String   @map("primary_text") @db.Text
+  description  String?  @db.Text
+  callToAction String?  @map("call_to_action")
+  hashtags     String[] @default([])
+
+  // For ads
+  adFormat String? @map("ad_format") // single_image, carousel, story, video_placeholder
+
+  // Associated image
+  imageId String? @map("image_id")
+
+  // Status
+  status       String    @default("draft") // draft, approved, published, archived
+  approvedAt   DateTime? @map("approved_at")
+  approvedById String?   @map("approved_by_id")
+
+  // AI Generation metadata
+  isAiGenerated    Boolean @default(true) @map("is_ai_generated")
+  aiModel          String? @map("ai_model")
+  aiGenerationData Json?   @map("ai_generation_data") // prompts, params, variations
+
+  // Variation tracking
+  variationGroup String? @map("variation_group") // groups A/B variants together
+  variationLabel String? @map("variation_label") // A, B, C
+
+  // Export tracking
+  exportedAt   DateTime? @map("exported_at")
+  exportFormat String?   @map("export_format")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  project CreativeProject @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  image   CreativeImage?  @relation(fields: [imageId], references: [id])
+
+  @@index([projectId, platform])
+  @@index([contentType, status])
+  @@map("creative_content")
+}
+
+model CreativeImage {
+  id        String  @id @default(cuid())
+  projectId String? @map("project_id") // null for library images
+  companyId String  @map("company_id")
+
+  // Image data
+  name        String
+  imageUrl    String? @map("image_url") // Supabase storage URL
+  imageBase64 String? @map("image_base64") @db.Text // For AI-generated images
+
+  // Metadata
+  imageType   String @map("image_type") // before_after, branded_graphic, team_photo, promotional, service_showcase, quote_card, stat_graphic
+  aspectRatio String @default("1:1") @map("aspect_ratio") // 1:1, 4:3, 16:9, 9:16, 3:4
+  width       Int?
+  height      Int?
+
+  // AI Generation
+  isAiGenerated Boolean @default(false) @map("is_ai_generated")
+  aiPrompt      String? @map("ai_prompt") @db.Text
+  aiModel       String? @map("ai_model") // imagen-3.0-generate-002
+
+  // Categorization
+  tags     String[] @default([])
+  category String? // transformation, quote_card, stat_graphic, team, service
+
+  // Status
+  status String @default("active") // active, archived
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project  CreativeProject?  @relation(fields: [projectId], references: [id])
+  contents CreativeContent[]
+
+  @@index([companyId, category])
+  @@index([projectId])
+  @@map("creative_images")
+}
+
+model CreativeTemplate {
+  id          String @id @default(cuid())
+  companyId   String @map("company_id")
+  createdById String @map("created_by_id")
+
+  name        String
+  description String? @db.Text
+
+  // Template configuration
+  contentType String @map("content_type") // social_post, ad_creative
+  platform    String // linkedin, instagram, etc.
+
+  // Prompt templates
+  promptTemplate  String  @map("prompt_template") @db.Text
+  imagePromptHint String? @map("image_prompt_hint") @db.Text
+
+  // Defaults
+  defaultTone     String?  @default("professional")
+  defaultHashtags String[] @default([]) @map("default_hashtags")
+  defaultCta      String?  @map("default_cta")
+
+  // Style guidance
+  styleGuide Json? @map("style_guide") // structured style preferences
+
+  isBuiltIn Boolean @default(false) @map("is_built_in")
+  isActive  Boolean @default(true) @map("is_active")
+  useCount  Int     @default(0) @map("use_count")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([companyId, contentType])
+  @@index([platform])
+  @@map("creative_templates")
+}
+
+// ============================================
+// DAILY INSPIRATION - CREATIVE HUB TOPICS
+// ============================================
+
+enum InspirationCategory {
+  AUSTIN_LOCAL // Local restaurants, bars, venues, events
+  POP_CULTURE // Trending national topics, viral moments
+  SEASONAL // Holidays, seasonal themes, weather
+}
+
+enum InspirationStatus {
+  PENDING // Awaiting approval
+  APPROVED // Ready to use
+  REJECTED // Not suitable
+  USED // Already created content from this
+  EXPIRED // Time-sensitive topic passed
+}
+
+model InspirationTopic {
+  id        String @id @default(cuid())
+  companyId String @map("company_id")
+
+  // Topic Content
+  title   String // "Salty Sow Opens New Downtown Location"
+  summary String @db.Text // Brief hook for the topic
+  context String? @db.Text // Additional context/details
+
+  // Categorization
+  category    InspirationCategory // austin_local, pop_culture, seasonal
+  subcategory String? // restaurants, bars, events, holidays, etc.
+
+  // Source Attribution
+  sourceType String  @default("ai_discovery") @map("source_type") // ai_discovery, web_search, manual
+  sourceUrl  String? @map("source_url")
+  sourceName String? @map("source_name")
+
+  // AI-Generated Content Ideas (pre-generated post angles)
+  postIdeas       Json     @default("[]") @map("post_ideas")
+  suggestedHooks  String[] @default([]) @map("suggested_hooks")
+  relatedHashtags String[] @default([]) @map("related_hashtags")
+
+  // Metadata
+  relevanceScore Float    @default(0.5) @map("relevance_score") // AI-scored relevance
+  trendingScore  Float?   @map("trending_score") // How "hot" is this topic
+  expiresAt      DateTime? @map("expires_at") // Auto-expire time-sensitive topics
+
+  // Status & Workflow
+  status         InspirationStatus @default(PENDING)
+  approvedAt     DateTime?         @map("approved_at")
+  approvedById   String?           @map("approved_by_id")
+  rejectedReason String?           @map("rejected_reason")
+
+  // Image for the topic card
+  imageUrl    String? @map("image_url")
+  imagePrompt String? @map("image_prompt") @db.Text
+
+  // Usage Tracking
+  usedInContentId String?   @map("used_in_content_id") // Links to CreativeContent
+  usedAt          DateTime? @map("used_at")
+
+  // Date/Time
+  discoveredAt DateTime @default(now()) @map("discovered_at")
+  forDate      DateTime @db.Date @map("for_date") // Which date this topic is relevant for
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  briefing   InspirationBriefing? @relation(fields: [briefingId], references: [id])
+  briefingId String?              @map("briefing_id")
+
+  @@index([companyId, forDate, status])
+  @@index([category, status])
+  @@index([forDate, category])
+  @@map("inspiration_topics")
+}
+
+model InspirationBriefing {
+  id        String @id @default(cuid())
+  companyId String @map("company_id")
+
+  // Briefing Date
+  forDate DateTime @db.Date @map("for_date")
+
+  // Generation Status
+  status String @default("generating") // generating, ready, failed
+
+  // AI-Generated Summary
+  headline String? // "Austin's Buzzing This Week"
+  greeting String? @db.Text // Personalized morning greeting
+  summary  String? @db.Text // Quick overview of today's topics
+
+  // Generation Metadata
+  aiModel        String? @map("ai_model")
+  generatedAt    DateTime? @map("generated_at")
+  generationTime Int?    @map("generation_time") // milliseconds
+  errorMessage   String? @map("error_message") @db.Text
+
+  // Topic Stats
+  totalDiscovered Int @default(0) @map("total_discovered")
+  totalApproved   Int @default(0) @map("total_approved")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  topics InspirationTopic[]
+
+  @@unique([companyId, forDate])
+  @@index([companyId, forDate])
+  @@map("inspiration_briefings")
+}
