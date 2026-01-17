@@ -55,12 +55,23 @@ export async function POST(request: Request) {
         // Optionally generate image if requested
         let image = null
         if (params.generateImage) {
+          // Determine aspect ratio based on platform
+          let aspectRatio: AspectRatio = '1:1' // Default square
+          if (params.platform === 'instagram') {
+            aspectRatio = '1:1' // Force square for Instagram
+          } else if (params.platform === 'linkedin' || params.platform === 'facebook') {
+            aspectRatio = '16:9' // Landscape for these platforms
+          }
+
           const imageResult = await generateCreativeImage({
             imageType: (params.imageType || 'promotional') as ImageType,
-            aspectRatio: (params.aspectRatio || '1:1') as AspectRatio,
+            aspectRatio: (params.aspectRatio || aspectRatio) as AspectRatio,
             customPrompt: params.selectedIdea?.suggestedImage,
             serviceContext: params.serviceHighlight,
             style: 'photorealistic',
+            imageStyle: params.imageStyle, // Pass the image style (lifestyle, minimal, etc.)
+            platform: params.platform, // Pass the platform for dimension hints
+            topic: params.topic, // Pass topic for context
           })
 
           if (imageResult) {

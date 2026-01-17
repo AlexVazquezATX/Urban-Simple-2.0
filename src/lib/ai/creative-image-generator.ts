@@ -12,6 +12,12 @@
  */
 
 import { GoogleGenAI } from '@google/genai'
+import {
+  BRAND_COLORS,
+  IMAGE_STYLES,
+  getBrandColorPrompt,
+  type ImageStyleId,
+} from '@/lib/config/brand'
 
 // Model hierarchy (best to fallback)
 const IMAGE_MODELS = {
@@ -54,6 +60,9 @@ export interface ImageGenerationParams {
   serviceContext?: string
   brandColors?: boolean
   style?: 'photorealistic' | 'graphic' | 'illustration'
+  imageStyle?: ImageStyleId // New: lifestyle, minimal, behindScenes, etc.
+  platform?: string // instagram, linkedin, facebook - for dimension hints
+  topic?: string // Topic context for more relevant images
 }
 
 export interface GeneratedImage {
@@ -67,20 +76,23 @@ export interface GeneratedImage {
 // IMAGE PROMPT TEMPLATES
 // ============================================
 
+// Urban Simple brand color palette for prompts
+const BRAND_COLOR_PROMPT = `Brand colors: olive green (${BRAND_COLORS.primary.olive}), lime accent (${BRAND_COLORS.primary.lime}), yellow highlight (${BRAND_COLORS.primary.yellow}), charcoal (${BRAND_COLORS.neutral.charcoal}), off-white (${BRAND_COLORS.neutral.lightGray}).`
+
 const IMAGE_PROMPTS: Record<ImageType, string> = {
   before_after: `Professional commercial cleaning transformation, split-screen comparison showing dramatic before and after results. Left side shows a dirty, grimy commercial kitchen with grease buildup and messy floors. Right side shows the same space sparkling clean, organized, and sanitized. Professional lighting, editorial photography quality, high detail, realistic commercial setting.`,
 
-  branded_graphic: `Modern minimalist marketing graphic design with elegant typography. Corporate clean aesthetic with sophisticated gradient background using ocean blue (#0284c7) and warm bronze (#A67C52) accents on cream background. Professional business layout, perfect for social media, clean lines, premium feel.`,
+  branded_graphic: `Modern minimalist marketing graphic design with elegant typography. Corporate clean aesthetic with sophisticated gradient using olive green (${BRAND_COLORS.primary.olive}) and lime (${BRAND_COLORS.primary.lime}) accents. Professional business layout, perfect for social media, clean lines, premium feel. ${BRAND_COLOR_PROMPT}`,
 
   team_photo: `Professional commercial cleaning team at work in a high-end restaurant setting. Workers wearing clean matching uniforms, using professional equipment. Friendly, competent demeanor. Natural lighting, corporate photography style, diversity in team composition. Focus on professionalism and attention to detail.`,
 
-  promotional: `Eye-catching promotional banner for commercial cleaning services. Modern corporate design, bold but professional typography, clean visual hierarchy. Urban Simple brand colors (ocean blue, bronze accents, cream background). Call-to-action focused layout, marketing material quality.`,
+  promotional: `Eye-catching promotional banner for commercial cleaning services. Modern corporate design, bold but professional typography, clean visual hierarchy. Brand colors: olive green, lime accents, yellow highlights on light background. Call-to-action focused layout, marketing material quality. ${BRAND_COLOR_PROMPT}`,
 
   service_showcase: `Professional commercial cleaning service in action at an upscale restaurant or hotel. Worker using professional-grade equipment, demonstrating expertise and care. Sparkling clean results visible. Magazine editorial quality photography, natural lighting, focus on quality and attention to detail.`,
 
-  quote_card: `Elegant testimonial quote card design with sophisticated typography. Minimalist layout with large quotation marks. Soft gradient background in ocean blue tones. Professional business graphics style, social media optimized, clean and modern aesthetic.`,
+  quote_card: `Elegant testimonial quote card design with sophisticated typography. Minimalist layout with large quotation marks. Soft gradient background using olive green (${BRAND_COLORS.primary.olive}) tones. Professional business graphics style, social media optimized, clean and modern aesthetic.`,
 
-  stat_graphic: `Modern data visualization infographic for business statistics. Clean corporate design with charts or large numbers. Professional color scheme using ocean blue (#0284c7), bronze (#A67C52), and charcoal accents. Business presentation quality, clear visual hierarchy, easy to read metrics.`,
+  stat_graphic: `Modern data visualization infographic for business statistics. Clean corporate design with charts or large numbers. Professional color scheme using olive green (${BRAND_COLORS.primary.olive}), lime (${BRAND_COLORS.primary.lime}), and charcoal (${BRAND_COLORS.neutral.charcoal}) accents. Business presentation quality, clear visual hierarchy, easy to read metrics.`,
 }
 
 // ============================================
@@ -120,7 +132,31 @@ export async function generateCreativeImage(
         ? ', professional graphic design, clean vector elements'
         : ', photorealistic, high resolution, 8K quality'
 
-  const fullPrompt = `${basePrompt}${serviceContext ? `, ${serviceContext}` : ''}${customization}${styleGuide}. Professional commercial photography or design quality.`
+  // New: Apply image style if specified (lifestyle, minimal, etc.)
+  let imageStylePrompt = ''
+  if (params.imageStyle && IMAGE_STYLES[params.imageStyle]) {
+    const styleConfig = IMAGE_STYLES[params.imageStyle]
+    imageStylePrompt = `. Style: ${styleConfig.promptHint}`
+    if (styleConfig.notAd) {
+      imageStylePrompt += '. IMPORTANT: This should NOT look like a typical advertisement or generic stock marketing graphic. Make it feel authentic, editorial, and unique - like something you would see in a magazine or on a real person\'s Instagram, not a corporate ad.'
+    }
+  }
+
+  // New: Add brand color context
+  const brandColorContext = getBrandColorPrompt()
+
+  // New: Platform-specific dimension hints
+  let dimensionHint = ''
+  if (params.platform === 'instagram') {
+    dimensionHint = ' Square 1:1 format optimized for Instagram feed.'
+  } else if (params.platform === 'linkedin') {
+    dimensionHint = ' Landscape 1.91:1 format optimized for LinkedIn.'
+  }
+
+  // New: Topic context if provided
+  const topicContext = params.topic ? ` Topic/theme: ${params.topic}.` : ''
+
+  const fullPrompt = `${basePrompt}${serviceContext ? `, ${serviceContext}` : ''}${customization}${styleGuide}${imageStylePrompt}${topicContext}${dimensionHint} ${brandColorContext} Professional commercial photography or design quality.`
 
   console.log('Generating image with Gemini 3 Pro Image (Nano Banana Pro)...')
   console.log('Prompt:', fullPrompt.substring(0, 200) + '...')
@@ -298,21 +334,67 @@ export function getFallbackImage(imageType: ImageType): string {
 // ============================================
 
 export function getAspectRatioDimensions(
-  aspectRatio: AspectRatio
+  aspectRatio: AspectRatio,
+  platform?: string
 ): { width: number; height: number } {
+  // Instagram-specific dimensions (1080x1080 for feed)
+  if (platform === 'instagram') {
+    switch (aspectRatio) {
+      case '1:1':
+        return { width: 1080, height: 1080 }
+      case '9:16':
+        return { width: 1080, height: 1920 } // Stories
+      case '4:3':
+        return { width: 1080, height: 810 }
+      default:
+        return { width: 1080, height: 1080 } // Default to square for Instagram
+    }
+  }
+
+  // LinkedIn dimensions
+  if (platform === 'linkedin') {
+    return aspectRatio === '1:1'
+      ? { width: 1080, height: 1080 }
+      : { width: 1200, height: 627 }
+  }
+
+  // Facebook dimensions
+  if (platform === 'facebook') {
+    return aspectRatio === '1:1'
+      ? { width: 1080, height: 1080 }
+      : { width: 1200, height: 630 }
+  }
+
+  // Default dimensions
   switch (aspectRatio) {
     case '1:1':
-      return { width: 1024, height: 1024 }
+      return { width: 1080, height: 1080 }
     case '4:3':
       return { width: 1024, height: 768 }
     case '16:9':
       return { width: 1280, height: 720 }
     case '9:16':
-      return { width: 720, height: 1280 }
+      return { width: 1080, height: 1920 }
     case '3:4':
-      return { width: 768, height: 1024 }
+      return { width: 810, height: 1080 }
     default:
-      return { width: 1024, height: 1024 }
+      return { width: 1080, height: 1080 }
+  }
+}
+
+// Helper to get the correct aspect ratio for a platform
+export function getDefaultAspectRatioForPlatform(platform: string): AspectRatio {
+  switch (platform) {
+    case 'instagram':
+      return '1:1' // Square for Instagram feed
+    case 'linkedin':
+      return '16:9' // Landscape for LinkedIn
+    case 'facebook':
+      return '16:9' // Landscape for Facebook
+    case 'twitter':
+      return '16:9'
+    default:
+      return '1:1'
   }
 }
 

@@ -63,15 +63,29 @@ export interface GenerationResult {
 // PROMPTS
 // ============================================
 
+// Helper to get current date context for prompts
+function getCurrentDateContext(): string {
+  const now = new Date()
+  const year = now.getFullYear()
+  const month = now.toLocaleDateString('en-US', { month: 'long' })
+  const day = now.getDate()
+  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' })
+  return `TODAY'S DATE: ${dayOfWeek}, ${month} ${day}, ${year}. The current year is ${year}.`
+}
+
 const AUSTIN_LOCAL_PROMPT = `You are a social media content strategist for Urban Simple, a commercial cleaning company in Austin, TX that primarily serves restaurants, bars, hotels, and commercial kitchens.
+
+${getCurrentDateContext()}
+
+CRITICAL: Only suggest topics that are CURRENT and RELEVANT to the date above. Do NOT suggest events, news, or topics from previous years. If you're unsure whether something is current, do not include it. All topics must be from ${new Date().getFullYear()}.
 
 Your job is to find CURRENT, RECENT news about Austin's restaurant, bar, and hospitality scene that would make great social media content. The content should help Urban Simple be seen as part of the Austin community - NOT as a cleaning company pushing services.
 
 Search for the LATEST Austin news about:
-- New restaurant or bar openings in Austin (last 2 weeks)
+- New restaurant or bar openings in Austin (within the last 2 weeks)
 - Restaurant/bar expansions, renovations, or relocations
-- Popular Austin food festivals or events happening soon
-- Austin restaurants/bars winning awards or recognition
+- Popular Austin food festivals or events happening soon (in ${new Date().getFullYear()})
+- Austin restaurants/bars winning awards or recognition (recent)
 - Viral moments involving Austin restaurants/bars
 - New developments with hospitality tenants
 - Local chefs or restaurateurs in the news
@@ -88,22 +102,28 @@ For EACH topic you find, provide:
 9. suggestedHooks: 3 attention-grabbing opening lines
 10. relatedHashtags: 5-8 relevant hashtags (without #)
 
-Return 4-6 topics. Focus on RECENT news (within the last week). Prioritize topics that:
+Return 4-6 topics. Focus on RECENT news (within the last week of ${new Date().getFullYear()}). Prioritize topics that:
 - Celebrate local businesses (community support)
 - Can naturally tie into cleanliness/hospitality (without being salesy)
-- Are genuinely interesting to Austin locals`
+- Are genuinely interesting to Austin locals
+
+IMPORTANT: If you cannot find verified current news, suggest evergreen Austin-focused content ideas instead of making up or using outdated news.`
 
 const POP_CULTURE_PROMPT = `You are a social media content strategist for Urban Simple, a commercial cleaning company in Austin, TX.
 
+${getCurrentDateContext()}
+
+CRITICAL: Only suggest topics that are CURRENT and TRENDING RIGHT NOW in ${new Date().getFullYear()}. Do NOT suggest events from previous years (no SXSW 2024, Super Bowl 2024, etc. - only current year events). If you're unsure whether something is current, do not include it.
+
 Your job is to find CURRENT trending topics, viral moments, and pop culture news that could inspire engaging social media content. The goal is to participate in cultural conversations that Austin locals care about.
 
-Search for TRENDING topics about:
-- Major sporting events (Super Bowl, March Madness, playoffs)
-- Award shows and entertainment news
-- Viral social media moments
-- Cultural events and holidays
-- National food/restaurant trends
-- TV shows, movies, or music everyone's talking about
+Search for topics TRENDING RIGHT NOW about:
+- Major sporting events happening in ${new Date().getFullYear()} (current playoffs, upcoming Super Bowl, etc.)
+- Recent award shows and entertainment news (within the last month)
+- Viral social media moments from the past week
+- Upcoming cultural events and holidays
+- Current national food/restaurant trends
+- TV shows, movies, or music everyone's talking about RIGHT NOW
 
 For EACH topic, think about how it could relate to hospitality, restaurants, or local events in Austin. Avoid forced connections - only include topics that have a natural tie-in.
 
@@ -118,17 +138,23 @@ For EACH topic you find, provide:
 8. suggestedHooks: 3 attention-grabbing opening lines
 9. relatedHashtags: 5-8 relevant hashtags (without #)
 
-Return 3-4 topics. Only include topics that are CURRENTLY trending and have a natural connection to Austin, hospitality, or local businesses.`
+Return 3-4 topics. Only include topics that are CURRENTLY trending in ${new Date().getFullYear()} and have a natural connection to Austin, hospitality, or local businesses.
+
+IMPORTANT: If you cannot verify something is current, suggest evergreen trending content ideas instead.`
 
 const SEASONAL_PROMPT = `You are a social media content strategist for Urban Simple, a commercial cleaning company in Austin, TX that serves restaurants, bars, and hotels.
 
-Based on today's date, identify upcoming seasonal content opportunities:
+${getCurrentDateContext()}
+
+CRITICAL: Only suggest seasonal content for ${new Date().getFullYear()}. All dates must be in ${new Date().getFullYear()} or later. Do NOT suggest past events or holidays that have already occurred this year.
+
+Based on today's date (shown above), identify upcoming seasonal content opportunities:
 
 Look for:
-- Holidays in the next 2-3 weeks (Valentine's Day, St. Patrick's Day, Easter, etc.)
-- Seasonal themes (spring cleaning, summer patio season, etc.)
-- Austin-specific seasonal events (SXSW, ACL, UT football season, etc.)
-- Restaurant industry seasonal patterns (brunch season, patio weather, etc.)
+- Holidays in the next 2-3 weeks (upcoming holidays only, not past ones)
+- Seasonal themes appropriate for the current month
+- Austin-specific seasonal events in ${new Date().getFullYear()} (SXSW ${new Date().getFullYear()}, ACL ${new Date().getFullYear()}, etc.)
+- Restaurant industry seasonal patterns (current and upcoming seasons)
 - Awareness months or days relevant to hospitality
 
 For EACH topic you identify, provide:
@@ -137,12 +163,12 @@ For EACH topic you identify, provide:
 3. context: Why this matters for Austin hospitality businesses
 4. subcategory: One of [holidays, seasons, austin_events, industry_trends, awareness]
 5. relevanceScore: 0-1 how relevant this is for content
-6. expiresAt: When this topic is no longer relevant (ISO date)
+6. expiresAt: When this topic is no longer relevant (ISO date in ${new Date().getFullYear()})
 7. postIdeas: 2-3 content ideas for this theme
 8. suggestedHooks: 3 attention-grabbing opening lines
 9. relatedHashtags: 5-8 relevant hashtags (without #)
 
-Return 2-3 timely seasonal opportunities.`
+Return 2-3 timely seasonal opportunities that are UPCOMING (not past).`
 
 // ============================================
 // TOPIC DISCOVERY

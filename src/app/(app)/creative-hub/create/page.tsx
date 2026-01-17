@@ -79,6 +79,17 @@ const TONES = [
   { value: 'funny', label: 'Funny / Quirky' },
 ]
 
+const IMAGE_STYLES = [
+  { value: 'lifestyle', label: 'Lifestyle / Community', description: 'Authentic Austin scenes, local restaurants, real moments' },
+  { value: 'minimal', label: 'Minimal / Editorial', description: 'Clean, magazine-quality, sophisticated' },
+  { value: 'behindScenes', label: 'Behind the Scenes', description: 'Real work moments, team culture, authentic action' },
+  { value: 'quote', label: 'Quote / Typography', description: 'Text-focused, inspirational, clean backgrounds' },
+  { value: 'data', label: 'Stats / Infographic', description: 'Data visualization, facts, educational' },
+  { value: 'branded', label: 'Branded Promotional', description: 'When you actually want an ad with logo and CTA' },
+  { value: 'artistic', label: 'Artistic / Abstract', description: 'Creative, eye-catching, pattern-based' },
+  { value: 'seasonal', label: 'Seasonal / Holiday', description: 'Themed for specific holidays or seasons' },
+]
+
 export default function CreateContentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -96,6 +107,7 @@ export default function CreateContentPage() {
     topic: '',
     callToAction: 'Get a free quote today',
     topicId: '', // For tracking which inspiration topic this came from
+    imageStyle: 'lifestyle', // Default to lifestyle for authentic, non-ad feel
   })
 
   // Check for query params from Daily Inspiration
@@ -197,6 +209,7 @@ export default function CreateContentPage() {
           selectedIdea: idea,
           generateImage: true,
           imageType: 'promotional',
+          imageStyle: params.imageStyle,
         }),
       })
 
@@ -224,15 +237,22 @@ export default function CreateContentPage() {
   async function handleRegenerateImage() {
     setUploadingImage(true)
     try {
+      // Force square for Instagram, otherwise use platform default
+      const aspectRatio = params.platform === 'instagram' ? '1:1' :
+        (params.platform === 'linkedin' || params.platform === 'facebook') ? '16:9' : '1:1'
+
       const response = await fetch('/api/creative-hub/images/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'generate',
           imageType: 'promotional',
-          aspectRatio: '1:1',
+          aspectRatio,
           serviceContext: params.serviceHighlight,
           customPrompt: selectedIdea?.suggestedImage,
+          imageStyle: params.imageStyle,
+          platform: params.platform,
+          topic: params.topic,
         }),
       })
 
@@ -465,6 +485,32 @@ export default function CreateContentPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Image Style */}
+            <div>
+              <Label>Image Style</Label>
+              <p className="text-xs text-charcoal-500 mb-2">Choose how you want the generated image to look</p>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {IMAGE_STYLES.map((style) => {
+                  const isSelected = params.imageStyle === style.value
+                  return (
+                    <button
+                      key={style.value}
+                      type="button"
+                      onClick={() => setParams({ ...params, imageStyle: style.value })}
+                      className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        isSelected
+                          ? 'border-ocean-500 bg-ocean-50'
+                          : 'border-cream-200 hover:border-cream-300'
+                      }`}
+                    >
+                      <span className="text-sm font-medium block">{style.label}</span>
+                      <span className="text-xs text-charcoal-500">{style.description}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             {/* Target Audience */}

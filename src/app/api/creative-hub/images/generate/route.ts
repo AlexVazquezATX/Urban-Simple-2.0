@@ -27,6 +27,9 @@ export async function POST(request: Request) {
       projectId,
       name,
       saveToLibrary,
+      imageStyle,
+      platform,
+      topic,
     } = body
 
     if (action === 'generate') {
@@ -36,6 +39,9 @@ export async function POST(request: Request) {
         customPrompt,
         serviceContext,
         style: style || 'photorealistic',
+        imageStyle, // lifestyle, minimal, behindScenes, etc.
+        platform, // instagram, linkedin, facebook
+        topic, // topic context for more relevant images
       })
 
       if (result) {
