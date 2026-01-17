@@ -83,6 +83,7 @@ export default function DailyInspirationPage() {
   const [topics, setTopics] = useState<Topic[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [selectedCategory, setSelectedCategory] = useState<CategoryFilter>('ALL')
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -108,17 +109,28 @@ export default function DailyInspirationPage() {
   async function generateTopics() {
     try {
       setGenerating(true)
+      setError(null)
       const response = await fetch('/api/creative-hub/inspiration', {
         method: 'POST',
       })
       const data = await response.json()
 
+      if (!response.ok) {
+        setError(data.error || data.details || 'Failed to generate topics')
+        return
+      }
+
       if (data.success && data.briefing) {
         setBriefing(data.briefing)
         setTopics(data.briefing.topics || [])
+      } else if (data.errors && data.errors.length > 0) {
+        setError(data.errors.join(', '))
+      } else if (!data.success) {
+        setError('No topics were generated. The AI may not have found relevant content.')
       }
-    } catch (error) {
-      console.error('Failed to generate topics:', error)
+    } catch (err) {
+      console.error('Failed to generate topics:', err)
+      setError('Network error. Please try again.')
     } finally {
       setGenerating(false)
     }
@@ -276,8 +288,23 @@ export default function DailyInspirationPage() {
           })}
         </div>
 
+        {/* Error State */}
+        {error && (
+          <div className="mb-6 px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <X className="w-4 h-4 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-red-800">Failed to generate topics</p>
+                <p className="text-sm text-red-600 mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Empty State */}
-        {topics.length === 0 && !generating && (
+        {topics.length === 0 && !generating && !error && (
           <div className="text-center py-16">
             <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-4">
               <Sparkles className="w-8 h-8 text-orange-600" />
