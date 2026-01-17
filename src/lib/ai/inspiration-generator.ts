@@ -149,7 +149,7 @@ Return 2-3 timely seasonal opportunities.`
 // ============================================
 
 export async function discoverAustinLocalTopics(): Promise<DiscoveredTopic[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   try {
     const result = await model.generateContent({
@@ -180,7 +180,7 @@ export async function discoverAustinLocalTopics(): Promise<DiscoveredTopic[]> {
 }
 
 export async function discoverPopCultureTopics(): Promise<DiscoveredTopic[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   try {
     const result = await model.generateContent({
@@ -211,7 +211,7 @@ export async function discoverPopCultureTopics(): Promise<DiscoveredTopic[]> {
 }
 
 export async function discoverSeasonalTopics(): Promise<DiscoveredTopic[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const today = new Date().toLocaleDateString('en-US', {
     weekday: 'long',
@@ -301,7 +301,7 @@ export async function generateQuickPostIdeas(
   },
   platform?: string
 ): Promise<PostIdea[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const platformInstructions = platform
     ? `Focus on ${platform} specifically.`
@@ -359,7 +359,7 @@ export async function generateBriefingSummary(
   topics: DiscoveredTopic[],
   userName?: string
 ): Promise<{ headline: string; greeting: string; summary: string }> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash' })
 
   const today = new Date()
   const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' })

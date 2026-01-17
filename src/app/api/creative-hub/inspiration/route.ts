@@ -151,7 +151,7 @@ export async function POST(request: NextRequest) {
         headline: briefingSummary.headline,
         greeting: briefingSummary.greeting,
         summary: briefingSummary.summary,
-        aiModel: 'gemini-2.0-flash-exp',
+        aiModel: 'gemini-2.0-flash',
         generatedAt: new Date(),
         generationTime: result.generationTime,
         totalDiscovered: result.topics.length,
