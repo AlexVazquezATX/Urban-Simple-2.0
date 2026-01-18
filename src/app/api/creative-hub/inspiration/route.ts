@@ -17,6 +17,7 @@ import {
   generateDailyTopics,
   generateBriefingSummary,
 } from '@/lib/ai/inspiration-generator'
+import type { ContentModeId } from '@/lib/config/brand'
 
 // Get today's briefing
 export async function GET(request: NextRequest) {
@@ -89,10 +90,13 @@ export async function POST(request: NextRequest) {
     const companyId = user.companyId
     const userName = user.firstName || undefined
 
-    // Get or parse date
+    // Get or parse date and content mode
     const body = await request.json().catch(() => ({}))
     const forDate = body.date ? new Date(body.date) : new Date()
     forDate.setHours(0, 0, 0, 0)
+
+    // Content mode: 'community' (default - no cleaning mentions), 'hybrid', or 'promotional'
+    const contentMode: ContentModeId = body.contentMode || 'community'
 
     // Create or get briefing
     const briefing = await getOrCreateBriefing(companyId, forDate)
@@ -101,8 +105,8 @@ export async function POST(request: NextRequest) {
     await updateBriefing(briefing.id, { status: 'generating' })
 
     try {
-      // Generate topics using AI
-      const result = await generateDailyTopics()
+      // Generate topics using AI with content mode
+      const result = await generateDailyTopics(contentMode)
 
       if (!result.success || result.topics.length === 0) {
         await updateBriefing(briefing.id, {

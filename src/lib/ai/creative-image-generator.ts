@@ -118,47 +118,85 @@ export async function generateCreativeImage(
 ): Promise<GeneratedImage | null> {
   const ai = getGenAI()
 
-  // Build the full prompt
-  const basePrompt = IMAGE_PROMPTS[params.imageType]
-  const serviceContext = params.serviceContext
-    ? SERVICE_CONTEXTS[params.serviceContext] ||
-      `featuring ${params.serviceContext}`
-    : ''
-  const customization = params.customPrompt ? `, ${params.customPrompt}` : ''
-  const styleGuide =
-    params.style === 'illustration'
-      ? ', digital illustration style, vector art quality'
-      : params.style === 'graphic'
-        ? ', professional graphic design, clean vector elements'
-        : ', photorealistic, high resolution, 8K quality'
+  // Check if this is a community/lifestyle style (NOT promotional)
+  const styleConfig = params.imageStyle ? IMAGE_STYLES[params.imageStyle] : null
+  const isCommunityStyle = styleConfig?.notAd === true
 
-  // New: Apply image style if specified (lifestyle, minimal, etc.)
-  let imageStylePrompt = ''
-  if (params.imageStyle && IMAGE_STYLES[params.imageStyle]) {
-    const styleConfig = IMAGE_STYLES[params.imageStyle]
-    imageStylePrompt = `. Style: ${styleConfig.promptHint}`
-    if (styleConfig.notAd) {
-      imageStylePrompt += '. IMPORTANT: This should NOT look like a typical advertisement or generic stock marketing graphic. Make it feel authentic, editorial, and unique - like something you would see in a magazine or on a real person\'s Instagram, not a corporate ad.'
+  // For community/lifestyle content, use a completely different prompt approach
+  // NO promotional graphics, NO text overlays, NO CTAs - just beautiful photos
+  let fullPrompt: string
+
+  if (isCommunityStyle) {
+    // COMMUNITY MODE: Generate lifestyle photography, NOT promotional graphics
+    const topicHint = params.topic ? `Related to: ${params.topic}. ` : ''
+    const customHint = params.customPrompt ? `Scene suggestion: ${params.customPrompt}. ` : ''
+
+    // Build a lifestyle/editorial photo prompt based on the style
+    let stylePrompt = ''
+    switch (params.imageStyle) {
+      case 'lifestyle':
+        stylePrompt = `Beautiful lifestyle photography of Austin, Texas. ${topicHint}${customHint}Authentic, warm, inviting atmosphere. Natural lighting, candid feel. Could be: a cozy Austin restaurant interior, people enjoying food and drinks, local street scenes, vibrant Austin culture. Magazine editorial quality. NO text, NO logos, NO promotional graphics, NO business branding - just a beautiful photo that captures the Austin vibe.`
+        break
+      case 'minimal':
+        stylePrompt = `Clean, minimalist editorial photography. ${topicHint}${customHint}Sophisticated composition with plenty of negative space. Modern, artistic, magazine-quality. Soft natural lighting. NO text overlays, NO graphics, NO promotional elements - pure visual storytelling.`
+        break
+      case 'behindScenes':
+        stylePrompt = `Documentary-style candid photography. ${topicHint}${customHint}Real, authentic moments. Natural and unposed. Behind-the-scenes feel of hospitality or local business. Warm, genuine atmosphere. NO staged marketing shots, NO text, NO promotional graphics.`
+        break
+      case 'seasonal':
+        stylePrompt = `Seasonal/holiday themed lifestyle photography. ${topicHint}${customHint}Festive but sophisticated. Captures the spirit of the season in Austin. Beautiful natural lighting. Editorial quality. NO promotional text, NO sale graphics, NO business branding - just a beautiful seasonal photo.`
+        break
+      case 'artistic':
+        stylePrompt = `Creative artistic photography or abstract visual. ${topicHint}${customHint}Eye-catching, unique composition. Bold colors or interesting patterns. Modern art photography style. NO text, NO logos, NO commercial graphics.`
+        break
+      case 'quote':
+        stylePrompt = `Clean, elegant background suitable for text overlay. ${topicHint}Soft gradient or subtle texture. Minimalist, sophisticated. Brand colors: olive green (${BRAND_COLORS.primary.olive}), lime accent (${BRAND_COLORS.primary.lime}). NO pre-existing text - just the background.`
+        break
+      case 'data':
+        stylePrompt = `Clean, modern background for infographic. ${topicHint}Professional, minimal design. Subtle brand colors as accents. NO pre-existing charts or text - just a clean canvas.`
+        break
+      default:
+        stylePrompt = `Beautiful lifestyle photography. ${topicHint}${customHint}Authentic, editorial quality. Natural lighting. NO promotional graphics, NO text overlays, NO business branding.`
     }
+
+    // Platform-specific adjustments
+    if (params.platform === 'instagram') {
+      stylePrompt += ' Square 1:1 composition optimized for Instagram feed. Eye-catching, scroll-stopping visual.'
+    } else if (params.platform === 'linkedin') {
+      stylePrompt += ' Professional yet warm. Landscape composition.'
+    }
+
+    fullPrompt = stylePrompt + ' High resolution, 8K quality photography.'
+  } else {
+    // PROMOTIONAL MODE: Use the original promotional prompt logic
+    const basePrompt = IMAGE_PROMPTS[params.imageType]
+    const serviceContext = params.serviceContext
+      ? SERVICE_CONTEXTS[params.serviceContext] ||
+        `featuring ${params.serviceContext}`
+      : ''
+    const customization = params.customPrompt ? `, ${params.customPrompt}` : ''
+    const styleGuide =
+      params.style === 'illustration'
+        ? ', digital illustration style, vector art quality'
+        : params.style === 'graphic'
+          ? ', professional graphic design, clean vector elements'
+          : ', photorealistic, high resolution, 8K quality'
+
+    const brandColorContext = getBrandColorPrompt()
+    const topicContext = params.topic ? ` Topic/theme: ${params.topic}.` : ''
+
+    let dimensionHint = ''
+    if (params.platform === 'instagram') {
+      dimensionHint = ' Square 1:1 format optimized for Instagram feed.'
+    } else if (params.platform === 'linkedin') {
+      dimensionHint = ' Landscape 1.91:1 format optimized for LinkedIn.'
+    }
+
+    fullPrompt = `${basePrompt}${serviceContext ? `, ${serviceContext}` : ''}${customization}${styleGuide}${topicContext}${dimensionHint} ${brandColorContext} Professional commercial photography or design quality.`
   }
 
-  // New: Add brand color context
-  const brandColorContext = getBrandColorPrompt()
-
-  // New: Platform-specific dimension hints
-  let dimensionHint = ''
-  if (params.platform === 'instagram') {
-    dimensionHint = ' Square 1:1 format optimized for Instagram feed.'
-  } else if (params.platform === 'linkedin') {
-    dimensionHint = ' Landscape 1.91:1 format optimized for LinkedIn.'
-  }
-
-  // New: Topic context if provided
-  const topicContext = params.topic ? ` Topic/theme: ${params.topic}.` : ''
-
-  const fullPrompt = `${basePrompt}${serviceContext ? `, ${serviceContext}` : ''}${customization}${styleGuide}${imageStylePrompt}${topicContext}${dimensionHint} ${brandColorContext} Professional commercial photography or design quality.`
-
-  console.log('Generating image with Gemini 3 Pro Image (Nano Banana Pro)...')
+  console.log('Generating image...')
+  console.log('Community mode:', isCommunityStyle)
   console.log('Prompt:', fullPrompt.substring(0, 200) + '...')
 
   // Try Gemini 3 Pro Image first (Nano Banana Pro - best quality)

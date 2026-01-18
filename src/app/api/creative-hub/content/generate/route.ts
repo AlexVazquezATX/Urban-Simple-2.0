@@ -35,6 +35,7 @@ export async function POST(request: Request) {
           topic: params.topic,
           includeStats: params.includeStats,
           callToAction: params.callToAction,
+          imageStyle: params.imageStyle, // Pass image style to determine content tone
         })
         return NextResponse.json({ ideas })
       }
@@ -48,6 +49,7 @@ export async function POST(request: Request) {
             tone: params.tone as Tone,
             targetAudience: params.targetAudience,
             callToAction: params.callToAction,
+            imageStyle: params.imageStyle, // Pass image style to determine content tone
           },
           params.selectedIdea
         )

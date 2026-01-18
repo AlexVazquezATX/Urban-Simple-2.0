@@ -4,8 +4,9 @@ import { prisma } from '@/lib/db'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import { Users, DollarSign, FileText, AlertTriangle, TrendingUp, Calendar, Clock } from 'lucide-react'
+import { Users, DollarSign, FileText, AlertTriangle, TrendingUp, Calendar, Clock, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 async function DashboardStats() {
   const user = await getCurrentUser()
@@ -219,13 +220,21 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-1">
-        <h1 className="text-4xl font-bold tracking-tight font-display">
-          {greeting}, {user?.firstName}
-        </h1>
-        <p className="text-lg text-muted-foreground">
-          Here's what's happening with your business today
-        </p>
+      <div className="flex items-start justify-between">
+        <div className="space-y-1">
+          <h1 className="text-4xl font-bold tracking-tight font-display">
+            {greeting}, {user?.firstName}
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Here's what's happening with your business today
+          </p>
+        </div>
+        <Link href="/landing" target="_blank">
+          <Button variant="outline" className="gap-2">
+            <ExternalLink className="w-4 h-4" />
+            View Homepage
+          </Button>
+        </Link>
       </div>
 
       <Suspense fallback={<DashboardStatsSkeleton />}>

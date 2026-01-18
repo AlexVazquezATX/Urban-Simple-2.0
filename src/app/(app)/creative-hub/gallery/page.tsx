@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   Sparkles,
@@ -23,10 +24,17 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Upload,
+  RefreshCw,
+  Link as LinkIcon,
+  ImageIcon,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -92,6 +100,8 @@ const STATUSES = [
 ]
 
 export default function ContentGalleryPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
   const [contents, setContents] = useState<CreativeContent[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
@@ -102,10 +112,55 @@ export default function ContentGalleryPage() {
   })
   const [selectedContent, setSelectedContent] = useState<CreativeContent | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [editForm, setEditForm] = useState<{
+    headline: string
+    primaryText: string
+    description: string
+    callToAction: string
+    hashtags: string
+  }>({ headline: '', primaryText: '', description: '', callToAction: '', hashtags: '' })
+  const [editImageUrl, setEditImageUrl] = useState('')
+  const [showImageOptions, setShowImageOptions] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   useEffect(() => {
     loadContents()
   }, [filter])
+
+  // Handle URL query params for view/edit
+  useEffect(() => {
+    const viewId = searchParams.get('view')
+    const editId = searchParams.get('edit')
+
+    if ((viewId || editId) && contents.length > 0) {
+      const contentId = viewId || editId
+      const content = contents.find((c) => c.id === contentId)
+
+      if (content) {
+        setSelectedContent(content)
+        if (editId) {
+          // Open edit dialog
+          setEditForm({
+            headline: content.headline || '',
+            primaryText: content.primaryText,
+            description: content.description || '',
+            callToAction: content.callToAction || '',
+            hashtags: content.hashtags?.join(', ') || '',
+          })
+          setEditImageUrl('')
+          setShowImageOptions(false)
+          setShowEdit(true)
+        } else {
+          // Open preview dialog
+          setShowPreview(true)
+        }
+        // Clear the URL params
+        router.replace('/creative-hub/gallery', { scroll: false })
+      }
+    }
+  }, [searchParams, contents, router])
 
   async function loadContents() {
     try {
@@ -117,7 +172,7 @@ export default function ContentGalleryPage() {
 
       const response = await fetch(`/api/creative-hub/content?${params}`)
       const data = await response.json()
-      setContents(data.contents || [])
+      setContents(data.content || [])
     } catch (error) {
       console.error('Failed to load contents:', error)
     } finally {
@@ -167,25 +222,134 @@ export default function ContentGalleryPage() {
   }
 
   function exportContent(content: CreativeContent) {
-    const data = {
-      platform: content.platform,
-      contentType: content.contentType,
-      headline: content.headline,
-      primaryText: content.primaryText,
-      description: content.description,
-      callToAction: content.callToAction,
-      hashtags: content.hashtags,
-    }
+    // Export as a text file that's easy to copy-paste
+    const text = [
+      content.headline ? `HEADLINE:\n${content.headline}\n` : '',
+      `CAPTION:\n${content.primaryText}\n`,
+      content.description ? `DESCRIPTION:\n${content.description}\n` : '',
+      content.callToAction ? `CTA:\n${content.callToAction}\n` : '',
+      content.hashtags?.length ? `HASHTAGS:\n${content.hashtags.map(h => '#' + h).join(' ')}\n` : '',
+      `\n---\nPlatform: ${content.platform}\nType: ${content.contentType}\nCreated: ${new Date(content.createdAt).toLocaleDateString()}`,
+    ].filter(Boolean).join('\n')
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], {
-      type: 'application/json',
-    })
+    const blob = new Blob([text], { type: 'text/plain' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `${content.platform}-content-${content.id}.json`
+    link.download = `${content.platform}-content-${content.id}.txt`
     link.click()
     URL.revokeObjectURL(url)
+  }
+
+  async function downloadImage(content: CreativeContent) {
+    const imageSrc = getImageSrc(content)
+    if (!imageSrc) return
+
+    try {
+      // For base64 images
+      if (imageSrc.startsWith('data:')) {
+        const link = document.createElement('a')
+        link.href = imageSrc
+        link.download = `${content.platform}-image-${content.id}.png`
+        link.click()
+      } else {
+        // For URL images, fetch and download
+        const response = await fetch(imageSrc)
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${content.platform}-image-${content.id}.png`
+        link.click()
+        URL.revokeObjectURL(url)
+      }
+    } catch (error) {
+      console.error('Failed to download image:', error)
+      alert('Failed to download image')
+    }
+  }
+
+  function openEditDialog(content: CreativeContent) {
+    setSelectedContent(content)
+    setEditForm({
+      headline: content.headline || '',
+      primaryText: content.primaryText,
+      description: content.description || '',
+      callToAction: content.callToAction || '',
+      hashtags: content.hashtags?.join(', ') || '',
+    })
+    setEditImageUrl('')
+    setShowImageOptions(false)
+    setShowEdit(true)
+  }
+
+  async function handleSaveEdit() {
+    if (!selectedContent) return
+
+    setSaving(true)
+    try {
+      // Update content
+      const response = await fetch(`/api/creative-hub/content/${selectedContent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headline: editForm.headline || undefined,
+          primaryText: editForm.primaryText,
+          description: editForm.description || undefined,
+          callToAction: editForm.callToAction || undefined,
+          hashtags: editForm.hashtags.split(',').map(h => h.trim()).filter(Boolean),
+        }),
+      })
+
+      if (!response.ok) throw new Error('Failed to update content')
+
+      // If we have a new image URL, update the image
+      if (editImageUrl && selectedContent.image?.id) {
+        await fetch(`/api/creative-hub/images/${selectedContent.image.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageUrl: editImageUrl }),
+        })
+      }
+
+      // Reload contents to reflect changes
+      await loadContents()
+      setShowEdit(false)
+      setSelectedContent(null)
+    } catch (error) {
+      console.error('Failed to save changes:', error)
+      alert('Failed to save changes. Please try again.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function handleImageUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file || !selectedContent) return
+
+    setUploadingImage(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'creative')
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) throw new Error('Upload failed')
+
+      const data = await response.json()
+      setEditImageUrl(data.url)
+      setShowImageOptions(false)
+    } catch (error) {
+      console.error('Failed to upload image:', error)
+      alert('Failed to upload image. Please try again.')
+    } finally {
+      setUploadingImage(false)
+    }
   }
 
   function getPlatformIcon(platform: string) {
@@ -456,11 +620,25 @@ export default function ContentGalleryPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
+                            onClick={() => openEditDialog(content)}
+                          >
+                            <Edit2 className="w-4 h-4 mr-2" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() => exportContent(content)}
                           >
                             <Download className="w-4 h-4 mr-2" />
-                            Export
+                            Export Text
                           </DropdownMenuItem>
+                          {getImageSrc(content) && (
+                            <DropdownMenuItem
+                              onClick={() => downloadImage(content)}
+                            >
+                              <ImageIcon className="w-4 h-4 mr-2" />
+                              Download Image
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem
                             onClick={() =>
                               handleStatusChange(content.id, 'approved')
@@ -713,6 +891,209 @@ export default function ContentGalleryPage() {
                 >
                   <Download className="w-4 h-4 mr-2" />
                   Export
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEdit} onOpenChange={setShowEdit}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Content</DialogTitle>
+          </DialogHeader>
+          {selectedContent && (
+            <div className="space-y-6 mt-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left: Text Content */}
+                <div className="space-y-4">
+                  <div>
+                    <Label>Headline</Label>
+                    <Input
+                      value={editForm.headline}
+                      onChange={(e) => setEditForm({ ...editForm, headline: e.target.value })}
+                      placeholder="Headline (optional)"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Primary Text / Caption</Label>
+                    <Textarea
+                      value={editForm.primaryText}
+                      onChange={(e) => setEditForm({ ...editForm, primaryText: e.target.value })}
+                      rows={6}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Description</Label>
+                    <Input
+                      value={editForm.description}
+                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                      placeholder="Description (optional)"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Call to Action</Label>
+                    <Input
+                      value={editForm.callToAction}
+                      onChange={(e) => setEditForm({ ...editForm, callToAction: e.target.value })}
+                      placeholder="Call to action (optional)"
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label>Hashtags (comma-separated)</Label>
+                    <Input
+                      value={editForm.hashtags}
+                      onChange={(e) => setEditForm({ ...editForm, hashtags: e.target.value })}
+                      placeholder="austin, local, community"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+
+                {/* Right: Image */}
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-lg font-semibold">Image</Label>
+                    <p className="text-sm text-charcoal-500 mb-3">
+                      Swap out the AI-generated image with your own
+                    </p>
+                  </div>
+
+                  {/* Current/New Image Preview */}
+                  <div className="relative rounded-lg overflow-hidden bg-charcoal-100 aspect-square">
+                    {editImageUrl ? (
+                      <img
+                        src={editImageUrl}
+                        alt="New image"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : getImageSrc(selectedContent) ? (
+                      <img
+                        src={getImageSrc(selectedContent)!}
+                        alt="Current image"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <ImageIcon className="w-12 h-12 text-charcoal-300" />
+                      </div>
+                    )}
+                    {editImageUrl && (
+                      <Badge className="absolute top-2 right-2 bg-green-500">
+                        New Image
+                      </Badge>
+                    )}
+                  </div>
+
+                  {/* Image Actions */}
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start"
+                      onClick={() => setShowImageOptions(!showImageOptions)}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Change Image
+                    </Button>
+
+                    {showImageOptions && (
+                      <div className="p-4 bg-charcoal-50 rounded-lg border space-y-3">
+                        {/* Upload */}
+                        <div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            id="edit-image-upload"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full justify-start"
+                            onClick={() => document.getElementById('edit-image-upload')?.click()}
+                            disabled={uploadingImage}
+                          >
+                            {uploadingImage ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Upload className="w-4 h-4 mr-2" />
+                            )}
+                            Upload from Computer
+                          </Button>
+                        </div>
+
+                        {/* URL Input */}
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Or paste image URL..."
+                            value={editImageUrl}
+                            onChange={(e) => setEditImageUrl(e.target.value)}
+                            className="text-sm"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setShowImageOptions(false)}
+                          >
+                            <LinkIcon className="w-4 h-4" />
+                          </Button>
+                        </div>
+
+                        <p className="text-xs text-charcoal-500">
+                          Tip: Use a real photo of the business or location for authenticity
+                        </p>
+                      </div>
+                    )}
+
+                    {editImageUrl && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600"
+                        onClick={() => setEditImageUrl('')}
+                      >
+                        Remove new image
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowEdit(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={saving}
+                  className="bg-ocean-600 hover:bg-ocean-700"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Save Changes
+                    </>
+                  )}
                 </Button>
               </div>
             </div>

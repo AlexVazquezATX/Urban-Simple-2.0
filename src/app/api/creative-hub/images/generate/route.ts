@@ -109,6 +109,39 @@ export async function POST(request: Request) {
       })
     }
 
+    // Save an already-generated image to the library
+    if (action === 'save') {
+      const { imageBase64, imageUrl } = body
+
+      if (!imageBase64 && !imageUrl) {
+        return NextResponse.json(
+          { error: 'No image data provided' },
+          { status: 400 }
+        )
+      }
+
+      const dimensions = getAspectRatioDimensions(
+        (aspectRatio || '1:1') as AspectRatio,
+        platform
+      )
+
+      const savedImage = await createImage({
+        companyId: user.companyId,
+        projectId,
+        name: name || `Content Image - ${new Date().toLocaleDateString()}`,
+        imageBase64,
+        imageUrl,
+        imageType: (imageType || 'service_showcase') as ImageType,
+        aspectRatio: (aspectRatio || '1:1') as AspectRatio,
+        width: dimensions.width,
+        height: dimensions.height,
+        isAiGenerated: !!imageBase64, // Base64 usually means AI-generated
+        category: imageType || 'content',
+      })
+
+      return NextResponse.json(savedImage)
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error) {
     console.error('Image generation error:', error)

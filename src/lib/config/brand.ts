@@ -165,3 +165,79 @@ ${topic ? `Topic context: ${topic}` : ''}
 ${styleConfig.notAd ? 'IMPORTANT: This should NOT look like a typical advertisement or stock marketing graphic. Make it feel authentic, editorial, and unique.' : ''}
 `.trim()
 }
+
+// ============================================
+// CONTENT MODE CONFIGURATION
+// ============================================
+
+/**
+ * Content Mode - Controls what type of content is generated
+ *
+ * When community mode is ON (default for lifestyle styles):
+ * - NO mentions of cleaning, sanitization, or Urban Simple services
+ * - NO sales pitches or CTAs about getting quotes/hiring
+ * - Focus on Austin community, local businesses, events, culture
+ * - Position the brand as a community member, not a vendor
+ *
+ * When promotional mode is ON:
+ * - Standard B2B marketing content
+ * - Service highlights and CTAs included
+ * - Focus on cleaning industry and business value
+ */
+export interface ContentMode {
+  includeSalesPitch: boolean       // Include sales language and promotional messaging
+  includeCTA: boolean              // Include calls-to-action (contact us, get a quote, etc.)
+  includeCleaningMentions: boolean // Mention cleaning, sanitization, or Urban Simple services
+  includeServiceHighlights: boolean // Highlight specific services (kitchen cleaning, etc.)
+}
+
+// Preset modes for easy selection
+export const CONTENT_MODES = {
+  community: {
+    id: 'community',
+    name: 'Community / Lifestyle',
+    description: 'Pure Austin community content - no business pitch',
+    mode: {
+      includeSalesPitch: false,
+      includeCTA: false,
+      includeCleaningMentions: false,
+      includeServiceHighlights: false,
+    } as ContentMode,
+  },
+  hybrid: {
+    id: 'hybrid',
+    name: 'Soft Brand',
+    description: 'Community-focused with subtle brand presence',
+    mode: {
+      includeSalesPitch: false,
+      includeCTA: false,
+      includeCleaningMentions: true, // Can mention we work with restaurants, but not salesy
+      includeServiceHighlights: false,
+    } as ContentMode,
+  },
+  promotional: {
+    id: 'promotional',
+    name: 'Promotional',
+    description: 'Standard marketing content with CTAs',
+    mode: {
+      includeSalesPitch: true,
+      includeCTA: true,
+      includeCleaningMentions: true,
+      includeServiceHighlights: true,
+    } as ContentMode,
+  },
+} as const
+
+export type ContentModeId = keyof typeof CONTENT_MODES
+
+// Default mode based on image style
+export function getDefaultContentMode(imageStyle?: ImageStyleId): ContentModeId {
+  if (!imageStyle) return 'promotional'
+  const style = IMAGE_STYLES[imageStyle]
+  return style?.notAd ? 'community' : 'promotional'
+}
+
+// Get content mode configuration
+export function getContentModeConfig(modeId: ContentModeId): ContentMode {
+  return CONTENT_MODES[modeId].mode
+}

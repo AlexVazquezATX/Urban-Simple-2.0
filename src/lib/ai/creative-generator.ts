@@ -9,6 +9,7 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { IMAGE_STYLES, type ImageStyleId } from '@/lib/config/brand'
 
 // Lazy initialization of Gemini client
 let genAI: GoogleGenerativeAI | null = null
@@ -62,6 +63,7 @@ export interface ContentGenerationParams {
   topic?: string
   includeStats?: boolean
   callToAction?: string
+  imageStyle?: ImageStyleId // Controls content tone: lifestyle = community-focused, branded = promotional
 }
 
 export interface ContentIdea {
@@ -171,6 +173,13 @@ const SERVICE_CONTEXT: Record<ServiceHighlight, string> = {
 // CONTENT IDEAS GENERATION
 // ============================================
 
+// Determine if the style is community-focused (not promotional)
+function isCommunityfocusedStyle(imageStyle?: ImageStyleId): boolean {
+  if (!imageStyle) return false
+  const style = IMAGE_STYLES[imageStyle]
+  return style?.notAd === true
+}
+
 export async function generateContentIdeas(
   params: ContentGenerationParams
 ): Promise<ContentIdea[]> {
@@ -178,7 +187,69 @@ export async function generateContentIdeas(
   const constraints = PLATFORM_CONSTRAINTS[params.platform]
   const serviceContext = SERVICE_CONTEXT[params.serviceHighlight]
 
-  const prompt = `You are an expert B2B marketing content strategist for Urban Simple, a commercial cleaning company in Austin, TX.
+  // Check if this is a community/lifestyle style (NOT promotional)
+  const isCommunityContent = isCommunityfocusedStyle(params.imageStyle)
+  const styleConfig = params.imageStyle ? IMAGE_STYLES[params.imageStyle] : null
+
+  // Different prompts for community-focused vs promotional content
+  const prompt = isCommunityContent
+    ? `You are a social media content strategist for Urban Simple, a commercial cleaning company based in Austin, TX. However, this post is NOT about promoting cleaning services.
+
+CONTENT STYLE: ${styleConfig?.name || 'Community-focused'}
+${styleConfig?.description ? `STYLE DESCRIPTION: ${styleConfig.description}` : ''}
+
+${params.topic ? `TOPIC TO FOCUS ON: ${params.topic}` : ''}
+
+TARGET PLATFORM: ${constraints.name}
+- Max characters: ${constraints.maxLength}
+- Hashtag count: ${constraints.hashtagCount.min}-${constraints.hashtagCount.max}
+- Format style: ${constraints.format}
+
+TARGET AUDIENCE: ${params.targetAudience}
+TONE: ${params.tone}
+
+CRITICAL INSTRUCTIONS:
+1. This is a COMMUNITY ENGAGEMENT post, NOT a sales pitch
+2. DO NOT mention cleaning services, commercial cleaning, or anything about what Urban Simple does
+3. DO NOT include any call-to-action about getting quotes, contacting the company, or hiring services
+4. The goal is to position Urban Simple as a LOCAL AUSTIN COMMUNITY MEMBER, not as a vendor trying to sell something
+5. Focus on celebrating Austin culture, local businesses, community events, or the hospitality industry in general
+
+${params.topic ? `
+Focus this content on the topic: "${params.topic}"
+- Share genuine appreciation for this topic
+- Connect with the Austin community around this topic
+- Be conversational and authentic, like a local business owner sharing something they care about
+` : `
+Generate content about:
+- Celebrating local Austin restaurants, bars, or hospitality businesses
+- Austin community events, culture, or local happenings
+- Shout-outs to the hardworking people in the hospitality industry
+- Fun Austin-specific content that locals would enjoy
+- Industry insights that add value (not about selling cleaning)
+`}
+
+Generate 4 unique content ideas. Each idea should:
+- Feel like it's coming from a company that's PART OF the Austin community, not just selling to it
+- Be genuinely interesting and engaging, not marketing-focused
+- NOT mention cleaning, sanitization, or Urban Simple's services
+
+Return a JSON array with this structure:
+[
+  {
+    "headline": "Attention-grabbing headline (40 chars max)",
+    "hook": "Opening line that hooks the reader - NO sales pitch",
+    "keyPoints": ["Point 1", "Point 2", "Point 3"],
+    "suggestedImage": "Description of ideal accompanying image - should be lifestyle/community focused, NOT a promotional graphic",
+    "hashtags": ["hashtag1", "hashtag2", ...]
+  }
+]
+
+Remember: This is about building community presence and brand affinity, NOT selling services.`
+    : `You are an expert B2B marketing content strategist for Urban Simple, a commercial cleaning company in Austin, TX.
+
+CONTENT STYLE: ${styleConfig?.name || 'Promotional'}
+${styleConfig?.description ? `STYLE DESCRIPTION: ${styleConfig.description}` : ''}
 
 BUSINESS CONTEXT:
 Urban Simple provides ${serviceContext}
@@ -192,6 +263,7 @@ TARGET AUDIENCE: ${params.targetAudience}
 TONE: ${params.tone}
 CONTENT TYPE: ${params.contentType === 'social_post' ? 'Organic social media post' : 'Paid advertisement'}
 ${params.topic ? `SPECIFIC TOPIC: ${params.topic}` : ''}
+${params.callToAction ? `CALL TO ACTION: ${params.callToAction}` : ''}
 
 Generate 4 unique content ideas for ${constraints.name}. Each idea should:
 - Be tailored to the platform's format and audience
@@ -210,7 +282,7 @@ Return a JSON array with this structure:
   }
 ]
 
-Make the content feel authentic, not salesy. Focus on pain points like:
+Make the content feel authentic, not overly salesy. Focus on pain points like:
 - Failed health inspections
 - Staff overwhelmed with cleaning duties
 - Inconsistent cleanliness affecting customer reviews
@@ -248,7 +320,82 @@ export async function generateContent(
   const constraints = PLATFORM_CONSTRAINTS[params.platform]
   const serviceContext = SERVICE_CONTEXT[params.serviceHighlight]
 
-  const prompt = `You are an expert B2B marketing copywriter for Urban Simple, a commercial cleaning company in Austin, TX.
+  // Check if this is a community/lifestyle style (NOT promotional)
+  const isCommunityContent = isCommunityfocusedStyle(params.imageStyle)
+  const styleConfig = params.imageStyle ? IMAGE_STYLES[params.imageStyle] : null
+
+  // For community content, use a different prompt that doesn't push sales
+  const prompt = isCommunityContent
+    ? `You are a social media content writer for Urban Simple, a company that's PART OF the Austin community. However, this post is NOT about promoting any services.
+
+CONTENT STYLE: ${styleConfig?.name || 'Community-focused'}
+
+SELECTED IDEA:
+- Headline: ${selectedIdea.headline}
+- Hook: ${selectedIdea.hook}
+- Key Points: ${selectedIdea.keyPoints.join(', ')}
+
+TARGET PLATFORM: ${constraints.name}
+CONSTRAINTS:
+- Primary text max: ${constraints.maxLength} characters
+- Hashtags: ${constraints.hashtagCount.min}-${constraints.hashtagCount.max}
+
+TARGET AUDIENCE: ${params.targetAudience}
+TONE: ${params.tone}
+
+CRITICAL INSTRUCTIONS:
+1. This is COMMUNITY ENGAGEMENT content - NOT a sales pitch
+2. DO NOT mention cleaning services, commercial cleaning, sanitization, or anything about what Urban Simple offers
+3. DO NOT include any call-to-action about getting quotes, contacting the company, or hiring services
+4. Write as if you're a local Austin business owner sharing something they genuinely care about
+5. The CTA should be engagement-focused like "What's your favorite spot?" or "Drop a ❤️ if you agree" - NOT "Contact us" or "Get a quote"
+
+${
+  params.platform === 'linkedin'
+    ? `
+For LinkedIn:
+- Professional but warm tone
+- Share an insight or appreciation
+- End with a question to spark conversation
+- NO business pitch`
+    : ''
+}
+
+${
+  params.platform === 'instagram'
+    ? `
+For Instagram:
+- Casual, friendly language
+- Emojis welcome but don't overdo it
+- End with an engagement question
+- Hashtags should be Austin/community focused`
+    : ''
+}
+
+${
+  params.platform === 'facebook'
+    ? `
+For Facebook:
+- Conversational and community-focused
+- Celebrate Austin or local businesses
+- Encourage comments and sharing
+- Feel like a local neighbor, not a business`
+    : ''
+}
+
+Return a JSON object:
+{
+  "headline": "",
+  "primaryText": "Main content body - community/lifestyle focused, NO sales pitch",
+  "description": "",
+  "callToAction": "Engagement-focused CTA like 'What do you think?' or simply leave empty",
+  "hashtags": ["hashtag1", "hashtag2", ...]
+}
+
+IMPORTANT: Ensure primaryText is under ${constraints.maxLength} characters. NO SALES LANGUAGE.`
+    : `You are an expert B2B marketing copywriter for Urban Simple, a commercial cleaning company in Austin, TX.
+
+CONTENT STYLE: ${styleConfig?.name || 'Promotional'}
 
 BUSINESS CONTEXT:
 Urban Simple provides ${serviceContext}
@@ -267,7 +414,7 @@ ${constraints.hasDescription ? '- Needs a description (30 chars max)' : ''}
 
 TARGET AUDIENCE: ${params.targetAudience}
 TONE: ${params.tone}
-CALL TO ACTION: ${params.callToAction || 'Contact us for a free quote'}
+${params.callToAction ? `CALL TO ACTION: ${params.callToAction}` : 'CALL TO ACTION: Contact us for a free quote'}
 
 Write the full ${params.contentType === 'social_post' ? 'social media post' : 'ad copy'}.
 

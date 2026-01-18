@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { getTopicById, updateTopic } from '@/lib/services/inspiration-service'
 import { generateQuickPostIdeas } from '@/lib/ai/inspiration-generator'
+import type { ContentModeId } from '@/lib/config/brand'
 
 interface RouteParams {
   params: Promise<{ id: string }>
@@ -31,9 +32,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    // Parse optional platform filter
+    // Parse optional platform filter and content mode
     const body = await request.json().catch(() => ({}))
     const platform = body.platform
+    const contentMode: ContentModeId = body.contentMode || 'community'
+
+    // Content customization options
+    const contentOptions = {
+      tone: body.tone || 'friendly',
+      length: body.length || 'medium',
+      emoji: body.emoji || 'minimal',
+      cta: body.cta || 'soft',
+    }
 
     // Check if we already have post ideas cached
     const existingIdeas = topic.postIdeas as object[]
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       })
     }
 
-    // Generate new post ideas
+    // Generate new post ideas with content mode and options
     const ideas = await generateQuickPostIdeas(
       {
         title: topic.title,
@@ -52,7 +62,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         context: topic.context || undefined,
         category: topic.category,
       },
-      platform
+      platform,
+      contentMode,
+      contentOptions
     )
 
     if (ideas.length === 0) {

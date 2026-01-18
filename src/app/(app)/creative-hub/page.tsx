@@ -17,6 +17,8 @@ import {
   Zap,
   Sun,
   TrendingUp,
+  Eye,
+  Edit2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -56,14 +58,21 @@ export default function CreativeHubPage() {
 
   async function loadStats() {
     try {
-      const response = await fetch('/api/creative-hub/content?includeStats=true&limit=6')
-      const data = await response.json()
+      // Fetch content stats and images count in parallel
+      const [contentResponse, imagesResponse] = await Promise.all([
+        fetch('/api/creative-hub/content?includeStats=true&limit=6'),
+        fetch('/api/creative-hub/images?limit=1'), // Just need the count
+      ])
+
+      const contentData = await contentResponse.json()
+      const imagesData = await imagesResponse.json()
+
       setStats({
-        totalContent: data.stats?.total || 0,
-        contentByPlatform: data.stats?.byPlatform || {},
-        contentByStatus: data.stats?.byStatus || {},
-        totalImages: 0,
-        recentContent: data.content || [],
+        totalContent: contentData.stats?.total || 0,
+        contentByPlatform: contentData.stats?.byPlatform || {},
+        contentByStatus: contentData.stats?.byStatus || {},
+        totalImages: imagesData.pagination?.total || imagesData.images?.length || 0,
+        recentContent: contentData.content || [],
       })
     } catch (error) {
       console.error('Failed to load stats:', error)
@@ -224,17 +233,17 @@ export default function CreativeHubPage() {
             </div>
 
             {/* Platform Mix */}
-            <div className="h-28 rounded-xl bg-charcoal-900 p-4 flex flex-col justify-between">
-              <p className="text-xs text-charcoal-400 uppercase tracking-wide">Platforms</p>
+            <div className="h-28 rounded-xl bg-gradient-to-br from-ocean-50 to-ocean-100 border border-ocean-200/50 p-4 flex flex-col justify-between">
+              <p className="text-xs text-ocean-600 uppercase tracking-wide font-medium">Platforms</p>
               <div className="flex items-center gap-1">
                 {Object.keys(stats?.contentByPlatform || {}).length > 0 ? (
                   Object.entries(stats?.contentByPlatform || {}).slice(0, 4).map(([platform, count]) => (
-                    <div key={platform} className="w-8 h-8 rounded-lg bg-charcoal-800 flex items-center justify-center text-charcoal-300" title={`${platform}: ${count}`}>
+                    <div key={platform} className="w-8 h-8 rounded-lg bg-white/80 border border-ocean-200 flex items-center justify-center text-ocean-600" title={`${platform}: ${count}`}>
                       {PLATFORM_ICONS[platform]}
                     </div>
                   ))
                 ) : (
-                  <span className="text-sm text-charcoal-500">No content yet</span>
+                  <span className="text-sm text-ocean-400">No content yet</span>
                 )}
               </div>
             </div>
@@ -254,7 +263,7 @@ export default function CreativeHubPage() {
             {hasContent ? (
               <div className="divide-y divide-charcoal-50">
                 {stats?.recentContent.slice(0, 5).map((content) => (
-                  <div key={content.id} className="px-5 py-3 flex items-center gap-4 hover:bg-charcoal-50/50 transition-colors">
+                  <div key={content.id} className="px-5 py-3 flex items-center gap-4 hover:bg-charcoal-50/50 transition-colors group">
                     {/* Thumbnail or Platform Icon */}
                     {content.image ? (
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-charcoal-100 flex-shrink-0">
@@ -278,6 +287,24 @@ export default function CreativeHubPage() {
                       <p className="text-xs text-charcoal-400 mt-0.5">
                         {content.platform.replace('_', ' ')} · {new Date(content.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
+                    </div>
+
+                    {/* Actions - show on hover */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Link
+                        href={`/creative-hub/gallery?view=${content.id}`}
+                        className="p-1.5 rounded-lg hover:bg-charcoal-100 text-charcoal-400 hover:text-charcoal-600 transition-colors"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Link>
+                      <Link
+                        href={`/creative-hub/gallery?edit=${content.id}`}
+                        className="p-1.5 rounded-lg hover:bg-charcoal-100 text-charcoal-400 hover:text-charcoal-600 transition-colors"
+                        title="Edit"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </Link>
                     </div>
 
                     {/* Status */}
