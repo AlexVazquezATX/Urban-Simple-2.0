@@ -77,8 +77,10 @@ interface Task {
 interface Project {
   id: string
   name: string
+  description: string | null
   color: string
   status: string
+  dueDate: string | null
   taskCount?: number
   openTaskCount?: number
 }
