@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Users, DollarSign, FileText, AlertTriangle, TrendingUp, Calendar, Clock, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { FocusWidget } from '@/components/dashboard/focus-widget'
 
 async function DashboardStats() {
   const user = await getCurrentUser()
@@ -155,27 +156,19 @@ async function DashboardStats() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-primary" />
-              Recent Activity
-            </CardTitle>
-            <CardDescription>Your latest invoices and payments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground text-center py-8">
-              No recent activity to display
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-primary" />
               Quick Actions
             </CardTitle>
             <CardDescription>Common tasks to get started</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
+            <Link
+              href="/tasks"
+              className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
+            >
+              <div className="font-medium group-hover:text-ocean-700">Manage Tasks</div>
+              <div className="text-xs text-muted-foreground">View and organize your tasks</div>
+            </Link>
             <Link
               href="/clients"
               className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
@@ -192,6 +185,9 @@ async function DashboardStats() {
             </Link>
           </CardContent>
         </Card>
+
+        {/* Focus Widget - AI-powered task prioritization */}
+        <FocusWidget />
       </div>
     </div>
   )

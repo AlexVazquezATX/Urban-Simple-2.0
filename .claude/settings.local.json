@@ -13,7 +13,10 @@
       "Bash(npx prisma db push:*)",
       "Bash(del \"c:\\\\Users\\\\avazq\\\\Documents\\\\Dev\\\\Urban Simple 2.0\\\\urbansimple\\\\src\\\\components\\\\creative-hub\\\\inspiration\\\\quick-post-sheet.tsx\")",
       "Bash(npx eslint:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(npx prisma:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)"
     ]
   }
 }

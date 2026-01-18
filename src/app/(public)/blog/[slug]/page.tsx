@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: BlogPostPageProps) {
       images: post.featuredImage ? [post.featuredImage] : [],
       type: 'article',
       publishedTime: post.publishedAt?.toISOString(),
-      authors: [post.author.displayName || `${post.author.firstName} ${post.author.lastName}`],
+      authors: [post.author?.displayName || `${post.author?.firstName || ''} ${post.author?.lastName || ''}`.trim() || 'Urban Simple'],
     },
     twitter: {
       card: 'summary_large_image',

@@ -128,6 +128,11 @@ model User {
   // Blog
   blogPosts BlogPost[]
 
+  // Task Management
+  projects Project[]
+  tasks    Task[]
+  taskTags TaskTag[]
+
   @@map("users")
 }
 
@@ -1652,4 +1657,119 @@ model InspirationBriefing {
   @@unique([companyId, forDate])
   @@index([companyId, forDate])
   @@map("inspiration_briefings")
+}
+
+// ============================================
+// TASK & PROJECT MANAGEMENT (Personal Productivity)
+// ============================================
+
+model Project {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  userId      String    @map("user_id")
+
+  name        String
+  description String?   @db.Text
+  color       String    @default("#3B82F6") // Hex color for visual identification
+  status      String    @default("active") // active, completed, archived
+
+  dueDate     DateTime? @map("due_date")
+  completedAt DateTime? @map("completed_at")
+  sortOrder   Int       @default(0) @map("sort_order")
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user  User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([userId, status])
+  @@index([companyId])
+  @@map("projects")
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  userId      String    @map("user_id")
+  projectId   String?   @map("project_id")
+
+  title       String
+  description String?   @db.Text
+  status      String    @default("todo") // todo, in_progress, done, cancelled
+  priority    String    @default("medium") // low, medium, high, urgent
+
+  dueDate       DateTime? @map("due_date")
+  scheduledDate DateTime? @map("scheduled_date") // For calendar view
+  completedAt   DateTime? @map("completed_at")
+
+  kanbanOrder Int @default(0) @map("kanban_order")
+
+  // AI Focus fields
+  isFocusTask   Boolean   @default(false) @map("is_focus_task")
+  focusDate     DateTime? @map("focus_date")
+  focusReason   String?   @map("focus_reason") @db.Text
+  focusPriority Int?      @map("focus_priority") // 1-5 ranking for the day
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  tags    TaskTagAssignment[]
+  links   TaskLink[]
+
+  @@index([userId, status])
+  @@index([projectId])
+  @@index([dueDate])
+  @@index([scheduledDate])
+  @@index([isFocusTask, focusDate])
+  @@map("tasks")
+}
+
+model TaskTag {
+  id        String   @id @default(cuid())
+  companyId String   @map("company_id")
+  userId    String   @map("user_id")
+  name      String
+  color     String   @default("#6B7280") // Hex color
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks TaskTagAssignment[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("task_tags")
+}
+
+model TaskTagAssignment {
+  id        String   @id @default(cuid())
+  taskId    String   @map("task_id")
+  tagId     String   @map("tag_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  TaskTag @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, tagId])
+  @@map("task_tag_assignments")
+}
+
+model TaskLink {
+  id          String   @id @default(cuid())
+  taskId      String   @map("task_id")
+  entityType  String   @map("entity_type") // client, prospect, location, invoice, creative_content
+  entityId    String   @map("entity_id")
+  entityLabel String?  @map("entity_label") // Denormalized for quick display
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, entityType, entityId])
+  @@index([taskId])
+  @@index([entityType, entityId])
+  @@map("task_links")
 }

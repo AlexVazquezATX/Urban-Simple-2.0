@@ -39,6 +39,7 @@ import {
   Sunrise,
   Sparkles,
   Palette,
+  CheckSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -133,6 +134,7 @@ export function AppSidebar() {
 
   const adminItems = [
     { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE', 'CLIENT_USER'] },
+    { href: '/tasks', icon: CheckSquare, label: 'Tasks', roles: ['SUPER_ADMIN'] },
     { href: '/dashboard/blog', icon: Sparkles, label: 'Blog', roles: ['SUPER_ADMIN'] },
     { href: '/pulse', icon: Sunrise, label: 'Pulse', roles: ['SUPER_ADMIN'] },
     { href: '/chat-analytics', icon: BarChart3, label: 'Chat Analytics', roles: ['SUPER_ADMIN', 'ADMIN'] },

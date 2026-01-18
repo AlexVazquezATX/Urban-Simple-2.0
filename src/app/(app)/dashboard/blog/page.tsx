@@ -177,11 +177,11 @@ export default function BlogManagementPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <Badge
                       style={{
-                        backgroundColor: post.category.color || '#A67C52',
+                        backgroundColor: post.category?.color || '#A67C52',
                         color: 'white',
                       }}
                     >
-                      {post.category.name}
+                      {post.category?.name || 'Uncategorized'}
                     </Badge>
                     {post.status === 'published' ? (
                       <Badge variant="outline" className="border-ocean-500 text-ocean-700">
