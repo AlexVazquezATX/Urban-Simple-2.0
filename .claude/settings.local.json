@@ -16,7 +16,9 @@
       "Bash(cd:*)",
       "Bash(npx prisma:*)",
       "Bash(ls:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(npx next build)",
+      "Bash(curl:*)"
     ]
   }
 }

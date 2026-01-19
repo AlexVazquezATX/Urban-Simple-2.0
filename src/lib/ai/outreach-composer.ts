@@ -195,12 +195,25 @@ function buildComposerPrompt(options: {
   }
 
   const purposeGuidelines = {
-    cold_outreach: 'First contact - introduce Urban Simple and our commercial cleaning services',
+    cold_outreach: 'First contact - introduce Urban Simple and our specialized hospitality cleaning services',
     follow_up: 'Follow-up message - reference previous contact and provide additional value',
     re_engagement: 'Re-engagement - reconnect with prospect who went cold',
   }
 
-  return `You are an expert outreach copywriter for Urban Simple, a commercial cleaning company specializing in hospitality services (restaurants, hotels, bars, commercial kitchens).
+  return `You are an expert outreach copywriter for Urban Simple, a hospitality-focused commercial cleaning company based in Austin, Texas.
+
+ABOUT URBAN SIMPLE:
+- We specialize EXCLUSIVELY in hospitality cleaning: restaurants, commercial kitchens, hotel dining facilities, resorts, bars, breweries, and food service establishments
+- Our core service is NIGHTLY CLEANING - we come in after closing to deep-clean kitchens, dining areas, bars, and back-of-house areas
+- We understand the unique needs of the food service industry: health code compliance, grease removal, sanitization, floor care, and maintaining pristine front-of-house presentation
+- We help restaurants and kitchens pass health inspections with flying colors
+- Based in Austin, TX - we serve the vibrant Austin food and hospitality scene
+- Key value propositions:
+  * Let your kitchen staff focus on food, not cleaning
+  * Consistent nightly cleaning means you open fresh every day
+  * Health department ready at all times
+  * Professional crews trained specifically for hospitality environments
+  * Flexible scheduling that works around your business hours
 
 ${prospectContext}
 
@@ -311,11 +324,11 @@ export async function generateSequenceStepContent(
     }
 
     const stepTypes: Record<number, string> = {
-      1: 'Initial outreach - introduce yourself and Urban Simple\'s commercial cleaning services',
-      2: 'Follow-up - reference the initial message, provide additional value or information',
-      3: 'Value add - share a case study, testimonial, or industry insight',
-      4: 'Soft check-in - friendly reminder, ask if they have questions',
-      5: 'Final follow-up - last attempt, suggest alternative contact methods or future timing',
+      1: 'Initial outreach - introduce Urban Simple\'s nightly hospitality cleaning services, mention we specialize in restaurants/kitchens',
+      2: 'Follow-up - reference the initial message, highlight a specific benefit like health code compliance or letting kitchen staff focus on food',
+      3: 'Value add - mention how consistent nightly cleaning helps restaurants open fresh every day, or reference health inspection readiness',
+      4: 'Soft check-in - friendly reminder, acknowledge they\'re busy running their establishment, ask if timing is better in the future',
+      5: 'Final follow-up - last attempt, keep it brief, offer to reconnect when they\'re ready to explore cleaning solutions',
     }
 
     const stepType = stepTypes[stepNumber] || stepTypes[Math.min(stepNumber, 5)]
@@ -324,7 +337,20 @@ export async function generateSequenceStepContent(
       ? `\nPREVIOUS STEPS IN SEQUENCE:\n${previousStepsContext.map((c, i) => `Step ${i + 1}: ${c.substring(0, 100)}...`).join('\n')}\n`
       : ''
 
-    const prompt = `You are an expert outreach copywriter for Urban Simple, a commercial cleaning company specializing in hospitality services (restaurants, hotels, bars, commercial kitchens).
+    const prompt = `You are an expert outreach copywriter for Urban Simple, a hospitality-focused commercial cleaning company based in Austin, Texas.
+
+ABOUT URBAN SIMPLE:
+- We specialize EXCLUSIVELY in hospitality cleaning: restaurants, commercial kitchens, hotel dining facilities, resorts, bars, breweries, and food service establishments
+- Our core service is NIGHTLY CLEANING - we come in after closing to deep-clean kitchens, dining areas, bars, and back-of-house areas
+- We understand the unique needs of the food service industry: health code compliance, grease removal, sanitization, floor care, and maintaining pristine front-of-house presentation
+- We help restaurants and kitchens pass health inspections with flying colors
+- Based in Austin, TX - we serve the vibrant Austin food and hospitality scene
+- Key value propositions:
+  * Let your kitchen staff focus on food, not cleaning
+  * Consistent nightly cleaning means you open fresh every day
+  * Health department ready at all times
+  * Professional crews trained specifically for hospitality environments
+  * Flexible scheduling that works around your business hours
 
 TASK: Generate a ${channel} message for STEP ${stepNumber} of ${totalSteps} in an outreach sequence.
 
