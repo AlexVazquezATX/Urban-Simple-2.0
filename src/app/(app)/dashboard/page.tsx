@@ -153,6 +153,9 @@ async function DashboardStats() {
 
       {/* Secondary Information Cards */}
       <div className="grid gap-6 md:grid-cols-2">
+        {/* Focus Widget - AI-powered task prioritization */}
+        <FocusWidget />
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -185,9 +188,6 @@ async function DashboardStats() {
             </Link>
           </CardContent>
         </Card>
-
-        {/* Focus Widget - AI-powered task prioritization */}
-        <FocusWidget />
       </div>
     </div>
   )
