@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { Resend } from 'resend'
+
+// Initialize Resend lazily to avoid build-time errors
+let resend: Resend | null = null
+function getResend() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resend
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -85,7 +95,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, scheduledMessage })
     }
 
-    // Send immediately (for now, just log as activity - actual sending would integrate with email/SMS providers)
+    // Send immediately based on channel
+    let emailId: string | undefined
+
+    if (channel === 'email') {
+      // Send email via Resend
+      const resendClient = getResend()
+
+      if (!resendClient) {
+        return NextResponse.json(
+          { error: 'Email service not configured. Please add RESEND_API_KEY to environment variables.' },
+          { status: 500 }
+        )
+      }
+
+      if (!subject) {
+        return NextResponse.json(
+          { error: 'Subject is required for email' },
+          { status: 400 }
+        )
+      }
+
+      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+
+      const { data, error } = await resendClient.emails.send({
+        from: fromEmail,
+        to,
+        subject,
+        html: messageBody.replace(/\n/g, '<br>'), // Convert newlines to HTML breaks
+      })
+
+      if (error) {
+        console.error('Resend API Error:', error)
+
+        // Log failed attempt
+        await prisma.prospectActivity.create({
+          data: {
+            prospectId,
+            userId: user.id,
+            type: 'email',
+            channel: 'email',
+            title: 'Email failed to send',
+            description: `Error: ${error.message || 'Unknown error'}`,
+            subject,
+            messageBody,
+          },
+        })
+
+        return NextResponse.json(
+          { error: `Failed to send email: ${error.message || 'Unknown error'}` },
+          { status: 500 }
+        )
+      }
+
+      emailId = data?.id
+    }
+
+    // Log successful activity
     const activity = await prisma.prospectActivity.create({
       data: {
         prospectId,
@@ -93,18 +159,27 @@ export async function POST(request: NextRequest) {
         type: channel,
         channel,
         title: `${channel === 'email' ? 'Email' : channel.toUpperCase()} sent`,
-        description: messageBody,
+        description: channel === 'email' ? undefined : messageBody, // Don't duplicate body for emails
         subject: channel === 'email' ? subject : null,
         messageBody,
         sentAt: new Date(),
         completedAt: new Date(),
+        metadata: emailId ? { emailId } : undefined,
       },
     })
 
-    // TODO: Integrate with actual email/SMS providers (Resend, Twilio, etc.)
-    // For now, we just log the activity
+    // Update prospect's lastContactedAt
+    await prisma.prospect.update({
+      where: { id: prospectId },
+      data: { lastContactedAt: new Date() },
+    })
 
-    return NextResponse.json({ success: true, activity })
+    return NextResponse.json({
+      success: true,
+      activity,
+      emailId,
+      message: channel === 'email' ? 'Email sent successfully' : `${channel} message logged`
+    })
   } catch (error) {
     console.error('Error sending message:', error)
     return NextResponse.json(
