@@ -88,9 +88,10 @@ model User {
   secondaryRoles String[]  @default([]) @map("secondary_roles")
   avatarUrl      String?   @map("avatar_url")
   isActive       Boolean   @default(true) @map("is_active")
-  lastLogin      DateTime? @map("last_login")
-  emailSignature String?   @db.Text @map("email_signature")
-  createdAt      DateTime  @default(now()) @map("created_at")
+  lastLogin         DateTime? @map("last_login")
+  emailSignature    String?   @db.Text @map("email_signature")
+  signatureLogoUrl  String?   @map("signature_logo_url")
+  createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)

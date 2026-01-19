@@ -8,7 +8,7 @@ import { cn } from '@/lib/utils'
 interface ImageUploadProps {
   value?: string
   onChange: (url: string | null) => void
-  folder: 'clients' | 'locations'
+  folder: 'clients' | 'locations' | 'signatures'
   className?: string
   disabled?: boolean
 }

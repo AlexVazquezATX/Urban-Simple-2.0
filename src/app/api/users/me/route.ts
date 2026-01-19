@@ -29,6 +29,7 @@ export async function GET() {
       companyId: user.companyId,
       branchId: user.branchId,
       emailSignature: user.emailSignature,
+      signatureLogoUrl: user.signatureLogoUrl,
     })
   } catch (error: any) {
     console.error('Get current user error:', error)
@@ -52,12 +53,13 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { emailSignature } = body
+    const { emailSignature, signatureLogoUrl } = body
 
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
         emailSignature: emailSignature ?? null,
+        signatureLogoUrl: signatureLogoUrl ?? null,
       },
       select: {
         id: true,
@@ -68,6 +70,7 @@ export async function PATCH(request: NextRequest) {
         companyId: true,
         branchId: true,
         emailSignature: true,
+        signatureLogoUrl: true,
       },
     })
 

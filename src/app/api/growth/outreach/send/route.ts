@@ -118,10 +118,16 @@ export async function POST(request: NextRequest) {
 
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
-      // Build email body with optional signature
+      // Build email body with optional signature and logo
       let emailHtml = messageBody.replace(/\n/g, '<br>')
-      if (user.emailSignature) {
-        emailHtml += '<br><br>--<br>' + user.emailSignature.replace(/\n/g, '<br>')
+      if (user.emailSignature || user.signatureLogoUrl) {
+        emailHtml += '<br><br>--<br>'
+        if (user.emailSignature) {
+          emailHtml += user.emailSignature.replace(/\n/g, '<br>')
+        }
+        if (user.signatureLogoUrl) {
+          emailHtml += `<br><br><img src="${user.signatureLogoUrl}" alt="Logo" style="max-height: 60px; width: auto;" />`
+        }
       }
 
       const { data, error } = await resendClient.emails.send({
