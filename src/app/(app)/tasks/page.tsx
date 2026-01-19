@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import {
   CheckSquare,
   Plus,
@@ -116,6 +117,9 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 type ViewMode = 'list' | 'board' | 'calendar'
 
 export default function TasksPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
   const [tasks, setTasks] = useState<Task[]>([])
   const [projects, setProjects] = useState<Project[]>([])
   const [stats, setStats] = useState<TaskStats | null>(null)
@@ -136,6 +140,15 @@ export default function TasksPage() {
   const [showProjectSidebar, setShowProjectSidebar] = useState(true)
   const [showProjectForm, setShowProjectForm] = useState(false)
   const [editingProject, setEditingProject] = useState<Project | null>(null)
+
+  // Handle ?new=true query param to auto-open new task form (for mobile quick-add)
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowTaskForm(true)
+      // Remove the query param from URL without navigation
+      router.replace('/tasks', { scroll: false })
+    }
+  }, [searchParams, router])
 
   const loadTasks = useCallback(async () => {
     try {
