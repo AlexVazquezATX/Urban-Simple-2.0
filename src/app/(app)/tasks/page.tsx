@@ -302,10 +302,10 @@ export default function TasksPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      {/* Left Sidebar - Projects */}
+    <div className="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
+      {/* Left Sidebar - Projects (hidden on mobile by default) */}
       {showProjectSidebar && (
-        <div className="w-64 border-r border-charcoal-100 bg-charcoal-50/30 flex flex-col">
+        <div className="hidden md:flex w-64 border-r border-charcoal-100 bg-charcoal-50/30 flex-col">
           {/* Sidebar Header */}
           <div className="p-4 border-b border-charcoal-100">
             <div className="flex items-center justify-between mb-3">
@@ -413,36 +413,37 @@ export default function TasksPage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-charcoal-100 bg-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-charcoal-100 bg-white">
+          {/* Title Row */}
+          <div className="flex items-center justify-between mb-3 md:mb-4">
+            <div className="flex items-center gap-2 md:gap-3">
               {!showProjectSidebar && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setShowProjectSidebar(true)}
-                  className="mr-2"
+                  className="mr-2 hidden md:flex"
                 >
                   <FolderKanban className="w-4 h-4" />
                 </Button>
               )}
               <div>
-                <h1 className="text-xl font-semibold text-charcoal-900">
+                <h1 className="text-lg md:text-xl font-semibold text-charcoal-900">
                   {projectFilter === null
                     ? 'All Tasks'
                     : projectFilter === 'null'
                       ? 'Inbox'
                       : projects.find(p => p.id === projectFilter)?.name || 'Tasks'}
                 </h1>
-                <p className="text-sm text-charcoal-500">
+                <p className="text-xs md:text-sm text-charcoal-500">
                   {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-charcoal-100 rounded-lg p-1">
+              {/* View Mode Toggle - Hidden on mobile for list, shown for board toggle */}
+              <div className="hidden md:flex items-center bg-charcoal-100 rounded-lg p-1">
                 <button
                   onClick={() => setViewMode('list')}
                   className={cn(
@@ -472,20 +473,69 @@ export default function TasksPage() {
                 </button>
               </div>
 
+              {/* New Task Button - Icon only on mobile */}
               <Button
                 onClick={() => setShowTaskForm(true)}
                 className="gap-2"
+                size="sm"
               >
                 <Plus className="w-4 h-4" />
-                New Task
+                <span className="hidden sm:inline">New Task</span>
               </Button>
             </div>
           </div>
 
-          {/* Search and Filters Row */}
-          <div className="flex items-center gap-3">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
+          {/* Mobile: Project Filter Dropdown */}
+          <div className="md:hidden mb-3">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full justify-between">
+                  <span className="flex items-center gap-2">
+                    <FolderKanban className="w-4 h-4" />
+                    {projectFilter === null
+                      ? 'All Tasks'
+                      : projectFilter === 'null'
+                        ? 'No Project'
+                        : projects.find(p => p.id === projectFilter)?.name || 'Project'}
+                  </span>
+                  <ChevronDown className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem onClick={() => setProjectFilter(null)}>
+                  <LayoutList className="w-4 h-4 mr-2" />
+                  All Tasks
+                  {projectFilter === null && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {projects.map((project) => (
+                  <DropdownMenuItem
+                    key={project.id}
+                    onClick={() => setProjectFilter(project.id)}
+                  >
+                    <span
+                      className="w-3 h-3 rounded-full mr-2"
+                      style={{ backgroundColor: project.color }}
+                    />
+                    {project.name}
+                    <span className="ml-auto text-xs text-charcoal-400">{project.openTaskCount || 0}</span>
+                    {projectFilter === project.id && <CheckCircle2 className="w-3 h-3 ml-2 text-ocean-500" />}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setProjectFilter('null')}>
+                  <span className="w-3 h-3 rounded-full mr-2 border-2 border-dashed border-charcoal-300" />
+                  No Project
+                  {projectFilter === 'null' && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Search and Filters Row - Responsive layout */}
+          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+            {/* Search - Full width on mobile */}
+            <div className="relative flex-1 md:max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-charcoal-400" />
               <Input
                 placeholder="Search tasks..."
@@ -503,8 +553,8 @@ export default function TasksPage() {
               )}
             </div>
 
-            {/* Quick Add */}
-            <form onSubmit={handleQuickAdd} className="flex items-center gap-2">
+            {/* Quick Add - Hidden on mobile (they use the bottom nav + button) */}
+            <form onSubmit={handleQuickAdd} className="hidden md:flex items-center gap-2">
               <div className="relative">
                 <Plus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-charcoal-400" />
                 <Input
@@ -522,80 +572,84 @@ export default function TasksPage() {
               )}
             </form>
 
-            {/* Status Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="w-4 h-4" />
-                  Status
-                  {statusFilter.length > 0 && statusFilter.length < 4 && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5">
-                      {statusFilter.length}
-                    </Badge>
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {['todo', 'in_progress', 'done', 'cancelled'].map((status) => (
-                  <DropdownMenuItem
-                    key={status}
-                    onClick={() => {
-                      setStatusFilter((prev) =>
-                        prev.includes(status)
-                          ? prev.filter((s) => s !== status)
-                          : [...prev, status]
-                      )
-                    }}
-                  >
-                    <span className={cn(
-                      'flex items-center gap-2',
-                      statusFilter.includes(status) && 'font-medium'
-                    )}>
-                      {STATUS_ICONS[status]}
-                      {status.replace('_', ' ')}
-                      {statusFilter.includes(status) && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
-                    </span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Filter buttons row - horizontal scroll on mobile */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0">
+              {/* Status Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+                    <Filter className="w-4 h-4" />
+                    <span className="hidden sm:inline">Status</span>
+                    {statusFilter.length > 0 && statusFilter.length < 4 && (
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                        {statusFilter.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {['todo', 'in_progress', 'done', 'cancelled'].map((status) => (
+                    <DropdownMenuItem
+                      key={status}
+                      onClick={() => {
+                        setStatusFilter((prev) =>
+                          prev.includes(status)
+                            ? prev.filter((s) => s !== status)
+                            : [...prev, status]
+                        )
+                      }}
+                    >
+                      <span className={cn(
+                        'flex items-center gap-2',
+                        statusFilter.includes(status) && 'font-medium'
+                      )}>
+                        {STATUS_ICONS[status]}
+                        {status.replace('_', ' ')}
+                        {statusFilter.includes(status) && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            {/* Priority Filter */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  Priority
-                  {priorityFilter && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 capitalize">
-                      {priorityFilter}
-                    </Badge>
-                  )}
-                  <ChevronDown className="w-3 h-3" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setPriorityFilter(null)}>
-                  All Priorities
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                {['urgent', 'high', 'medium', 'low'].map((priority) => (
-                  <DropdownMenuItem
-                    key={priority}
-                    onClick={() => setPriorityFilter(priority)}
-                  >
-                    <span className="flex items-center gap-2 capitalize">
-                      <span className={cn('w-2 h-2 rounded-full', PRIORITY_DOT_COLORS[priority])} />
-                      {priority}
-                    </span>
+              {/* Priority Filter */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+                    <span className="hidden sm:inline">Priority</span>
+                    <span className="sm:hidden">Pri</span>
+                    {priorityFilter && (
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 capitalize">
+                        {priorityFilter}
+                      </Badge>
+                    )}
+                    <ChevronDown className="w-3 h-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setPriorityFilter(null)}>
+                    All Priorities
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <DropdownMenuSeparator />
+                  {['urgent', 'high', 'medium', 'low'].map((priority) => (
+                    <DropdownMenuItem
+                      key={priority}
+                      onClick={() => setPriorityFilter(priority)}
+                    >
+                      <span className="flex items-center gap-2 capitalize">
+                        <span className={cn('w-2 h-2 rounded-full', PRIORITY_DOT_COLORS[priority])} />
+                        {priority}
+                      </span>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto p-6 bg-charcoal-50/30">
+        <div className="flex-1 overflow-auto p-3 md:p-6 bg-charcoal-50/30">
           {viewMode === 'list' && (
             <div className="bg-white border border-charcoal-100 rounded-xl overflow-hidden">
               {filteredTasks.length === 0 ? (
@@ -622,29 +676,29 @@ export default function TasksPage() {
                     <div
                       key={task.id}
                       className={cn(
-                        'px-4 py-3 flex items-center gap-4 hover:bg-charcoal-50/50 transition-colors group',
+                        'px-3 md:px-4 py-3 md:py-3 flex items-start md:items-center gap-3 md:gap-4 hover:bg-charcoal-50/50 transition-colors group',
                         task.status === 'done' && 'opacity-60'
                       )}
                     >
-                      {/* Status Toggle */}
+                      {/* Status Toggle - Larger touch target on mobile */}
                       <button
                         onClick={() => handleStatusChange(
                           task.id,
                           task.status === 'done' ? 'todo' : 'done'
                         )}
-                        className="shrink-0 hover:scale-110 transition-transform"
+                        className="shrink-0 hover:scale-110 transition-transform p-1 -m-1"
                       >
                         {STATUS_ICONS[task.status]}
                       </button>
 
                       {/* Priority Indicator */}
-                      <span className={cn('w-1.5 h-8 rounded-full shrink-0', PRIORITY_DOT_COLORS[task.priority])} />
+                      <span className={cn('w-1.5 h-6 md:h-8 rounded-full shrink-0 mt-1 md:mt-0', PRIORITY_DOT_COLORS[task.priority])} />
 
                       {/* Task Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-start md:items-center gap-2 flex-wrap">
                           <span className={cn(
-                            'font-medium text-charcoal-900',
+                            'font-medium text-charcoal-900 text-sm md:text-base',
                             task.status === 'done' && 'line-through text-charcoal-500'
                           )}>
                             {task.title}
@@ -652,12 +706,12 @@ export default function TasksPage() {
                           {task.isFocusTask && (
                             <Badge variant="secondary" className="gap-1 text-xs bg-amber-50 text-amber-700 border-amber-200">
                               <Sparkles className="w-3 h-3" />
-                              Focus
+                              <span className="hidden sm:inline">Focus</span>
                             </Badge>
                           )}
                         </div>
 
-                        <div className="flex items-center gap-3 mt-1 text-xs text-charcoal-500">
+                        <div className="flex items-center gap-2 md:gap-3 mt-1 text-xs text-charcoal-500 flex-wrap">
                           {/* Project */}
                           {task.project && (
                             <span className="flex items-center gap-1">
@@ -665,7 +719,7 @@ export default function TasksPage() {
                                 className="w-2 h-2 rounded-full"
                                 style={{ backgroundColor: task.project.color }}
                               />
-                              {task.project.name}
+                              <span className="hidden sm:inline">{task.project.name}</span>
                             </span>
                           )}
 
@@ -683,9 +737,9 @@ export default function TasksPage() {
                             </span>
                           )}
 
-                          {/* Tags */}
+                          {/* Tags - Hide on mobile to save space */}
                           {task.tags.length > 0 && (
-                            <div className="flex items-center gap-1">
+                            <div className="hidden sm:flex items-center gap-1">
                               {task.tags.slice(0, 2).map(({ tag }) => (
                                 <span
                                   key={tag.id}
@@ -706,13 +760,13 @@ export default function TasksPage() {
                         </div>
                       </div>
 
-                      {/* Actions */}
+                      {/* Actions - Always visible on mobile for touch access */}
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
                           >
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
@@ -756,7 +810,7 @@ export default function TasksPage() {
           )}
 
           {viewMode === 'board' && (
-            <div className="grid grid-cols-3 gap-4 h-full">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-full">
               {/* To Do Column */}
               <div className="bg-white border border-charcoal-100 rounded-xl flex flex-col">
                 <div className="px-4 py-3 border-b border-charcoal-100 flex items-center justify-between">
@@ -766,7 +820,7 @@ export default function TasksPage() {
                     <Badge variant="secondary" className="ml-1">{tasksByStatus.todo.length}</Badge>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
                   {tasksByStatus.todo.map((task) => (
                     <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
                   ))}
@@ -782,7 +836,7 @@ export default function TasksPage() {
                     <Badge variant="secondary" className="ml-1">{tasksByStatus.in_progress.length}</Badge>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
                   {tasksByStatus.in_progress.map((task) => (
                     <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
                   ))}
@@ -798,7 +852,7 @@ export default function TasksPage() {
                     <Badge variant="secondary" className="ml-1">{tasksByStatus.done.length}</Badge>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
                   {tasksByStatus.done.map((task) => (
                     <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
                   ))}
