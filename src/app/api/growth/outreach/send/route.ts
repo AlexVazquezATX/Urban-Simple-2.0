@@ -118,11 +118,17 @@ export async function POST(request: NextRequest) {
 
       const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
+      // Build email body with optional signature
+      let emailHtml = messageBody.replace(/\n/g, '<br>')
+      if (user.emailSignature) {
+        emailHtml += '<br><br>--<br>' + user.emailSignature.replace(/\n/g, '<br>')
+      }
+
       const { data, error } = await resendClient.emails.send({
         from: fromEmail,
         to,
         subject,
-        html: messageBody.replace(/\n/g, '<br>'), // Convert newlines to HTML breaks
+        html: emailHtml,
       })
 
       if (error) {

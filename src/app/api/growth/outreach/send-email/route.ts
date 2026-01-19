@@ -39,11 +39,18 @@ export async function POST(request: NextRequest) {
     // Send email via Resend
     const resend = new Resend(process.env.RESEND_API_KEY || '')
     const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+
+    // Build email body with optional signature
+    let emailHtml = emailBody
+    if (user.emailSignature) {
+      emailHtml += '<br><br>--<br>' + user.emailSignature.replace(/\n/g, '<br>')
+    }
+
     const { data, error } = await resend.emails.send({
       from,
       to,
       subject,
-      html: emailBody,
+      html: emailHtml,
     })
 
     if (error) {

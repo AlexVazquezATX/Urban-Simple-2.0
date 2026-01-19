@@ -8,7 +8,8 @@ import { QuickCompose } from '@/components/growth/outreach/quick-compose'
 import { TemplateLibrary } from '@/components/growth/outreach/template-library'
 import { SequenceList } from '@/components/growth/outreach/sequence-list'
 import { BulkSender } from '@/components/growth/outreach/bulk-sender'
-import { LayoutDashboard, Send, FileText, Zap, Users } from 'lucide-react'
+import { OutreachSettings } from '@/components/growth/outreach/outreach-settings'
+import { LayoutDashboard, Send, FileText, Zap, Users, Settings } from 'lucide-react'
 
 export default function OutreachPage() {
   const searchParams = useSearchParams()
@@ -31,7 +32,7 @@ export default function OutreachPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <LayoutDashboard className="h-4 w-4" />
             Dashboard
@@ -51,6 +52,10 @@ export default function OutreachPage() {
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <FileText className="h-4 w-4" />
             Templates
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-2">
+            <Settings className="h-4 w-4" />
+            Settings
           </TabsTrigger>
         </TabsList>
 
@@ -72,6 +77,10 @@ export default function OutreachPage() {
 
         <TabsContent value="templates" className="mt-6">
           <TemplateLibrary />
+        </TabsContent>
+
+        <TabsContent value="settings" className="mt-6">
+          <OutreachSettings />
         </TabsContent>
       </Tabs>
     </div>
