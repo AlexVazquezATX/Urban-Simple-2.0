@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { ArrowLeft, Save, Plus, Trash2, Loader2 } from 'lucide-react'
+import { ArrowLeft, Save, Plus, Trash2, Loader2, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface SequenceBuilderProps {
@@ -34,6 +34,8 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
   const router = useRouter()
   const [loading, setLoading] = useState(!!sequenceId)
   const [saving, setSaving] = useState(false)
+  const [generatingStepId, setGeneratingStepId] = useState<string | null>(null)
+  const [tone, setTone] = useState<'professional' | 'friendly' | 'casual' | 'warm'>('friendly')
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [steps, setSteps] = useState<SequenceStep[]>([
@@ -105,6 +107,77 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
 
   const updateStep = (id: string, field: string, value: any) => {
     setSteps(steps.map((s) => (s.id === id ? { ...s, [field]: value } : s)))
+  }
+
+  const handleGenerateStepContent = async (stepId: string) => {
+    const step = steps.find((s) => s.id === stepId)
+    if (!step) return
+
+    if (!name) {
+      toast.error('Please enter a sequence name first')
+      return
+    }
+
+    setGeneratingStepId(stepId)
+    try {
+      // Get previous steps' content for context
+      const previousStepsContext = steps
+        .filter((s) => s.step < step.step)
+        .map((s) => s.body)
+        .filter((b) => b.length > 0)
+
+      const response = await fetch('/api/growth/outreach/sequences/generate-step', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          channel: step.channel,
+          stepNumber: step.step,
+          totalSteps: steps.length,
+          sequenceName: name,
+          sequenceDescription: description,
+          tone,
+          previousStepsContext,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to generate content')
+      }
+
+      const data = await response.json()
+
+      if (data.content) {
+        setSteps((prev) =>
+          prev.map((s) =>
+            s.id === stepId
+              ? {
+                  ...s,
+                  subject: data.content.subject || s.subject,
+                  body: data.content.body || s.body,
+                }
+              : s
+          )
+        )
+        toast.success(`Step ${step.step} content generated!`)
+      }
+    } catch (error: any) {
+      console.error('Error generating step content:', error)
+      toast.error(error.message || 'Failed to generate content')
+    } finally {
+      setGeneratingStepId(null)
+    }
+  }
+
+  const handleGenerateAllSteps = async () => {
+    if (!name) {
+      toast.error('Please enter a sequence name first')
+      return
+    }
+
+    for (const step of steps) {
+      await handleGenerateStepContent(step.id)
+    }
   }
 
   const handleSave = async () => {
@@ -193,6 +266,23 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
               placeholder="Optional description"
             />
           </div>
+          <div>
+            <Label>AI Tone</Label>
+            <Select value={tone} onValueChange={(v: any) => setTone(v)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="professional">Professional</SelectItem>
+                <SelectItem value="friendly">Friendly</SelectItem>
+                <SelectItem value="casual">Casual</SelectItem>
+                <SelectItem value="warm">Warm</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sets the tone for AI-generated content
+            </p>
+          </div>
         </CardContent>
       </Card>
 
@@ -205,10 +295,21 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                 Messages will be sent automatically based on delays
               </CardDescription>
             </div>
-            <Button onClick={addStep} variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Step
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleGenerateAllSteps}
+                variant="outline"
+                size="sm"
+                disabled={!!generatingStepId || !name}
+              >
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate All with AI
+              </Button>
+              <Button onClick={addStep} variant="outline" size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Step
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -217,15 +318,35 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">Step {step.step}</CardTitle>
-                  {steps.length > 1 && (
+                  <div className="flex items-center gap-2">
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      onClick={() => removeStep(step.id)}
+                      onClick={() => handleGenerateStepContent(step.id)}
+                      disabled={generatingStepId === step.id || !name}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {generatingStepId === step.id ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generate with AI
+                        </>
+                      )}
                     </Button>
-                  )}
+                    {steps.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeStep(step.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -272,7 +393,12 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                 )}
 
                 <div>
-                  <Label>Message Body</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label>Message Body</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Use {'{{company_name}}'}, {'{{contact_name}}'}, {'{{location}}'} for personalization
+                    </p>
+                  </div>
                   <Textarea
                     value={step.body}
                     onChange={(e) => updateStep(step.id, 'body', e.target.value)}

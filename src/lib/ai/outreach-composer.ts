@@ -225,11 +225,20 @@ IMPORTANT GUIDELINES:
 - Don't use generic phrases like "I hope this email finds you well"
 - Show you've done research about their business
 
-OUTPUT FORMAT:
-${channel === 'email' ? 'Subject: [subject line]\n\n' : ''}Body:
-[message body]
+CRITICAL: Generate ONE complete, ready-to-send message. Do NOT:
+- Provide multiple options or alternatives to choose from
+- Include bracketed placeholders like [Option A] or [Option B]
+- Suggest different sentence variations
+- Add comments or notes within the message
+- Include any meta-text like "Here's your email" or "Choose between"
 
-${channel === 'email' ? 'Provide both subject and body.' : 'Provide only the message body (no subject line).'}`
+The message should be final and polished - ready to send as-is without any editing required.
+
+OUTPUT FORMAT:
+${channel === 'email' ? 'Subject: [your subject line here]\n\n' : ''}Body:
+[your complete message here]
+
+${channel === 'email' ? 'Provide both subject and body as a single, complete email.' : 'Provide only the message body (no subject line).'}`
 }
 
 function parseAIResponse(text: string, channel: string): {
@@ -255,6 +264,115 @@ function parseAIResponse(text: string, channel: string): {
   return {
     subject,
     body,
+  }
+}
+
+export interface SequenceStepOptions {
+  channel: 'email' | 'sms' | 'linkedin' | 'instagram_dm'
+  stepNumber: number
+  totalSteps: number
+  sequenceName: string
+  sequenceDescription?: string
+  tone?: 'professional' | 'friendly' | 'casual' | 'warm'
+  previousStepsContext?: string[]
+}
+
+/**
+ * Generate content for a sequence step using AI
+ */
+export async function generateSequenceStepContent(
+  options: SequenceStepOptions
+): Promise<{ subject?: string; body: string }> {
+  const {
+    channel,
+    stepNumber,
+    totalSteps,
+    sequenceName,
+    sequenceDescription,
+    tone = 'friendly',
+    previousStepsContext = [],
+  } = options
+
+  try {
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+
+    const channelGuidelines = {
+      email: 'Professional email format with clear subject line. Keep body concise (3-4 paragraphs max).',
+      sms: 'Short, friendly text message. Maximum 160 characters. No subject line.',
+      linkedin: 'Professional LinkedIn message. 2-3 short paragraphs. Personal and conversational.',
+      instagram_dm: 'Casual, friendly Instagram DM. Keep it brief and authentic. Use emojis sparingly.',
+    }
+
+    const toneGuidelines = {
+      professional: 'Formal, business-like, respectful',
+      friendly: 'Warm, approachable, personable',
+      casual: 'Relaxed, conversational, authentic',
+      warm: 'Very friendly, enthusiastic, personal',
+    }
+
+    const stepTypes: Record<number, string> = {
+      1: 'Initial outreach - introduce yourself and Urban Simple\'s commercial cleaning services',
+      2: 'Follow-up - reference the initial message, provide additional value or information',
+      3: 'Value add - share a case study, testimonial, or industry insight',
+      4: 'Soft check-in - friendly reminder, ask if they have questions',
+      5: 'Final follow-up - last attempt, suggest alternative contact methods or future timing',
+    }
+
+    const stepType = stepTypes[stepNumber] || stepTypes[Math.min(stepNumber, 5)]
+
+    const previousContext = previousStepsContext.length > 0
+      ? `\nPREVIOUS STEPS IN SEQUENCE:\n${previousStepsContext.map((c, i) => `Step ${i + 1}: ${c.substring(0, 100)}...`).join('\n')}\n`
+      : ''
+
+    const prompt = `You are an expert outreach copywriter for Urban Simple, a commercial cleaning company specializing in hospitality services (restaurants, hotels, bars, commercial kitchens).
+
+TASK: Generate a ${channel} message for STEP ${stepNumber} of ${totalSteps} in an outreach sequence.
+
+SEQUENCE INFO:
+Name: ${sequenceName}
+${sequenceDescription ? `Description: ${sequenceDescription}` : ''}
+${previousContext}
+
+STEP CONTEXT:
+- This is step ${stepNumber} of ${totalSteps}
+- Step type: ${stepType}
+- Channel: ${channel}
+- Tone: ${toneGuidelines[tone]}
+- ${channelGuidelines[channel]}
+
+IMPORTANT GUIDELINES:
+- This is a TEMPLATE that will be personalized later with merge fields
+- Use these placeholders: {{company_name}}, {{contact_name}}, {{location}}
+- Keep messages progressively shorter as the sequence continues
+- Each step should have a unique angle - don't repeat the same pitch
+- Reference previous messages naturally (for steps 2+)
+- Include a clear but non-pushy call-to-action
+
+CRITICAL: Generate ONE complete, ready-to-use template. Do NOT:
+- Provide multiple options or alternatives
+- Include bracketed placeholders like [Option A] or [Option B]
+- Add meta-text or comments
+
+OUTPUT FORMAT:
+${channel === 'email' ? 'Subject: [your subject line here]\n\n' : ''}Body:
+[your complete message template here]
+
+${channel === 'email' ? 'Provide both subject and body.' : 'Provide only the message body.'}`
+
+    const result = await model.generateContent(prompt)
+    const response = result.response
+    const text = response.text()
+
+    // Parse the response
+    const parsed = parseAIResponse(text, channel)
+
+    return {
+      subject: parsed.subject,
+      body: parsed.body,
+    }
+  } catch (error) {
+    console.error('Error generating sequence step content:', error)
+    throw new Error('Failed to generate sequence step content')
   }
 }
 
