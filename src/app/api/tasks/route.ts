@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const includeProject = searchParams.get('includeProject') === 'true'
     const includeTags = searchParams.get('includeTags') === 'true'
     const includeLinks = searchParams.get('includeLinks') === 'true'
+    const includeStats = searchParams.get('includeStats') !== 'false' // Default true for backwards compat
     const limit = searchParams.get('limit')
     const orderBy = searchParams.get('orderBy') || 'createdAt'
     const order = searchParams.get('order') || 'desc'
@@ -104,64 +105,70 @@ export async function GET(request: NextRequest) {
     const orderByClause: Record<string, string> = {}
     orderByClause[orderBy] = order
 
-    const tasks = await prisma.task.findMany({
-      where,
-      include: Object.keys(include).length > 0 ? include : undefined,
-      orderBy: orderByClause,
-      take: limit ? parseInt(limit) : undefined,
-    })
-
-    // Get stats for dashboard
-    const stats = await prisma.task.groupBy({
-      by: ['status'],
-      where: {
-        userId: user.id,
-        companyId: user.companyId,
-      },
-      _count: true,
-    })
-
-    // Count overdue
+    // Run queries in parallel for better performance
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-
-    const overdueCount = await prisma.task.count({
-      where: {
-        userId: user.id,
-        companyId: user.companyId,
-        status: { in: ['todo', 'in_progress'] },
-        dueDate: { lt: today },
-      },
-    })
-
-    // Count due today
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    const dueTodayCount = await prisma.task.count({
-      where: {
-        userId: user.id,
-        companyId: user.companyId,
-        status: { in: ['todo', 'in_progress'] },
-        dueDate: {
-          gte: today,
-          lt: tomorrow,
-        },
-      },
-    })
+    const baseWhere = {
+      userId: user.id,
+      companyId: user.companyId,
+    }
 
-    return NextResponse.json({
-      tasks,
-      stats: {
-        byStatus: stats.reduce((acc, s) => {
-          acc[s.status] = s._count
-          return acc
-        }, {} as Record<string, number>),
-        overdue: overdueCount,
-        dueToday: dueTodayCount,
-        total: tasks.length,
-      },
-    })
+    // Only fetch stats if requested (skip for simple task updates)
+    if (includeStats) {
+      const [tasks, statsResult] = await Promise.all([
+        prisma.task.findMany({
+          where,
+          include: Object.keys(include).length > 0 ? include : undefined,
+          orderBy: orderByClause,
+          take: limit ? parseInt(limit) : undefined,
+        }),
+        // Single raw query for all stats instead of 3 separate queries
+        prisma.$queryRaw<Array<{ status: string; count: bigint; overdue: bigint; due_today: bigint }>>`
+          SELECT
+            status,
+            COUNT(*) as count,
+            SUM(CASE WHEN status IN ('todo', 'in_progress') AND due_date < ${today} THEN 1 ELSE 0 END) as overdue,
+            SUM(CASE WHEN status IN ('todo', 'in_progress') AND due_date >= ${today} AND due_date < ${tomorrow} THEN 1 ELSE 0 END) as due_today
+          FROM tasks
+          WHERE user_id = ${user.id} AND company_id = ${user.companyId}
+          GROUP BY status
+        `
+      ])
+
+      // Process stats from raw query
+      const byStatus: Record<string, number> = {}
+      let overdueCount = 0
+      let dueTodayCount = 0
+
+      for (const row of statsResult) {
+        byStatus[row.status] = Number(row.count)
+        overdueCount += Number(row.overdue)
+        dueTodayCount += Number(row.due_today)
+      }
+
+      return NextResponse.json({
+        tasks,
+        stats: {
+          byStatus,
+          overdue: overdueCount,
+          dueToday: dueTodayCount,
+          total: tasks.length,
+        },
+      })
+    } else {
+      // Simple task fetch without stats
+      const tasks = await prisma.task.findMany({
+        where,
+        include: Object.keys(include).length > 0 ? include : undefined,
+        orderBy: orderByClause,
+        take: limit ? parseInt(limit) : undefined,
+      })
+
+      return NextResponse.json({ tasks })
+    }
   } catch (error) {
     console.error('Error fetching tasks:', error)
     return NextResponse.json(

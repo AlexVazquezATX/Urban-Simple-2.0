@@ -164,7 +164,7 @@ export default function TasksPage() {
       }
       params.set('includeProject', 'true')
       params.set('includeTags', 'true')
-      params.set('includeLinks', 'true')
+      // Don't include links in list view - not displayed and adds payload
 
       const response = await fetch(`/api/tasks?${params.toString()}`)
       const data = await response.json()
@@ -228,14 +228,46 @@ export default function TasksPage() {
   }
 
   const handleStatusChange = async (taskId: string, newStatus: string) => {
+    // Optimistic update - update UI immediately
+    const previousTasks = tasks
+    setTasks(prev => prev.map(task =>
+      task.id === taskId
+        ? { ...task, status: newStatus, completedAt: newStatus === 'done' ? new Date().toISOString() : null }
+        : task
+    ))
+
+    // Update stats optimistically
+    if (stats) {
+      const task = tasks.find(t => t.id === taskId)
+      if (task) {
+        const oldStatus = task.status
+        setStats(prev => prev ? {
+          ...prev,
+          byStatus: {
+            ...prev.byStatus,
+            [oldStatus]: (prev.byStatus[oldStatus] || 1) - 1,
+            [newStatus]: (prev.byStatus[newStatus] || 0) + 1,
+          }
+        } : null)
+      }
+    }
+
     try {
-      await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
-      await loadTasks()
+
+      if (!response.ok) {
+        // Revert on error
+        setTasks(previousTasks)
+        console.error('Failed to update task')
+      }
+      // Don't reload - optimistic update is sufficient
     } catch (error) {
+      // Revert on error
+      setTasks(previousTasks)
       console.error('Failed to update task:', error)
     }
   }
@@ -243,13 +275,38 @@ export default function TasksPage() {
   const handleDeleteTask = async (taskId: string) => {
     if (!confirm('Are you sure you want to delete this task?')) return
 
+    // Optimistic update
+    const previousTasks = tasks
+    const deletedTask = tasks.find(t => t.id === taskId)
+    setTasks(prev => prev.filter(task => task.id !== taskId))
+
+    // Update stats optimistically
+    if (stats && deletedTask) {
+      setStats(prev => prev ? {
+        ...prev,
+        byStatus: {
+          ...prev.byStatus,
+          [deletedTask.status]: (prev.byStatus[deletedTask.status] || 1) - 1,
+        },
+        total: prev.total - 1,
+      } : null)
+    }
+
     try {
-      await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`/api/tasks/${taskId}`, {
         method: 'DELETE',
       })
-      await loadTasks()
-      await loadProjects()
+
+      if (!response.ok) {
+        // Revert on error
+        setTasks(previousTasks)
+      } else {
+        // Only reload projects to update counts (lightweight)
+        loadProjects()
+      }
     } catch (error) {
+      // Revert on error
+      setTasks(previousTasks)
       console.error('Failed to delete task:', error)
     }
   }

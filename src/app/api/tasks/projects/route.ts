@@ -24,39 +24,69 @@ export async function GET(request: NextRequest) {
       where.status = statuses.length > 1 ? { in: statuses } : status
     }
 
-    const projects = await prisma.project.findMany({
-      where,
-      include: includeTaskCount ? {
-        _count: {
-          select: {
-            tasks: true,
+    if (includeTaskCount) {
+      // Run both queries in parallel for better performance
+      const [projects, openCounts] = await Promise.all([
+        prisma.project.findMany({
+          where,
+          include: {
+            _count: {
+              select: {
+                tasks: true,
+              },
+            },
           },
-        },
-        tasks: {
+          orderBy: [
+            { sortOrder: 'asc' },
+            { createdAt: 'desc' },
+          ],
+        }),
+        // Get open task counts with a single aggregated query instead of fetching all tasks
+        prisma.task.groupBy({
+          by: ['projectId'],
           where: {
+            userId: user.id,
+            companyId: user.companyId,
             status: { in: ['todo', 'in_progress'] },
+            projectId: { not: null },
           },
-          select: {
-            id: true,
-          },
-        },
-      } : undefined,
-      orderBy: [
-        { sortOrder: 'asc' },
-        { createdAt: 'desc' },
-      ],
-    })
+          _count: true,
+        })
+      ])
 
-    // Transform to include task counts properly
-    const projectsWithCounts = projects.map(project => ({
-      ...project,
-      taskCount: includeTaskCount ? (project as typeof project & { _count: { tasks: number } })._count?.tasks || 0 : undefined,
-      openTaskCount: includeTaskCount ? (project as typeof project & { tasks: { id: string }[] }).tasks?.length || 0 : undefined,
-      tasks: undefined, // Remove the tasks array from response
-      _count: undefined, // Remove _count from response
-    }))
+      // Create a map for quick lookup
+      const openCountMap = new Map(
+        openCounts.map(c => [c.projectId, c._count])
+      )
 
-    return NextResponse.json(projectsWithCounts)
+      // Transform to include task counts properly
+      const projectsWithCounts = projects.map(project => ({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        color: project.color,
+        status: project.status,
+        dueDate: project.dueDate,
+        sortOrder: project.sortOrder,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        taskCount: project._count?.tasks || 0,
+        openTaskCount: openCountMap.get(project.id) || 0,
+      }))
+
+      return NextResponse.json(projectsWithCounts)
+    } else {
+      // Simple fetch without counts
+      const projects = await prisma.project.findMany({
+        where,
+        orderBy: [
+          { sortOrder: 'asc' },
+          { createdAt: 'desc' },
+        ],
+      })
+
+      return NextResponse.json(projects)
+    }
   } catch (error) {
     console.error('Error fetching projects:', error)
     return NextResponse.json(
