@@ -37,6 +37,14 @@ export async function GET() {
             color: true,
           },
         },
+        goal: {
+          select: {
+            id: true,
+            title: true,
+            color: true,
+            period: true,
+          },
+        },
         links: true,
       },
       orderBy: {
@@ -105,6 +113,13 @@ export async function POST() {
             name: true,
           },
         },
+        goal: {
+          select: {
+            id: true,
+            title: true,
+            period: true,
+          },
+        },
         links: true,
       },
       orderBy: {
@@ -130,6 +145,8 @@ export async function POST() {
       dueDate: task.dueDate?.toISOString().split('T')[0],
       scheduledDate: task.scheduledDate?.toISOString().split('T')[0],
       project: task.project?.name,
+      goal: task.goal ? { title: task.goal.title, period: task.goal.period } : null,
+      isStarred: task.isStarred,
       linkedEntities: task.links.map(l => `${l.entityType}: ${l.entityLabel || l.entityId}`),
       isOverdue: task.dueDate && task.dueDate < today,
       daysPastDue: task.dueDate && task.dueDate < today
@@ -148,11 +165,13 @@ Here are their open tasks:
 ${JSON.stringify(taskData, null, 2)}
 
 Select 3-5 tasks they should focus on today. Prioritize based on:
-1. Overdue tasks (highest priority - these MUST be addressed)
-2. Tasks due today or tomorrow
-3. High/urgent priority tasks
-4. Tasks already "in_progress" (momentum)
-5. Tasks linked to clients or invoices (business impact)
+1. Starred tasks (user's manual priority - respect their choices)
+2. Overdue tasks (highest priority - these MUST be addressed)
+3. Tasks due today or tomorrow
+4. Tasks linked to weekly goals (support goal achievement)
+5. High/urgent priority tasks
+6. Tasks already "in_progress" (momentum)
+7. Tasks linked to clients or invoices (business impact)
 
 Return a JSON response with this exact structure:
 {
@@ -166,7 +185,7 @@ Return a JSON response with this exact structure:
   "summary": "A brief, encouraging 1-2 sentence summary of the day's focus (conversational, not robotic)"
 }
 
-Focus on being helpful and specific. The summary should feel like advice from a smart assistant, not a generic statement.`
+Focus on being helpful and specific. If a task supports a weekly goal, mention it. The summary should feel like advice from a smart assistant, not a generic statement.`
 
     const result = await model.generateContent(prompt)
     const responseText = result.response.text()
@@ -184,9 +203,15 @@ Focus on being helpful and specific. The summary should feel like advice from a 
       console.error('Failed to parse AI response:', responseText)
       // Fallback: select top tasks manually
       const sortedTasks = [...taskData].sort((a, b) => {
-        // Overdue first
+        // Starred first
+        if (a.isStarred && !b.isStarred) return -1
+        if (!a.isStarred && b.isStarred) return 1
+        // Overdue second
         if (a.isOverdue && !b.isOverdue) return -1
         if (!a.isOverdue && b.isOverdue) return 1
+        // Tasks with goals third
+        if (a.goal && !b.goal) return -1
+        if (!a.goal && b.goal) return 1
         // Then by priority
         const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 }
         return (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) -
@@ -197,7 +222,10 @@ Focus on being helpful and specific. The summary should feel like advice from a 
         focusTasks: sortedTasks.slice(0, 4).map((t, i) => ({
           id: t.id,
           priority: i + 1,
-          reason: t.isOverdue ? 'Overdue - needs attention' : `${t.priority} priority task`,
+          reason: t.isStarred ? 'Starred - your priority' :
+                  t.isOverdue ? 'Overdue - needs attention' :
+                  t.goal ? `Supports: ${t.goal.title}` :
+                  `${t.priority} priority task`,
         })),
         summary: 'Here are your top tasks for today based on priority and due dates.',
       }
@@ -233,6 +261,14 @@ Focus on being helpful and specific. The summary should feel like advice from a 
             id: true,
             name: true,
             color: true,
+          },
+        },
+        goal: {
+          select: {
+            id: true,
+            title: true,
+            color: true,
+            period: true,
           },
         },
         links: true,

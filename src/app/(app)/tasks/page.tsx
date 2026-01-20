@@ -26,6 +26,7 @@ import {
   X,
   ChevronRight,
   ArrowUpRight,
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,6 +41,7 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { TaskForm } from '@/components/tasks/task-form'
 import { ProjectForm } from '@/components/tasks/project-form'
+import { GoalsSection } from '@/components/tasks/goals-section'
 import Link from 'next/link'
 
 interface Task {
@@ -54,6 +56,8 @@ interface Task {
   isFocusTask: boolean
   focusReason: string | null
   focusPriority: number | null
+  isStarred: boolean
+  starredAt: string | null
   createdAt: string
   project: {
     id: string
@@ -156,8 +160,12 @@ export default function TasksPage() {
       if (statusFilter.length > 0) {
         params.set('status', statusFilter.join(','))
       }
-      if (projectFilter) {
+      // Handle special 'starred' filter - don't pass as projectId
+      if (projectFilter && projectFilter !== 'starred') {
         params.set('projectId', projectFilter)
+      }
+      if (projectFilter === 'starred') {
+        params.set('isStarred', 'true')
       }
       if (priorityFilter) {
         params.set('priority', priorityFilter)
@@ -222,6 +230,8 @@ export default function TasksPage() {
       isFocusTask: false,
       focusReason: null,
       focusPriority: null,
+      isStarred: false,
+      starredAt: null,
       createdAt: new Date().toISOString(),
       project: assignedProject ? { id: assignedProject.id, name: assignedProject.name, color: assignedProject.color } : null,
       tags: [],
@@ -364,6 +374,35 @@ export default function TasksPage() {
     }
   }
 
+  const handleStarToggle = async (taskId: string, currentlyStarred: boolean) => {
+    // Optimistic update
+    const previousTasks = tasks
+    const newStarredState = !currentlyStarred
+    setTasks(prev => prev.map(task =>
+      task.id === taskId
+        ? { ...task, isStarred: newStarredState, starredAt: newStarredState ? new Date().toISOString() : null }
+        : task
+    ))
+
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isStarred: newStarredState }),
+      })
+
+      if (!response.ok) {
+        // Revert on error
+        setTasks(previousTasks)
+        console.error('Failed to update task star status')
+      }
+    } catch (error) {
+      // Revert on error
+      setTasks(previousTasks)
+      console.error('Failed to toggle star:', error)
+    }
+  }
+
   const formatDueDate = (date: string | null) => {
     if (!date) return null
     const d = new Date(date)
@@ -438,6 +477,23 @@ export default function TasksPage() {
               <span className="flex-1 text-left font-medium">Today's Focus</span>
               <ArrowUpRight className="w-3 h-3" />
             </Link>
+
+            {/* Starred Tasks */}
+            <button
+              onClick={() => setProjectFilter('starred')}
+              className={cn(
+                'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
+                projectFilter === 'starred'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'text-charcoal-600 hover:bg-charcoal-100'
+              )}
+            >
+              <Star className="w-4 h-4" />
+              <span className="flex-1 text-left">Starred</span>
+              <span className="text-xs text-charcoal-400">
+                {tasks.filter(t => t.isStarred && statusFilter.includes(t.status)).length}
+              </span>
+            </button>
 
             <div className="border-t border-charcoal-100 my-3" />
 
@@ -543,7 +599,9 @@ export default function TasksPage() {
                     ? 'All Tasks'
                     : projectFilter === 'null'
                       ? 'Inbox'
-                      : projects.find(p => p.id === projectFilter)?.name || 'Tasks'}
+                      : projectFilter === 'starred'
+                        ? 'Starred Tasks'
+                        : projects.find(p => p.id === projectFilter)?.name || 'Tasks'}
                 </h1>
                 <p className="text-xs md:text-sm text-charcoal-500">
                   {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
@@ -601,17 +659,25 @@ export default function TasksPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
                   <span className="flex items-center gap-2">
-                    <FolderKanban className="w-4 h-4" />
+                    {projectFilter === 'starred' ? <Star className="w-4 h-4 text-amber-500" /> : <FolderKanban className="w-4 h-4" />}
                     {projectFilter === null
                       ? 'All Tasks'
                       : projectFilter === 'null'
                         ? 'No Project'
-                        : projects.find(p => p.id === projectFilter)?.name || 'Project'}
+                        : projectFilter === 'starred'
+                          ? 'Starred'
+                          : projects.find(p => p.id === projectFilter)?.name || 'Project'}
                   </span>
                   <ChevronDown className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
+                <DropdownMenuItem onClick={() => setProjectFilter('starred')}>
+                  <Star className={cn('w-4 h-4 mr-2', projectFilter === 'starred' && 'fill-amber-500 text-amber-500')} />
+                  Starred
+                  {projectFilter === 'starred' && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setProjectFilter(null)}>
                   <LayoutList className="w-4 h-4 mr-2" />
                   All Tasks
@@ -760,6 +826,11 @@ export default function TasksPage() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto p-3 md:p-6 bg-charcoal-50/30">
+          {/* Goals Section - shown only when not filtering by project */}
+          {(projectFilter === null || projectFilter === 'starred') && (
+            <GoalsSection className="mb-4" />
+          )}
+
           {viewMode === 'list' && (
             <div className="bg-white border border-charcoal-100 rounded-xl overflow-hidden">
               {filteredTasks.length === 0 ? (
@@ -787,9 +858,22 @@ export default function TasksPage() {
                       key={task.id}
                       className={cn(
                         'px-3 md:px-4 py-3 md:py-3 flex items-start md:items-center gap-3 md:gap-4 hover:bg-charcoal-50/50 transition-colors group',
-                        task.status === 'done' && 'opacity-60'
+                        task.status === 'done' && 'opacity-60',
+                        task.isStarred && 'bg-amber-50/50'
                       )}
                     >
+                      {/* Star Toggle */}
+                      <button
+                        onClick={() => handleStarToggle(task.id, task.isStarred)}
+                        className={cn(
+                          'shrink-0 hover:scale-110 transition-all p-1 -m-1',
+                          task.isStarred ? 'text-amber-500' : 'text-charcoal-300 hover:text-amber-400'
+                        )}
+                        title={task.isStarred ? 'Unstar task' : 'Star task'}
+                      >
+                        <Star className={cn('w-4 h-4', task.isStarred && 'fill-current')} />
+                      </button>
+
                       {/* Status Toggle - Larger touch target on mobile */}
                       <button
                         onClick={() => handleStatusChange(
@@ -882,6 +966,10 @@ export default function TasksPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleStarToggle(task.id, task.isStarred)}>
+                            <Star className={cn('w-4 h-4 mr-2', task.isStarred && 'fill-amber-500 text-amber-500')} />
+                            {task.isStarred ? 'Unstar' : 'Star'}
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => {
                             setEditingTask(task)
                             setShowTaskForm(true)
@@ -932,7 +1020,7 @@ export default function TasksPage() {
                 </div>
                 <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
                   {tasksByStatus.todo.map((task) => (
-                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
+                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onStarToggle={handleStarToggle} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
                   ))}
                 </div>
               </div>
@@ -948,7 +1036,7 @@ export default function TasksPage() {
                 </div>
                 <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
                   {tasksByStatus.in_progress.map((task) => (
-                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
+                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onStarToggle={handleStarToggle} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
                   ))}
                 </div>
               </div>
@@ -964,7 +1052,7 @@ export default function TasksPage() {
                 </div>
                 <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
                   {tasksByStatus.done.map((task) => (
-                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
+                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onStarToggle={handleStarToggle} onEdit={() => { setEditingTask(task); setShowTaskForm(true) }} />
                   ))}
                 </div>
               </div>
@@ -1052,10 +1140,12 @@ export default function TasksPage() {
 function TaskCard({
   task,
   onStatusChange,
+  onStarToggle,
   onEdit
 }: {
   task: Task
   onStatusChange: (id: string, status: string) => void
+  onStarToggle: (id: string, isStarred: boolean) => void
   onEdit: () => void
 }) {
   const isOverdue = (date: string | null) => {
@@ -1085,10 +1175,25 @@ function TaskCard({
 
   return (
     <div
-      className="p-3 bg-charcoal-50/50 hover:bg-charcoal-100/50 rounded-lg border border-charcoal-100 cursor-pointer group transition-colors"
+      className={cn(
+        'p-3 bg-charcoal-50/50 hover:bg-charcoal-100/50 rounded-lg border border-charcoal-100 cursor-pointer group transition-colors',
+        task.isStarred && 'bg-amber-50/50 border-amber-200'
+      )}
       onClick={onEdit}
     >
       <div className="flex items-start gap-2">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onStarToggle(task.id, task.isStarred)
+          }}
+          className={cn(
+            'mt-0.5 shrink-0 transition-colors',
+            task.isStarred ? 'text-amber-500' : 'text-charcoal-300 hover:text-amber-400'
+          )}
+        >
+          <Star className={cn('w-3.5 h-3.5', task.isStarred && 'fill-current')} />
+        </button>
         <button
           onClick={(e) => {
             e.stopPropagation()

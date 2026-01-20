@@ -14,6 +14,7 @@ import {
   RefreshCw,
   ChevronRight,
   ExternalLink,
+  Star,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -26,10 +27,17 @@ interface FocusTask {
   dueDate: string | null
   focusReason: string | null
   focusPriority: number | null
+  isStarred: boolean
   project: {
     id: string
     name: string
     color: string
+  } | null
+  goal: {
+    id: string
+    title: string
+    color: string
+    period: string
   } | null
   links: Array<{
     id: string
@@ -37,6 +45,15 @@ interface FocusTask {
     entityId: string
     entityLabel: string | null
   }>
+}
+
+interface GoalSummary {
+  id: string
+  title: string
+  progress: number
+  color: string
+  taskCount: number
+  completedTaskCount: number
 }
 
 interface TaskStats {
@@ -56,12 +73,14 @@ export function FocusWidget() {
   const [focusTasks, setFocusTasks] = useState<FocusTask[]>([])
   const [summary, setSummary] = useState<string | null>(null)
   const [stats, setStats] = useState<TaskStats | null>(null)
+  const [weeklyGoals, setWeeklyGoals] = useState<GoalSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [generating, setGenerating] = useState(false)
 
   useEffect(() => {
     loadFocus()
     loadStats()
+    loadGoals()
   }, [])
 
   const loadFocus = async () => {
@@ -90,6 +109,19 @@ export function FocusWidget() {
     } catch (error) {
       console.error('Failed to load task stats:', error)
       setStats(null)
+    }
+  }
+
+  const loadGoals = async () => {
+    try {
+      const response = await fetch('/api/goals/current')
+      if (response.ok) {
+        const data = await response.json()
+        setWeeklyGoals(data.weekly || [])
+      }
+    } catch (error) {
+      console.error('Failed to load goals:', error)
+      setWeeklyGoals([])
     }
   }
 
@@ -209,6 +241,44 @@ export function FocusWidget() {
         </div>
       )}
 
+      {/* Weekly Goals Summary */}
+      {weeklyGoals.length > 0 && (
+        <div className="px-5 py-3 border-b border-charcoal-100 bg-ocean-50/30">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium text-charcoal-600 flex items-center gap-1.5">
+              <Target className="w-3.5 h-3.5 text-ocean-600" />
+              This Week's Goals
+            </span>
+            <span className="text-xs text-charcoal-500">
+              {weeklyGoals.filter(g => g.progress >= 100).length}/{weeklyGoals.length} complete
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {weeklyGoals.slice(0, 3).map((goal) => (
+              <div
+                key={goal.id}
+                className="flex-1 min-w-0"
+                title={`${goal.title}: ${goal.progress}%`}
+              >
+                <div className="h-1.5 bg-charcoal-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${Math.min(goal.progress, 100)}%`,
+                      backgroundColor: goal.color,
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-charcoal-500 mt-1 truncate">{goal.title}</p>
+              </div>
+            ))}
+          </div>
+          {weeklyGoals.length > 3 && (
+            <p className="text-[10px] text-charcoal-400 mt-1">+{weeklyGoals.length - 3} more</p>
+          )}
+        </div>
+      )}
+
       {/* Focus Tasks */}
       {focusTasks.length > 0 ? (
         <div className="divide-y divide-charcoal-50">
@@ -237,6 +307,9 @@ export function FocusWidget() {
                   >
                     {STATUS_ICONS[task.status]}
                   </button>
+                  {task.isStarred && (
+                    <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                  )}
                   <span className={cn(
                     'font-medium text-sm text-charcoal-900',
                     task.status === 'done' && 'line-through text-charcoal-500'
@@ -267,6 +340,20 @@ export function FocusWidget() {
                         style={{ backgroundColor: task.project.color }}
                       />
                       {task.project.name}
+                    </span>
+                  )}
+
+                  {/* Goal */}
+                  {task.goal && (
+                    <span
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      style={{
+                        backgroundColor: `${task.goal.color}15`,
+                        color: task.goal.color,
+                      }}
+                    >
+                      <Target className="w-2.5 h-2.5" />
+                      {task.goal.title}
                     </span>
                   )}
 

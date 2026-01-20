@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     const projectId = searchParams.get('projectId')
     const priority = searchParams.get('priority')
     const isFocusTask = searchParams.get('isFocusTask')
+    const isStarred = searchParams.get('isStarred')
     const focusDate = searchParams.get('focusDate')
     const dueBefore = searchParams.get('dueBefore')
     const dueAfter = searchParams.get('dueAfter')
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
     const includeTags = searchParams.get('includeTags') === 'true'
     const includeLinks = searchParams.get('includeLinks') === 'true'
     const includeStats = searchParams.get('includeStats') !== 'false' // Default true for backwards compat
+    const starredFirst = searchParams.get('starredFirst') !== 'false' // Default true - starred tasks at top
     const limit = searchParams.get('limit')
     const orderBy = searchParams.get('orderBy') || 'createdAt'
     const order = searchParams.get('order') || 'desc'
@@ -49,6 +51,12 @@ export async function GET(request: NextRequest) {
 
     if (isFocusTask === 'true') {
       where.isFocusTask = true
+    }
+
+    if (isStarred === 'true') {
+      where.isStarred = true
+    } else if (isStarred === 'false') {
+      where.isStarred = false
     }
 
     if (focusDate) {
@@ -101,9 +109,12 @@ export async function GET(request: NextRequest) {
       include.links = true
     }
 
-    // Build orderBy clause
-    const orderByClause: Record<string, string> = {}
-    orderByClause[orderBy] = order
+    // Build orderBy clause - starred tasks first by default
+    const orderByClause: Array<Record<string, string>> = []
+    if (starredFirst) {
+      orderByClause.push({ isStarred: 'desc' }) // true (1) comes before false (0) in desc
+    }
+    orderByClause.push({ [orderBy]: order })
 
     // Run queries in parallel for better performance
     const today = new Date()
@@ -193,8 +204,10 @@ export async function POST(request: NextRequest) {
       status = 'todo',
       priority = 'medium',
       projectId,
+      goalId,
       dueDate,
       scheduledDate,
+      isStarred = false,
       tagIds = [],
       links = [],
     } = body
@@ -216,8 +229,11 @@ export async function POST(request: NextRequest) {
         status,
         priority,
         projectId: projectId || null,
+        goalId: goalId || null,
         dueDate: dueDate ? new Date(dueDate) : null,
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
+        isStarred,
+        starredAt: isStarred ? new Date() : null,
         // Create tag assignments
         tags: tagIds.length > 0 ? {
           create: tagIds.map((tagId: string) => ({
@@ -239,6 +255,14 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             color: true,
+          },
+        },
+        goal: {
+          select: {
+            id: true,
+            title: true,
+            color: true,
+            period: true,
           },
         },
         tags: {

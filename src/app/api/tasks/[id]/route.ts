@@ -25,6 +25,14 @@ export async function GET(
             color: true,
           },
         },
+        goal: {
+          select: {
+            id: true,
+            title: true,
+            color: true,
+            period: true,
+          },
+        },
         tags: {
           include: {
             tag: true,
@@ -87,6 +95,7 @@ export async function PATCH(
       status,
       priority,
       projectId,
+      goalId,
       dueDate,
       scheduledDate,
       kanbanOrder,
@@ -94,6 +103,7 @@ export async function PATCH(
       focusDate,
       focusReason,
       focusPriority,
+      isStarred,
       tagIds,
       links,
     } = body
@@ -114,6 +124,7 @@ export async function PATCH(
     }
     if (priority !== undefined) updateData.priority = priority
     if (projectId !== undefined) updateData.projectId = projectId || null
+    if (goalId !== undefined) updateData.goalId = goalId || null
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null
     if (scheduledDate !== undefined) updateData.scheduledDate = scheduledDate ? new Date(scheduledDate) : null
     if (kanbanOrder !== undefined) updateData.kanbanOrder = kanbanOrder
@@ -121,6 +132,11 @@ export async function PATCH(
     if (focusDate !== undefined) updateData.focusDate = focusDate ? new Date(focusDate) : null
     if (focusReason !== undefined) updateData.focusReason = focusReason
     if (focusPriority !== undefined) updateData.focusPriority = focusPriority
+    if (isStarred !== undefined) {
+      updateData.isStarred = isStarred
+      // Set starredAt when starring, clear when unstarring
+      updateData.starredAt = isStarred ? new Date() : null
+    }
 
     // Handle tags update
     if (tagIds !== undefined) {
@@ -167,6 +183,14 @@ export async function PATCH(
             id: true,
             name: true,
             color: true,
+          },
+        },
+        goal: {
+          select: {
+            id: true,
+            title: true,
+            color: true,
+            period: true,
           },
         },
         tags: {

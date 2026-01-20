@@ -9,6 +9,8 @@ import {
   FolderKanban,
   Tag,
   Link2,
+  Star,
+  Target,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,11 +37,19 @@ interface Task {
   isFocusTask: boolean
   focusReason: string | null
   focusPriority: number | null
+  isStarred: boolean
+  starredAt: string | null
   createdAt: string
   project: {
     id: string
     name: string
     color: string
+  } | null
+  goal: {
+    id: string
+    title: string
+    color: string
+    period: string
   } | null
   tags: Array<{
     tag: {
@@ -68,6 +78,13 @@ interface TaskTag {
   color: string
 }
 
+interface Goal {
+  id: string
+  title: string
+  color: string
+  period: string
+}
+
 interface TaskFormProps {
   task?: Task | null
   projects: Project[]
@@ -92,6 +109,7 @@ const STATUS_OPTIONS = [
 export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
   const [loading, setLoading] = useState(false)
   const [tags, setTags] = useState<TaskTag[]>([])
+  const [goals, setGoals] = useState<Goal[]>([])
 
   // Form state
   const [title, setTitle] = useState(task?.title || '')
@@ -99,8 +117,10 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
   const [status, setStatus] = useState(task?.status || 'todo')
   const [priority, setPriority] = useState(task?.priority || 'medium')
   const [projectId, setProjectId] = useState<string | null>(task?.project?.id || null)
+  const [goalId, setGoalId] = useState<string | null>(task?.goal?.id || null)
   const [dueDate, setDueDate] = useState(task?.dueDate?.split('T')[0] || '')
   const [scheduledDate, setScheduledDate] = useState(task?.scheduledDate?.split('T')[0] || '')
+  const [isStarred, setIsStarred] = useState(task?.isStarred || false)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     task?.tags.map(t => t.tag.id) || []
   )
@@ -108,6 +128,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
 
   useEffect(() => {
     loadTags()
+    loadGoals()
   }, [])
 
   const loadTags = async () => {
@@ -124,6 +145,22 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
     } catch (error) {
       console.error('Failed to load tags:', error)
       setTags([])
+    }
+  }
+
+  const loadGoals = async () => {
+    try {
+      const response = await fetch('/api/goals/current')
+      const data = await response.json()
+      // Combine weekly and monthly goals for the dropdown
+      const allGoals: Goal[] = [
+        ...(data.weekly || []).map((g: Goal) => ({ id: g.id, title: g.title, color: g.color, period: g.period })),
+        ...(data.monthly || []).map((g: Goal) => ({ id: g.id, title: g.title, color: g.color, period: g.period })),
+      ]
+      setGoals(allGoals)
+    } catch (error) {
+      console.error('Failed to load goals:', error)
+      setGoals([])
     }
   }
 
@@ -145,8 +182,10 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
           status,
           priority,
           projectId: projectId || null,
+          goalId: goalId || null,
           dueDate: dueDate || null,
           scheduledDate: scheduledDate || null,
+          isStarred,
           tagIds: selectedTagIds,
         }),
       })
@@ -211,9 +250,24 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-charcoal-100">
-          <h2 className="text-lg font-semibold text-charcoal-900">
-            {task ? 'Edit Task' : 'New Task'}
-          </h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-semibold text-charcoal-900">
+              {task ? 'Edit Task' : 'New Task'}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setIsStarred(!isStarred)}
+              className={cn(
+                'p-1.5 rounded-lg transition-all',
+                isStarred
+                  ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
+                  : 'text-charcoal-400 hover:text-amber-400 hover:bg-charcoal-100'
+              )}
+              title={isStarred ? 'Unstar task' : 'Star task'}
+            >
+              <Star className={cn('w-5 h-5', isStarred && 'fill-current')} />
+            </button>
+          </div>
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-charcoal-100 transition-colors"
@@ -286,34 +340,90 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
             </div>
           </div>
 
-          {/* Project */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-2">
-              <FolderKanban className="w-4 h-4" />
-              Project
-            </Label>
-            <Select
-              value={projectId || 'none'}
-              onValueChange={(v) => setProjectId(v === 'none' ? null : v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="No project" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No project</SelectItem>
-                {projects.map((project) => (
-                  <SelectItem key={project.id} value={project.id}>
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: project.color }}
-                      />
-                      {project.name}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {/* Project & Goal Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <FolderKanban className="w-4 h-4" />
+                Project
+              </Label>
+              <Select
+                value={projectId || 'none'}
+                onValueChange={(v) => setProjectId(v === 'none' ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="No project" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No project</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: project.color }}
+                        />
+                        {project.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Target className="w-4 h-4" />
+                Goal
+              </Label>
+              <Select
+                value={goalId || 'none'}
+                onValueChange={(v) => setGoalId(v === 'none' ? null : v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="No goal" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No goal</SelectItem>
+                  {goals.length > 0 && (
+                    <>
+                      {goals.filter(g => g.period === 'weekly').length > 0 && (
+                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500">
+                          This Week
+                        </div>
+                      )}
+                      {goals.filter(g => g.period === 'weekly').map((goal) => (
+                        <SelectItem key={goal.id} value={goal.id}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: goal.color }}
+                            />
+                            {goal.title}
+                          </span>
+                        </SelectItem>
+                      ))}
+                      {goals.filter(g => g.period === 'monthly').length > 0 && (
+                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500">
+                          This Month
+                        </div>
+                      )}
+                      {goals.filter(g => g.period === 'monthly').map((goal) => (
+                        <SelectItem key={goal.id} value={goal.id}>
+                          <span className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: goal.color }}
+                            />
+                            {goal.title}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Dates Row */}
