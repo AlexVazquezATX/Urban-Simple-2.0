@@ -31,6 +31,11 @@ interface Task {
   priority: string
   dueDate: string | null
   scheduledDate: string | null
+  completedAt: string | null
+  isFocusTask: boolean
+  focusReason: string | null
+  focusPriority: number | null
+  createdAt: string
   project: {
     id: string
     name: string
