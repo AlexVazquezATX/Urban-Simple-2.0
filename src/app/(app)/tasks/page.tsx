@@ -240,6 +240,7 @@ export default function TasksPage() {
       starredAt: null,
       createdAt: new Date().toISOString(),
       project: assignedProject ? { id: assignedProject.id, name: assignedProject.name, color: assignedProject.color } : null,
+      goal: null,
       tags: [],
       links: [],
     }
