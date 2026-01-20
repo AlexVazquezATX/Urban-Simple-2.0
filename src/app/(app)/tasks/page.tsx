@@ -64,6 +64,12 @@ interface Task {
     name: string
     color: string
   } | null
+  goal: {
+    id: string
+    title: string
+    color: string
+    period: string
+  } | null
   tags: Array<{
     tag: {
       id: string

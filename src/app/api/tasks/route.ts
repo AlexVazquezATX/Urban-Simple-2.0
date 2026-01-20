@@ -20,6 +20,7 @@ export async function GET(request: NextRequest) {
     const dueBefore = searchParams.get('dueBefore')
     const dueAfter = searchParams.get('dueAfter')
     const includeProject = searchParams.get('includeProject') === 'true'
+    const includeGoal = searchParams.get('includeGoal') !== 'false' // Default true
     const includeTags = searchParams.get('includeTags') === 'true'
     const includeLinks = searchParams.get('includeLinks') === 'true'
     const includeStats = searchParams.get('includeStats') !== 'false' // Default true for backwards compat
@@ -93,6 +94,17 @@ export async function GET(request: NextRequest) {
           id: true,
           name: true,
           color: true,
+        },
+      }
+    }
+
+    if (includeGoal) {
+      include.goal = {
+        select: {
+          id: true,
+          title: true,
+          color: true,
+          period: true,
         },
       }
     }
