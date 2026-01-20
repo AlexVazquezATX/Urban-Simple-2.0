@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     ])
 
     // Calculate progress for each goal
-    const calculateProgress = async (goals: typeof weeklyGoals) => {
+    const calculateProgress = async <T extends { id: string; progress: number }>(goals: T[]) => {
       return Promise.all(
         goals.map(async (goal) => {
           const [totalTasks, completedTasks] = await Promise.all([
