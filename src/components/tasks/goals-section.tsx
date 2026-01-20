@@ -180,11 +180,11 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
       <div className={cn('bg-white border border-charcoal-100 rounded-xl overflow-hidden', className)}>
         {/* Weekly Goals Section */}
         <div className="border-b border-charcoal-100">
-          <button
-            onClick={() => setWeeklyExpanded(!weeklyExpanded)}
-            className="w-full px-4 py-3 flex items-center justify-between hover:bg-charcoal-50/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
+          <div className="px-4 py-3 flex items-center justify-between hover:bg-charcoal-50/50 transition-colors">
+            <button
+              onClick={() => setWeeklyExpanded(!weeklyExpanded)}
+              className="flex items-center gap-2 flex-1"
+            >
               {weeklyExpanded ? (
                 <ChevronDown className="w-4 h-4 text-charcoal-400" />
               ) : (
@@ -193,7 +193,7 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
               <Target className="w-4 h-4 text-ocean-600" />
               <span className="font-medium text-charcoal-900">This Week's Goals</span>
               <span className="text-xs text-charcoal-500">({formatWeekRange()})</span>
-            </div>
+            </button>
             <div className="flex items-center gap-2">
               <span className="text-xs text-charcoal-500">
                 {weeklyGoals.length}/5
@@ -202,16 +202,13 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleAddGoal('weekly')
-                }}
+                onClick={() => handleAddGoal('weekly')}
                 disabled={weeklyGoals.length >= 5}
               >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-          </button>
+          </div>
 
           {weeklyExpanded && (
             <div className="px-4 pb-4 space-y-2">
@@ -239,11 +236,11 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
 
         {/* Monthly Goals Section */}
         <div>
-          <button
-            onClick={() => setMonthlyExpanded(!monthlyExpanded)}
-            className="w-full px-4 py-3 flex items-center justify-between hover:bg-charcoal-50/50 transition-colors"
-          >
-            <div className="flex items-center gap-2">
+          <div className="px-4 py-3 flex items-center justify-between hover:bg-charcoal-50/50 transition-colors">
+            <button
+              onClick={() => setMonthlyExpanded(!monthlyExpanded)}
+              className="flex items-center gap-2 flex-1"
+            >
               {monthlyExpanded ? (
                 <ChevronDown className="w-4 h-4 text-charcoal-400" />
               ) : (
@@ -251,7 +248,7 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
               )}
               <Target className="w-4 h-4 text-purple-600" />
               <span className="font-medium text-charcoal-900">{formatMonthRange()} Goals</span>
-            </div>
+            </button>
             <div className="flex items-center gap-2">
               <span className="text-xs text-charcoal-500">
                 {monthlyGoals.length}
@@ -260,15 +257,12 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleAddGoal('monthly')
-                }}
+                onClick={() => handleAddGoal('monthly')}
               >
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-          </button>
+          </div>
 
           {monthlyExpanded && (
             <div className="px-4 pb-4 space-y-2">

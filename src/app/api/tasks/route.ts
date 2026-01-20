@@ -129,43 +129,45 @@ export async function GET(request: NextRequest) {
 
     // Only fetch stats if requested (skip for simple task updates)
     if (includeStats) {
-      const [tasks, statsResult] = await Promise.all([
-        prisma.task.findMany({
-          where,
-          include: Object.keys(include).length > 0 ? include : undefined,
-          orderBy: orderByClause,
-          take: limit ? parseInt(limit) : undefined,
+      // Fetch tasks first
+      const tasks = await prisma.task.findMany({
+        where,
+        include: Object.keys(include).length > 0 ? include : undefined,
+        orderBy: orderByClause,
+        take: limit ? parseInt(limit) : undefined,
+      })
+
+      // Fetch stats using Prisma queries instead of raw SQL for better compatibility
+      const [todoCount, inProgressCount, doneCount, overdueTasks, dueTodayTasks] = await Promise.all([
+        prisma.task.count({ where: { ...baseWhere, status: 'todo' } }),
+        prisma.task.count({ where: { ...baseWhere, status: 'in_progress' } }),
+        prisma.task.count({ where: { ...baseWhere, status: 'done' } }),
+        prisma.task.count({
+          where: {
+            ...baseWhere,
+            status: { in: ['todo', 'in_progress'] },
+            dueDate: { lt: today },
+          },
         }),
-        // Single raw query for all stats instead of 3 separate queries
-        prisma.$queryRaw<Array<{ status: string; count: bigint; overdue: bigint; due_today: bigint }>>`
-          SELECT
-            status,
-            COUNT(*) as count,
-            SUM(CASE WHEN status IN ('todo', 'in_progress') AND due_date < ${today} THEN 1 ELSE 0 END) as overdue,
-            SUM(CASE WHEN status IN ('todo', 'in_progress') AND due_date >= ${today} AND due_date < ${tomorrow} THEN 1 ELSE 0 END) as due_today
-          FROM tasks
-          WHERE user_id = ${user.id} AND company_id = ${user.companyId}
-          GROUP BY status
-        `
+        prisma.task.count({
+          where: {
+            ...baseWhere,
+            status: { in: ['todo', 'in_progress'] },
+            dueDate: { gte: today, lt: tomorrow },
+          },
+        }),
       ])
-
-      // Process stats from raw query
-      const byStatus: Record<string, number> = {}
-      let overdueCount = 0
-      let dueTodayCount = 0
-
-      for (const row of statsResult) {
-        byStatus[row.status] = Number(row.count)
-        overdueCount += Number(row.overdue)
-        dueTodayCount += Number(row.due_today)
-      }
 
       return NextResponse.json({
         tasks,
         stats: {
-          byStatus,
-          overdue: overdueCount,
-          dueToday: dueTodayCount,
+          byStatus: {
+            todo: todoCount,
+            in_progress: inProgressCount,
+            done: doneCount,
+          },
+          overdue: overdueTasks,
+          dueToday: dueTodayTasks,
           total: tasks.length,
         },
       })
