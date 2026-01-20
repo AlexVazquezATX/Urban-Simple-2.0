@@ -204,24 +204,77 @@ export default function TasksPage() {
     e.preventDefault()
     if (!quickAddTitle.trim()) return
 
+    const tempId = `temp-${Date.now()}`
+    const newTaskTitle = quickAddTitle.trim()
+    const assignedProjectId = projectFilter && projectFilter !== 'null' ? projectFilter : null
+    const assignedProject = assignedProjectId ? projects.find(p => p.id === assignedProjectId) : null
+
+    // Optimistic update - add task immediately
+    const optimisticTask: Task = {
+      id: tempId,
+      title: newTaskTitle,
+      description: null,
+      status: 'todo',
+      priority: 'medium',
+      dueDate: null,
+      scheduledDate: null,
+      completedAt: null,
+      isFocusTask: false,
+      focusReason: null,
+      focusPriority: null,
+      createdAt: new Date().toISOString(),
+      project: assignedProject ? { id: assignedProject.id, name: assignedProject.name, color: assignedProject.color } : null,
+      tags: [],
+      links: [],
+    }
+
+    setTasks(prev => [optimisticTask, ...prev])
+    setQuickAddTitle('')
+
+    // Update stats optimistically
+    if (stats) {
+      setStats(prev => prev ? {
+        ...prev,
+        byStatus: {
+          ...prev.byStatus,
+          todo: (prev.byStatus.todo || 0) + 1,
+        },
+        total: prev.total + 1,
+      } : null)
+    }
+
     setAddingTask(true)
     try {
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: quickAddTitle.trim(),
-          projectId: projectFilter && projectFilter !== 'null' ? projectFilter : null,
+          title: newTaskTitle,
+          projectId: assignedProjectId,
         }),
       })
 
       if (response.ok) {
-        setQuickAddTitle('')
-        await loadTasks()
-        await loadProjects()
+        const createdTask = await response.json()
+        // Replace temp task with real task
+        setTasks(prev => prev.map(t => t.id === tempId ? { ...createdTask, tags: createdTask.tags || [], links: createdTask.links || [] } : t))
+        // Update project counts in background (lightweight)
+        loadProjects()
+      } else {
+        // Revert on error
+        setTasks(prev => prev.filter(t => t.id !== tempId))
+        if (stats) {
+          setStats(prev => prev ? {
+            ...prev,
+            byStatus: { ...prev.byStatus, todo: (prev.byStatus.todo || 1) - 1 },
+            total: prev.total - 1,
+          } : null)
+        }
       }
     } catch (error) {
       console.error('Failed to create task:', error)
+      // Revert on error
+      setTasks(prev => prev.filter(t => t.id !== tempId))
     } finally {
       setAddingTask(false)
     }
@@ -937,9 +990,30 @@ export default function TasksPage() {
             setShowTaskForm(false)
             setEditingTask(null)
           }}
-          onSave={async () => {
-            await loadTasks()
-            await loadProjects()
+          onSave={async (savedTask?: Task) => {
+            // Optimistic update - update local state immediately
+            if (savedTask) {
+              if (editingTask) {
+                // Update existing task
+                setTasks(prev => prev.map(t => t.id === savedTask.id ? savedTask : t))
+              } else {
+                // Add new task at the top
+                setTasks(prev => [savedTask, ...prev])
+                // Update stats
+                if (stats) {
+                  setStats(prev => prev ? {
+                    ...prev,
+                    byStatus: {
+                      ...prev.byStatus,
+                      [savedTask.status]: (prev.byStatus[savedTask.status] || 0) + 1,
+                    },
+                    total: prev.total + 1,
+                  } : null)
+                }
+              }
+              // Update project counts in background
+              loadProjects()
+            }
             setShowTaskForm(false)
             setEditingTask(null)
           }}
@@ -954,8 +1028,17 @@ export default function TasksPage() {
             setShowProjectForm(false)
             setEditingProject(null)
           }}
-          onSave={async () => {
-            await loadProjects()
+          onSave={(savedProject) => {
+            // Optimistic update - update local state immediately
+            if (savedProject) {
+              if (editingProject) {
+                // Update existing project
+                setProjects(prev => prev.map(p => p.id === savedProject.id ? { ...savedProject, openTaskCount: p.openTaskCount, taskCount: p.taskCount } : p))
+              } else {
+                // Add new project
+                setProjects(prev => [...prev, { ...savedProject, openTaskCount: 0, taskCount: 0 }])
+              }
+            }
             setShowProjectForm(false)
             setEditingProject(null)
           }}

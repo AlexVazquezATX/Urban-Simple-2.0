@@ -15,12 +15,14 @@ interface Project {
   color: string
   status: string
   dueDate: string | null
+  taskCount?: number
+  openTaskCount?: number
 }
 
 interface ProjectFormProps {
   project?: Project | null
   onClose: () => void
-  onSave: () => void
+  onSave: (savedProject?: Project) => void
 }
 
 const COLOR_OPTIONS = [
@@ -66,7 +68,8 @@ export function ProjectForm({ project, onClose, onSave }: ProjectFormProps) {
       })
 
       if (response.ok) {
-        onSave()
+        const savedProject = await response.json()
+        onSave(savedProject)
       }
     } catch (error) {
       console.error('Failed to save project:', error)

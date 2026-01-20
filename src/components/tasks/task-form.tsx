@@ -67,7 +67,7 @@ interface TaskFormProps {
   task?: Task | null
   projects: Project[]
   onClose: () => void
-  onSave: () => void
+  onSave: (savedTask?: Task) => void
 }
 
 const PRIORITY_OPTIONS = [
@@ -147,7 +147,13 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
       })
 
       if (response.ok) {
-        onSave()
+        const savedTask = await response.json()
+        // Pass saved task back for optimistic UI updates
+        onSave({
+          ...savedTask,
+          tags: savedTask.tags || [],
+          links: savedTask.links || [],
+        })
       }
     } catch (error) {
       console.error('Failed to save task:', error)

@@ -157,11 +157,11 @@ export function AppSidebar() {
 
   const growthItems = [
     { href: '/growth', icon: Rocket, label: 'Daily Planner', exact: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
-    { href: '/growth/pipeline', icon: TrendingUp, label: 'Pipeline', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/creative-hub', icon: Palette, label: 'Creative Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/discovery', icon: Search, label: 'AI Discovery', roles: ['SUPER_ADMIN', 'ADMIN'] },
-    { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
-    { href: '/creative-hub', icon: Palette, label: 'Creative Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/pipeline', icon: TrendingUp, label: 'Pipeline', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
 
   const administrativeItems = [
