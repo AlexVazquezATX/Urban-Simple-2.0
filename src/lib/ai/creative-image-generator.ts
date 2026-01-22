@@ -39,6 +39,287 @@ function getGenAI(): GoogleGenAI {
 }
 
 // ============================================
+// PROMPT DIVERSITY POOLS
+// ============================================
+
+// Helper function to randomly select from an array
+function randomFrom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+// LIFESTYLE POOLS - For Community Mode (Austin Local, Pop Culture, Seasonal)
+const LIFESTYLE_POOLS = {
+  austinScenes: [
+    'bustling South Congress cafe patio with eclectic vintage decor',
+    'cozy East Austin coffee shop with exposed brick and local art',
+    'Rainey Street bar patio with string lights at golden hour',
+    'vibrant food truck park at sunset with diverse crowd',
+    'Lady Bird Lake hike and bike trail at golden hour',
+    'intimate live music venue on 6th Street',
+    'colorful local taco joint with vintage neon signs',
+    'upscale Domain restaurant terrace with modern design',
+    'Mueller farmers market on a sunny Sunday morning',
+    'rooftop bar overlooking downtown Austin skyline at dusk',
+    'Barton Springs Pool area on a summer afternoon',
+    'historic Driskill Hotel bar with classic elegance',
+    'trendy East Side King food trailer with late night crowd',
+    'Zilker Park picnic scene with Austin skyline backdrop',
+    'cozy Hyde Park neighborhood cafe with shaded patio',
+  ],
+
+  peopleActivities: [
+    'friends laughing and clinking glasses over brunch',
+    'skilled barista crafting intricate latte art',
+    'passionate chef carefully plating a beautiful dish',
+    'couple sharing appetizers and enjoying conversation',
+    'solo diner savoring coffee while reading a book',
+    'group of friends toasting at happy hour',
+    'musicians tuning instruments before a show',
+    'food truck owner proudly serving customers',
+    'bartender expertly mixing a craft cocktail',
+    'family enjoying weekend breakfast together',
+    'coworkers having a casual outdoor meeting',
+    'local artist sketching the scene around them',
+  ],
+
+  seasonalThemes: [
+    'spring bluebonnets in Texas Hill Country',
+    'summer patio dining with cold margaritas and sunshine',
+    'fall football watch party with burnt orange everywhere',
+    'holiday lights on 2nd Street District at night',
+    'SXSW festival energy with creative crowds',
+    'ACL Music Festival weekend vibes',
+    'Fourth of July celebration with Austin skyline',
+    'Halloween on 6th Street with creative costumes',
+    'Thanksgiving gathering with Texas BBQ twist',
+    'New Year countdown at downtown celebration',
+  ],
+
+  photographyMoods: [
+    'warm golden hour glow casting long shadows',
+    'moody evening ambiance with soft string lights',
+    'bright and airy morning light streaming in',
+    'dramatic sunset silhouettes against the sky',
+    'intimate candlelit atmosphere with bokeh',
+    'vibrant midday energy with saturated colors',
+    'soft overcast light with even tones',
+    'neon-lit night scene with urban energy',
+  ],
+
+  cameraAngles: [
+    'wide establishing shot capturing the full scene',
+    'intimate close-up focusing on details',
+    'over-the-shoulder perspective drawing viewer in',
+    'candid moment captured from across the room',
+    'low angle making the scene feel grand',
+    'high angle overview of the bustling space',
+    'profile shot with beautiful background blur',
+  ],
+}
+
+// SERVICE POOLS - For Promotional Mode (Before/After, Service Showcase)
+const SERVICE_POOLS = {
+  spaces: [
+    'upscale steakhouse commercial kitchen with stainless steel surfaces',
+    'boutique hotel commercial kitchen during off-hours',
+    'craft brewery taproom after closing time',
+    'modern corporate office break room and kitchen',
+    'luxury hotel bathroom with marble finishes',
+    'restaurant walk-in cooler with organized shelving',
+    'food hall vendor prep area and service counter',
+    'country club kitchen with professional equipment',
+    'fine dining restaurant bar area',
+    'hospital cafeteria kitchen with industrial equipment',
+    'university dining hall serving area',
+    'corporate headquarters executive kitchen',
+  ],
+
+  beforeDescriptors: [
+    'heavy grease buildup on hood vents and filters',
+    'grimy tile floors with visible stains and residue',
+    'cluttered and disorganized storage shelves',
+    'water stains and soap scum on fixtures',
+    'dust accumulation on ceiling vents and returns',
+    'sticky residue coating prep surfaces',
+    'fingerprints and smudges covering stainless steel',
+    'grime buildup in grout lines',
+    'food debris accumulated in corners',
+    'cloudy and streaked glass surfaces',
+  ],
+
+  afterDescriptors: [
+    'sparkling stainless steel reflecting overhead lights',
+    'gleaming floors with mirror-like shine',
+    'perfectly organized and pristine storage areas',
+    'spotless and sanitized surfaces ready for inspection',
+    'crystal clear glass and polished mirrors',
+    'fresh and move-in ready appearance',
+    'bright white grout lines fully restored',
+    'streak-free surfaces with professional finish',
+    'immaculate condition meeting health code standards',
+    'showroom-quality cleanliness throughout',
+  ],
+
+  equipment: [
+    'commercial floor scrubber polishing tile',
+    'professional steam cleaning system in action',
+    'HEPA vacuum system on commercial carpet',
+    'pressure washer cleaning exterior concrete',
+    'detail brushes restoring grout lines',
+    'microfiber mop system on hardwood',
+    'commercial window cleaning equipment',
+    'industrial degreaser application on hood',
+    'carpet extraction machine deep cleaning',
+    'sanitizing fogger treating surfaces',
+  ],
+
+  techniques: [
+    'methodical deep cleaning process',
+    'professional attention to detail work',
+    'systematic sanitization protocol',
+    'expert restoration technique',
+    'thorough inspection and quality check',
+    'precision cleaning in tight spaces',
+    'eco-friendly cleaning approach',
+    'high-touch surface disinfection',
+  ],
+}
+
+// GRAPHIC POOLS - For branded graphics, quote cards, stat graphics
+const GRAPHIC_POOLS = {
+  layouts: [
+    'bold headline with supporting imagery below',
+    'centered text with elegant border treatment',
+    'asymmetric modern layout with dynamic angles',
+    'minimalist design with single focal point',
+    'split composition with text and visual balance',
+    'gradient background with floating elements',
+    'clean grid-based professional layout',
+  ],
+
+  colorTreatments: [
+    `rich olive green (${BRAND_COLORS.primary.olive}) gradient`,
+    `lime accent (${BRAND_COLORS.primary.lime}) with dark contrast`,
+    `warm yellow (${BRAND_COLORS.primary.yellow}) highlights on neutral`,
+    'sophisticated dark mode with brand color accents',
+    'light and airy with subtle brand color touches',
+    'high contrast black and white with color pop',
+    'earth tones with organic texture feel',
+  ],
+
+  visualStyles: [
+    'modern corporate with clean lines',
+    'organic and approachable with soft edges',
+    'bold and confident with strong typography',
+    'elegant and refined with premium feel',
+    'friendly and warm with inviting presence',
+    'professional and trustworthy appearance',
+  ],
+}
+
+// Negative prompts to avoid stock-photo feel
+const NEGATIVE_PROMPTS = [
+  'NO stock photo feel',
+  'NO overly posed or artificial scenes',
+  'NO generic corporate imagery',
+  'NO watermarks or text overlays',
+  'NO clipart or cartoon style',
+  'NOT everyone looking at camera',
+  'NO matching identical outfits',
+  'NO obviously AI-generated artifacts',
+]
+
+// ============================================
+// DYNAMIC PROMPT BUILDERS
+// ============================================
+
+function buildLifestylePrompt(
+  style: string,
+  topic?: string,
+  customHint?: string
+): string {
+  const scene = randomFrom(LIFESTYLE_POOLS.austinScenes)
+  const activity = randomFrom(LIFESTYLE_POOLS.peopleActivities)
+  const mood = randomFrom(LIFESTYLE_POOLS.photographyMoods)
+  const angle = randomFrom(LIFESTYLE_POOLS.cameraAngles)
+  const negatives = NEGATIVE_PROMPTS.slice(0, 3).join(', ')
+
+  const topicContext = topic ? `Theme: ${topic}. ` : ''
+  const customContext = customHint ? `${customHint} ` : ''
+
+  switch (style) {
+    case 'lifestyle':
+      return `${mood} photography. ${angle} of ${scene}. ${activity}. ${topicContext}${customContext}Authentic Austin, Texas vibe, editorial magazine quality. Warm and inviting atmosphere. ${negatives}. NO text, NO logos, NO promotional graphics.`
+
+    case 'minimal':
+      return `Clean, minimalist editorial photography. ${mood}. ${topicContext}${customContext}Sophisticated composition with plenty of negative space. Focus on textures and light. Modern, artistic, magazine-quality. ${negatives}. NO text overlays, NO graphics - pure visual storytelling.`
+
+    case 'behindScenes':
+      return `Documentary-style candid photography. ${angle} capturing ${activity}. ${topicContext}${customContext}Real, authentic moments in ${scene}. Natural and unposed. Warm, genuine atmosphere. ${negatives}. NO staged shots, NO text.`
+
+    case 'seasonal':
+      const seasonal = randomFrom(LIFESTYLE_POOLS.seasonalThemes)
+      return `${mood} photography capturing ${seasonal}. ${topicContext}${customContext}Festive but sophisticated. Beautiful natural lighting at ${scene}. Editorial quality. ${negatives}. NO promotional text, NO sale graphics.`
+
+    case 'artistic':
+      return `Creative artistic photography. ${mood}. ${topicContext}${customContext}Eye-catching, unique composition. Bold colors or interesting patterns in ${scene}. Modern art photography style. Abstract elements welcome. ${negatives}. NO text, NO logos.`
+
+    default:
+      return `Beautiful lifestyle photography. ${mood} at ${scene}. ${activity}. ${topicContext}${customContext}Authentic, editorial quality. ${negatives}. NO promotional graphics, NO text overlays.`
+  }
+}
+
+function buildServicePrompt(imageType: ImageType, serviceContext?: string): string {
+  const space = randomFrom(SERVICE_POOLS.spaces)
+  const before = randomFrom(SERVICE_POOLS.beforeDescriptors)
+  const after = randomFrom(SERVICE_POOLS.afterDescriptors)
+  const equipment = randomFrom(SERVICE_POOLS.equipment)
+  const technique = randomFrom(SERVICE_POOLS.techniques)
+  const negatives = NEGATIVE_PROMPTS.slice(0, 2).join(', ')
+
+  const contextHint = serviceContext
+    ? SERVICE_CONTEXTS[serviceContext] || `featuring ${serviceContext}`
+    : ''
+
+  switch (imageType) {
+    case 'before_after':
+      return `Professional commercial cleaning transformation, dramatic split-screen comparison. LEFT SIDE: ${space} showing ${before}, needs attention. RIGHT SIDE: Same exact space now ${after}, professionally cleaned. Editorial photography quality, high detail, realistic commercial setting. ${contextHint} ${negatives}.`
+
+    case 'service_showcase':
+      return `Professional commercial cleaning in action. ${equipment} being used with ${technique} in ${space}. ${after} results visible. Magazine editorial quality photography, natural lighting, focus on expertise and quality results. ${contextHint} ${negatives}.`
+
+    case 'promotional':
+      const layout = randomFrom(GRAPHIC_POOLS.layouts)
+      const colorStyle = randomFrom(GRAPHIC_POOLS.colorTreatments)
+      const visualStyle = randomFrom(GRAPHIC_POOLS.visualStyles)
+      return `Eye-catching promotional banner for commercial cleaning services. ${layout} design. ${colorStyle} color scheme. ${visualStyle} aesthetic. Modern corporate design, bold but professional typography, clean visual hierarchy. Call-to-action focused layout, marketing material quality. ${BRAND_COLOR_PROMPT}`
+
+    default:
+      return `Professional commercial cleaning scene. ${space} with ${after}. High quality, realistic commercial photography. ${negatives}.`
+  }
+}
+
+function buildGraphicPrompt(imageType: ImageType): string {
+  const layout = randomFrom(GRAPHIC_POOLS.layouts)
+  const colorStyle = randomFrom(GRAPHIC_POOLS.colorTreatments)
+  const visualStyle = randomFrom(GRAPHIC_POOLS.visualStyles)
+
+  switch (imageType) {
+    case 'quote_card':
+      return `Elegant testimonial quote card design. ${layout}. ${colorStyle} background treatment. ${visualStyle}. Sophisticated typography space with large quotation marks. Minimalist, social media optimized. Clean and modern aesthetic. ${BRAND_COLOR_PROMPT}`
+
+    case 'stat_graphic':
+      return `Modern data visualization infographic design. ${layout}. ${colorStyle} accents. ${visualStyle}. Space for large numbers or simple charts. Business presentation quality, clear visual hierarchy, easy to read metrics. ${BRAND_COLOR_PROMPT}`
+
+    case 'branded_graphic':
+      return `Modern minimalist marketing graphic design. ${layout}. ${colorStyle}. ${visualStyle}. Elegant typography treatment. Professional business layout, perfect for social media, clean lines, premium feel. ${BRAND_COLOR_PROMPT}`
+
+    default:
+      return `Professional marketing graphic. ${layout}. ${colorStyle}. ${visualStyle}. ${BRAND_COLOR_PROMPT}`
+  }
+}
+
+// ============================================
 // TYPES
 // ============================================
 
@@ -127,36 +408,22 @@ export async function generateCreativeImage(
   let fullPrompt: string
 
   if (isCommunityStyle) {
-    // COMMUNITY MODE: Generate lifestyle photography, NOT promotional graphics
-    const topicHint = params.topic ? `Related to: ${params.topic}. ` : ''
-    const customHint = params.customPrompt ? `Scene suggestion: ${params.customPrompt}. ` : ''
-
-    // Build a lifestyle/editorial photo prompt based on the style
+    // COMMUNITY MODE: Generate lifestyle photography using dynamic prompt builder
+    // Each generation will use randomly selected elements for variety
     let stylePrompt = ''
-    switch (params.imageStyle) {
-      case 'lifestyle':
-        stylePrompt = `Beautiful lifestyle photography of Austin, Texas. ${topicHint}${customHint}Authentic, warm, inviting atmosphere. Natural lighting, candid feel. Could be: a cozy Austin restaurant interior, people enjoying food and drinks, local street scenes, vibrant Austin culture. Magazine editorial quality. NO text, NO logos, NO promotional graphics, NO business branding - just a beautiful photo that captures the Austin vibe.`
-        break
-      case 'minimal':
-        stylePrompt = `Clean, minimalist editorial photography. ${topicHint}${customHint}Sophisticated composition with plenty of negative space. Modern, artistic, magazine-quality. Soft natural lighting. NO text overlays, NO graphics, NO promotional elements - pure visual storytelling.`
-        break
-      case 'behindScenes':
-        stylePrompt = `Documentary-style candid photography. ${topicHint}${customHint}Real, authentic moments. Natural and unposed. Behind-the-scenes feel of hospitality or local business. Warm, genuine atmosphere. NO staged marketing shots, NO text, NO promotional graphics.`
-        break
-      case 'seasonal':
-        stylePrompt = `Seasonal/holiday themed lifestyle photography. ${topicHint}${customHint}Festive but sophisticated. Captures the spirit of the season in Austin. Beautiful natural lighting. Editorial quality. NO promotional text, NO sale graphics, NO business branding - just a beautiful seasonal photo.`
-        break
-      case 'artistic':
-        stylePrompt = `Creative artistic photography or abstract visual. ${topicHint}${customHint}Eye-catching, unique composition. Bold colors or interesting patterns. Modern art photography style. NO text, NO logos, NO commercial graphics.`
-        break
-      case 'quote':
-        stylePrompt = `Clean, elegant background suitable for text overlay. ${topicHint}Soft gradient or subtle texture. Minimalist, sophisticated. Brand colors: olive green (${BRAND_COLORS.primary.olive}), lime accent (${BRAND_COLORS.primary.lime}). NO pre-existing text - just the background.`
-        break
-      case 'data':
-        stylePrompt = `Clean, modern background for infographic. ${topicHint}Professional, minimal design. Subtle brand colors as accents. NO pre-existing charts or text - just a clean canvas.`
-        break
-      default:
-        stylePrompt = `Beautiful lifestyle photography. ${topicHint}${customHint}Authentic, editorial quality. Natural lighting. NO promotional graphics, NO text overlays, NO business branding.`
+
+    // Handle quote and data styles separately (they need backgrounds, not lifestyle photos)
+    if (params.imageStyle === 'quote') {
+      stylePrompt = buildGraphicPrompt('quote_card')
+    } else if (params.imageStyle === 'data') {
+      stylePrompt = buildGraphicPrompt('stat_graphic')
+    } else {
+      // Use the dynamic lifestyle prompt builder for variety
+      stylePrompt = buildLifestylePrompt(
+        params.imageStyle || 'lifestyle',
+        params.topic,
+        params.customPrompt
+      )
     }
 
     // Platform-specific adjustments
@@ -168,21 +435,42 @@ export async function generateCreativeImage(
 
     fullPrompt = stylePrompt + ' High resolution, 8K quality photography.'
   } else {
-    // PROMOTIONAL MODE: Use the original promotional prompt logic
-    const basePrompt = IMAGE_PROMPTS[params.imageType]
-    const serviceContext = params.serviceContext
-      ? SERVICE_CONTEXTS[params.serviceContext] ||
-        `featuring ${params.serviceContext}`
-      : ''
-    const customization = params.customPrompt ? `, ${params.customPrompt}` : ''
+    // PROMOTIONAL MODE: Use dynamic prompt builders for variety
+    let basePrompt: string
+
+    // Use appropriate dynamic builder based on image type
+    if (
+      params.imageType === 'before_after' ||
+      params.imageType === 'service_showcase' ||
+      params.imageType === 'promotional'
+    ) {
+      // Service-related images use SERVICE_POOLS
+      basePrompt = buildServicePrompt(params.imageType, params.serviceContext)
+    } else if (
+      params.imageType === 'quote_card' ||
+      params.imageType === 'stat_graphic' ||
+      params.imageType === 'branded_graphic'
+    ) {
+      // Graphics use GRAPHIC_POOLS
+      basePrompt = buildGraphicPrompt(params.imageType)
+    } else if (params.imageType === 'team_photo') {
+      // DEPRECATED: team_photo - fallback to generic professional scene
+      // Use real photos instead of AI-generated team images
+      console.warn('team_photo is deprecated - consider using real team photos instead')
+      basePrompt = `Professional commercial space, clean and well-maintained. Modern business environment with attention to detail. Editorial photography quality. NO people - focus on the space and results.`
+    } else {
+      // Fallback to static prompts for any unhandled types
+      basePrompt = IMAGE_PROMPTS[params.imageType]
+    }
+
+    const customization = params.customPrompt ? ` ${params.customPrompt}` : ''
     const styleGuide =
       params.style === 'illustration'
-        ? ', digital illustration style, vector art quality'
+        ? ' Digital illustration style, vector art quality.'
         : params.style === 'graphic'
-          ? ', professional graphic design, clean vector elements'
-          : ', photorealistic, high resolution, 8K quality'
+          ? ' Professional graphic design, clean vector elements.'
+          : ' Photorealistic, high resolution, 8K quality.'
 
-    const brandColorContext = getBrandColorPrompt()
     const topicContext = params.topic ? ` Topic/theme: ${params.topic}.` : ''
 
     let dimensionHint = ''
@@ -192,7 +480,7 @@ export async function generateCreativeImage(
       dimensionHint = ' Landscape 1.91:1 format optimized for LinkedIn.'
     }
 
-    fullPrompt = `${basePrompt}${serviceContext ? `, ${serviceContext}` : ''}${customization}${styleGuide}${topicContext}${dimensionHint} ${brandColorContext} Professional commercial photography or design quality.`
+    fullPrompt = `${basePrompt}${customization}${styleGuide}${topicContext}${dimensionHint}`
   }
 
   console.log('Generating image...')
@@ -298,21 +586,13 @@ export async function generateImageVariations(
 ): Promise<GeneratedImage[]> {
   const results: GeneratedImage[] = []
 
-  // Generate multiple images with slight prompt variations
-  const variations = [
-    '', // Original
-    ', different angle',
-    ', alternative composition',
-    ', closer perspective',
-  ]
+  // With the new dynamic prompt system, each call to generateCreativeImage
+  // will automatically produce varied results due to random pool selection.
+  // We no longer need to add manual variation hints - the variety is built in!
 
-  for (let i = 0; i < Math.min(count, variations.length); i++) {
-    const variantParams = {
-      ...params,
-      customPrompt: `${params.customPrompt || ''}${variations[i]}`,
-    }
-
-    const result = await generateCreativeImage(variantParams)
+  for (let i = 0; i < count; i++) {
+    // Each generation uses fresh random selections from the pools
+    const result = await generateCreativeImage(params)
     if (result) {
       results.push(result)
     }
