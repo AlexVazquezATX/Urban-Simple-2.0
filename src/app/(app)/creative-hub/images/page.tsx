@@ -47,6 +47,7 @@ interface CreativeImage {
   aiModel?: string
   tags: string[]
   category?: string
+  photoCredit?: string
   createdAt: string
 }
 
@@ -88,6 +89,9 @@ export default function ImageLibraryPage() {
   // Upload state
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [pendingFile, setPendingFile] = useState<File | null>(null)
+  const [uploadPhotoCredit, setUploadPhotoCredit] = useState('')
 
   useEffect(() => {
     loadImages()
@@ -139,14 +143,29 @@ export default function ImageLibraryPage() {
     }
   }
 
-  async function handleUpload(event: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
     if (!file) return
 
+    setPendingFile(file)
+    setUploadPhotoCredit('')
+    setShowUploadDialog(true)
+
+    // Reset the file input so the same file can be selected again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  async function handleUploadConfirm() {
+    if (!pendingFile) return
+
     setUploading(true)
+    setShowUploadDialog(false)
+
     try {
       const formData = new FormData()
-      formData.append('file', file)
+      formData.append('file', pendingFile)
       formData.append('folder', 'creative')
 
       const uploadResponse = await fetch('/api/upload', {
@@ -158,16 +177,17 @@ export default function ImageLibraryPage() {
 
       const uploadData = await uploadResponse.json()
 
-      // Save to library
+      // Save to library with photo credit
       const saveResponse = await fetch('/api/creative-hub/images', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: file.name,
+          name: pendingFile.name,
           imageUrl: uploadData.url,
           imageType: 'promotional',
           aspectRatio: '1:1',
           isAiGenerated: false,
+          photoCredit: uploadPhotoCredit || undefined,
         }),
       })
 
@@ -178,6 +198,8 @@ export default function ImageLibraryPage() {
       alert('Failed to upload image. Please try again.')
     } finally {
       setUploading(false)
+      setPendingFile(null)
+      setUploadPhotoCredit('')
     }
   }
 
@@ -243,7 +265,7 @@ export default function ImageLibraryPage() {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleUpload}
+            onChange={handleFileSelect}
             className="hidden"
           />
           <Button
@@ -346,6 +368,64 @@ export default function ImageLibraryPage() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Upload Dialog with Photo Credit */}
+          <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Upload Image</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                {pendingFile && (
+                  <div className="text-sm text-charcoal-600">
+                    <span className="font-medium">File:</span> {pendingFile.name}
+                  </div>
+                )}
+                <div>
+                  <Label>Photo Credit (Optional)</Label>
+                  <Input
+                    value={uploadPhotoCredit}
+                    onChange={(e) => setUploadPhotoCredit(e.target.value)}
+                    placeholder="e.g., Photo: Austin Monthly, Credit: @photographer"
+                    className="mt-2"
+                  />
+                  <p className="text-xs text-charcoal-500 mt-1">
+                    Add attribution for sourced images
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowUploadDialog(false)
+                      setPendingFile(null)
+                      setUploadPhotoCredit('')
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUploadConfirm}
+                    disabled={uploading}
+                    className="flex-1 bg-gradient-to-br from-ocean-500 to-ocean-600"
+                  >
+                    {uploading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -440,6 +520,11 @@ export default function ImageLibraryPage() {
                 <p className="text-xs text-charcoal-500 capitalize">
                   {image.imageType.replace('_', ' ')} • {image.aspectRatio}
                 </p>
+                {image.photoCredit && (
+                  <p className="text-xs text-charcoal-400 italic mt-1 truncate">
+                    {image.photoCredit}
+                  </p>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -467,6 +552,11 @@ export default function ImageLibraryPage() {
                         <Sparkles className="w-3 h-3 mr-1" />
                         AI Generated
                       </Badge>
+                    )}
+                    {image.photoCredit && (
+                      <span className="text-xs text-charcoal-400 italic">
+                        {image.photoCredit}
+                      </span>
                     )}
                     <span className="text-xs text-charcoal-400">
                       {new Date(image.createdAt).toLocaleDateString()}

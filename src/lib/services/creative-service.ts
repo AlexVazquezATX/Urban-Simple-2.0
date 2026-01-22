@@ -76,6 +76,7 @@ export interface CreateImageInput {
   aiModel?: string
   tags?: string[]
   category?: string
+  photoCredit?: string
 }
 
 // ============================================

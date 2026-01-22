@@ -71,6 +71,7 @@ export async function POST(request: Request) {
       aiModel: body.aiModel,
       tags: body.tags || [],
       category: body.category,
+      photoCredit: body.photoCredit,
     })
 
     return NextResponse.json(image)
