@@ -180,41 +180,41 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-cream-300 bg-gradient-to-b from-cream-50 to-cream-100">
-      <SidebarHeader className="border-b border-cream-300 p-6">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-baseline gap-1">
-            <span className="font-bold text-2xl tracking-tight text-charcoal-900">
+    <Sidebar className="border-r border-warm-800 bg-warm-900">
+      <SidebarHeader className="border-b border-warm-800 p-5">
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-semibold text-xl tracking-tight text-warm-50">
               Urban
             </span>
-            <span className="font-display italic font-normal text-2xl text-bronze-600">
+            <span className="font-display italic font-normal text-xl text-lime-400">
               Simple
             </span>
           </div>
-          <p className="text-xs text-charcoal-500 tracking-wide uppercase font-medium">
+          <p className="text-[10px] text-warm-500 tracking-widest uppercase font-medium">
             Business Management
           </p>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
+      <SidebarContent className="px-3 py-4 scrollbar-elegant">
         {/* Admin Tools */}
         {adminItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel
-            className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-300 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('admin')}
           >
             <span>Admin Tools</span>
             {sidebarState.admin ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3.5 w-3.5" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             )}
           </SidebarGroupLabel>
           {sidebarState.admin && (
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-0.5">
                 {adminItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
@@ -224,22 +224,22 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         className={cn(
-                          'h-11 px-3 rounded-xl transition-all duration-200 group',
+                          'h-10 px-3 rounded-lg transition-all duration-150 group',
                           active
-                            ? 'bg-gradient-to-br from-bronze-400 to-bronze-500 text-white shadow-md hover:shadow-lg hover:from-bronze-500 hover:to-bronze-600'
-                            : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
+                            ? 'bg-warm-800 text-warm-50'
+                            : 'text-warm-400 hover:bg-warm-800/50 hover:text-warm-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
-                              'h-5 w-5 transition-transform duration-200',
+                              'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-white'
-                                : 'text-charcoal-500 group-hover:text-ocean-600 group-hover:scale-110'
+                                ? 'text-lime-400'
+                                : 'text-warm-500 group-hover:text-warm-300'
                             )}
                           />
-                          <span className="font-medium text-sm">{item.label}</span>
+                          <span className="font-medium text-[13px]">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -253,21 +253,21 @@ export function AppSidebar() {
 
         {/* Growth */}
         {growthItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-2">
+        <SidebarGroup className="mt-4">
           <SidebarGroupLabel
-            className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-300 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('growth')}
           >
             <span>Growth</span>
             {sidebarState.growth ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3.5 w-3.5" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             )}
           </SidebarGroupLabel>
           {sidebarState.growth && (
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-0.5">
                 {growthItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href, item.exact)
@@ -277,22 +277,22 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         className={cn(
-                          'h-11 px-3 rounded-xl transition-all duration-200 group',
+                          'h-10 px-3 rounded-lg transition-all duration-150 group',
                           active
-                            ? 'bg-gradient-to-br from-bronze-500 to-bronze-600 text-white shadow-md hover:shadow-lg hover:from-bronze-600 hover:to-bronze-700'
-                            : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-bronze-50 hover:text-bronze-700 hover:border-bronze-200'
+                            ? 'bg-warm-800 text-warm-50'
+                            : 'text-warm-400 hover:bg-warm-800/50 hover:text-warm-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
-                              'h-5 w-5 transition-transform duration-200',
+                              'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-white'
-                                : 'text-charcoal-500 group-hover:text-bronze-600 group-hover:scale-110'
+                                ? 'text-lime-400'
+                                : 'text-warm-500 group-hover:text-warm-300'
                             )}
                           />
-                          <span className="font-medium text-sm">{item.label}</span>
+                          <span className="font-medium text-[13px]">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -306,21 +306,21 @@ export function AppSidebar() {
 
         {/* Operations */}
         {operationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-2">
+        <SidebarGroup className="mt-4">
           <SidebarGroupLabel
-            className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-300 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('operations')}
           >
             <span>Operations</span>
             {sidebarState.operations ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3.5 w-3.5" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             )}
           </SidebarGroupLabel>
           {sidebarState.operations && (
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-0.5">
                 {operationsItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href, item.exact)
@@ -330,22 +330,22 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         className={cn(
-                          'h-11 px-3 rounded-xl transition-all duration-200 group',
+                          'h-10 px-3 rounded-lg transition-all duration-150 group',
                           active
-                            ? 'bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-md hover:shadow-lg hover:from-ocean-600 hover:to-ocean-700'
-                            : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
+                            ? 'bg-warm-800 text-warm-50'
+                            : 'text-warm-400 hover:bg-warm-800/50 hover:text-warm-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
-                              'h-5 w-5 transition-transform duration-200',
+                              'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-white'
-                                : 'text-charcoal-500 group-hover:text-ocean-600 group-hover:scale-110'
+                                ? 'text-lime-400'
+                                : 'text-warm-500 group-hover:text-warm-300'
                             )}
                           />
-                          <span className="font-medium text-sm">{item.label}</span>
+                          <span className="font-medium text-[13px]">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -359,21 +359,21 @@ export function AppSidebar() {
 
         {/* Client Relations */}
         {clientRelationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-2">
+        <SidebarGroup className="mt-4">
           <SidebarGroupLabel
-            className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-300 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('clientRelations')}
           >
             <span>Client Relations</span>
             {sidebarState.clientRelations ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3.5 w-3.5" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             )}
           </SidebarGroupLabel>
           {sidebarState.clientRelations && (
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-0.5">
                 {clientRelationsItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
@@ -383,22 +383,22 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         className={cn(
-                          'h-11 px-3 rounded-xl transition-all duration-200 group',
+                          'h-10 px-3 rounded-lg transition-all duration-150 group',
                           active
-                            ? 'bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-md hover:shadow-lg hover:from-ocean-600 hover:to-ocean-700'
-                            : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
+                            ? 'bg-warm-800 text-warm-50'
+                            : 'text-warm-400 hover:bg-warm-800/50 hover:text-warm-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
-                              'h-5 w-5 transition-transform duration-200',
+                              'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-white'
-                                : 'text-charcoal-500 group-hover:text-ocean-600 group-hover:scale-110'
+                                ? 'text-lime-400'
+                                : 'text-warm-500 group-hover:text-warm-300'
                             )}
                           />
-                          <span className="font-medium text-sm">{item.label}</span>
+                          <span className="font-medium text-[13px]">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -412,21 +412,21 @@ export function AppSidebar() {
 
         {/* Administrative */}
         {administrativeItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-2">
+        <SidebarGroup className="mt-4">
           <SidebarGroupLabel
-            className="text-xs font-bold uppercase tracking-widest text-charcoal-400 px-3 mb-2 cursor-pointer hover:text-charcoal-600 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-300 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('administrative')}
           >
             <span>Administrative</span>
             {sidebarState.administrative ? (
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className="h-3.5 w-3.5" />
             ) : (
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-3.5 w-3.5" />
             )}
           </SidebarGroupLabel>
           {sidebarState.administrative && (
             <SidebarGroupContent>
-              <SidebarMenu className="space-y-1">
+              <SidebarMenu className="space-y-0.5">
                 {administrativeItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
@@ -436,22 +436,22 @@ export function AppSidebar() {
                       <SidebarMenuButton
                         asChild
                         className={cn(
-                          'h-11 px-3 rounded-xl transition-all duration-200 group',
+                          'h-10 px-3 rounded-lg transition-all duration-150 group',
                           active
-                            ? 'bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-md hover:shadow-lg hover:from-ocean-600 hover:to-ocean-700'
-                            : 'text-charcoal-700 hover:bg-gradient-to-br hover:from-cream-100 hover:to-ocean-50 hover:text-ocean-700 hover:border-ocean-200'
+                            ? 'bg-warm-800 text-warm-50'
+                            : 'text-warm-400 hover:bg-warm-800/50 hover:text-warm-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
                           <Icon
                             className={cn(
-                              'h-5 w-5 transition-transform duration-200',
+                              'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-white'
-                                : 'text-charcoal-500 group-hover:text-ocean-600 group-hover:scale-110'
+                                ? 'text-lime-400'
+                                : 'text-warm-500 group-hover:text-warm-300'
                             )}
                           />
-                          <span className="font-medium text-sm">{item.label}</span>
+                          <span className="font-medium text-[13px]">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -464,15 +464,15 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-cream-300 p-3">
+      <SidebarFooter className="border-t border-warm-800 p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="h-11 px-3 rounded-xl text-charcoal-700 hover:bg-status-error-light hover:text-status-error transition-all duration-200 group"
+              className="h-10 px-3 rounded-lg text-warm-400 hover:bg-warm-800/50 hover:text-warm-200 transition-all duration-150 group"
             >
-              <LogOut className="h-5 w-5 text-charcoal-500 group-hover:text-status-error transition-colors" />
-              <span className="font-medium text-sm">Sign out</span>
+              <LogOut className="h-4.5 w-4.5 text-warm-500 group-hover:text-warm-300 transition-colors" />
+              <span className="font-medium text-[13px]">Sign out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

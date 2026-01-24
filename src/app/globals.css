@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -9,7 +9,7 @@
   /* === URBAN COGNITIVE DESIGN SYSTEM === */
 
   /* Font Families */
-  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-display: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
   --font-sans: Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
@@ -101,6 +101,31 @@
   --color-honey-700: #927323;
   --color-honey-800: #6E561A;
   --color-honey-900: #4D3C12;
+
+  /* Lime - Bright accent for CTAs and highlights (Ramp-inspired) */
+  --color-lime-50: #FAFFF0;
+  --color-lime-100: #F2FFD4;
+  --color-lime-200: #E4FFAB;
+  --color-lime-300: #D4F97D;
+  --color-lime-400: #CDEC4C;
+  --color-lime-500: #BDD92A;
+  --color-lime-600: #96B01D;
+  --color-lime-700: #71861A;
+  --color-lime-800: #596A19;
+  --color-lime-900: #4A5A19;
+
+  /* Warm Neutrals - Ramp-inspired warmer grays */
+  --color-warm-50: #FAF9F7;
+  --color-warm-100: #F5F3F0;
+  --color-warm-200: #EBE8E4;
+  --color-warm-300: #DAD6D0;
+  --color-warm-400: #B8B3AA;
+  --color-warm-500: #969189;
+  --color-warm-600: #787268;
+  --color-warm-700: #5C5750;
+  --color-warm-800: #3D3A36;
+  --color-warm-900: #2A2825;
+  --color-warm-950: #1C1B19;
 
   /* Status colors */
   --color-status-success: #4C8C63;
@@ -208,15 +233,16 @@
   --color-chart-4: var(--color-status-warning);
   --color-chart-5: var(--color-charcoal-600);
 
-  /* Sidebar */
-  --color-sidebar: var(--color-cream-100);
-  --color-sidebar-foreground: var(--color-charcoal-900);
-  --color-sidebar-primary: var(--color-bronze-500);
-  --color-sidebar-primary-foreground: #FFFFFF;
-  --color-sidebar-accent: var(--color-cream-200);
-  --color-sidebar-accent-foreground: var(--color-charcoal-900);
-  --color-sidebar-border: var(--color-cream-300);
-  --color-sidebar-ring: var(--color-bronze-400);
+  /* Sidebar - Ramp-inspired dark warm sidebar */
+  --color-sidebar: var(--color-warm-900);
+  --color-sidebar-foreground: var(--color-warm-100);
+  --color-sidebar-primary: var(--color-lime-400);
+  --color-sidebar-primary-foreground: var(--color-warm-950);
+  --color-sidebar-accent: var(--color-warm-800);
+  --color-sidebar-accent-foreground: var(--color-warm-100);
+  --color-sidebar-border: var(--color-warm-800);
+  --color-sidebar-ring: var(--color-lime-400);
+  --color-sidebar-muted: var(--color-warm-500);
 }
 
 .dark {
@@ -475,21 +501,41 @@
     background-clip: padding-box;
   }
 
-  /* Sidebar-specific elegant scrollbar */
+  /* Sidebar-specific elegant scrollbar (dark sidebar) */
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar {
     width: 6px;
   }
 
+  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
-    background: var(--color-cream-400);
+    background: var(--color-warm-700);
     border-radius: 10px;
     border: 1px solid transparent;
     background-clip: padding-box;
   }
 
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb:hover {
-    background: var(--color-bronze-400);
+    background: var(--color-warm-600);
     background-clip: padding-box;
+  }
+
+  /* Lime accent button (Ramp-style CTA) */
+  .btn-lime {
+    background-color: var(--color-lime-400);
+    color: var(--color-warm-950);
+    font-weight: 500;
+    transition: all 0.15s ease;
+  }
+
+  .btn-lime:hover {
+    background-color: var(--color-lime-500);
+  }
+
+  .btn-lime:active {
+    background-color: var(--color-lime-600);
   }
 
   /* Safe area padding for iPhone notch/home indicator */
