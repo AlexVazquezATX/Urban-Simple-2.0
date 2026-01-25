@@ -75,22 +75,22 @@ export default function NightlyReviewsPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />
+        return <CheckCircle2 className="h-5 w-5 text-lime-600" />
       case 'in_progress':
         return <AlertCircle className="h-5 w-5 text-orange-600" />
       default:
-        return <Circle className="h-5 w-5 text-gray-400" />
+        return <Circle className="h-5 w-5 text-warm-400" />
     }
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-700 border-green-300">Completed</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">Completed</Badge>
       case 'in_progress':
-        return <Badge className="bg-orange-100 text-orange-700 border-orange-300">In Progress</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-100 text-orange-700 border-orange-200">In Progress</Badge>
       default:
-        return <Badge variant="outline">Pending</Badge>
+        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">Pending</Badge>
     }
   }
 
@@ -106,7 +106,7 @@ export default function NightlyReviewsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-ocean-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
       </div>
     )
   }
@@ -115,30 +115,30 @@ export default function NightlyReviewsPage() {
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Tonight's Route</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Tonight's Route</h1>
+        <p className="text-sm text-warm-500 mt-1">
           Review locations scheduled for tonight's service
         </p>
       </div>
 
       {/* Progress Summary */}
-      <Card className="border-ocean-200 bg-gradient-to-br from-ocean-50 to-blue-50">
-        <CardContent className="pt-6">
+      <Card className="rounded-sm border-ocean-200 bg-gradient-to-br from-ocean-50 to-ocean-100/50">
+        <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Progress</p>
-              <p className="text-2xl font-bold mt-1">
+              <p className="text-xs text-warm-500">Progress</p>
+              <p className="text-2xl font-bold text-warm-900 mt-1">
                 {completedCount} / {locations.length}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-muted-foreground">Pending</p>
+              <p className="text-xs text-warm-500">Pending</p>
               <p className="text-2xl font-bold mt-1 text-orange-600">{pendingCount}</p>
             </div>
             <div className="hidden sm:block w-32">
-              <div className="w-full bg-gray-200 rounded-full h-3">
+              <div className="w-full bg-warm-200 rounded-sm h-2">
                 <div
-                  className="bg-ocean-600 h-3 rounded-full transition-all duration-300"
+                  className="bg-ocean-600 h-2 rounded-sm transition-all duration-300"
                   style={{ width: `${(completedCount / locations.length) * 100}%` }}
                 />
               </div>
@@ -150,34 +150,34 @@ export default function NightlyReviewsPage() {
       {/* Filter Buttons */}
       <div className="flex gap-2">
         <Button
-          variant={filter === 'all' ? 'default' : 'outline'}
+          variant={filter === 'all' ? 'lime' : 'outline'}
           onClick={() => setFilter('all')}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none rounded-sm"
         >
           All ({locations.length})
         </Button>
         <Button
-          variant={filter === 'pending' ? 'default' : 'outline'}
+          variant={filter === 'pending' ? 'lime' : 'outline'}
           onClick={() => setFilter('pending')}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none rounded-sm"
         >
           Pending ({pendingCount})
         </Button>
         <Button
-          variant={filter === 'completed' ? 'default' : 'outline'}
+          variant={filter === 'completed' ? 'lime' : 'outline'}
           onClick={() => setFilter('completed')}
-          className="flex-1 sm:flex-none"
+          className="flex-1 sm:flex-none rounded-sm"
         >
           Completed ({completedCount})
         </Button>
       </div>
 
       {/* Location Cards */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         {filteredLocations.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center text-muted-foreground">
-              <Building2 className="h-12 w-12 mx-auto mb-4 opacity-50" />
+          <Card className="rounded-sm border-warm-200">
+            <CardContent className="py-12 text-center text-warm-500">
+              <Building2 className="h-12 w-12 mx-auto mb-4 text-warm-300" />
               <p>No locations found for this filter</p>
             </CardContent>
           </Card>
@@ -186,11 +186,11 @@ export default function NightlyReviewsPage() {
             <Card
               key={location.id}
               className={cn(
-                'hover:shadow-md transition-shadow',
-                location.status === 'completed' && 'bg-green-50/50 border-green-200'
+                'rounded-sm border-warm-200 hover:border-ocean-400 transition-colors',
+                location.status === 'completed' && 'bg-lime-50/50 border-lime-200'
               )}
             >
-              <CardContent className="p-4 md:p-6">
+              <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   {/* Status Icon */}
                   <div className="flex-shrink-0 mt-1">
@@ -201,24 +201,24 @@ export default function NightlyReviewsPage() {
                   <div className="flex-1 min-w-0 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-semibold text-lg">{location.locationName}</h3>
-                        <p className="text-sm text-muted-foreground">{location.clientName}</p>
+                        <h3 className="font-medium text-warm-900">{location.locationName}</h3>
+                        <p className="text-xs text-warm-500">{location.clientName}</p>
                       </div>
                       {getStatusBadge(location.status)}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-4 w-4 flex-shrink-0" />
-                        <span className="truncate">{location.address}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-warm-500">
+                        <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="truncate text-xs">{location.address}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4 flex-shrink-0" />
-                        <span>{location.scheduledTime}</span>
+                      <div className="flex items-center gap-2 text-warm-500">
+                        <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="text-xs">{location.scheduledTime}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
-                        <ClipboardCheck className="h-4 w-4 flex-shrink-0" />
-                        <span>{location.checklistName}</span>
+                      <div className="flex items-center gap-2 text-warm-500 sm:col-span-2">
+                        <ClipboardCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                        <span className="text-xs">{location.checklistName}</span>
                       </div>
                     </div>
 
@@ -226,7 +226,8 @@ export default function NightlyReviewsPage() {
                     <div className="flex flex-wrap gap-2 pt-2">
                       <Button
                         onClick={() => handleStartReview(location)}
-                        className="flex-1 sm:flex-none bg-ocean-600 hover:bg-ocean-700"
+                        variant="lime"
+                        className="flex-1 sm:flex-none rounded-sm"
                         disabled={location.status === 'completed'}
                       >
                         {location.status === 'completed' ? (
@@ -244,7 +245,7 @@ export default function NightlyReviewsPage() {
                       <Button
                         variant="outline"
                         onClick={() => handleGetDirections(location.address)}
-                        className="flex-1 sm:flex-none"
+                        className="flex-1 sm:flex-none rounded-sm"
                       >
                         <Navigation className="h-4 w-4 mr-2" />
                         Directions

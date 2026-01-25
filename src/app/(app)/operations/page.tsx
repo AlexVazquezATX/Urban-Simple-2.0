@@ -49,25 +49,29 @@ async function OperationsDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Operations</h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Operations</h1>
+        <p className="text-sm text-warm-500 mt-1">
           Manage service operations, schedules, and checklists
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <ClipboardList className="h-8 w-8 text-ocean-600" />
-              <CardTitle>Checklists</CardTitle>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="rounded-sm border-warm-200 hover:border-ocean-400 transition-colors">
+          <CardHeader className="p-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center">
+                <ClipboardList className="h-5 w-5 text-ocean-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-display font-medium text-warm-900">Checklists</CardTitle>
+                <CardDescription className="text-xs text-warm-500">Manage checklist templates</CardDescription>
+              </div>
             </div>
-            <CardDescription>Manage checklist templates</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4">{templatesCount}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-3xl font-bold text-warm-900 mb-4">{templatesCount}</div>
             <Link href="/operations/checklists">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full rounded-sm">
                 View Checklists
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -75,18 +79,22 @@ async function OperationsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <Users className="h-8 w-8 text-bronze-600" />
-              <CardTitle>Assignments</CardTitle>
+        <Card className="rounded-sm border-warm-200 hover:border-ocean-400 transition-colors">
+          <CardHeader className="p-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center">
+                <Users className="h-5 w-5 text-plum-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-display font-medium text-warm-900">Assignments</CardTitle>
+                <CardDescription className="text-xs text-warm-500">Manage location assignments</CardDescription>
+              </div>
             </div>
-            <CardDescription>Manage location assignments</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4">{assignmentsCount}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-3xl font-bold text-warm-900 mb-4">{assignmentsCount}</div>
             <Link href="/operations/assignments">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full rounded-sm">
                 View Assignments
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -94,18 +102,22 @@ async function OperationsDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <Calendar className="h-8 w-8 text-charcoal-600" />
-              <CardTitle>Schedule</CardTitle>
+        <Card className="rounded-sm border-warm-200 hover:border-ocean-400 transition-colors">
+          <CardHeader className="p-4 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center">
+                <Calendar className="h-5 w-5 text-warm-600" />
+              </div>
+              <div>
+                <CardTitle className="text-base font-display font-medium text-warm-900">Schedule</CardTitle>
+                <CardDescription className="text-xs text-warm-500">View and manage shifts</CardDescription>
+              </div>
             </div>
-            <CardDescription>View and manage shifts</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4">{shiftsCount}</div>
+          <CardContent className="p-4 pt-0">
+            <div className="text-3xl font-bold text-warm-900 mb-4">{shiftsCount}</div>
             <Link href="/operations/schedule">
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full rounded-sm">
                 View Schedule
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>

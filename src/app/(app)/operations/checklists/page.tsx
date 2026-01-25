@@ -45,11 +45,11 @@ async function ChecklistsList() {
 
   if (templates.length === 0) {
     return (
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-muted-foreground mb-4">No checklist templates yet</p>
+          <p className="text-warm-500 mb-4">No checklist templates yet</p>
           <ChecklistForm>
-            <Button>
+            <Button variant="lime" className="rounded-sm">
               <Plus className="mr-2 h-4 w-4" />
               Create Your First Template
             </Button>
@@ -63,36 +63,36 @@ async function ChecklistsList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Checklist Templates</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Checklist Templates</h1>
+          <p className="text-sm text-warm-500 mt-1">
             Create and manage reusable service checklists
           </p>
         </div>
         <ChecklistForm>
-          <Button>
+          <Button variant="lime" className="rounded-sm">
             <Plus className="mr-2 h-4 w-4" />
             New Template
           </Button>
         </ChecklistForm>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>All Templates</CardTitle>
-          <CardDescription>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-3">
+          <CardTitle className="text-base font-display font-medium text-warm-900">All Templates</CardTitle>
+          <CardDescription className="text-xs text-warm-500">
             {templates.length} {templates.length === 1 ? 'template' : 'templates'}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Spanish Name</TableHead>
-                <TableHead>Sections</TableHead>
-                <TableHead>Locations</TableHead>
-                <TableHead>Services</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="border-warm-200">
+                <TableHead className="text-xs font-medium text-warm-500">Name</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500">Spanish Name</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500">Sections</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500">Locations</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500">Services</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -106,26 +106,26 @@ async function ChecklistsList() {
                 )
 
                 return (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">
+                  <TableRow key={template.id} className="border-warm-200 hover:bg-warm-50">
+                    <TableCell className="font-medium text-sm text-warm-900">
                       <Link
                         href={`/operations/checklists/${template.id}`}
-                        className="hover:underline"
+                        className="hover:text-ocean-600 hover:underline"
                       >
                         {template.name}
                       </Link>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell className="text-sm text-warm-500">
                       {template.nameEs || '-'}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
                         {sectionCount} {sectionCount === 1 ? 'section' : 'sections'}
                         {itemCount > 0 && ` • ${itemCount} items`}
                       </Badge>
                     </TableCell>
-                    <TableCell>{template._count.locations}</TableCell>
-                    <TableCell>{template._count.serviceLogs}</TableCell>
+                    <TableCell className="text-sm text-warm-700">{template._count.locations}</TableCell>
+                    <TableCell className="text-sm text-warm-700">{template._count.serviceLogs}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <DuplicateChecklistButton
@@ -133,8 +133,8 @@ async function ChecklistsList() {
                           templateName={template.name}
                         />
                         <Link href={`/operations/checklists/${template.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4 mr-1" />
+                          <Button variant="ghost" size="sm" className="rounded-sm h-7 px-2 text-xs">
+                            <Edit className="h-3 w-3 mr-1" />
                             Edit
                           </Button>
                         </Link>
@@ -156,20 +156,20 @@ function ChecklistsListSkeleton() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Skeleton className="h-9 w-48 mb-2" />
-          <Skeleton className="h-5 w-64" />
+          <Skeleton className="h-8 w-48 mb-2 rounded-sm" />
+          <Skeleton className="h-4 w-64 rounded-sm" />
         </div>
-        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-10 w-32 rounded-sm" />
       </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-32 mb-2" />
-          <Skeleton className="h-4 w-48" />
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-3">
+          <Skeleton className="h-5 w-32 mb-2 rounded-sm" />
+          <Skeleton className="h-3 w-48 rounded-sm" />
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-12 w-full" />
+              <Skeleton key={i} className="h-12 w-full rounded-sm" />
             ))}
           </div>
         </CardContent>

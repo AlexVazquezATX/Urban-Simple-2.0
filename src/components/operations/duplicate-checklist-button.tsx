@@ -67,26 +67,27 @@ export function DuplicateChecklistButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Copy className="h-4 w-4 mr-1" />
+        <Button variant="ghost" size="sm" className="rounded-sm h-7 px-2 text-xs">
+          <Copy className="h-3 w-3 mr-1" />
           Duplicate
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="rounded-sm">
         <DialogHeader>
-          <DialogTitle>Duplicate Checklist</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg font-display font-medium text-warm-900">Duplicate Checklist</DialogTitle>
+          <DialogDescription className="text-sm text-warm-500">
             Create a copy of "{templateName}" with a new name
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="duplicate-name">New Checklist Name *</Label>
+            <Label htmlFor="duplicate-name" className="text-xs font-medium text-warm-700">New Checklist Name *</Label>
             <Input
               id="duplicate-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter name for duplicate..."
+              className="rounded-sm border-warm-200 mt-1"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleDuplicate()
@@ -96,10 +97,10 @@ export function DuplicateChecklistButton({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="rounded-sm">
             Cancel
           </Button>
-          <Button onClick={handleDuplicate} disabled={loading}>
+          <Button onClick={handleDuplicate} disabled={loading} variant="lime" className="rounded-sm">
             {loading ? 'Duplicating...' : 'Duplicate'}
           </Button>
         </DialogFooter>

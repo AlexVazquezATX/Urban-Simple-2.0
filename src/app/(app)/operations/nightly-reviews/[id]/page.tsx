@@ -159,7 +159,7 @@ export default function LocationReviewPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-ocean-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
       </div>
     )
   }
@@ -168,39 +168,39 @@ export default function LocationReviewPage() {
     <div className="max-w-2xl mx-auto p-4 md:p-6 space-y-6 pb-24">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.back()}>
+        <Button variant="ghost" size="icon" onClick={() => router.back()} className="rounded-sm">
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">{locationData.locationName}</h1>
-          <p className="text-sm text-muted-foreground">{locationData.clientName}</p>
+          <h1 className="text-xl font-display font-medium text-warm-900">{locationData.locationName}</h1>
+          <p className="text-xs text-warm-500">{locationData.clientName}</p>
         </div>
       </div>
 
       {/* Location Info */}
-      <Card>
-        <CardContent className="pt-6 space-y-3">
+      <Card className="rounded-sm border-warm-200">
+        <CardContent className="p-4 space-y-2">
           <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span>{locationData.address}</span>
+            <MapPin className="h-3.5 w-3.5 text-warm-400" />
+            <span className="text-warm-700">{locationData.address}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>Scheduled: {locationData.scheduledTime}</span>
+            <Clock className="h-3.5 w-3.5 text-warm-400" />
+            <span className="text-warm-700">Scheduled: {locationData.scheduledTime}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
-            <User className="h-4 w-4 text-muted-foreground" />
-            <span>Associate: {locationData.associateName}</span>
+            <User className="h-3.5 w-3.5 text-warm-400" />
+            <span className="text-warm-700">Associate: {locationData.associateName}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Overall Rating */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Overall Quality Rating</CardTitle>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base font-display font-medium text-warm-900">Overall Quality Rating</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <div className="flex gap-2 justify-center py-4">
             {[1, 2, 3, 4, 5].map((rating) => (
               <button
@@ -210,17 +210,17 @@ export default function LocationReviewPage() {
               >
                 <Star
                   className={cn(
-                    'h-12 w-12 transition-colors',
+                    'h-10 w-10 transition-colors',
                     rating <= overallRating
-                      ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300'
+                      ? 'fill-lime-400 text-lime-400'
+                      : 'text-warm-300'
                   )}
                 />
               </button>
             ))}
           </div>
           {overallRating > 0 && (
-            <p className="text-center text-sm text-muted-foreground">
+            <p className="text-center text-xs text-warm-500">
               {overallRating === 5 && 'Excellent work!'}
               {overallRating === 4 && 'Good job'}
               {overallRating === 3 && 'Acceptable'}
@@ -232,25 +232,26 @@ export default function LocationReviewPage() {
       </Card>
 
       {/* Checklist Verification */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Checklist Verification</CardTitle>
-          <p className="text-sm text-muted-foreground">{locationData.checklistName}</p>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base font-display font-medium text-warm-900">Checklist Verification</CardTitle>
+          <p className="text-xs text-warm-500">{locationData.checklistName}</p>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="p-4 pt-0 space-y-3">
           {checklistItems.map((item) => (
-            <div key={item.id} className="border rounded-lg p-4 space-y-3">
-              <p className="font-medium">{item.name}</p>
+            <div key={item.id} className="border border-warm-200 rounded-sm p-3 space-y-3">
+              <p className="font-medium text-sm text-warm-900">{item.name}</p>
               <div className="grid grid-cols-3 gap-2">
                 <Button
                   variant={item.status === 'good' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => handleChecklistItemStatus(item.id, 'good')}
                   className={cn(
-                    item.status === 'good' && 'bg-green-600 hover:bg-green-700'
+                    'rounded-sm text-xs',
+                    item.status === 'good' && 'bg-lime-600 hover:bg-lime-700'
                   )}
                 >
-                  <CheckCircle className="h-4 w-4 mr-1" />
+                  <CheckCircle className="h-3.5 w-3.5 mr-1" />
                   Good
                 </Button>
                 <Button
@@ -258,10 +259,11 @@ export default function LocationReviewPage() {
                   size="sm"
                   onClick={() => handleChecklistItemStatus(item.id, 'needs_work')}
                   className={cn(
+                    'rounded-sm text-xs',
                     item.status === 'needs_work' && 'bg-orange-600 hover:bg-orange-700'
                   )}
                 >
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                  <AlertCircle className="h-3.5 w-3.5 mr-1" />
                   Needs Work
                 </Button>
                 <Button
@@ -269,10 +271,11 @@ export default function LocationReviewPage() {
                   size="sm"
                   onClick={() => handleChecklistItemStatus(item.id, 'not_done')}
                   className={cn(
+                    'rounded-sm text-xs',
                     item.status === 'not_done' && 'bg-red-600 hover:bg-red-700'
                   )}
                 >
-                  <XCircle className="h-4 w-4 mr-1" />
+                  <XCircle className="h-3.5 w-3.5 mr-1" />
                   Not Done
                 </Button>
               </div>
@@ -282,43 +285,43 @@ export default function LocationReviewPage() {
       </Card>
 
       {/* Pain Points */}
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-red-600" />
+      <Card className="rounded-sm border-red-200">
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base font-display font-medium text-warm-900 flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
             Pain Points & Issues
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-warm-500">
             Critical - Report any issues found during inspection
           </p>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="p-4 pt-0 space-y-3">
           {painPoints.length === 0 && (
-            <p className="text-center text-muted-foreground py-4">
+            <p className="text-center text-warm-500 text-sm py-4">
               No issues reported - Tap a category below to add
             </p>
           )}
 
           {/* Display added pain points */}
           {painPoints.map((point, index) => (
-            <div key={index} className="border-2 border-red-200 rounded-lg p-4 space-y-3 bg-red-50">
+            <div key={index} className="border border-red-200 rounded-sm p-3 space-y-3 bg-red-50">
               <div className="flex items-center justify-between">
-                <p className="font-medium text-sm">
+                <p className="font-medium text-sm text-warm-900">
                   {point.category.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
                 </p>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => setPainPoints(prev => prev.filter((_, i) => i !== index))}
-                  className="h-8 w-8 p-0 hover:bg-red-200"
+                  className="h-7 w-7 p-0 hover:bg-red-200 rounded-sm"
                 >
-                  <XCircle className="h-4 w-4 text-red-600" />
+                  <XCircle className="h-3.5 w-3.5 text-red-600" />
                 </Button>
               </div>
 
               {/* Severity selector */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">Severity</Label>
+                <Label className="text-xs font-medium text-warm-700">Severity</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {(['low', 'medium', 'high', 'critical'] as const).map((severity) => (
                     <Button
@@ -331,7 +334,7 @@ export default function LocationReviewPage() {
                         setPainPoints(updated)
                       }}
                       className={cn(
-                        'text-xs',
+                        'text-xs rounded-sm',
                         point.severity === severity && severity === 'low' && 'bg-yellow-500 hover:bg-yellow-600',
                         point.severity === severity && severity === 'medium' && 'bg-orange-500 hover:bg-orange-600',
                         point.severity === severity && severity === 'high' && 'bg-red-500 hover:bg-red-600',
@@ -346,7 +349,7 @@ export default function LocationReviewPage() {
 
               {/* Description */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">Description *</Label>
+                <Label className="text-xs font-medium text-warm-700">Description *</Label>
                 <Textarea
                   value={point.description}
                   onChange={(e) => {
@@ -355,24 +358,24 @@ export default function LocationReviewPage() {
                     setPainPoints(updated)
                   }}
                   placeholder="Describe the issue in detail..."
-                  className="min-h-[80px]"
+                  className="min-h-[80px] rounded-sm border-warm-200"
                 />
               </div>
 
               {/* Photo upload placeholder */}
               <div className="space-y-2">
-                <Label className="text-xs font-semibold">Photos (Optional)</Label>
+                <Label className="text-xs font-medium text-warm-700">Photos (Optional)</Label>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="w-full border-dashed"
+                  className="w-full border-dashed rounded-sm"
                   onClick={() => toast.info('Photo upload coming soon')}
                 >
-                  <Camera className="h-4 w-4 mr-2" />
+                  <Camera className="h-3.5 w-3.5 mr-2" />
                   Add Photos
                 </Button>
                 {point.photos.length > 0 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-warm-500">
                     {point.photos.length} photo(s) attached
                   </p>
                 )}
@@ -382,81 +385,82 @@ export default function LocationReviewPage() {
 
           <Separator className="my-4" />
 
-          <p className="text-xs font-semibold text-muted-foreground mb-2">Add Pain Point:</p>
+          <p className="text-xs font-medium text-warm-500 mb-2">Add Pain Point:</p>
           <div className="grid grid-cols-2 gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleAddPainPoint('supply_shortage')}
-              className="border-orange-300"
+              className="rounded-sm border-orange-200 text-xs"
             >
-              ⚠️ Supply Shortage
+              Supply Shortage
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleAddPainPoint('equipment')}
-              className="border-orange-300"
+              className="rounded-sm border-orange-200 text-xs"
             >
-              🔧 Equipment Issue
+              Equipment Issue
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleAddPainPoint('staffing')}
-              className="border-orange-300"
+              className="rounded-sm border-orange-200 text-xs"
             >
-              👤 Staffing Concern
+              Staffing Concern
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleAddPainPoint('quality')}
-              className="border-orange-300"
+              className="rounded-sm border-orange-200 text-xs"
             >
-              🧼 Quality Issue
+              Quality Issue
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleAddPainPoint('safety')}
-              className="border-red-300"
+              className="rounded-sm border-red-200 text-xs"
             >
-              🚨 Safety Hazard
+              Safety Hazard
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => handleAddPainPoint('client_feedback')}
-              className="border-orange-300"
+              className="rounded-sm border-orange-200 text-xs"
             >
-              💬 Client Feedback
+              Client Feedback
             </Button>
           </div>
         </CardContent>
       </Card>
 
       {/* Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Additional Notes</CardTitle>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-2">
+          <CardTitle className="text-base font-display font-medium text-warm-900">Additional Notes</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Any additional observations, comments, or feedback..."
-            className="min-h-[100px]"
+            className="min-h-[100px] rounded-sm border-warm-200"
           />
         </CardContent>
       </Card>
 
       {/* Submit Button - Fixed at bottom on mobile */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t md:relative md:border-0">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-warm-200 md:relative md:border-0">
         <Button
           onClick={handleSubmitReview}
           disabled={isSaving}
-          className="w-full h-14 text-lg bg-ocean-600 hover:bg-ocean-700"
+          variant="lime"
+          className="w-full h-12 text-base rounded-sm"
         >
           {isSaving ? (
             <>

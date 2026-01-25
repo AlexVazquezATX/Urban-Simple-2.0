@@ -167,45 +167,45 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Schedule</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Schedule</h1>
+          <p className="text-sm text-warm-500 mt-1">
             View manager schedules and associate assignments
           </p>
         </div>
         <ShiftForm defaultDate={today.toISOString().split('T')[0]}>
-          <Button>
+          <Button variant="lime" className="rounded-sm">
             <Plus className="mr-2 h-4 w-4" />
             Schedule Manager
           </Button>
         </ShiftForm>
       </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>
+              <CardTitle className="text-base font-display font-medium text-warm-900">
                 Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
               </CardTitle>
-              <CardDescription className="mt-1">
+              <CardDescription className="text-xs text-warm-500 mt-1">
                 {managerShifts.length} manager{' '}
                 {managerShifts.length === 1 ? 'shift' : 'shifts'} scheduled
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Link href={`/operations/schedule?week=${currentWeekOffset - 1}`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="rounded-sm">
                   <ChevronLeft className="h-4 w-4" />
                   Previous Week
                 </Button>
               </Link>
               {currentWeekOffset !== 0 && (
                 <Link href="/operations/schedule">
-                  <Button variant="outline" size="sm">This Week</Button>
+                  <Button variant="outline" size="sm" className="rounded-sm">This Week</Button>
                 </Link>
               )}
               <Link href={`/operations/schedule?week=${currentWeekOffset + 1}`}>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="rounded-sm">
                   Next Week
                   <ChevronRight className="h-4 w-4 ml-1" />
                 </Button>
@@ -213,7 +213,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           {/* Week Grid - 7 columns (Mon-Sun) */}
           <div className="grid grid-cols-7 gap-2">
             {weekDays.map((day) => {
@@ -225,25 +225,25 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
               return (
                 <div
                   key={dateKey}
-                  className={`border rounded-lg flex flex-col min-h-[400px] ${
+                  className={`border rounded-sm flex flex-col min-h-100 ${
                     isToday
-                      ? 'bg-muted/50 border-primary'
+                      ? 'bg-warm-50 border-ocean-400'
                       : isPast
-                        ? 'bg-muted/20 opacity-75'
-                        : ''
+                        ? 'bg-warm-50/50 opacity-75'
+                        : 'border-warm-200'
                   }`}
                 >
                   {/* Day Header */}
-                  <div className="p-3 border-b bg-muted/30">
+                  <div className="p-3 border-b border-warm-200 bg-warm-50">
                     <div className="text-center">
-                      <div className="text-xs font-medium text-muted-foreground uppercase">
+                      <div className="text-xs font-medium text-warm-500 uppercase">
                         {format(day, 'EEE')}
                       </div>
-                      <div className="text-2xl font-bold mt-1">
+                      <div className="text-2xl font-bold text-warm-900 mt-1">
                         {format(day, 'd')}
                       </div>
                       {isToday && (
-                        <Badge variant="default" className="mt-1 text-xs">
+                        <Badge className="mt-1 rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
                           Today
                         </Badge>
                       )}
@@ -255,12 +255,12 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                     {/* Manager Shifts */}
                     {dayShifts.length === 0 ? (
                       <div className="text-center py-4">
-                        <p className="text-xs text-muted-foreground italic">
+                        <p className="text-xs text-warm-500 italic">
                           No shifts
                         </p>
                         {!isPast && (
                           <ShiftForm defaultDate={dateKey}>
-                            <Button variant="ghost" size="sm" className="mt-2">
+                            <Button variant="ghost" size="sm" className="mt-2 rounded-sm">
                               <Plus className="h-3 w-3 mr-1" />
                               Add
                             </Button>
@@ -281,16 +281,16 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                           return (
                             <div
                               key={shift.id}
-                              className="p-2 bg-background border rounded hover:bg-muted/50 transition-colors text-xs"
+                              className="p-2 bg-white border border-warm-200 rounded-sm hover:border-ocean-400 transition-colors text-xs"
                             >
-                              <div className="font-medium text-sm mb-1">
+                              <div className="font-medium text-sm text-warm-900 mb-1">
                                 {shift.manager.firstName} {shift.manager.lastName}
                               </div>
-                              <div className="text-muted-foreground mb-1">
+                              <div className="text-warm-500 mb-1">
                                 {shift.startTime} - {shift.endTime}
                               </div>
                               {locations.length > 0 && (
-                                <div className="text-muted-foreground space-y-0.5">
+                                <div className="text-warm-500 space-y-0.5">
                                   {locations.map((loc: any) => (
                                     <div key={loc.id} className="truncate" title={`${loc.client.name} - ${loc.name}`}>
                                       • {loc.name}
@@ -300,26 +300,25 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                               )}
                               <div className="flex gap-1 mt-2">
                                 <Badge
-                                  variant={
+                                  className={`rounded-sm text-[10px] px-1.5 py-0 ${
                                     shift.status === 'completed'
-                                      ? 'default'
+                                      ? 'bg-lime-100 text-lime-700 border-lime-200'
                                       : shift.status === 'missed'
-                                        ? 'destructive'
-                                        : 'secondary'
-                                  }
-                                  className="text-xs"
+                                        ? 'bg-red-100 text-red-700 border-red-200'
+                                        : 'bg-warm-100 text-warm-600 border-warm-200'
+                                  }`}
                                 >
                                   {shift.status}
                                 </Badge>
                                 {locations.length > 1 && (
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
                                     {locations.length} stops
                                   </Badge>
                                 )}
                               </div>
                               {!isPast && (
                                 <ShiftForm shift={shift}>
-                                  <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs">
+                                  <Button variant="ghost" size="sm" className="w-full mt-2 h-7 text-xs rounded-sm">
                                     Edit
                                   </Button>
                                 </ShiftForm>
@@ -329,7 +328,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                         })}
                         {!isPast && (
                           <ShiftForm defaultDate={dateKey}>
-                            <Button variant="outline" size="sm" className="w-full text-xs">
+                            <Button variant="outline" size="sm" className="w-full text-xs rounded-sm">
                               <Plus className="h-3 w-3 mr-1" />
                               Add Shift
                             </Button>
@@ -345,20 +344,20 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
 
           {/* Associate Assignments - Show below the week grid */}
           {assignments.length > 0 && (
-            <div className="mt-6 pt-6 border-t">
-              <h4 className="text-sm font-medium text-muted-foreground mb-3">
+            <div className="mt-6 pt-6 border-t border-warm-200">
+              <h4 className="text-sm font-medium text-warm-700 mb-3">
                 Associate Assignments (Recurring)
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {assignments.map((assignment: any) => (
                   <div
                     key={assignment.id}
-                    className="text-sm p-2 bg-muted/30 rounded border"
+                    className="text-sm p-2 bg-warm-50 rounded-sm border border-warm-200"
                   >
-                    <span className="font-medium">
+                    <span className="font-medium text-warm-900">
                       {assignment.user.firstName} {assignment.user.lastName}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-warm-500">
                       {' '}
                       → {assignment.location.client.name} - {assignment.location.name}
                     </span>
@@ -378,20 +377,20 @@ function ScheduleViewSkeleton() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Skeleton className="h-9 w-48 mb-2" />
-          <Skeleton className="h-5 w-64" />
+          <Skeleton className="h-8 w-48 mb-2 rounded-sm" />
+          <Skeleton className="h-4 w-64 rounded-sm" />
         </div>
-        <Skeleton className="h-10 w-40" />
+        <Skeleton className="h-10 w-40 rounded-sm" />
       </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-64 mb-2" />
-          <Skeleton className="h-4 w-48" />
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4">
+          <Skeleton className="h-5 w-64 mb-2 rounded-sm" />
+          <Skeleton className="h-3 w-48 rounded-sm" />
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
+        <CardContent className="p-4 pt-0">
+          <div className="grid grid-cols-7 gap-2">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <Skeleton key={i} className="h-32 w-full" />
+              <Skeleton key={i} className="h-80 w-full rounded-sm" />
             ))}
           </div>
         </CardContent>

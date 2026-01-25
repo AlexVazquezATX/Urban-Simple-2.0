@@ -403,8 +403,8 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Build Checklist</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-lg font-display font-medium text-warm-900">Build Checklist</h2>
+          <p className="text-sm text-warm-500">
             Add sections and items to create your checklist template
           </p>
         </div>
@@ -413,16 +413,16 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
             value={previewLanguage}
             onValueChange={(v) => setPreviewLanguage(v as 'en' | 'es')}
           >
-            <TabsList>
-              <TabsTrigger value="en">English</TabsTrigger>
-              <TabsTrigger value="es">Español</TabsTrigger>
+            <TabsList className="rounded-sm bg-warm-100">
+              <TabsTrigger value="en" className="rounded-sm data-[state=active]:bg-white">English</TabsTrigger>
+              <TabsTrigger value="es" className="rounded-sm data-[state=active]:bg-white">Español</TabsTrigger>
             </TabsList>
           </Tabs>
-          <Button onClick={handleTranslateAll} disabled={translating} variant="outline">
+          <Button onClick={handleTranslateAll} disabled={translating} variant="outline" className="rounded-sm">
             <Languages className="mr-2 h-4 w-4" />
             {translating ? 'Translating...' : 'AI Translate All'}
           </Button>
-          <Button onClick={handleSave} disabled={saving}>
+          <Button onClick={handleSave} disabled={saving} variant="lime" className="rounded-sm">
             <Save className="mr-2 h-4 w-4" />
             {saving ? 'Saving...' : 'Save Checklist'}
           </Button>
@@ -432,21 +432,21 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
       {/* Add Section Dialog */}
       <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
         <DialogTrigger asChild>
-          <Button>
+          <Button variant="outline" className="rounded-sm">
             <Plus className="mr-2 h-4 w-4" />
             Add Section
           </Button>
         </DialogTrigger>
-        <DialogContent>
+        <DialogContent className="rounded-sm">
           <DialogHeader>
-            <DialogTitle>Add Section</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg font-display font-medium text-warm-900">Add Section</DialogTitle>
+            <DialogDescription className="text-sm text-warm-500">
               Choose a section type from the library or create a custom section
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label>Section Type (Optional)</Label>
+              <Label className="text-xs font-medium text-warm-700">Section Type (Optional)</Label>
               <Select
                 value={selectedSectionType}
                 onValueChange={(value) => {
@@ -455,22 +455,22 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 }}
                 disabled={loadingLibrary}
               >
-                <SelectTrigger>
-                  <SelectValue 
+                <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                  <SelectValue
                     placeholder={
-                      loadingLibrary 
-                        ? "Loading section types..." 
-                        : sectionTypes.length === 0 
+                      loadingLibrary
+                        ? "Loading section types..."
+                        : sectionTypes.length === 0
                         ? "No section types available. Run seed script first."
                         : "Select a section type..."
-                    } 
+                    }
                   />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-sm">
                   {sectionTypes.length === 0 ? (
                     <SelectItem value="__empty__" disabled>
-                      {loadingLibrary 
-                        ? "Loading..." 
+                      {loadingLibrary
+                        ? "Loading..."
                         : "No section types available. Please run the seed script."}
                     </SelectItem>
                   ) : (
@@ -483,13 +483,13 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 </SelectContent>
               </Select>
               {sectionTypes.length === 0 && !loadingLibrary && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Run: <code className="bg-muted px-1 rounded">npx tsx scripts/seed-checklist-library.ts</code>
+                <p className="text-xs text-warm-500 mt-1">
+                  Run: <code className="bg-warm-100 px-1 rounded-sm">npx tsx scripts/seed-checklist-library.ts</code>
                 </p>
               )}
             </div>
             <div>
-              <Label>Or Custom Section Name</Label>
+              <Label className="text-xs font-medium text-warm-700">Or Custom Section Name</Label>
               <Input
                 value={customSectionName}
                 onChange={(e) => {
@@ -497,25 +497,26 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                   setSelectedSectionType('')
                 }}
                 placeholder="e.g., Special Equipment"
+                className="rounded-sm border-warm-200 mt-1"
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAddSectionOpen(false)}>
+              <Button variant="outline" onClick={() => setAddSectionOpen(false)} className="rounded-sm">
                 Cancel
               </Button>
-              <Button onClick={addSection}>Add Section</Button>
+              <Button onClick={addSection} variant="lime" className="rounded-sm">Add Section</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {sections.length === 0 ? (
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground mb-4">No sections yet</p>
+            <p className="text-warm-500 mb-4">No sections yet</p>
             <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
               <DialogTrigger asChild>
-                <Button>
+                <Button variant="lime" className="rounded-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Add First Section
                 </Button>
@@ -538,35 +539,37 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
             )
 
             return (
-              <Card key={section.id}>
-                <CardHeader>
+              <Card key={section.id} className="rounded-sm border-warm-200">
+                <CardHeader className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-4">
                       <div className="flex items-center gap-2">
-                        <GripVertical className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm font-medium text-muted-foreground">
+                        <GripVertical className="h-5 w-5 text-warm-400" />
+                        <span className="text-sm font-medium text-warm-500">
                           Section {sectionIndex + 1}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label>Section Name (English) *</Label>
+                          <Label className="text-xs font-medium text-warm-700">Section Name (English) *</Label>
                           <Input
                             value={section.name}
                             onChange={(e) =>
                               updateSection(section.id, { name: e.target.value })
                             }
                             placeholder="e.g., Kitchen Equipment"
+                            className="rounded-sm border-warm-200 mt-1"
                           />
                         </div>
                         <div>
-                          <Label>Section Name (Spanish)</Label>
+                          <Label className="text-xs font-medium text-warm-700">Section Name (Spanish)</Label>
                           <Input
                             value={section.nameEs || ''}
                             onChange={(e) =>
                               updateSection(section.id, { nameEs: e.target.value })
                             }
                             placeholder="e.g., Equipamiento de Cocina"
+                            className="rounded-sm border-warm-200 mt-1"
                           />
                         </div>
                       </div>
@@ -575,15 +578,16 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                       variant="ghost"
                       size="icon"
                       onClick={() => deleteSection(section.id)}
+                      className="rounded-sm"
                     >
-                      <Trash2 className="h-4 w-4 text-destructive" />
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="p-4 pt-0 space-y-4">
                   {/* Quick-select panel for library items */}
                   {sectionType && libraryItems.length > 0 && (
-                    <div className="border rounded-lg p-4 bg-muted/30">
+                    <div className="border border-warm-200 rounded-sm p-4 bg-warm-50">
                       <div className="flex items-center justify-between mb-3">
                         <Label className="text-sm font-semibold">
                           Popular Items (click to add)

@@ -46,7 +46,7 @@ async function ChecklistDetail({ id }: { id: string }) {
 
   if (!template) {
     return (
-      <div className="text-destructive">
+      <div className="text-red-600">
         Checklist template not found. Please try again.
       </div>
     )
@@ -56,17 +56,17 @@ async function ChecklistDetail({ id }: { id: string }) {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/operations/checklists">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="rounded-sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">{template.name}</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">{template.name}</h1>
           {template.nameEs && (
-            <p className="text-muted-foreground">{template.nameEs}</p>
+            <p className="text-sm text-warm-500">{template.nameEs}</p>
           )}
           {template.description && (
-            <p className="text-sm text-muted-foreground mt-1">{template.description}</p>
+            <p className="text-sm text-warm-500 mt-1">{template.description}</p>
           )}
         </div>
       </div>
@@ -80,15 +80,15 @@ function ChecklistDetailSkeleton() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Skeleton className="h-10 w-10" />
+        <Skeleton className="h-10 w-10 rounded-sm" />
         <div>
-          <Skeleton className="h-9 w-64 mb-2" />
-          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-8 w-64 mb-2 rounded-sm" />
+          <Skeleton className="h-4 w-48 rounded-sm" />
         </div>
       </div>
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-32 w-full rounded-sm" />
+        <Skeleton className="h-64 w-full rounded-sm" />
       </div>
     </div>
   )
