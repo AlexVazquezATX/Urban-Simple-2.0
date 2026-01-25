@@ -66,13 +66,13 @@ async function InvoicesList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Invoices</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Invoices</h1>
+          <p className="text-sm text-warm-500">
             Manage invoices and track payments
           </p>
         </div>
         <GenerateInvoicesDialog>
-          <Button>
+          <Button variant="lime" className="rounded-sm">
             <Plus className="mr-2 h-4 w-4" />
             Generate Invoices
           </Button>
@@ -80,62 +80,62 @@ async function InvoicesList() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-warm-700">Total Invoices</CardTitle>
+            <FileText className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{invoices.length}</div>
-            <p className="text-xs text-muted-foreground">All time</p>
+            <div className="text-2xl font-display font-medium text-warm-900">{invoices.length}</div>
+            <p className="text-xs text-warm-500">All time</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-warm-700">Outstanding</CardTitle>
+            <FileText className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-display font-medium text-yellow-600">
               ${totalOutstanding.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">Unpaid invoices</p>
+            <p className="text-xs text-warm-500">Unpaid invoices</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-warm-700">Overdue</CardTitle>
+            <FileText className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
+            <div className="text-2xl font-display font-medium text-red-600">
               ${totalOverdue.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">Past due</p>
+            <p className="text-xs text-warm-500">Past due</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardHeader>
-          <CardTitle>All Invoices</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-display font-medium text-warm-900">All Invoices</CardTitle>
+          <CardDescription className="text-warm-500">
             {invoices.length} {invoices.length === 1 ? 'invoice' : 'invoices'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {invoices.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="mx-auto h-12 w-12 mb-4 opacity-50" />
+            <div className="text-center py-12 text-warm-500">
+              <FileText className="mx-auto h-12 w-12 mb-4 text-warm-400" />
               <p>No invoices yet</p>
               <GenerateInvoicesDialog>
-                <Button variant="outline" className="mt-4">
+                <Button variant="outline" className="mt-4 rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
                   Generate Invoices from Agreements
                 </Button>
               </GenerateInvoicesDialog>
@@ -143,15 +143,15 @@ async function InvoicesList() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Issue Date</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Balance</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-warm-200 hover:bg-transparent">
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Invoice #</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Client</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Issue Date</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Due Date</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Amount</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Balance</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,31 +163,31 @@ async function InvoicesList() {
                     Number(invoice.balanceDue) > 0
 
                   return (
-                    <TableRow key={invoice.id}>
-                      <TableCell className="font-medium">
+                    <TableRow key={invoice.id} className="border-warm-200 hover:bg-warm-50">
+                      <TableCell className="font-medium text-warm-900">
                         <Link
                           href={`/app/invoices/${invoice.id}`}
-                          className="hover:underline"
+                          className="hover:text-ocean-600 transition-colors"
                         >
                           {invoice.invoiceNumber}
                         </Link>
                       </TableCell>
-                      <TableCell>{invoice.client.name}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-warm-600">{invoice.client.name}</TableCell>
+                      <TableCell className="text-warm-600">
                         {new Date(invoice.issueDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <span className={isOverdue ? 'text-destructive' : ''}>
+                        <span className={isOverdue ? 'text-red-600' : 'text-warm-600'}>
                           {new Date(invoice.dueDate).toLocaleDateString()}
                         </span>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-warm-900 font-medium">
                         ${Number(invoice.totalAmount).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-warm-900 font-medium">
                         ${Number(invoice.balanceDue).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -195,15 +195,15 @@ async function InvoicesList() {
                       </TableCell>
                       <TableCell>
                         <Badge
-                          variant={
+                          className={`rounded-sm text-[10px] px-1.5 py-0 ${
                             invoice.status === 'paid'
-                              ? 'default'
+                              ? 'bg-lime-100 text-lime-700 border-lime-200'
                               : invoice.status === 'draft'
-                                ? 'secondary'
+                                ? 'bg-warm-100 text-warm-600 border-warm-200'
                                 : isOverdue
-                                  ? 'destructive'
-                                  : 'outline'
-                          }
+                                  ? 'bg-red-100 text-red-700 border-red-200'
+                                  : 'bg-ocean-100 text-ocean-700 border-ocean-200'
+                          }`}
                         >
                           {invoice.status === 'sent' && isOverdue
                             ? 'Overdue'
@@ -218,7 +218,7 @@ async function InvoicesList() {
                             defaultEmail={invoice.client.billingEmail || ''}
                           />
                           <Link href={`/invoices/${invoice.id}`}>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
                               View
                             </Button>
                           </Link>

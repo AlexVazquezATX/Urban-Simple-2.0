@@ -18,8 +18,8 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
     : null
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow p-0">
-      <div className="relative h-36 bg-gradient-to-br from-primary/10 to-primary/5 rounded-t-xl overflow-hidden">
+    <Card className="overflow-hidden rounded-sm border-warm-200 hover:border-ocean-400 hover:shadow-md transition-all p-0">
+      <div className="relative h-36 bg-gradient-to-br from-warm-100 to-warm-50 rounded-t-sm overflow-hidden">
         {location.logoUrl ? (
           <Image
             src={location.logoUrl}
@@ -30,43 +30,49 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Building2 className="h-24 w-24 text-muted-foreground/30" />
+            <Building2 className="h-24 w-24 text-warm-300" />
           </div>
         )}
         <div className="absolute top-2 right-2 z-10">
-          <Badge variant={location.isActive ? 'default' : 'secondary'}>
+          <Badge
+            className={`rounded-sm text-[10px] px-1.5 py-0 ${
+              location.isActive
+                ? 'bg-lime-100 text-lime-700 border-lime-200'
+                : 'bg-warm-100 text-warm-600 border-warm-200'
+            }`}
+          >
             {location.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </div>
       </div>
-      <CardContent className="p-4 pt-4">
-        <div className="space-y-3">
+      <CardContent className="p-3">
+        <div className="space-y-2">
           <div>
             <Link href={`/locations/${location.id}`}>
-              <h3 className="font-semibold text-lg hover:text-primary transition-colors">
+              <h3 className="text-base font-display font-medium text-warm-900 hover:text-ocean-600 transition-colors leading-tight">
                 {location.name}
               </h3>
             </Link>
             {location.client && (
               <Link href={`/clients/${location.client.id}`}>
-                <div className="flex items-center gap-1.5 mt-1 text-sm text-muted-foreground hover:text-ocean-600 transition-colors">
-                  <Users className="h-3 w-3" />
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-warm-500 hover:text-ocean-600 transition-colors">
+                  <Users className="h-2.5 w-2.5" />
                   <span className="truncate">{location.client.name}</span>
                 </div>
               </Link>
             )}
           </div>
 
-          <div className="space-y-2 text-sm">
+          <div className="space-y-1.5 text-xs">
             {addressStr && (
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-1.5 text-warm-500">
+                <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span className="line-clamp-2">{addressStr}</span>
               </div>
             )}
             {location.checklistTemplate && (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <CheckSquare className="h-4 w-4 flex-shrink-0" />
+              <div className="flex items-center gap-1.5 text-warm-500">
+                <CheckSquare className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">
                   {location.checklistTemplate.name}
                 </span>
@@ -75,19 +81,19 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
           </div>
 
           {location.accessInstructions && (
-            <div className="text-xs text-muted-foreground line-clamp-2">
+            <div className="text-[10px] text-warm-400 line-clamp-2">
               {location.accessInstructions}
             </div>
           )}
 
-          <div className="flex items-center gap-2 pt-2 border-t">
+          <div className="flex items-center gap-1.5 pt-2 border-t border-warm-200">
             <Link href={`/locations/${location.id}`} className="flex-1">
-              <Button variant="outline" size="sm" className="w-full">
+              <Button variant="outline" size="sm" className="w-full h-7 text-xs rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
                 View Details
               </Button>
             </Link>
             <LocationForm clientId={clientId} location={location}>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="h-7 text-xs rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
                 Edit
               </Button>
             </LocationForm>

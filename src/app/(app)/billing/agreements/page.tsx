@@ -67,12 +67,12 @@ async function ServiceAgreementsList() {
 
   if (agreements.length === 0) {
     return (
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <DollarSign className="h-12 w-12 mb-4 text-muted-foreground opacity-50" />
-          <p className="text-muted-foreground mb-4">No service agreements yet</p>
+          <DollarSign className="h-12 w-12 mb-4 text-warm-400" />
+          <p className="text-warm-500 mb-4">No service agreements yet</p>
           <ServiceAgreementForm>
-            <Button>
+            <Button variant="lime" className="rounded-sm">
               <Plus className="mr-2 h-4 w-4" />
               Create Your First Agreement
             </Button>
@@ -93,13 +93,13 @@ async function ServiceAgreementsList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Service Agreements</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Service Agreements</h1>
+          <p className="text-sm text-warm-500">
             Manage recurring service agreements and billing
           </p>
         </div>
         <ServiceAgreementForm>
-          <Button>
+          <Button variant="lime" className="rounded-sm">
             <Plus className="mr-2 h-4 w-4" />
             New Agreement
           </Button>
@@ -107,93 +107,99 @@ async function ServiceAgreementsList() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Agreements</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-warm-700">Active Agreements</CardTitle>
+            <DollarSign className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{agreements.length}</div>
-            <p className="text-xs text-muted-foreground">Currently active</p>
+            <div className="text-2xl font-display font-medium text-warm-900">{agreements.length}</div>
+            <p className="text-xs text-warm-500">Currently active</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-warm-700">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-display font-medium text-warm-900">
               ${totalMonthly.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">Recurring monthly</p>
+            <p className="text-xs text-warm-500">Recurring monthly</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Annual Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-warm-700">Annual Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-display font-medium text-warm-900">
               ${(totalMonthly * 12).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground">Projected annual</p>
+            <p className="text-xs text-warm-500">Projected annual</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardHeader>
-          <CardTitle>Active Agreements</CardTitle>
-          <CardDescription>
+          <CardTitle className="font-display font-medium text-warm-900">Active Agreements</CardTitle>
+          <CardDescription className="text-warm-500">
             {agreements.length} {agreements.length === 1 ? 'agreement' : 'agreements'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Client</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Monthly Amount</TableHead>
-                <TableHead>Billing Day</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="border-warm-200 hover:bg-transparent">
+                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Client</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Location</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Description</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Monthly Amount</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Billing Day</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {agreements.map((agreement: any) => (
-                <TableRow key={agreement.id}>
-                  <TableCell className="font-medium">
+                <TableRow key={agreement.id} className="border-warm-200 hover:bg-warm-50">
+                  <TableCell className="font-medium text-warm-900">
                     {agreement.location.client.name}
                   </TableCell>
-                  <TableCell>{agreement.location.name}</TableCell>
-                  <TableCell className="max-w-xs truncate">
+                  <TableCell className="text-warm-600">{agreement.location.name}</TableCell>
+                  <TableCell className="max-w-xs truncate text-warm-600">
                     {agreement.description}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-warm-900">
                     ${Number(agreement.monthlyAmount).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
                   </TableCell>
-                  <TableCell>Day {agreement.billingDay}</TableCell>
+                  <TableCell className="text-warm-600">Day {agreement.billingDay}</TableCell>
                   <TableCell>
-                    <Badge variant={agreement.isActive ? 'default' : 'secondary'}>
+                    <Badge
+                      className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                        agreement.isActive
+                          ? 'bg-lime-100 text-lime-700 border-lime-200'
+                          : 'bg-warm-100 text-warm-600 border-warm-200'
+                      }`}
+                    >
                       {agreement.isActive ? 'Active' : 'Inactive'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     <ServiceAgreementForm agreement={agreement}>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
                         Edit
                       </Button>
                     </ServiceAgreementForm>

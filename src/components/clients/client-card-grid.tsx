@@ -7,7 +7,7 @@ interface ClientCardGridProps {
 export function ClientCardGrid({ clients }: ClientCardGridProps) {
   if (clients.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
+      <div className="text-center py-12 text-warm-500">
         <p>No clients found</p>
       </div>
     )

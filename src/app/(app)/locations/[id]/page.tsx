@@ -97,30 +97,30 @@ async function LocationDetail({ id }: { id: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href={`/clients/${location.client.id}`}>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">{location.name}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">{location.name}</h1>
+            <p className="text-sm text-warm-500">
               {location.client.name} • {location.branch.name}
             </p>
           </div>
         </div>
         <LocationForm clientId={location.client.id} location={location}>
-          <Button variant="outline">Edit Location</Button>
+          <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">Edit Location</Button>
         </LocationForm>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader>
-            <CardTitle>Location Information</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900">Location Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {location.logoUrl && (
-              <div className="relative h-64 w-full rounded-lg overflow-hidden border bg-muted">
+              <div className="relative h-64 w-full rounded-sm overflow-hidden border border-warm-200 bg-warm-50">
                 <Image
                   src={location.logoUrl}
                   alt={location.name}
@@ -132,58 +132,64 @@ async function LocationDetail({ id }: { id: string }) {
             )}
             {addressStr && (
               <div>
-                <p className="text-sm text-muted-foreground">Address</p>
-                <p className="font-medium">{addressStr}</p>
+                <p className="text-sm text-warm-500">Address</p>
+                <p className="font-medium text-warm-900">{addressStr}</p>
               </div>
             )}
             {location.accessInstructions && (
               <div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-warm-500">
                   Access Instructions
                 </p>
-                <p className="text-sm">{location.accessInstructions}</p>
+                <p className="text-sm text-warm-700">{location.accessInstructions}</p>
               </div>
             )}
             {location.serviceNotes && (
               <div>
-                <p className="text-sm text-muted-foreground">Service Notes</p>
-                <p className="text-sm">{location.serviceNotes}</p>
+                <p className="text-sm text-warm-500">Service Notes</p>
+                <p className="text-sm text-warm-700">{location.serviceNotes}</p>
               </div>
             )}
             {location.painPoints && (
               <div>
-                <p className="text-sm text-muted-foreground">Pain Points</p>
-                <p className="text-sm text-destructive">{location.painPoints}</p>
+                <p className="text-sm text-warm-500">Pain Points</p>
+                <p className="text-sm text-red-600">{location.painPoints}</p>
               </div>
             )}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Badge variant={location.isActive ? 'default' : 'secondary'}>
+                <Badge
+                  className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                    location.isActive
+                      ? 'bg-lime-100 text-lime-700 border-lime-200'
+                      : 'bg-warm-100 text-warm-600 border-warm-200'
+                  }`}
+                >
                   {location.isActive ? 'Active' : 'Inactive'}
                 </Badge>
               </div>
               {location.checklistTemplate ? (
-                <div className="p-3 border rounded-lg bg-muted/30">
+                <div className="p-3 border border-warm-200 rounded-sm bg-warm-50/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <CheckSquare className="h-4 w-4 text-muted-foreground" />
+                      <CheckSquare className="h-4 w-4 text-warm-500" />
                       <div>
-                        <p className="text-sm font-medium">Assigned Checklist</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-sm font-medium text-warm-900">Assigned Checklist</p>
+                        <p className="text-xs text-warm-500">
                           {location.checklistTemplate.name}
                         </p>
                       </div>
                     </div>
                     <Link href={`/operations/checklists/${location.checklistTemplate.id}`}>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
                         View Checklist
                       </Button>
                     </Link>
                   </div>
                 </div>
               ) : (
-                <div className="p-3 border rounded-lg bg-muted/30">
-                  <p className="text-sm text-muted-foreground">
+                <div className="p-3 border border-warm-200 rounded-sm bg-warm-50/50">
+                  <p className="text-sm text-warm-500">
                     No checklist assigned. Edit location to assign one.
                   </p>
                 </div>
@@ -192,42 +198,44 @@ async function LocationDetail({ id }: { id: string }) {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader>
-            <CardTitle>Quick Stats</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900">Quick Stats</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-warm-500">
                 Service Logs
               </span>
-              <span className="font-medium">
+              <span className="font-medium text-warm-900">
                 {location._count.serviceLogs}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-warm-500">
                 Open Issues
               </span>
               <Badge
-                variant={
-                  location._count.issues > 0 ? 'destructive' : 'secondary'
-                }
+                className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                  location._count.issues > 0
+                    ? 'bg-red-100 text-red-700 border-red-200'
+                    : 'bg-warm-100 text-warm-600 border-warm-200'
+                }`}
               >
                 {location._count.issues}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-warm-500">
                 Active Agreements
               </span>
-              <span className="font-medium">
+              <span className="font-medium text-warm-900">
                 {location._count.serviceAgreements}
               </span>
             </div>
             {location.assignments.length > 0 && (
-              <div className="pt-3 border-t">
-                <p className="text-sm text-muted-foreground mb-2">
+              <div className="pt-3 border-t border-warm-200">
+                <p className="text-sm text-warm-500 mb-2">
                   Assigned Associates
                 </p>
                 <div className="space-y-1">
@@ -236,10 +244,10 @@ async function LocationDetail({ id }: { id: string }) {
                       key={assignment.id}
                       className="text-sm flex items-center justify-between"
                     >
-                      <span>
+                      <span className="text-warm-700">
                         {assignment.user.firstName} {assignment.user.lastName}
                       </span>
-                      <Badge variant="outline">
+                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
                         ${Number(assignment.monthlyPay).toFixed(2)}/mo
                       </Badge>
                     </div>
@@ -252,19 +260,19 @@ async function LocationDetail({ id }: { id: string }) {
       </div>
 
       {equipmentInventory.length > 0 && (
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader>
-            <CardTitle>Equipment Inventory</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900">Equipment Inventory</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {equipmentInventory.map((item: any, index: number) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 p-2 border rounded-lg"
+                  className="flex items-center gap-2 p-2 border border-warm-200 rounded-sm hover:border-ocean-400 transition-colors"
                 >
-                  <Wrench className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">
+                  <Wrench className="h-4 w-4 text-warm-500" />
+                  <span className="text-sm text-warm-700">
                     {typeof item === 'string' ? item : item.name || 'Unknown'}
                   </span>
                 </div>

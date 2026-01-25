@@ -42,11 +42,11 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
 
   if (clients.length === 0) {
     return (
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-muted-foreground mb-4">No clients yet</p>
+          <p className="text-warm-500 mb-4">No clients yet</p>
           <ClientForm>
-            <Button>
+            <Button variant="lime" className="rounded-sm">
               <Plus className="mr-2 h-4 w-4" />
               Add Your First Client
             </Button>
@@ -60,15 +60,15 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Clients</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Clients</h1>
+          <p className="text-sm text-warm-500">
             Manage your clients and their locations
           </p>
         </div>
         <div className="flex items-center gap-3">
           <ViewToggle value={viewMode} onChange={handleViewChange} />
           <ClientForm>
-            <Button>
+            <Button variant="lime" className="rounded-sm">
               <Plus className="mr-2 h-4 w-4" />
               Add Client
             </Button>
@@ -76,12 +76,12 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
         </div>
       </div>
 
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>All Clients</CardTitle>
-              <CardDescription>
+              <CardTitle className="font-display font-medium text-warm-900">All Clients</CardTitle>
+              <CardDescription className="text-warm-500">
                 {clients.length} {clients.length === 1 ? 'client' : 'clients'}
               </CardDescription>
             </div>
@@ -91,23 +91,23 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
           {viewMode === 'table' ? (
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-16">Logo</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Branch</TableHead>
-                  <TableHead>Billing Email</TableHead>
-                  <TableHead>Locations</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Payment Terms</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="border-warm-200 hover:bg-transparent">
+                  <TableHead className="w-16 text-xs font-medium text-warm-500 uppercase tracking-wider">Logo</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Name</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Branch</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Billing Email</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Locations</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Payment Terms</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client: any) => (
-                  <TableRow key={client.id}>
+                  <TableRow key={client.id} className="border-warm-200 hover:bg-warm-50">
                     <TableCell>
                       {client.logoUrl ? (
-                        <div className="relative h-10 w-10 rounded overflow-hidden bg-muted">
+                        <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-warm-100">
                           <Image
                             src={client.logoUrl}
                             alt={client.name}
@@ -117,39 +117,42 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
                           />
                         </div>
                       ) : (
-                        <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
-                          <span className="text-xs font-medium text-muted-foreground">
+                        <div className="h-10 w-10 rounded-sm bg-warm-100 flex items-center justify-center">
+                          <span className="text-xs font-medium text-warm-500">
                             {client.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-warm-900">
                       <Link
                         href={`/clients/${client.id}`}
-                        className="hover:underline"
+                        className="hover:text-ocean-600 transition-colors"
                       >
                         {client.name}
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{client.branch.code}</Badge>
+                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">{client.branch.code}</Badge>
                     </TableCell>
-                    <TableCell>{client.billingEmail || '-'}</TableCell>
-                    <TableCell>{client.locations.length}</TableCell>
+                    <TableCell className="text-warm-600">{client.billingEmail || '-'}</TableCell>
+                    <TableCell className="text-warm-600">{client.locations.length}</TableCell>
                     <TableCell>
                       <Badge
-                        variant={
-                          client.status === 'active' ? 'default' : 'secondary'
-                        }
+                        variant={client.status === 'active' ? 'default' : 'secondary'}
+                        className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                          client.status === 'active'
+                            ? 'bg-lime-100 text-lime-700 border-lime-200'
+                            : 'bg-warm-100 text-warm-600 border-warm-200'
+                        }`}
                       >
                         {client.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{client.paymentTerms}</TableCell>
+                    <TableCell className="text-warm-600">{client.paymentTerms}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/clients/${client.id}`}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
                           View
                         </Button>
                       </Link>

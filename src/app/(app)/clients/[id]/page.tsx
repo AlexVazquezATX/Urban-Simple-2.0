@@ -96,13 +96,13 @@ async function ClientDetail({ id }: { id: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/clients">
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-3xl font-bold">{client.name}</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">{client.name}</h1>
+            <p className="text-sm text-warm-500">
               {client.legalName && `${client.legalName} • `}
               {client.branch.name}
               {client.locations.length > 0 && (
@@ -115,18 +115,18 @@ async function ClientDetail({ id }: { id: string }) {
           </div>
         </div>
         <ClientForm client={client}>
-          <Button variant="outline">Edit Client</Button>
+          <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">Edit Client</Button>
         </ClientForm>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader>
-            <CardTitle>Client Information</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900">Client Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {client.logoUrl && (
-              <div className="relative h-32 w-full rounded-lg overflow-hidden border bg-muted">
+              <div className="relative h-32 w-full rounded-sm overflow-hidden border border-warm-200 bg-warm-50">
                 <Image
                   src={client.logoUrl}
                   alt={client.name}
@@ -137,51 +137,53 @@ async function ClientDetail({ id }: { id: string }) {
               </div>
             )}
             <div>
-              <p className="text-sm text-muted-foreground">Billing Email</p>
-              <p className="font-medium">{client.billingEmail || '-'}</p>
+              <p className="text-sm text-warm-500">Billing Email</p>
+              <p className="font-medium text-warm-900">{client.billingEmail || '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Phone</p>
-              <p className="font-medium">{client.phone || '-'}</p>
+              <p className="text-sm text-warm-500">Phone</p>
+              <p className="font-medium text-warm-900">{client.phone || '-'}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Payment Terms</p>
-              <p className="font-medium">{client.paymentTerms}</p>
+              <p className="text-sm text-warm-500">Payment Terms</p>
+              <p className="font-medium text-warm-900">{client.paymentTerms}</p>
             </div>
             {client.preferredPaymentMethod && (
               <div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-warm-500">
                   Preferred Payment Method
                 </p>
-                <p className="font-medium capitalize">
+                <p className="font-medium capitalize text-warm-900">
                   {client.preferredPaymentMethod.replace('_', ' ')}
                 </p>
               </div>
             )}
             <div className="flex items-center gap-4">
               <div>
-                <p className="text-sm text-muted-foreground">Status</p>
+                <p className="text-sm text-warm-500">Status</p>
                 <Badge
-                  variant={
-                    client.status === 'active' ? 'default' : 'secondary'
-                  }
+                  className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                    client.status === 'active'
+                      ? 'bg-lime-100 text-lime-700 border-lime-200'
+                      : 'bg-warm-100 text-warm-600 border-warm-200'
+                  }`}
                 >
                   {client.status}
                 </Badge>
               </div>
               {client.taxExempt && (
-                <Badge variant="outline">Tax Exempt</Badge>
+                <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">Tax Exempt</Badge>
               )}
             </div>
             {client.healthScore !== null && (
               <div>
-                <p className="text-sm text-muted-foreground">Health Score</p>
+                <p className="text-sm text-warm-500">Health Score</p>
                 <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="flex-1 h-2 bg-warm-100 rounded-sm overflow-hidden">
                     <div
                       className={`h-full ${
                         (client.healthScore || 0) >= 80
-                          ? 'bg-green-500'
+                          ? 'bg-lime-500'
                           : (client.healthScore || 0) >= 60
                             ? 'bg-yellow-500'
                             : 'bg-red-500'
@@ -189,7 +191,7 @@ async function ClientDetail({ id }: { id: string }) {
                       style={{ width: `${client.healthScore || 0}%` }}
                     />
                   </div>
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-warm-700">
                     {client.healthScore}/100
                   </span>
                 </div>
@@ -197,12 +199,12 @@ async function ClientDetail({ id }: { id: string }) {
             )}
             {(client.loyaltyPoints > 0 || client.loyaltyTier !== 'bronze') && (
               <div>
-                <p className="text-sm text-muted-foreground">Loyalty</p>
+                <p className="text-sm text-warm-500">Loyalty</p>
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="capitalize">
+                  <Badge variant="outline" className="capitalize rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
                     {client.loyaltyTier}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-warm-500">
                     {client.loyaltyPoints} points
                   </span>
                 </div>
@@ -210,25 +212,25 @@ async function ClientDetail({ id }: { id: string }) {
             )}
             {client.notes && (
               <div>
-                <p className="text-sm text-muted-foreground">Notes</p>
-                <p className="text-sm">{client.notes}</p>
+                <p className="text-sm text-warm-500">Notes</p>
+                <p className="text-sm text-warm-700">{client.notes}</p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Contacts</CardTitle>
-                <CardDescription>
+                <CardTitle className="font-display font-medium text-warm-900">Contacts</CardTitle>
+                <CardDescription className="text-warm-500">
                   {client.contacts.length}{' '}
                   {client.contacts.length === 1 ? 'contact' : 'contacts'}
                 </CardDescription>
               </div>
               <ContactForm clientId={client.id}>
-                <Button size="sm">
+                <Button variant="lime" size="sm" className="rounded-sm">
                   <Plus className="mr-2 h-4 w-4" />
                   Add Contact
                 </Button>
@@ -237,11 +239,11 @@ async function ClientDetail({ id }: { id: string }) {
           </CardHeader>
           <CardContent>
             {client.contacts.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <User className="mx-auto h-12 w-12 mb-2 opacity-50" />
+              <div className="text-center py-8 text-warm-500">
+                <User className="mx-auto h-12 w-12 mb-2 text-warm-400" />
                 <p>No contacts yet</p>
                 <ContactForm clientId={client.id}>
-                  <Button variant="outline" size="sm" className="mt-4">
+                  <Button variant="outline" size="sm" className="mt-4 rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
                     Add First Contact
                   </Button>
                 </ContactForm>
@@ -251,23 +253,23 @@ async function ClientDetail({ id }: { id: string }) {
                 {client.contacts.map((contact: any) => (
                   <div
                     key={contact.id}
-                    className="flex items-start justify-between p-3 border rounded-lg"
+                    className="flex items-start justify-between p-3 border border-warm-200 rounded-sm hover:border-ocean-400 transition-colors"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <p className="font-medium">
+                        <p className="font-medium text-warm-900">
                           {contact.firstName} {contact.lastName}
                         </p>
-                        <Badge variant="outline" className="text-xs capitalize">
+                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 capitalize border-warm-300 text-warm-600">
                           {contact.role}
                         </Badge>
                         {contact.isPortalUser && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
                             Portal
                           </Badge>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 mt-1 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-4 mt-1 text-sm text-warm-500">
                         {contact.email && (
                           <div className="flex items-center gap-1">
                             <Mail className="h-3 w-3" />
@@ -284,7 +286,7 @@ async function ClientDetail({ id }: { id: string }) {
                     </div>
                     <div className="flex items-center gap-1">
                       <ContactForm clientId={client.id} contact={contact}>
-                        <Button variant="ghost" size="sm">
+                        <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
                           <Edit className="h-4 w-4" />
                         </Button>
                       </ContactForm>
@@ -302,19 +304,19 @@ async function ClientDetail({ id }: { id: string }) {
       </div>
 
       {/* Locations Section - Full Width */}
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Locations</CardTitle>
-              <CardDescription>
+              <CardTitle className="font-display font-medium text-warm-900">Locations</CardTitle>
+              <CardDescription className="text-warm-500">
                 {client.locations.length}{' '}
                 {client.locations.length === 1 ? 'location' : 'locations'} for{' '}
                 {client.name}
               </CardDescription>
             </div>
             <LocationForm clientId={client.id}>
-              <Button>
+              <Button variant="lime" className="rounded-sm">
                 <Plus className="mr-2 h-4 w-4" />
                 Add Location
               </Button>
@@ -323,14 +325,14 @@ async function ClientDetail({ id }: { id: string }) {
         </CardHeader>
         <CardContent>
           {client.locations.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <MapPin className="mx-auto h-16 w-16 mb-4 opacity-50" />
-              <p className="text-lg font-medium mb-2">No locations yet</p>
+            <div className="text-center py-12 text-warm-500">
+              <MapPin className="mx-auto h-16 w-16 mb-4 text-warm-400" />
+              <p className="text-lg font-medium mb-2 text-warm-700">No locations yet</p>
               <p className="text-sm mb-4">
                 Add locations for {client.name} to get started
               </p>
               <LocationForm clientId={client.id}>
-                <Button variant="outline">
+                <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
                   <Plus className="mr-2 h-4 w-4" />
                   Add First Location
                 </Button>
@@ -351,25 +353,27 @@ async function ClientDetail({ id }: { id: string }) {
       </Card>
 
       {/* Quick Stats */}
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardHeader>
-          <CardTitle>Quick Stats</CardTitle>
+          <CardTitle className="font-display font-medium text-warm-900">Quick Stats</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Invoices</span>
-            <span className="font-medium">{client._count.invoices}</span>
+            <span className="text-sm text-warm-500">Invoices</span>
+            <span className="font-medium text-warm-900">{client._count.invoices}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Payments</span>
-            <span className="font-medium">{client._count.payments}</span>
+            <span className="text-sm text-warm-500">Payments</span>
+            <span className="font-medium text-warm-900">{client._count.payments}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Open Issues</span>
+            <span className="text-sm text-warm-500">Open Issues</span>
             <Badge
-              variant={
-                client._count.issues > 0 ? 'destructive' : 'secondary'
-              }
+              className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                client._count.issues > 0
+                  ? 'bg-red-100 text-red-700 border-red-200'
+                  : 'bg-warm-100 text-warm-600 border-warm-200'
+              }`}
             >
               {client._count.issues}
             </Badge>
