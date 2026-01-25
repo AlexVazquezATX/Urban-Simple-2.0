@@ -60,14 +60,14 @@ export function OutreachDashboard() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardHeader className="pb-2">
-                <Skeleton className="h-4 w-24" />
+            <Card key={i} className="rounded-sm border-warm-200">
+              <CardHeader className="p-4 pb-2">
+                <Skeleton className="h-4 w-24 rounded-sm" />
               </CardHeader>
-              <CardContent>
-                <Skeleton className="h-8 w-16" />
+              <CardContent className="p-4 pt-0">
+                <Skeleton className="h-8 w-16 rounded-sm" />
               </CardContent>
             </Card>
           ))}
@@ -77,22 +77,22 @@ export function OutreachDashboard() {
   }
 
   if (!data) {
-    return <div>Failed to load dashboard data</div>
+    return <div className="text-warm-500">Failed to load dashboard data</div>
   }
 
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email':
-        return <Mail className="h-4 w-4" />
+        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
       case 'sms':
-        return <MessageSquare className="h-4 w-4" />
+        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
       case 'linkedin':
-        return <Linkedin className="h-4 w-4" />
+        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
       case 'instagram':
       case 'instagram_dm':
-        return <Instagram className="h-4 w-4" />
+        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
       default:
-        return <Send className="h-4 w-4" />
+        return <Send className="h-3.5 w-3.5 text-warm-500" />
     }
   }
 
@@ -102,107 +102,80 @@ export function OutreachDashboard() {
       <CommandCenter />
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Messages This Week</CardTitle>
-            <Send className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.stats.messagesThisWeek}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across all channels
-            </p>
-          </CardContent>
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Messages This Week</div>
+          <div className="text-2xl font-semibold text-ocean-600">{data.stats.messagesThisWeek}</div>
+          <p className="text-xs text-warm-500 mt-1">Across all channels</p>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Response Rate</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.stats.responseRate}%</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.stats.responsesThisWeek} responses this week
-            </p>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-lime-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Response Rate</div>
+          <div className="text-2xl font-semibold text-lime-600">{data.stats.responseRate}%</div>
+          <p className="text-xs text-warm-500 mt-1">{data.stats.responsesThisWeek} responses this week</p>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Scheduled Today</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.stats.scheduledToday}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Messages to send
-            </p>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-plum-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Scheduled Today</div>
+          <div className="text-2xl font-semibold text-plum-600">{data.stats.scheduledToday}</div>
+          <p className="text-xs text-warm-500 mt-1">Messages to send</p>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Hot Prospects</CardTitle>
-            <Zap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{data.stats.hotProspects}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Showing engagement
-            </p>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-red-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Hot Prospects</div>
+          <div className="text-2xl font-semibold text-red-600">{data.stats.hotProspects}</div>
+          <p className="text-xs text-warm-500 mt-1">Showing engagement</p>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Today's Tasks */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Today's Tasks</CardTitle>
-            <CardDescription>
+        <Card className="rounded-sm border-warm-200">
+          <CardHeader className="p-4 pb-3">
+            <CardTitle className="text-base font-display font-medium text-warm-900">Today's Tasks</CardTitle>
+            <CardDescription className="text-xs text-warm-500">
               Follow-ups and scheduled messages for today
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0">
             <TaskList tasks={data.todaysTasks} scheduledMessages={data.scheduledMessages} />
           </CardContent>
         </Card>
 
         {/* Hot Prospects */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Hot Prospects</CardTitle>
-            <CardDescription>
+        <Card className="rounded-sm border-warm-200">
+          <CardHeader className="p-4 pb-3">
+            <CardTitle className="text-base font-display font-medium text-warm-900">Hot Prospects</CardTitle>
+            <CardDescription className="text-xs text-warm-500">
               Prospects showing recent engagement
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0">
             {data.hotProspects.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">
-                No hot prospects right now
-              </p>
+              <div className="text-center py-8">
+                <Zap className="h-10 w-10 mx-auto mb-2 text-warm-300" />
+                <p className="text-sm text-warm-500">No hot prospects right now</p>
+              </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 {data.hotProspects.map((prospect) => (
                   <Link
                     key={prospect.id}
                     href={`/growth/prospects/${prospect.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
                   >
-                    <div className="flex-1">
-                      <p className="font-medium text-sm">{prospect.companyName}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className="text-xs">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-warm-900">{prospect.companyName}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
                           {prospect.status}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[10px] text-warm-400">
                           {format(new Date(prospect.lastActivity), 'MMM d')}
                         </span>
                       </div>
                     </div>
-                    <Zap className="h-4 w-4 text-amber-500" />
+                    <Zap className="h-4 w-4 text-red-500 flex-shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -212,14 +185,14 @@ export function OutreachDashboard() {
       </div>
 
       {/* Activity Feed */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Recent Activity</CardTitle>
-          <CardDescription>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-3">
+          <CardTitle className="text-base font-display font-medium text-warm-900">Recent Activity</CardTitle>
+          <CardDescription className="text-xs text-warm-500">
             Latest outreach activities across all prospects
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 pt-0">
           <ActivityFeed activities={data.recentActivity} />
         </CardContent>
       </Card>

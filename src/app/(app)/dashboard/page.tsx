@@ -67,41 +67,34 @@ async function DashboardStats() {
   return (
     <div className="space-y-6">
       {/* Primary Metrics */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Clients */}
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Clients</CardTitle>
-            <div className="rounded-full bg-primary/10 p-2">
-              <Users className="h-5 w-5 text-primary" />
-            </div>
+        <Card className="rounded-sm border-warm-200 border-l-4 border-l-lime-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-4">
+            <CardTitle className="text-xs font-medium text-warm-500 uppercase tracking-wide">Total Clients</CardTitle>
+            <Users className="h-4 w-4 text-lime-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{clients.length}</div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
-              Active accounts
-            </p>
+          <CardContent className="pb-4 px-4">
+            <div className="text-2xl font-semibold tracking-tight text-warm-900">{clients.length}</div>
+            <p className="text-xs text-warm-500 mt-0.5">Active accounts</p>
           </CardContent>
         </Card>
 
         {/* AR Outstanding */}
-        <Card className="border-l-4 border-l-accent">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">AR Outstanding</CardTitle>
-            <div className="rounded-full bg-accent/10 p-2">
-              <DollarSign className="h-5 w-5 text-accent" />
-            </div>
+        <Card className="rounded-sm border-warm-200 border-l-4 border-l-lime-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-4">
+            <CardTitle className="text-xs font-medium text-warm-500 uppercase tracking-wide">AR Outstanding</CardTitle>
+            <DollarSign className="h-4 w-4 text-lime-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">
+          <CardContent className="pb-4 px-4">
+            <div className="text-2xl font-semibold tracking-tight text-warm-900">
               ${arTotal.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <Link href="/billing" className="hover:text-accent transition-colors flex items-center gap-1">
+            <p className="text-xs text-warm-500 mt-0.5">
+              <Link href="/billing" className="hover:text-ocean-600 transition-colors">
                 View aging report →
               </Link>
             </p>
@@ -109,41 +102,34 @@ async function DashboardStats() {
         </Card>
 
         {/* This Month Revenue */}
-        <Card className="border-l-4 border-l-chart-3">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">This Month</CardTitle>
-            <div className="rounded-full bg-chart-3/10 p-2">
-              <Calendar className="h-5 w-5 text-chart-3" />
-            </div>
+        <Card className="rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-4">
+            <CardTitle className="text-xs font-medium text-warm-500 uppercase tracking-wide">This Month</CardTitle>
+            <Calendar className="h-4 w-4 text-ocean-600" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">
+          <CardContent className="pb-4 px-4">
+            <div className="text-2xl font-semibold tracking-tight text-warm-900">
               ${thisMonthRevenue.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Revenue invoiced
-            </p>
+            <p className="text-xs text-warm-500 mt-0.5">Revenue invoiced</p>
           </CardContent>
         </Card>
 
         {/* Overdue Invoices */}
-        <Card className="border-l-4 border-l-destructive">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Overdue</CardTitle>
-            <div className="rounded-full bg-destructive/10 p-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-            </div>
+        <Card className="rounded-sm border-warm-200 border-l-4 border-l-destructive">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 pt-4 px-4">
+            <CardTitle className="text-xs font-medium text-warm-500 uppercase tracking-wide">Overdue</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight text-destructive">
+          <CardContent className="pb-4 px-4">
+            <div className="text-2xl font-semibold tracking-tight text-destructive">
               {overdueCount}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <Link href="/billing" className="hover:text-destructive transition-colors flex items-center gap-1">
+            <p className="text-xs text-warm-500 mt-0.5">
+              <Link href="/billing" className="hover:text-destructive transition-colors">
                 Review past due →
               </Link>
             </p>
@@ -156,35 +142,35 @@ async function DashboardStats() {
         {/* Focus Widget - AI-powered task prioritization */}
         <FocusWidget />
 
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" />
+            <CardTitle className="flex items-center gap-2 text-warm-900 text-lg font-display font-medium tracking-tight">
+              <TrendingUp className="h-4 w-4 text-lime-600" />
               Quick Actions
             </CardTitle>
-            <CardDescription>Common tasks to get started</CardDescription>
+            <CardDescription className="text-warm-500 text-sm">Common tasks to get started</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <Link
               href="/tasks"
-              className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
+              className="block p-3 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
             >
-              <div className="font-medium group-hover:text-ocean-700">Manage Tasks</div>
-              <div className="text-xs text-muted-foreground">View and organize your tasks</div>
+              <div className="font-medium text-warm-800">Manage Tasks</div>
+              <div className="text-xs text-warm-500">View and organize your tasks</div>
             </Link>
             <Link
               href="/clients"
-              className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
+              className="block p-3 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
             >
-              <div className="font-medium group-hover:text-ocean-700">Add a Client</div>
-              <div className="text-xs text-muted-foreground">Create your first client account</div>
+              <div className="font-medium text-warm-800">Add a Client</div>
+              <div className="text-xs text-warm-500">Create your first client account</div>
             </Link>
             <Link
               href="/invoices"
-              className="block p-3 rounded-lg border hover:bg-ocean-50 hover:border-ocean-300 transition-colors group"
+              className="block p-3 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
             >
-              <div className="font-medium group-hover:text-ocean-700">Generate Invoice</div>
-              <div className="text-xs text-muted-foreground">Create and send an invoice</div>
+              <div className="font-medium text-warm-800">Generate Invoice</div>
+              <div className="text-xs text-warm-500">Create and send an invoice</div>
             </Link>
           </CardContent>
         </Card>
@@ -218,15 +204,15 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
-          <h1 className="text-4xl font-bold tracking-tight font-display">
+          <h1 className="text-4xl font-medium tracking-tight font-display text-warm-900">
             {greeting}, {user?.firstName}
           </h1>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-lg text-warm-500">
             Here's what's happening with your business today
           </p>
         </div>
         <Link href="/landing" target="_blank">
-          <Button variant="outline" className="gap-2">
+          <Button variant="outline" className="gap-2 border-warm-300 text-warm-700 hover:bg-warm-100 hover:border-warm-400">
             <ExternalLink className="w-4 h-4" />
             View Homepage
           </Button>

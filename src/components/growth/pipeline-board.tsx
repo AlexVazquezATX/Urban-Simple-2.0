@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Building2, DollarSign, MoreVertical, X, ArrowLeft } from 'lucide-react'
+import { Building2, DollarSign, MoreVertical, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
@@ -118,36 +118,36 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 pb-4 min-w-max">
+      <div className="flex gap-3 pb-4 min-w-max">
         {PIPELINE_STAGES.map((stage) => {
           const stageProspects = prospectsByStage[stage.id] || []
           const isWon = stage.id === 'won'
           const isLost = stage.id === 'lost'
 
           return (
-            <div key={stage.id} className="w-64 flex-shrink-0 flex flex-col">
+            <div key={stage.id} className="w-60 flex-shrink-0 flex flex-col">
               {/* Column Header */}
               <div
                 className={`
-                  flex items-center justify-between px-3 py-2 rounded-t-lg border border-b-0
+                  flex items-center justify-between px-3 py-2 rounded-t-sm border border-b-0
                   ${
                     isWon
-                      ? 'bg-green-50 border-green-200'
+                      ? 'bg-lime-100 border-lime-200'
                       : isLost
-                      ? 'bg-charcoal-50 border-charcoal-200'
-                      : 'bg-cream-100 border-cream-200'
+                      ? 'bg-warm-200 border-warm-300'
+                      : 'bg-warm-100 border-warm-200'
                   }
                 `}
               >
                 <span
                   className={`
-                    text-xs font-semibold uppercase tracking-wide
+                    text-[10px] font-semibold uppercase tracking-wide
                     ${
                       isWon
-                        ? 'text-green-700'
+                        ? 'text-lime-700'
                         : isLost
-                        ? 'text-charcoal-500'
-                        : 'text-charcoal-700'
+                        ? 'text-warm-600'
+                        : 'text-warm-700'
                     }
                   `}
                 >
@@ -155,13 +155,13 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                 </span>
                 <span
                   className={`
-                    text-xs font-medium px-2 py-0.5 rounded-full
+                    text-[10px] font-medium px-1.5 py-0.5 rounded-sm
                     ${
                       isWon
-                        ? 'bg-green-100 text-green-700'
+                        ? 'bg-lime-200 text-lime-700'
                         : isLost
-                        ? 'bg-charcoal-100 text-charcoal-500'
-                        : 'bg-bronze-100 text-bronze-700'
+                        ? 'bg-warm-300 text-warm-600'
+                        : 'bg-warm-200 text-warm-700'
                     }
                   `}
                 >
@@ -176,15 +176,15 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                     ref={provided.innerRef}
                     {...provided.droppableProps}
                     className={`
-                      rounded-b-lg border border-t-0 p-2 space-y-2 min-h-[400px] max-h-[calc(100vh-280px)] overflow-y-auto
+                      rounded-b-sm border border-t-0 p-2 space-y-1.5 min-h-80 max-h-[calc(100vh-280px)] overflow-y-auto
                       ${
                         isWon
-                          ? 'bg-green-50/50 border-green-200'
+                          ? 'bg-lime-50/50 border-lime-200'
                           : isLost
-                          ? 'bg-charcoal-50/50 border-charcoal-200'
-                          : 'bg-cream-50 border-cream-200'
+                          ? 'bg-warm-100/50 border-warm-300'
+                          : 'bg-warm-50 border-warm-200'
                       }
-                      ${snapshot.isDraggingOver ? 'bg-bronze-50/50' : ''}
+                      ${snapshot.isDraggingOver ? 'bg-ocean-50' : ''}
                     `}
                   >
                     {stageProspects.map((prospect, index) => (
@@ -197,23 +197,23 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                           >
                             <Card
                               className={`
-                                transition-all duration-200 cursor-grab active:cursor-grabbing border-cream-200 hover:border-bronze-300 bg-white
-                                ${snapshot.isDragging ? 'shadow-lg rotate-2' : 'hover:shadow-md'}
+                                transition-all duration-200 cursor-grab active:cursor-grabbing rounded-sm border-warm-200 hover:border-ocean-400 bg-white
+                                ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''}
                               `}
                             >
-                              <CardContent className="p-3">
+                              <CardContent className="p-2.5">
                                 <div className="flex items-start gap-2">
-                                  <div className="w-8 h-8 rounded-lg bg-bronze-100 flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="h-4 w-4 text-bronze-600" />
+                                  <div className="w-7 h-7 rounded-sm bg-warm-100 flex items-center justify-center flex-shrink-0">
+                                    <Building2 className="h-3.5 w-3.5 text-warm-600" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <Link href={`/growth/prospects/${prospect.id}`}>
-                                      <h4 className="font-medium text-sm text-charcoal-900 truncate hover:text-primary">
+                                      <h4 className="text-xs font-medium text-warm-900 truncate hover:text-ocean-600">
                                         {prospect.companyName}
                                       </h4>
                                     </Link>
                                     {prospect.contacts && prospect.contacts.length > 0 && (
-                                      <p className="text-xs text-charcoal-500 truncate mt-0.5">
+                                      <p className="text-[10px] text-warm-500 truncate mt-0.5">
                                         {prospect.contacts[0].firstName}{' '}
                                         {prospect.contacts[0].lastName}
                                       </p>
@@ -224,23 +224,24 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-6 w-6 p-0"
+                                        className="h-5 w-5 p-0 text-warm-400 hover:text-warm-700"
                                       >
                                         <MoreVertical className="h-3 w-3" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
+                                    <DropdownMenuContent align="end" className="rounded-sm">
                                       <DropdownMenuItem
                                         onClick={() => router.push(`/growth/prospects/${prospect.id}`)}
+                                        className="text-xs"
                                       >
                                         View Details
                                       </DropdownMenuItem>
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
                                         onClick={() => handleRemoveFromPipeline(prospect.id)}
-                                        className="text-destructive"
+                                        className="text-xs text-red-600"
                                       >
-                                        <ArrowLeft className="mr-2 h-4 w-4" />
+                                        <ArrowLeft className="mr-1.5 h-3 w-3" />
                                         Remove from Pipeline
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
@@ -248,21 +249,21 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                 </div>
 
                                 {(prospect.estimatedValue || prospect.priority) && (
-                                  <div className="flex items-center gap-2 mt-2 pt-2 border-t border-cream-100">
+                                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-warm-100">
                                     {prospect.estimatedValue && (
-                                      <span className="text-xs text-charcoal-600 flex items-center gap-1">
-                                        <DollarSign className="h-3 w-3" />
+                                      <span className="text-[10px] text-warm-600 flex items-center gap-0.5">
+                                        <DollarSign className="h-2.5 w-2.5" />
                                         {Number(prospect.estimatedValue).toLocaleString()}
                                       </span>
                                     )}
                                     {prospect.priority && prospect.priority !== 'medium' && (
                                       <span
-                                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                                        className={`text-[10px] font-medium px-1 py-0 rounded-sm ${
                                           prospect.priority === 'urgent'
                                             ? 'bg-red-100 text-red-700'
                                             : prospect.priority === 'high'
-                                            ? 'bg-orange-100 text-orange-700'
-                                            : 'bg-charcoal-100 text-charcoal-600'
+                                            ? 'bg-plum-100 text-plum-700'
+                                            : 'bg-warm-100 text-warm-600'
                                         }`}
                                       >
                                         {prospect.priority}
@@ -279,11 +280,11 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                     {provided.placeholder}
 
                     {stageProspects.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-8 text-charcoal-400">
-                        <div className="w-10 h-10 rounded-full bg-cream-100 flex items-center justify-center mb-2">
-                          <Building2 className="h-5 w-5 text-charcoal-300" />
+                      <div className="flex flex-col items-center justify-center py-6 text-warm-400">
+                        <div className="w-8 h-8 rounded-sm bg-warm-100 flex items-center justify-center mb-1.5">
+                          <Building2 className="h-4 w-4 text-warm-300" />
                         </div>
-                        <span className="text-xs">No prospects</span>
+                        <span className="text-[10px]">No prospects</span>
                       </div>
                     )}
                   </div>

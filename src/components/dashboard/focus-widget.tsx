@@ -184,7 +184,7 @@ export function FocusWidget() {
 
   if (loading) {
     return (
-      <div className="bg-white border border-charcoal-100 rounded-xl p-6">
+      <div className="bg-white border border-warm-200 rounded-sm p-6">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="w-5 h-5 animate-spin text-ocean-500" />
         </div>
@@ -193,17 +193,17 @@ export function FocusWidget() {
   }
 
   return (
-    <div className="bg-white border border-charcoal-100 rounded-xl overflow-hidden">
+    <div className="bg-white border border-warm-200 rounded-sm overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-4 border-b border-charcoal-100 flex items-center justify-between">
+      <div className="px-5 py-4 border-b border-warm-200 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-            <Target className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 rounded-sm bg-lime-400 flex items-center justify-center">
+            <Target className="w-4 h-4 text-warm-900" />
           </div>
           <div>
-            <h2 className="font-semibold text-charcoal-900">Today's Focus</h2>
+            <h2 className="font-display font-medium text-warm-900 text-lg tracking-tight">Today's Focus</h2>
             {summary && (
-              <p className="text-xs text-charcoal-500 mt-0.5">{summary}</p>
+              <p className="text-xs text-warm-500 mt-0.5">{summary}</p>
             )}
           </div>
         </div>
@@ -225,7 +225,7 @@ export function FocusWidget() {
 
       {/* Quick Stats */}
       {stats && (stats.overdue > 0 || stats.dueToday > 0) && (
-        <div className="px-5 py-3 bg-charcoal-50/50 border-b border-charcoal-100 flex items-center gap-4 text-sm">
+        <div className="px-5 py-3 bg-warm-50 border-b border-warm-200 flex items-center gap-4 text-sm">
           {stats.overdue > 0 && (
             <span className="flex items-center gap-1.5 text-red-600">
               <AlertTriangle className="w-4 h-4" />
@@ -243,13 +243,13 @@ export function FocusWidget() {
 
       {/* Weekly Goals Summary */}
       {weeklyGoals.length > 0 && (
-        <div className="px-5 py-3 border-b border-charcoal-100 bg-ocean-50/30">
+        <div className="px-5 py-3 border-b border-warm-200 bg-warm-50">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-charcoal-600 flex items-center gap-1.5">
+            <span className="text-xs font-medium text-warm-600 flex items-center gap-1.5">
               <Target className="w-3.5 h-3.5 text-ocean-600" />
               This Week's Goals
             </span>
-            <span className="text-xs text-charcoal-500">
+            <span className="text-xs text-warm-500">
               {weeklyGoals.filter(g => g.progress >= 100).length}/{weeklyGoals.length} complete
             </span>
           </div>
@@ -260,7 +260,7 @@ export function FocusWidget() {
                 className="flex-1 min-w-0"
                 title={`${goal.title}: ${goal.progress}%`}
               >
-                <div className="h-1.5 bg-charcoal-100 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-warm-200 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
                     style={{
@@ -269,29 +269,29 @@ export function FocusWidget() {
                     }}
                   />
                 </div>
-                <p className="text-[10px] text-charcoal-500 mt-1 truncate">{goal.title}</p>
+                <p className="text-[10px] text-warm-500 mt-1 truncate">{goal.title}</p>
               </div>
             ))}
           </div>
           {weeklyGoals.length > 3 && (
-            <p className="text-[10px] text-charcoal-400 mt-1">+{weeklyGoals.length - 3} more</p>
+            <p className="text-[10px] text-warm-400 mt-1">+{weeklyGoals.length - 3} more</p>
           )}
         </div>
       )}
 
       {/* Focus Tasks */}
       {focusTasks.length > 0 ? (
-        <div className="divide-y divide-charcoal-50">
+        <div className="divide-y divide-warm-100">
           {focusTasks.map((task, index) => (
             <div
               key={task.id}
               className={cn(
-                'px-5 py-3 flex items-start gap-3 hover:bg-charcoal-50/50 transition-colors group',
+                'px-5 py-3 flex items-start gap-3 hover:bg-warm-50 transition-colors group',
                 task.status === 'done' && 'opacity-60'
               )}
             >
               {/* Priority Number */}
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-ocean-400 to-ocean-600 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+              <div className="w-6 h-6 rounded-sm bg-ocean-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
                 {index + 1}
               </div>
 
@@ -308,17 +308,17 @@ export function FocusWidget() {
                     {STATUS_ICONS[task.status]}
                   </button>
                   {task.isStarred && (
-                    <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500 flex-shrink-0" />
+                    <Star className="w-3.5 h-3.5 text-lime-600 fill-lime-500 flex-shrink-0" />
                   )}
                   <span className={cn(
-                    'font-medium text-sm text-charcoal-900',
-                    task.status === 'done' && 'line-through text-charcoal-500'
+                    'font-medium text-sm text-warm-900',
+                    task.status === 'done' && 'line-through text-warm-500'
                   )}>
                     {task.title}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 mt-1 text-xs text-charcoal-500 ml-6">
+                <div className="flex items-center gap-3 mt-1 text-xs text-warm-500 ml-6">
                   {/* Due Date */}
                   {task.dueDate && (
                     <span className={cn(
@@ -378,14 +378,14 @@ export function FocusWidget() {
         </div>
       ) : (
         <div className="px-5 py-8 text-center">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-ocean-100 to-bronze-100 flex items-center justify-center mx-auto mb-3">
+          <div className="w-12 h-12 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-3">
             <Target className="w-6 h-6 text-ocean-600" />
           </div>
-          <h3 className="font-medium text-charcoal-900 mb-1">No focus set for today</h3>
-          <p className="text-sm text-charcoal-500 mb-4">
+          <h3 className="font-display font-medium text-warm-900 text-base mb-1">No focus set for today</h3>
+          <p className="text-sm text-warm-500 mb-4">
             Generate your AI-powered daily focus to get started
           </p>
-          <Button onClick={generateFocus} disabled={generating}>
+          <Button onClick={generateFocus} disabled={generating} variant="lime">
             {generating ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
             ) : (
@@ -397,7 +397,7 @@ export function FocusWidget() {
       )}
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-charcoal-100 flex items-center justify-between bg-charcoal-50/50">
+      <div className="px-5 py-3 border-t border-warm-200 flex items-center justify-between bg-warm-50">
         <Link
           href="/tasks"
           className="text-sm text-ocean-600 hover:text-ocean-700 font-medium flex items-center gap-1"
@@ -406,7 +406,7 @@ export function FocusWidget() {
           <ChevronRight className="w-4 h-4" />
         </Link>
         {stats && (
-          <span className="text-xs text-charcoal-400">
+          <span className="text-xs text-warm-400">
             {(stats.byStatus?.todo || 0) + (stats.byStatus?.in_progress || 0)} open tasks
           </span>
         )}

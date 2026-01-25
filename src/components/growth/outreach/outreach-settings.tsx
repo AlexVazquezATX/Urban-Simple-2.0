@@ -113,35 +113,37 @@ export function OutreachSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-3">
           <div className="flex items-center gap-3">
-            <Mail className="h-5 w-5" />
+            <div className="w-8 h-8 rounded-sm bg-ocean-100 flex items-center justify-center">
+              <Mail className="h-4 w-4 text-ocean-600" />
+            </div>
             <div>
-              <CardTitle>Email Signature</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base font-display font-medium text-warm-900">Email Signature</CardTitle>
+              <CardDescription className="text-xs text-warm-500">
                 This signature will be automatically appended to all outreach emails you send
               </CardDescription>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="p-4 pt-0 space-y-6">
           {/* Logo Upload */}
           <div>
-            <Label>Signature Logo (Optional)</Label>
-            <p className="text-xs text-muted-foreground mb-3">
+            <Label className="text-xs font-medium text-warm-700">Signature Logo (Optional)</Label>
+            <p className="text-[10px] text-warm-400 mb-3">
               Add your company logo to appear at the bottom of your signature
             </p>
             {logoUrl ? (
               <div className="flex items-center gap-4">
-                <div className="relative h-16 w-auto border rounded-lg overflow-hidden bg-white p-2">
+                <div className="relative h-16 w-auto border border-warm-200 rounded-sm overflow-hidden bg-white p-2">
                   <img
                     src={logoUrl}
                     alt="Signature logo"
@@ -153,8 +155,9 @@ export function OutreachSettings() {
                   variant="outline"
                   size="sm"
                   onClick={handleRemoveLogo}
+                  className="rounded-sm"
                 >
-                  <X className="h-4 w-4 mr-2" />
+                  <X className="h-3.5 w-3.5 mr-1.5" />
                   Remove
                 </Button>
               </div>
@@ -165,20 +168,21 @@ export function OutreachSettings() {
                   variant="outline"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
+                  className="rounded-sm"
                 >
                   {uploading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                       Uploading...
                     </>
                   ) : (
                     <>
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="h-3.5 w-3.5 mr-1.5" />
                       Upload Logo
                     </>
                   )}
                 </Button>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-[10px] text-warm-400">
                   PNG, JPG, or WebP (max 2MB, recommended: 200px height)
                 </span>
               </div>
@@ -194,7 +198,7 @@ export function OutreachSettings() {
 
           {/* Signature Text */}
           <div>
-            <Label htmlFor="signature">Signature Text</Label>
+            <Label htmlFor="signature" className="text-xs font-medium text-warm-700">Signature Text</Label>
             <Textarea
               id="signature"
               value={signature}
@@ -207,21 +211,21 @@ Business Development
 Urban Simple
 (512) 555-0123
 john@urbansimple.net`}
-              className="font-mono text-sm mt-2"
+              className="font-mono text-sm mt-1 rounded-sm border-warm-200"
             />
-            <p className="text-xs text-muted-foreground mt-2">
+            <p className="text-[10px] text-warm-400 mt-1.5">
               Plain text only. Line breaks will be preserved. A separator line (--) will be added automatically before your signature.
             </p>
           </div>
 
           {/* Preview */}
           {(signature || logoUrl) && (
-            <div className="border rounded-lg p-4 bg-muted/50">
-              <p className="text-xs font-medium text-muted-foreground mb-2">Preview:</p>
-              <div className="text-sm bg-white p-4 rounded border">
-                <p className="text-muted-foreground italic mb-4">[Your email message here...]</p>
-                <p className="text-muted-foreground mb-2">--</p>
-                {signature && <div className="whitespace-pre-wrap mb-3">{signature}</div>}
+            <div className="border border-warm-200 rounded-sm p-3 bg-warm-50">
+              <p className="text-[10px] font-medium text-warm-500 uppercase tracking-wide mb-2">Preview:</p>
+              <div className="text-sm bg-white p-3 rounded-sm border border-warm-200">
+                <p className="text-warm-400 italic mb-4 text-xs">[Your email message here...]</p>
+                <p className="text-warm-400 mb-2">--</p>
+                {signature && <div className="whitespace-pre-wrap mb-3 text-warm-700 text-sm">{signature}</div>}
                 {logoUrl && (
                   <img
                     src={logoUrl}
@@ -233,16 +237,16 @@ john@urbansimple.net`}
             </div>
           )}
 
-          <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving}>
+          <div className="flex justify-end pt-4 border-t border-warm-200">
+            <Button onClick={handleSave} disabled={saving} variant="lime" className="rounded-sm">
               {saving ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="mr-2 h-4 w-4" />
+                  <Save className="mr-1.5 h-3.5 w-3.5" />
                   Save Signature
                 </>
               )}

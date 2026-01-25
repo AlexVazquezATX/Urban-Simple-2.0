@@ -47,16 +47,16 @@ export function ProspectSelector({ value, onValueChange }: ProspectSelectorProps
   return (
     <div className="space-y-2">
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger>
+        <SelectTrigger className="rounded-sm border-warm-200 mt-1">
           <SelectValue placeholder="Select a prospect..." />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="rounded-sm">
           {loading ? (
             <div className="flex items-center justify-center p-4">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin text-warm-400" />
             </div>
           ) : filteredProspects.length === 0 ? (
-            <div className="p-4 text-sm text-muted-foreground text-center">
+            <div className="p-4 text-sm text-warm-500 text-center">
               No prospects found
             </div>
           ) : (
@@ -66,14 +66,14 @@ export function ProspectSelector({ value, onValueChange }: ProspectSelectorProps
                   placeholder="Search prospects..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-8"
+                  className="h-8 rounded-sm border-warm-200"
                 />
               </div>
               {filteredProspects.slice(0, 50).map((prospect) => (
                 <SelectItem key={prospect.id} value={prospect.id}>
                   {prospect.companyName}
                   {prospect.status && (
-                    <span className="text-muted-foreground ml-2">({prospect.status})</span>
+                    <span className="text-warm-400 ml-2">({prospect.status})</span>
                   )}
                 </SelectItem>
               ))}

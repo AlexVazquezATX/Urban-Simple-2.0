@@ -202,17 +202,17 @@ export function QuickCompose() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Quick Compose</CardTitle>
-          <CardDescription>
+      <Card className="rounded-sm border-warm-200">
+        <CardHeader className="p-4 pb-3">
+          <CardTitle className="text-base font-display font-medium text-warm-900">Quick Compose</CardTitle>
+          <CardDescription className="text-xs text-warm-500">
             Send a message to a prospect or schedule it for later
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="p-4 pt-0 space-y-4">
           {/* Prospect Selector */}
           <div>
-            <Label>Select Prospect</Label>
+            <Label className="text-xs font-medium text-warm-700">Select Prospect</Label>
             <ProspectSelector
               value={prospectId || ''}
               onValueChange={(id) => {
@@ -228,97 +228,104 @@ export function QuickCompose() {
           {prospectId && (
             <>
               <Tabs value={channel} onValueChange={setChannel}>
-                <TabsList>
-                  <TabsTrigger value="email">
-                    <Mail className="h-4 w-4 mr-2" />
+                <TabsList className="grid w-full grid-cols-4 rounded-none bg-white border-b border-warm-200 p-0 h-auto">
+                  <TabsTrigger value="email" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                    <Mail className="h-3.5 w-3.5 text-ocean-500" />
                     Email
                   </TabsTrigger>
-                  <TabsTrigger value="sms">
-                    <MessageSquare className="h-4 w-4 mr-2" />
+                  <TabsTrigger value="sms" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                    <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
                     SMS
                   </TabsTrigger>
-                  <TabsTrigger value="linkedin">
-                    <Linkedin className="h-4 w-4 mr-2" />
+                  <TabsTrigger value="linkedin" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                    <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
                     LinkedIn
                   </TabsTrigger>
-                  <TabsTrigger value="instagram_dm">
-                    <Instagram className="h-4 w-4 mr-2" />
-                    Instagram DM
+                  <TabsTrigger value="instagram_dm" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                    <Instagram className="h-3.5 w-3.5 text-plum-500" />
+                    Instagram
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="email" className="space-y-4">
+                <TabsContent value="email" className="space-y-4 mt-4">
                   <div>
-                    <Label>To</Label>
+                    <Label className="text-xs font-medium text-warm-700">To</Label>
                     <Input
                       value={to}
                       onChange={(e) => setTo(e.target.value)}
                       placeholder="email@example.com"
+                      className="rounded-sm border-warm-200 mt-1"
                     />
                   </div>
                   <div>
-                    <Label>Subject</Label>
+                    <Label className="text-xs font-medium text-warm-700">Subject</Label>
                     <Input
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       placeholder="Email subject"
+                      className="rounded-sm border-warm-200 mt-1"
                     />
                   </div>
                   <div>
-                    <Label>Message</Label>
+                    <Label className="text-xs font-medium text-warm-700">Message</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={10}
                       placeholder="Email body..."
+                      className="rounded-sm border-warm-200 mt-1"
                     />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="sms" className="space-y-4">
+                <TabsContent value="sms" className="space-y-4 mt-4">
                   <div>
-                    <Label>Phone Number</Label>
+                    <Label className="text-xs font-medium text-warm-700">Phone Number</Label>
                     <Input
                       value={to}
                       onChange={(e) => setTo(e.target.value)}
                       placeholder="(555) 123-4567"
+                      className="rounded-sm border-warm-200 mt-1"
                     />
                   </div>
                   <div>
-                    <Label>Message (160 characters max)</Label>
+                    <Label className="text-xs font-medium text-warm-700">Message (160 characters max)</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={4}
                       maxLength={160}
                       placeholder="SMS message..."
+                      className="rounded-sm border-warm-200 mt-1"
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-[10px] text-warm-400 mt-1">
                       {body.length}/160 characters
                     </p>
                   </div>
                 </TabsContent>
 
-                <TabsContent value="linkedin" className="space-y-4">
+                <TabsContent value="linkedin" className="space-y-4 mt-4">
                   <div>
-                    <Label>LinkedIn Message</Label>
+                    <Label className="text-xs font-medium text-warm-700">LinkedIn Message</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={8}
                       placeholder="LinkedIn message..."
+                      className="rounded-sm border-warm-200 mt-1"
                     />
                   </div>
                 </TabsContent>
 
-                <TabsContent value="instagram_dm" className="space-y-4">
+                <TabsContent value="instagram_dm" className="space-y-4 mt-4">
                   <div>
-                    <Label>Instagram DM</Label>
+                    <Label className="text-xs font-medium text-warm-700">Instagram DM</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={8}
                       placeholder="Instagram DM message..."
+                      className="rounded-sm border-warm-200 mt-1"
                     />
                   </div>
                 </TabsContent>
@@ -327,12 +334,12 @@ export function QuickCompose() {
               {/* Template Selector */}
               {templates.length > 0 && (
                 <div>
-                  <Label>Use Template</Label>
+                  <Label className="text-xs font-medium text-warm-700">Use Template</Label>
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                    <SelectTrigger>
+                    <SelectTrigger className="rounded-sm border-warm-200 mt-1">
                       <SelectValue placeholder="Select a template..." />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="rounded-sm">
                       {templates.map((template) => (
                         <SelectItem key={template.id} value={template.id}>
                           {template.name}
@@ -344,14 +351,14 @@ export function QuickCompose() {
               )}
 
               {/* AI Content Generator */}
-              <div className="border-t pt-4">
+              <div className="border-t border-warm-200 pt-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <Label className="flex items-center gap-2">
-                      <Sparkles className="h-4 w-4" />
+                    <Label className="flex items-center gap-2 text-xs font-medium text-warm-700">
+                      <Sparkles className="h-3.5 w-3.5 text-plum-500" />
                       AI Content Assistant
                     </Label>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs text-warm-500 mt-0.5">
                       Generate personalized outreach content
                     </p>
                   </div>
@@ -360,15 +367,16 @@ export function QuickCompose() {
                     disabled={isGeneratingAI}
                     variant="outline"
                     size="sm"
+                    className="rounded-sm"
                   >
                     {isGeneratingAI ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                         Generating...
                       </>
                     ) : (
                       <>
-                        <Sparkles className="mr-2 h-4 w-4" />
+                        <Sparkles className="mr-1.5 h-3.5 w-3.5 text-plum-500" />
                         Generate with AI
                       </>
                     )}
@@ -376,12 +384,12 @@ export function QuickCompose() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label>Tone</Label>
+                    <Label className="text-xs font-medium text-warm-700">Tone</Label>
                     <Select value={tone} onValueChange={setTone}>
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-sm border-warm-200 mt-1">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="rounded-sm">
                         <SelectItem value="formal">Formal</SelectItem>
                         <SelectItem value="friendly">Friendly</SelectItem>
                         <SelectItem value="casual">Casual</SelectItem>
@@ -390,12 +398,12 @@ export function QuickCompose() {
                     </Select>
                   </div>
                   <div>
-                    <Label>Purpose</Label>
+                    <Label className="text-xs font-medium text-warm-700">Purpose</Label>
                     <Select value={purpose} onValueChange={setPurpose}>
-                      <SelectTrigger>
+                      <SelectTrigger className="rounded-sm border-warm-200 mt-1">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="rounded-sm">
                         <SelectItem value="cold_outreach">Cold Outreach</SelectItem>
                         <SelectItem value="follow_up">Follow Up</SelectItem>
                         <SelectItem value="introduction">Introduction</SelectItem>
@@ -407,40 +415,42 @@ export function QuickCompose() {
               </div>
 
               {/* Schedule Option */}
-              <div className="border-t pt-4">
-                <Label>Schedule (Optional)</Label>
+              <div className="border-t border-warm-200 pt-4">
+                <Label className="text-xs font-medium text-warm-700">Schedule (Optional)</Label>
                 <Input
                   type="datetime-local"
                   value={scheduleFor}
                   onChange={(e) => setScheduleFor(e.target.value)}
-                  className="mt-2"
+                  className="rounded-sm border-warm-200 mt-1"
                 />
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] text-warm-400 mt-1">
                   Leave empty to send immediately
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-4 pt-4 border-t">
+              <div className="flex items-center gap-3 pt-4 border-t border-warm-200">
                 <Button
                   onClick={handleSend}
                   disabled={isSending || !to || !body || (channel === 'email' && !subject)}
+                  variant="lime"
+                  className="rounded-sm"
                 >
                   {isSending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                       {scheduleFor ? 'Scheduling...' : 'Sending...'}
                     </>
                   ) : (
                     <>
                       {scheduleFor ? (
                         <>
-                          <Calendar className="mr-2 h-4 w-4" />
+                          <Calendar className="mr-1.5 h-3.5 w-3.5" />
                           Schedule
                         </>
                       ) : (
                         <>
-                          <Send className="mr-2 h-4 w-4" />
+                          <Send className="mr-1.5 h-3.5 w-3.5" />
                           Send Now
                         </>
                       )}
@@ -449,6 +459,7 @@ export function QuickCompose() {
                 </Button>
                 <Button
                   variant="outline"
+                  className="rounded-sm"
                   onClick={() => {
                     setSubject('')
                     setBody('')

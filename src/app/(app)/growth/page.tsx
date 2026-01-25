@@ -96,25 +96,25 @@ async function DailyPlannerContent() {
   }, {} as Record<string, number>)
 
   return (
-    <div className="space-y-6">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Growth</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Daily Planner</h1>
+          <p className="text-sm text-warm-500 mt-0.5">
             Manage your sales pipeline and prospect outreach
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/growth/prospects">
-            <Button variant="outline">
-              <Users className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" className="rounded-sm">
+              <Users className="mr-1.5 h-3.5 w-3.5" />
               View All Leads
             </Button>
           </Link>
           <Link href="/growth/prospects/new">
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button variant="lime" size="sm" className="rounded-sm">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               Add Prospect
             </Button>
           </Link>
@@ -122,114 +122,86 @@ async function DailyPlannerContent() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-bronze-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Prospects</CardTitle>
-            <div className="rounded-full bg-bronze-500/10 p-2">
-              <Users className="h-5 w-5 text-bronze-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">
-              {Object.values(statsMap).reduce((a, b) => a + b, 0)}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">All prospects in system</p>
-          </CardContent>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-warm-400">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Total Prospects</div>
+          <div className="text-2xl font-semibold text-warm-900">
+            {Object.values(statsMap).reduce((a, b) => a + b, 0)}
+          </div>
+          <p className="text-xs text-warm-500 mt-1">All prospects in system</p>
         </Card>
 
-        <Card className="border-l-4 border-l-ocean-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">New in Pipeline</CardTitle>
-            <div className="rounded-full bg-ocean-500/10 p-2">
-              <Target className="h-5 w-5 text-ocean-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{statsMap.new || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">Ready for outreach</p>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">New in Pipeline</div>
+          <div className="text-2xl font-semibold text-ocean-600">{statsMap.new || 0}</div>
+          <p className="text-xs text-warm-500 mt-1">Ready for outreach</p>
         </Card>
 
-        <Card className="border-l-4 border-l-primary">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Qualified</CardTitle>
-            <div className="rounded-full bg-primary/10 p-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{statsMap.qualified || 0}</div>
-            <p className="text-xs text-muted-foreground mt-1">High-value leads</p>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-lime-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Qualified</div>
+          <div className="text-2xl font-semibold text-lime-600">{statsMap.qualified || 0}</div>
+          <p className="text-xs text-warm-500 mt-1">High-value leads</p>
         </Card>
 
-        <Card className="border-l-4 border-l-accent">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Contact Today</CardTitle>
-            <div className="rounded-full bg-accent/10 p-2">
-              <Zap className="h-5 w-5 text-accent" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold tracking-tight">{prospectsToContact.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">Action required</p>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-plum-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Contact Today</div>
+          <div className="text-2xl font-semibold text-plum-600">{prospectsToContact.length}</div>
+          <p className="text-xs text-warm-500 mt-1">Action required</p>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Prospects to Contact */}
-        <Card>
-          <CardHeader>
+        <Card className="rounded-sm border-warm-200">
+          <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Priority Outreach</CardTitle>
-                <CardDescription>Prospects that need contact today</CardDescription>
+                <CardTitle className="text-base font-display font-medium text-warm-900">Priority Outreach</CardTitle>
+                <CardDescription className="text-xs text-warm-500">Prospects that need contact today</CardDescription>
               </div>
-              <Badge variant="outline">{prospectsToContact.length}</Badge>
+              <Badge variant="secondary" className="rounded-sm text-xs">{prospectsToContact.length}</Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0">
             {prospectsToContact.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Target className="mx-auto h-12 w-12 mb-2 opacity-50" />
-                <p>No prospects need contact today</p>
+              <div className="text-center py-8">
+                <Target className="mx-auto h-10 w-10 mb-2 text-warm-300" />
+                <p className="text-sm text-warm-500">No prospects need contact today</p>
                 <Link href="/growth/prospects">
-                  <Button variant="outline" size="sm" className="mt-4">
+                  <Button variant="outline" size="sm" className="mt-4 rounded-sm">
                     View All Prospects
                   </Button>
                 </Link>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {prospectsToContact.map((prospect) => (
                   <div
                     key={prospect.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <Link href={`/growth/prospects/${prospect.id}`}>
-                        <h4 className="text-sm font-medium hover:text-primary truncate">
+                        <h4 className="text-sm font-medium text-warm-900 hover:text-ocean-600 truncate">
                           {prospect.companyName}
                         </h4>
                       </Link>
                       {prospect.contacts.length > 0 && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-warm-500 mt-0.5">
                           {prospect.contacts[0].firstName} {prospect.contacts[0].lastName}
                           {prospect.contacts[0].title && ` • ${prospect.contacts[0].title}`}
                         </p>
                       )}
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-                          prospect.priority === 'urgent' ? 'bg-muted text-destructive' :
-                          prospect.priority === 'high' ? 'bg-muted text-accent' :
-                          prospect.priority === 'medium' ? 'bg-muted text-foreground' :
-                          'bg-muted text-muted-foreground'
+                        <span className={`text-[10px] px-1.5 py-0 rounded-sm font-medium ${
+                          prospect.priority === 'urgent' ? 'bg-red-100 text-red-700' :
+                          prospect.priority === 'high' ? 'bg-plum-100 text-plum-700' :
+                          prospect.priority === 'medium' ? 'bg-warm-100 text-warm-700' :
+                          'bg-warm-100 text-warm-500'
                         }`}>
                           {prospect.priority}
                         </span>
-                        <span className="text-[10px] text-muted-foreground capitalize">
+                        <span className="text-[10px] text-warm-400 capitalize">
                           {prospect.status}
                         </span>
                       </div>
@@ -237,15 +209,15 @@ async function DailyPlannerContent() {
                     <div className="flex items-center gap-1 ml-2">
                       {prospect.contacts[0]?.email && (
                         <Link href={`/growth/outreach?prospect=${prospect.id}&channel=email`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Mail className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 hover:text-ocean-600">
+                            <Mail className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
                       )}
                       {prospect.contacts[0]?.phone && (
                         <Link href={`/growth/outreach?prospect=${prospect.id}&channel=phone`}>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            <Phone className="h-4 w-4" />
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 hover:text-ocean-600">
+                            <Phone className="h-3.5 w-3.5" />
                           </Button>
                         </Link>
                       )}
@@ -258,52 +230,52 @@ async function DailyPlannerContent() {
         </Card>
 
         {/* Scheduled Activities */}
-        <Card>
-          <CardHeader>
+        <Card className="rounded-sm border-warm-200">
+          <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Today's Schedule</CardTitle>
-                <CardDescription>Activities scheduled for today</CardDescription>
+                <CardTitle className="text-base font-display font-medium text-warm-900">Today's Schedule</CardTitle>
+                <CardDescription className="text-xs text-warm-500">Activities scheduled for today</CardDescription>
               </div>
-              <Badge variant="outline">{scheduledActivities.length}</Badge>
+              <Badge variant="secondary" className="rounded-sm text-xs">{scheduledActivities.length}</Badge>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 pt-0">
             {scheduledActivities.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <Calendar className="mx-auto h-12 w-12 mb-2 opacity-50" />
-                <p>No activities scheduled for today</p>
+              <div className="text-center py-8">
+                <Calendar className="mx-auto h-10 w-10 mb-2 text-warm-300" />
+                <p className="text-sm text-warm-500">No activities scheduled for today</p>
               </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {scheduledActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                    className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted font-medium uppercase">
+                        <span className="text-[10px] px-1.5 py-0 rounded-sm bg-warm-100 text-warm-700 font-medium uppercase">
                           {activity.type}
                         </span>
                         {activity.channel && (
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-[10px] text-warm-400">
                             via {activity.channel}
                           </span>
                         )}
                       </div>
                       <Link href={`/growth/prospects/${activity.prospect.id}`}>
-                        <h4 className="text-sm font-medium hover:text-primary truncate">
+                        <h4 className="text-sm font-medium text-warm-900 hover:text-ocean-600 truncate">
                           {activity.prospect.companyName}
                         </h4>
                       </Link>
                       {activity.title && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        <p className="text-xs text-warm-500 mt-0.5 truncate">
                           {activity.title}
                         </p>
                       )}
                       {activity.scheduledAt && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="text-xs text-warm-400 mt-0.5">
                           <Clock className="h-3 w-3 inline mr-1" />
                           {new Date(activity.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           {activity.user && ` • ${activity.user.firstName} ${activity.user.lastName}`}
@@ -319,26 +291,28 @@ async function DailyPlannerContent() {
       </div>
 
       {/* Quick Actions */}
-      <div className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-        <div>
-          <h3 className="font-semibold">More Tools</h3>
-          <p className="text-sm text-muted-foreground">Access pipeline and discovery features</p>
+      <Card className="rounded-sm border-warm-200 mt-4">
+        <div className="flex items-center justify-between p-4">
+          <div>
+            <h3 className="font-display font-medium text-warm-900">More Tools</h3>
+            <p className="text-sm text-warm-500">Access pipeline and discovery features</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link href="/growth/pipeline">
+              <Button variant="outline" size="sm" className="rounded-sm">
+                <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
+                Pipeline
+              </Button>
+            </Link>
+            <Link href="/growth/discovery">
+              <Button variant="lime" size="sm" className="rounded-sm">
+                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                AI Discovery
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Link href="/growth/pipeline">
-            <Button variant="outline">
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Pipeline
-            </Button>
-          </Link>
-          <Link href="/growth/discovery">
-            <Button>
-              <Sparkles className="mr-2 h-4 w-4" />
-              AI Discovery
-            </Button>
-          </Link>
-        </div>
-      </div>
+      </Card>
     </div>
   )
 }
@@ -347,32 +321,32 @@ export default function GrowthPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-6">
+        <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
           {/* Header skeleton */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-4 w-64 mt-2" />
+              <Skeleton className="h-7 w-40 rounded-sm" />
+              <Skeleton className="h-4 w-64 mt-2 rounded-sm" />
             </div>
             <div className="flex gap-2">
-              <Skeleton className="h-10 w-32" />
-              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-8 w-28 rounded-sm" />
+              <Skeleton className="h-8 w-28 rounded-sm" />
             </div>
           </div>
           {/* Stats skeletons */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-32" />
+              <Skeleton key={i} className="h-24 rounded-sm" />
             ))}
           </div>
           {/* Content skeletons */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-96" />
+              <Skeleton key={i} className="h-80 rounded-sm" />
             ))}
           </div>
           {/* Quick actions skeleton */}
-          <Skeleton className="h-20 w-full" />
+          <Skeleton className="h-16 w-full mt-4 rounded-sm" />
         </div>
       }
     >

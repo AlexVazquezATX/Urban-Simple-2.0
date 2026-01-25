@@ -23,63 +23,66 @@ export default function OutreachPage() {
   }, [tabParam])
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Outreach Hub</h1>
-        <p className="text-muted-foreground mt-1">
-          Your command center for lead generation and outreach
-        </p>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Outreach Hub</h1>
+          <p className="text-sm text-warm-500 mt-0.5">
+            Your command center for lead generation and outreach
+          </p>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
-          <TabsTrigger value="dashboard" className="flex items-center gap-2">
-            <LayoutDashboard className="h-4 w-4" />
-            Dashboard
+        <TabsList className="grid w-full grid-cols-6 rounded-none bg-white border-b border-warm-200 p-0 mb-6 h-auto">
+          <TabsTrigger value="dashboard" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <LayoutDashboard className="h-3.5 w-3.5 text-ocean-500" />
+            <span className="hidden sm:inline">Dashboard</span>
           </TabsTrigger>
-          <TabsTrigger value="compose" className="flex items-center gap-2">
-            <Send className="h-4 w-4" />
-            Compose
+          <TabsTrigger value="compose" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <Send className="h-3.5 w-3.5 text-lime-600" />
+            <span className="hidden sm:inline">Compose</span>
           </TabsTrigger>
-          <TabsTrigger value="sequences" className="flex items-center gap-2">
-            <Zap className="h-4 w-4" />
-            Sequences
+          <TabsTrigger value="sequences" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <Zap className="h-3.5 w-3.5 text-plum-500" />
+            <span className="hidden sm:inline">Sequences</span>
           </TabsTrigger>
-          <TabsTrigger value="bulk" className="flex items-center gap-2">
-            <Users className="h-4 w-4" />
-            Bulk
+          <TabsTrigger value="bulk" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <Users className="h-3.5 w-3.5 text-ocean-500" />
+            <span className="hidden sm:inline">Bulk</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Templates
+          <TabsTrigger value="templates" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <FileText className="h-3.5 w-3.5 text-warm-600" />
+            <span className="hidden sm:inline">Templates</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
+          <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <Settings className="h-3.5 w-3.5 text-warm-500" />
+            <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="mt-6">
+        <TabsContent value="dashboard" className="mt-0">
           <OutreachDashboard />
         </TabsContent>
 
-        <TabsContent value="compose" className="mt-6">
+        <TabsContent value="compose" className="mt-0">
           <QuickCompose />
         </TabsContent>
 
-        <TabsContent value="sequences" className="mt-6">
+        <TabsContent value="sequences" className="mt-0">
           <SequenceList />
         </TabsContent>
 
-        <TabsContent value="bulk" className="mt-6">
+        <TabsContent value="bulk" className="mt-0">
           <BulkSender />
         </TabsContent>
 
-        <TabsContent value="templates" className="mt-6">
+        <TabsContent value="templates" className="mt-0">
           <TemplateLibrary />
         </TabsContent>
 
-        <TabsContent value="settings" className="mt-6">
+        <TabsContent value="settings" className="mt-0">
           <OutreachSettings />
         </TabsContent>
       </Tabs>

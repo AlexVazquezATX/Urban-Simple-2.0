@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -119,12 +119,10 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isEnrichingBulk, setIsEnrichingBulk] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
-  const [viewMode, setViewMode] = useState<'spreadsheet' | 'card'>('spreadsheet')
 
   // Calculate stats for tabs
   const stats = useMemo(() => {
     const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
     return {
       total: prospects.length,
@@ -403,54 +401,54 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">urgent</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">urgent</Badge>
       case 'high':
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">hot</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">hot</Badge>
       case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">warm</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-700 border-warm-200">warm</Badge>
       default:
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">cold</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">cold</Badge>
     }
   }
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      prospect: 'bg-slate-100 text-slate-600',
-      new: 'bg-gray-100 text-gray-700',
-      researching: 'bg-purple-100 text-purple-700',
-      contacted: 'bg-blue-100 text-blue-700',
-      engaged: 'bg-cyan-100 text-cyan-700',
-      qualified: 'bg-green-100 text-green-700',
-      proposal_sent: 'bg-amber-100 text-amber-700',
-      won: 'bg-emerald-100 text-emerald-700',
-      lost: 'bg-red-100 text-red-700',
-      nurturing: 'bg-pink-100 text-pink-700',
+      prospect: 'bg-warm-100 text-warm-600 border-warm-200',
+      new: 'bg-warm-100 text-warm-700 border-warm-200',
+      researching: 'bg-plum-100 text-plum-700 border-plum-200',
+      contacted: 'bg-ocean-100 text-ocean-700 border-ocean-200',
+      engaged: 'bg-ocean-100 text-ocean-700 border-ocean-200',
+      qualified: 'bg-lime-100 text-lime-700 border-lime-200',
+      proposal_sent: 'bg-warm-200 text-warm-700 border-warm-300',
+      won: 'bg-lime-100 text-lime-700 border-lime-200',
+      lost: 'bg-red-100 text-red-700 border-red-200',
+      nurturing: 'bg-plum-100 text-plum-700 border-plum-200',
     }
     return (
-      <Badge className={`${colors[status] || 'bg-gray-100 text-gray-700'} hover:${colors[status] || 'bg-gray-100'}`}>
+      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 text-warm-700 border-warm-200'}`}>
         {status.replace('_', ' ')}
       </Badge>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-charcoal-900">Leads</h1>
-          <p className="text-sm text-charcoal-500">AI-Native Lead Intelligence & Outreach OS</p>
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Leads</h1>
+          <p className="text-sm text-warm-500 mt-0.5">AI-Native Lead Intelligence & Outreach OS</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/growth/prospects/import">
-            <Button variant="outline" size="sm">
-              <Upload className="mr-2 h-4 w-4" />
+            <Button variant="outline" size="sm" className="rounded-sm">
+              <Upload className="mr-1.5 h-3.5 w-3.5" />
               Import
             </Button>
           </Link>
           <Link href="/growth/prospects/new">
-            <Button size="sm" className="bg-bronze-500 hover:bg-bronze-600">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button variant="lime" size="sm" className="rounded-sm">
+              <Plus className="mr-1.5 h-3.5 w-3.5" />
               Add Lead
             </Button>
           </Link>
@@ -458,77 +456,50 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-purple-50 to-white border-purple-100">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <Target className="h-8 w-8 text-purple-500" />
-              <Badge variant="outline" className="bg-purple-100 text-purple-700 border-0">0</Badge>
-            </div>
-            <div className="mt-2">
-              <p className="text-2xl font-bold text-purple-700">{stats.contactToday}</p>
-              <p className="text-sm text-purple-600">Contact Today</p>
-            </div>
-          </CardContent>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-plum-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Contact Today</div>
+          <div className="text-2xl font-semibold text-plum-600">{stats.contactToday}</div>
+          <p className="text-xs text-warm-500 mt-1">Need outreach</p>
         </Card>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-white border-orange-100">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <Zap className="h-8 w-8 text-orange-500" />
-              <Badge variant="outline" className="bg-orange-100 text-orange-700 border-0">0</Badge>
-            </div>
-            <div className="mt-2">
-              <p className="text-2xl font-bold text-orange-700">{stats.hotLeads}</p>
-              <p className="text-sm text-orange-600">Hot Leads</p>
-            </div>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-red-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Hot Leads</div>
+          <div className="text-2xl font-semibold text-red-600">{stats.hotLeads}</div>
+          <p className="text-xs text-warm-500 mt-1">High priority</p>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-white border-amber-100">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <Calendar className="h-8 w-8 text-amber-500" />
-              <Badge variant="outline" className="bg-amber-100 text-amber-700 border-0">0</Badge>
-            </div>
-            <div className="mt-2">
-              <p className="text-2xl font-bold text-amber-700">{stats.followUp}</p>
-              <p className="text-sm text-amber-600">Needs Follow-Up</p>
-            </div>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Follow-Up</div>
+          <div className="text-2xl font-semibold text-ocean-600">{stats.followUp}</div>
+          <p className="text-xs text-warm-500 mt-1">Awaiting response</p>
         </Card>
 
-        <Card className="bg-gradient-to-br from-emerald-50 to-white border-emerald-100">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <Users className="h-8 w-8 text-emerald-500" />
-            </div>
-            <div className="mt-2">
-              <p className="text-2xl font-bold text-emerald-700">{stats.total}</p>
-              <p className="text-sm text-emerald-600">Total Leads</p>
-            </div>
-          </CardContent>
+        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-lime-500">
+          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Total Leads</div>
+          <div className="text-2xl font-semibold text-lime-600">{stats.total}</div>
+          <p className="text-xs text-warm-500 mt-1">In database</p>
         </Card>
       </div>
 
       {/* Filters Bar */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative flex-1 min-w-[200px] max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+      <Card className="rounded-sm border-warm-200 mb-4">
+        <CardContent className="p-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 min-w-[180px] max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-warm-400" />
               <Input
                 placeholder="Search leads..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-9"
+                className="pl-8 h-8 text-sm rounded-sm border-warm-200"
               />
             </div>
 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 px-3 border rounded-md bg-background text-sm"
+              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
             >
               {statusOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -538,7 +509,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-9 px-3 border rounded-md bg-background text-sm"
+              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
             >
               {priorityOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -548,7 +519,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={facilityFilter}
               onChange={(e) => setFacilityFilter(e.target.value)}
-              className="h-9 px-3 border rounded-md bg-background text-sm"
+              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
             >
               <option value="all">All Facilities</option>
               {uniqueFacilities.map((f) => (
@@ -559,19 +530,19 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={priceLevelFilter}
               onChange={(e) => setPriceLevelFilter(e.target.value)}
-              className="h-9 px-3 border rounded-md bg-background text-sm"
+              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
             >
-              <option value="all">All Price Levels</option>
-              <option value="$">$ (Budget)</option>
-              <option value="$$">$$ (Moderate)</option>
-              <option value="$$$">$$$ (Upscale)</option>
-              <option value="$$$$">$$$$ (Fine Dining)</option>
+              <option value="all">All Prices</option>
+              <option value="$">$</option>
+              <option value="$$">$$</option>
+              <option value="$$$">$$$</option>
+              <option value="$$$$">$$$$</option>
             </select>
 
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="h-9 px-3 border rounded-md bg-background text-sm"
+              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
             >
               <option value="all">All Sources</option>
               {uniqueSources.map((s) => (
@@ -583,24 +554,24 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       </Card>
 
       {/* View Toggle & Tabs */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList>
-            <TabsTrigger value="all">All Leads ({stats.total})</TabsTrigger>
-            <TabsTrigger value="contact_today">Contact Today ({stats.contactToday})</TabsTrigger>
-            <TabsTrigger value="hot_leads">Hot Leads ({stats.hotLeads})</TabsTrigger>
-            <TabsTrigger value="follow_up">Follow-Up ({stats.followUp})</TabsTrigger>
+          <TabsList className="rounded-sm bg-warm-100 p-1">
+            <TabsTrigger value="all" className="text-xs rounded-sm data-[state=active]:bg-white">All ({stats.total})</TabsTrigger>
+            <TabsTrigger value="contact_today" className="text-xs rounded-sm data-[state=active]:bg-white">Contact Today ({stats.contactToday})</TabsTrigger>
+            <TabsTrigger value="hot_leads" className="text-xs rounded-sm data-[state=active]:bg-white">Hot ({stats.hotLeads})</TabsTrigger>
+            <TabsTrigger value="follow_up" className="text-xs rounded-sm data-[state=active]:bg-white">Follow-Up ({stats.followUp})</TabsTrigger>
           </TabsList>
         </Tabs>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Settings2 className="mr-2 h-4 w-4" />
-              Customize Columns
+            <Button variant="outline" size="sm" className="rounded-sm">
+              <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+              Columns
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
+          <DropdownMenuContent align="end" className="w-48 rounded-sm">
             {ALL_COLUMNS.filter(c => !c.alwaysVisible).map((col) => (
               <DropdownMenuCheckboxItem
                 key={col.id}
@@ -622,18 +593,19 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <Card className="bg-bronze-50 border-bronze-200">
+        <Card className="rounded-sm bg-lime-50 border-lime-200 mb-4">
           <CardContent className="p-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-bronze-700">
+            <span className="text-sm font-medium text-lime-700">
               {selectedIds.size} lead{selectedIds.size > 1 ? 's' : ''} selected
             </span>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 onClick={handleMoveToPipeline}
-                className="bg-bronze-500 hover:bg-bronze-600 text-white"
+                variant="lime"
+                className="rounded-sm"
               >
-                <ArrowRight className="mr-2 h-4 w-4" />
+                <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
                 Move to Pipeline
               </Button>
               <Button
@@ -641,28 +613,28 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 variant="outline"
                 onClick={handleBulkEnrich}
                 disabled={isEnrichingBulk}
-                className="bg-white"
+                className="rounded-sm bg-white"
               >
                 {isEnrichingBulk ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                     Enriching...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                     AI Enrich
                   </>
                 )}
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="bg-white">
-                    <RefreshCw className="mr-2 h-4 w-4" />
-                    Update Status
+                  <Button size="sm" variant="outline" className="rounded-sm bg-white">
+                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                    Status
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent>
+                <DropdownMenuContent className="rounded-sm">
                   {statusOptions.filter(s => s.value !== 'all').map((status) => (
                     <DropdownMenuItem
                       key={status.value}
@@ -677,9 +649,9 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 size="sm"
                 variant="outline"
                 onClick={() => setSelectedIds(new Set())}
-                className="bg-white"
+                className="rounded-sm bg-white"
               >
-                Clear Selection
+                Clear
               </Button>
             </div>
           </CardContent>
@@ -687,11 +659,11 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       )}
 
       {/* Spreadsheet Table */}
-      <Card>
+      <Card className="rounded-sm border-warm-200">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-muted/50 border-b">
+              <thead className="bg-warm-100 border-b border-warm-200">
                 <tr>
                   <th className="w-10 p-3 text-left">
                     <Checkbox
@@ -702,7 +674,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('companyName') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-sm font-medium hover:text-primary"
+                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
                         onClick={() => handleSort('companyName')}
                       >
                         Business Name
@@ -711,12 +683,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('contact') && (
-                    <th className="p-3 text-left text-sm font-medium">Contact</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Contact</th>
                   )}
                   {visibleColumns.includes('status') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-sm font-medium hover:text-primary"
+                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
                         onClick={() => handleSort('status')}
                       >
                         Status
@@ -725,15 +697,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('businessType') && (
-                    <th className="p-3 text-left text-sm font-medium">Facility Type</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Facility</th>
                   )}
                   {visibleColumns.includes('priceLevel') && (
-                    <th className="p-3 text-left text-sm font-medium">Price Level</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Price</th>
                   )}
                   {visibleColumns.includes('priority') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-sm font-medium hover:text-primary"
+                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
                         onClick={() => handleSort('priority')}
                       >
                         Interest
@@ -742,18 +714,18 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('address') && (
-                    <th className="p-3 text-left text-sm font-medium">City</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">City</th>
                   )}
                   {visibleColumns.includes('email') && (
-                    <th className="p-3 text-left text-sm font-medium">Email</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Email</th>
                   )}
                   {visibleColumns.includes('phone') && (
-                    <th className="p-3 text-left text-sm font-medium">Phone</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Phone</th>
                   )}
                   {visibleColumns.includes('estimatedValue') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-sm font-medium hover:text-primary"
+                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
                         onClick={() => handleSort('estimatedValue')}
                       >
                         Value
@@ -762,20 +734,20 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('source') && (
-                    <th className="p-3 text-left text-sm font-medium">Source</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Source</th>
                   )}
                   {visibleColumns.includes('aiEnriched') && (
-                    <th className="p-3 text-left text-sm font-medium">Enriched</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Enriched</th>
                   )}
                   {visibleColumns.includes('actions') && (
-                    <th className="w-20 p-3 text-left text-sm font-medium">Actions</th>
+                    <th className="w-16 p-3 text-left text-xs font-medium text-warm-700">Actions</th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y">
+              <tbody className="divide-y divide-warm-100">
                 {filteredProspects.length === 0 ? (
                   <tr>
-                    <td colSpan={visibleColumns.length + 1} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={visibleColumns.length + 1} className="p-8 text-center text-warm-500 text-sm">
                       No leads found matching your criteria
                     </td>
                   </tr>
@@ -787,7 +759,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     return (
                       <tr
                         key={prospect.id}
-                        className={`hover:bg-muted/30 cursor-pointer ${selectedIds.has(prospect.id) ? 'bg-bronze-50' : ''}`}
+                        className={`hover:bg-warm-50 cursor-pointer transition-colors ${selectedIds.has(prospect.id) ? 'bg-lime-50' : ''}`}
                         onClick={() => router.push(`/growth/prospects/${prospect.id}`)}
                       >
                         <td className="p-3" onClick={(e) => e.stopPropagation()}>
@@ -798,15 +770,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         </td>
                         {visibleColumns.includes('companyName') && (
                           <td className="p-3">
-                            <div className="font-medium text-charcoal-900">{prospect.companyName}</div>
+                            <div className="text-sm font-medium text-warm-900">{prospect.companyName}</div>
                           </td>
                         )}
                         {visibleColumns.includes('contact') && (
-                          <td className="p-3 text-sm text-muted-foreground">
+                          <td className="p-3 text-xs text-warm-600">
                             {primaryContact ? (
                               <span>{primaryContact.firstName} {primaryContact.lastName}</span>
                             ) : (
-                              <span className="text-muted-foreground/50">-</span>
+                              <span className="text-warm-400">-</span>
                             )}
                           </td>
                         )}
@@ -816,16 +788,16 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           </td>
                         )}
                         {visibleColumns.includes('businessType') && (
-                          <td className="p-3 text-sm">
-                            {prospect.businessType || <span className="text-muted-foreground/50">-</span>}
+                          <td className="p-3 text-xs text-warm-600">
+                            {prospect.businessType || <span className="text-warm-400">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('priceLevel') && (
-                          <td className="p-3 text-sm">
+                          <td className="p-3 text-xs">
                             {prospect.priceLevel ? (
-                              <span className="font-medium text-emerald-700">{prospect.priceLevel}</span>
+                              <span className="font-medium text-lime-700">{prospect.priceLevel}</span>
                             ) : (
-                              <span className="text-muted-foreground/50">-</span>
+                              <span className="text-warm-400">-</span>
                             )}
                           </td>
                         )}
@@ -835,49 +807,49 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           </td>
                         )}
                         {visibleColumns.includes('address') && (
-                          <td className="p-3 text-sm">
-                            {address?.city || <span className="text-muted-foreground/50">-</span>}
+                          <td className="p-3 text-xs text-warm-600">
+                            {address?.city || <span className="text-warm-400">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('email') && (
-                          <td className="p-3 text-sm">
+                          <td className="p-3 text-xs text-warm-600">
                             {primaryContact?.email ? (
-                              <span className="truncate max-w-[180px] block" title={primaryContact.email}>
+                              <span className="truncate max-w-[160px] block" title={primaryContact.email}>
                                 {primaryContact.email}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground/50">-</span>
+                              <span className="text-warm-400">-</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('phone') && (
-                          <td className="p-3 text-sm">
-                            {prospect.phone || primaryContact?.phone || <span className="text-muted-foreground/50">-</span>}
+                          <td className="p-3 text-xs text-warm-600">
+                            {prospect.phone || primaryContact?.phone || <span className="text-warm-400">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('estimatedValue') && (
-                          <td className="p-3 text-sm">
+                          <td className="p-3 text-xs">
                             {prospect.estimatedValue ? (
-                              <span className="font-medium">${Number(prospect.estimatedValue).toLocaleString()}</span>
+                              <span className="font-medium text-warm-900">${Number(prospect.estimatedValue).toLocaleString()}</span>
                             ) : (
-                              <span className="text-muted-foreground/50">-</span>
+                              <span className="text-warm-400">-</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('source') && (
-                          <td className="p-3 text-sm capitalize">
+                          <td className="p-3 text-xs text-warm-600 capitalize">
                             {prospect.source.replace('_', ' ')}
                           </td>
                         )}
                         {visibleColumns.includes('aiEnriched') && (
                           <td className="p-3">
                             {prospect.aiEnriched ? (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                                <Sparkles className="h-3 w-3 mr-1" />
+                              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">
+                                <Sparkles className="h-2.5 w-2.5 mr-0.5" />
                                 Yes
                               </Badge>
                             ) : (
-                              <span className="text-muted-foreground/50">-</span>
+                              <span className="text-warm-400 text-xs">-</span>
                             )}
                           </td>
                         )}
@@ -885,24 +857,24 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           <td className="p-3" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <MoreHorizontal className="h-4 w-4" />
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 hover:text-warm-900">
+                                  <MoreHorizontal className="h-3.5 w-3.5" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
+                              <DropdownMenuContent align="end" className="rounded-sm">
                                 <DropdownMenuItem onClick={() => router.push(`/growth/prospects/${prospect.id}`)}>
-                                  <Eye className="mr-2 h-4 w-4" />
+                                  <Eye className="mr-2 h-3.5 w-3.5" />
                                   View Details
                                 </DropdownMenuItem>
                                 {primaryContact?.email && (
                                   <DropdownMenuItem onClick={() => router.push(`/growth/outreach?prospect=${prospect.id}&channel=email`)}>
-                                    <Mail className="mr-2 h-4 w-4" />
+                                    <Mail className="mr-2 h-3.5 w-3.5" />
                                     Send Email
                                   </DropdownMenuItem>
                                 )}
                                 {(prospect.phone || primaryContact?.phone) && (
                                   <DropdownMenuItem>
-                                    <Phone className="mr-2 h-4 w-4" />
+                                    <Phone className="mr-2 h-3.5 w-3.5" />
                                     Call
                                   </DropdownMenuItem>
                                 )}
@@ -925,7 +897,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                     }
                                   }}
                                 >
-                                  <Sparkles className="mr-2 h-4 w-4" />
+                                  <Sparkles className="mr-2 h-3.5 w-3.5" />
                                   AI Enrich
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
@@ -943,7 +915,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       </Card>
 
       {/* Results count */}
-      <p className="text-sm text-muted-foreground text-center">
+      <p className="text-xs text-warm-500 text-center mt-4">
         Showing {filteredProspects.length} of {prospects.length} leads
       </p>
     </div>

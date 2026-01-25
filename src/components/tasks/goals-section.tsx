@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Target, ChevronDown, ChevronRight, Plus, MoreHorizontal, Pencil, Trash2, Link2 } from 'lucide-react'
+import { Target, CalendarDays, ChevronDown, ChevronRight, Plus, MoreHorizontal, Pencil, Trash2, Link2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -165,11 +165,11 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
 
   if (loading) {
     return (
-      <div className={cn('bg-white border border-charcoal-100 rounded-xl p-4', className)}>
+      <div className={cn('bg-white border border-warm-200 rounded-sm p-4', className)}>
         <div className="animate-pulse space-y-3">
-          <div className="h-5 bg-charcoal-100 rounded w-32" />
-          <div className="h-10 bg-charcoal-50 rounded" />
-          <div className="h-10 bg-charcoal-50 rounded" />
+          <div className="h-5 bg-warm-200 rounded-sm w-32" />
+          <div className="h-10 bg-warm-100 rounded-sm" />
+          <div className="h-10 bg-warm-100 rounded-sm" />
         </div>
       </div>
     )
@@ -177,25 +177,25 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
 
   return (
     <>
-      <div className={cn('bg-white border border-charcoal-100 rounded-xl overflow-hidden', className)}>
+      <div className={cn('bg-white border border-warm-200 rounded-sm overflow-hidden', className)}>
         {/* Weekly Goals Section */}
-        <div className="border-b border-charcoal-100">
-          <div className="px-4 py-3 flex items-center justify-between hover:bg-charcoal-50/50 transition-colors">
+        <div className="border-b border-warm-200">
+          <div className="px-4 py-3 flex items-center justify-between hover:bg-warm-50 transition-colors">
             <button
               onClick={() => setWeeklyExpanded(!weeklyExpanded)}
               className="flex items-center gap-2 flex-1"
             >
               {weeklyExpanded ? (
-                <ChevronDown className="w-4 h-4 text-charcoal-400" />
+                <ChevronDown className="w-4 h-4 text-warm-400" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-charcoal-400" />
+                <ChevronRight className="w-4 h-4 text-warm-400" />
               )}
-              <Target className="w-4 h-4 text-ocean-600" />
-              <span className="font-medium text-charcoal-900">This Week's Goals</span>
-              <span className="text-xs text-charcoal-500">({formatWeekRange()})</span>
+              <Target className="w-4 h-4 text-lime-600" />
+              <span className="font-medium text-warm-900">This Week's Goals</span>
+              <span className="text-xs text-warm-500">({formatWeekRange()})</span>
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-charcoal-500">
+              <span className="text-xs text-warm-500">
                 {weeklyGoals.length}/5
               </span>
               <Button
@@ -215,7 +215,7 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
               {weeklyGoals.length === 0 ? (
                 <button
                   onClick={() => handleAddGoal('weekly')}
-                  className="w-full p-3 border-2 border-dashed border-charcoal-200 rounded-lg text-sm text-charcoal-500 hover:border-ocean-300 hover:text-ocean-600 transition-colors"
+                  className="w-full p-3 border-2 border-dashed border-warm-300 rounded-sm text-sm text-warm-500 hover:border-ocean-400 hover:text-ocean-600 transition-colors"
                 >
                   + Add your first goal for this week
                 </button>
@@ -236,21 +236,21 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
 
         {/* Monthly Goals Section */}
         <div>
-          <div className="px-4 py-3 flex items-center justify-between hover:bg-charcoal-50/50 transition-colors">
+          <div className="px-4 py-3 flex items-center justify-between hover:bg-warm-50 transition-colors">
             <button
               onClick={() => setMonthlyExpanded(!monthlyExpanded)}
               className="flex items-center gap-2 flex-1"
             >
               {monthlyExpanded ? (
-                <ChevronDown className="w-4 h-4 text-charcoal-400" />
+                <ChevronDown className="w-4 h-4 text-warm-400" />
               ) : (
-                <ChevronRight className="w-4 h-4 text-charcoal-400" />
+                <ChevronRight className="w-4 h-4 text-warm-400" />
               )}
-              <Target className="w-4 h-4 text-purple-600" />
-              <span className="font-medium text-charcoal-900">{formatMonthRange()} Goals</span>
+              <CalendarDays className="w-4 h-4 text-ocean-600" />
+              <span className="font-medium text-warm-900">{formatMonthRange()} Goals</span>
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-charcoal-500">
+              <span className="text-xs text-warm-500">
                 {monthlyGoals.length}
               </span>
               <Button
@@ -269,7 +269,7 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
               {monthlyGoals.length === 0 ? (
                 <button
                   onClick={() => handleAddGoal('monthly')}
-                  className="w-full p-3 border-2 border-dashed border-charcoal-200 rounded-lg text-sm text-charcoal-500 hover:border-purple-300 hover:text-purple-600 transition-colors"
+                  className="w-full p-3 border-2 border-dashed border-warm-300 rounded-sm text-sm text-warm-500 hover:border-ocean-400 hover:text-ocean-600 transition-colors"
                 >
                   + Add a monthly goal
                 </button>
@@ -325,7 +325,7 @@ function GoalCard({
   return (
     <div
       className={cn(
-        'p-3 rounded-lg border border-charcoal-100 hover:border-charcoal-200 transition-colors group',
+        'p-3 rounded-sm border border-warm-200 hover:border-warm-300 transition-colors group',
         onClick && 'cursor-pointer'
       )}
       onClick={onClick}
@@ -337,11 +337,11 @@ function GoalCard({
             style={{ backgroundColor: goal.color }}
           />
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-charcoal-900 text-sm truncate">
+            <p className="font-medium text-warm-900 text-sm truncate">
               {goal.title}
             </p>
             {goal.taskCount !== undefined && (
-              <p className="text-xs text-charcoal-500 mt-0.5">
+              <p className="text-xs text-warm-500 mt-0.5">
                 {goal.completedTaskCount || 0}/{goal.taskCount} tasks
               </p>
             )}
@@ -384,7 +384,7 @@ function GoalCard({
 
       {/* Parent goal indicator */}
       {goal.parent && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-charcoal-400">
+        <div className="mt-2 flex items-center gap-1 text-xs text-warm-400">
           <Link2 className="w-3 h-3" />
           <span>{goal.parent.title}</span>
         </div>

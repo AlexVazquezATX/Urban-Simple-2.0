@@ -1,10 +1,5 @@
 import { Suspense } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Plus, Search, Upload, Filter } from 'lucide-react'
-import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { ProspectsListClient } from '@/components/growth/prospects-list-client'
@@ -80,30 +75,30 @@ export default function ProspectsPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-4">
+        <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
           {/* Header skeleton */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div>
-              <Skeleton className="h-8 w-32" />
-              <Skeleton className="h-4 w-64 mt-1" />
+              <Skeleton className="h-7 w-32 rounded-sm" />
+              <Skeleton className="h-4 w-64 mt-2 rounded-sm" />
             </div>
             <div className="flex gap-2">
-              <Skeleton className="h-9 w-24" />
-              <Skeleton className="h-9 w-28" />
+              <Skeleton className="h-8 w-24 rounded-sm" />
+              <Skeleton className="h-8 w-28 rounded-sm" />
             </div>
           </div>
           {/* Stats cards skeleton */}
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-28 rounded-lg" />
+              <Skeleton key={i} className="h-24 rounded-sm" />
             ))}
           </div>
           {/* Filters skeleton */}
-          <Skeleton className="h-16 rounded-lg" />
+          <Skeleton className="h-14 rounded-sm mb-4" />
           {/* Tabs skeleton */}
-          <Skeleton className="h-10 w-96" />
+          <Skeleton className="h-10 w-96 rounded-sm mb-4" />
           {/* Table skeleton */}
-          <Skeleton className="h-[400px] rounded-lg" />
+          <Skeleton className="h-[400px] rounded-sm" />
         </div>
       }
     >
@@ -111,4 +106,3 @@ export default function ProspectsPage() {
     </Suspense>
   )
 }
-

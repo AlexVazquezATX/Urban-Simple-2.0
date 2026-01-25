@@ -66,17 +66,17 @@
   --color-terracotta-800: #6D3A28;
   --color-terracotta-900: #4E2A1E;
 
-  /* Ocean - Cool teal for trust and financial elements */
-  --color-ocean-50: #F2F8F8;
-  --color-ocean-100: #E0EEEE;
-  --color-ocean-200: #C1DDDD;
-  --color-ocean-300: #9AC5C5;
-  --color-ocean-400: #6FA9A9;
-  --color-ocean-500: #4A8C8C;
-  --color-ocean-600: #3A7373;
-  --color-ocean-700: #2E5A5A;
-  --color-ocean-800: #224343;
-  --color-ocean-900: #183030;
+  /* Ocean - Vibrant teal for trust and interactive elements */
+  --color-ocean-50: #EDFAFA;
+  --color-ocean-100: #D5F5F5;
+  --color-ocean-200: #A8EBEB;
+  --color-ocean-300: #6CDCDC;
+  --color-ocean-400: #2DC8C8;
+  --color-ocean-500: #14B8B8;
+  --color-ocean-600: #0E9A9A;
+  --color-ocean-700: #0B7A7A;
+  --color-ocean-800: #085C5C;
+  --color-ocean-900: #064040;
 
   /* Plum - Sophisticated richness for premium features */
   --color-plum-50: #F8F5F7;
@@ -102,17 +102,17 @@
   --color-honey-800: #6E561A;
   --color-honey-900: #4D3C12;
 
-  /* Lime - Bright accent for CTAs and highlights (Ramp-inspired) */
-  --color-lime-50: #FAFFF0;
-  --color-lime-100: #F2FFD4;
-  --color-lime-200: #E4FFAB;
-  --color-lime-300: #D4F97D;
-  --color-lime-400: #CDEC4C;
-  --color-lime-500: #BDD92A;
-  --color-lime-600: #96B01D;
-  --color-lime-700: #71861A;
-  --color-lime-800: #596A19;
-  --color-lime-900: #4A5A19;
+  /* Accent - Golden/Lemon yellow for CTAs and highlights (Ramp-inspired) */
+  --color-lime-50: #FFFDF5;
+  --color-lime-100: #FEF9E7;
+  --color-lime-200: #FDF2C9;
+  --color-lime-300: #FCE8A0;
+  --color-lime-400: #F9D85C;
+  --color-lime-500: #EAC435;
+  --color-lime-600: #D4A91F;
+  --color-lime-700: #A78318;
+  --color-lime-800: #7A5F14;
+  --color-lime-900: #4D3B0D;
 
   /* Warm Neutrals - Ramp-inspired warmer grays */
   --color-warm-50: #FAF9F7;
@@ -198,33 +198,33 @@
   --spacing-34: 8.5rem;
   --spacing-38: 9.5rem;
 
-  /* === shadcn/ui theme integration === */
-  --color-background: var(--color-cream-50);
-  --color-foreground: var(--color-charcoal-900);
+  /* === shadcn/ui theme integration (Ramp-inspired) === */
+  --color-background: var(--color-warm-50);
+  --color-foreground: var(--color-warm-900);
 
   --color-card: #FFFFFF;
-  --color-card-foreground: var(--color-charcoal-900);
+  --color-card-foreground: var(--color-warm-900);
 
   --color-popover: #FFFFFF;
-  --color-popover-foreground: var(--color-charcoal-900);
+  --color-popover-foreground: var(--color-warm-900);
 
-  --color-primary: var(--color-bronze-500);
-  --color-primary-foreground: #FFFFFF;
+  --color-primary: var(--color-lime-500);
+  --color-primary-foreground: var(--color-warm-950);
 
-  --color-secondary: var(--color-cream-200);
-  --color-secondary-foreground: var(--color-charcoal-900);
+  --color-secondary: var(--color-warm-100);
+  --color-secondary-foreground: var(--color-warm-900);
 
-  --color-muted: var(--color-cream-200);
-  --color-muted-foreground: var(--color-charcoal-500);
+  --color-muted: var(--color-warm-100);
+  --color-muted-foreground: var(--color-warm-500);
 
-  --color-accent: var(--color-bronze-100);
-  --color-accent-foreground: var(--color-bronze-700);
+  --color-accent: var(--color-warm-100);
+  --color-accent-foreground: var(--color-warm-900);
 
   --color-destructive: var(--color-status-error);
 
-  --color-border: var(--color-cream-300);
-  --color-input: var(--color-cream-300);
-  --color-ring: var(--color-bronze-400);
+  --color-border: var(--color-warm-200);
+  --color-input: var(--color-warm-200);
+  --color-ring: var(--color-lime-500);
 
   /* Chart colors */
   --color-chart-1: var(--color-bronze-500);
@@ -233,15 +233,15 @@
   --color-chart-4: var(--color-status-warning);
   --color-chart-5: var(--color-charcoal-600);
 
-  /* Sidebar - Ramp-inspired dark warm sidebar */
-  --color-sidebar: var(--color-warm-900);
-  --color-sidebar-foreground: var(--color-warm-100);
-  --color-sidebar-primary: var(--color-lime-400);
+  /* Sidebar - Ramp-inspired light warm sidebar */
+  --color-sidebar: var(--color-warm-100);
+  --color-sidebar-foreground: var(--color-warm-900);
+  --color-sidebar-primary: var(--color-lime-500);
   --color-sidebar-primary-foreground: var(--color-warm-950);
-  --color-sidebar-accent: var(--color-warm-800);
-  --color-sidebar-accent-foreground: var(--color-warm-100);
-  --color-sidebar-border: var(--color-warm-800);
-  --color-sidebar-ring: var(--color-lime-400);
+  --color-sidebar-accent: var(--color-warm-200);
+  --color-sidebar-accent-foreground: var(--color-warm-900);
+  --color-sidebar-border: var(--color-warm-200);
+  --color-sidebar-ring: var(--color-lime-500);
   --color-sidebar-muted: var(--color-warm-500);
 }
 
@@ -501,7 +501,7 @@
     background-clip: padding-box;
   }
 
-  /* Sidebar-specific elegant scrollbar (dark sidebar) */
+  /* Sidebar-specific elegant scrollbar (light sidebar) */
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar {
     width: 6px;
   }
@@ -511,23 +511,24 @@
   }
 
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
-    background: var(--color-warm-700);
+    background: var(--color-warm-300);
     border-radius: 10px;
     border: 1px solid transparent;
     background-clip: padding-box;
   }
 
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb:hover {
-    background: var(--color-warm-600);
+    background: var(--color-warm-400);
     background-clip: padding-box;
   }
 
-  /* Lime accent button (Ramp-style CTA) */
+  /* Golden accent button (Ramp-style CTA) */
   .btn-lime {
     background-color: var(--color-lime-400);
     color: var(--color-warm-950);
-    font-weight: 500;
+    font-weight: 600;
     transition: all 0.15s ease;
+    border-radius: 4px;
   }
 
   .btn-lime:hover {
@@ -536,6 +537,47 @@
 
   .btn-lime:active {
     background-color: var(--color-lime-600);
+  }
+
+  /* Ramp-style outline button */
+  .btn-outline-warm {
+    background-color: transparent;
+    color: var(--color-warm-700);
+    font-weight: 500;
+    border: 1px solid var(--color-warm-300);
+    transition: all 0.15s ease;
+    border-radius: 8px;
+  }
+
+  .btn-outline-warm:hover {
+    background-color: var(--color-warm-100);
+    border-color: var(--color-warm-400);
+  }
+
+  /* Ramp-style card with subtle shadow */
+  .card-ramp {
+    background: white;
+    border: 1px solid var(--color-warm-200);
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    transition: border-color 0.15s ease;
+  }
+
+  .card-ramp:hover {
+    border-color: var(--color-ocean-400);
+  }
+
+  /* Ramp-style section heading */
+  .heading-ramp {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    color: var(--color-warm-900);
+  }
+
+  /* Ramp-style muted text */
+  .text-muted-warm {
+    color: var(--color-warm-500);
   }
 
   /* Safe area padding for iPhone notch/home indicator */

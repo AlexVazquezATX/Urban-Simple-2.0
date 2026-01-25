@@ -70,13 +70,13 @@ export function SequenceList() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="bg-green-500">Active</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">Active</Badge>
       case 'paused':
-        return <Badge variant="outline">Paused</Badge>
+        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">Paused</Badge>
       case 'completed':
-        return <Badge variant="secondary">Completed</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">Completed</Badge>
       default:
-        return <Badge variant="outline">{status}</Badge>
+        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">{status}</Badge>
     }
   }
 
@@ -84,14 +84,14 @@ export function SequenceList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Automated Sequences</h2>
-          <p className="text-muted-foreground mt-1">
+          <h2 className="text-lg font-display font-medium text-warm-900">Automated Sequences</h2>
+          <p className="text-sm text-warm-500 mt-0.5">
             Multi-step outreach campaigns that run automatically
           </p>
         </div>
         <Link href="/growth/outreach/sequences/new">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
+          <Button variant="lime" className="rounded-sm">
+            <Plus className="h-3.5 w-3.5 mr-1.5" />
             New Sequence
           </Button>
         </Link>
@@ -99,49 +99,52 @@ export function SequenceList() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin" />
+          <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
         </div>
       ) : sequences.length === 0 ? (
-        <Card>
+        <Card className="rounded-sm border-warm-200">
           <CardContent className="py-12 text-center">
-            <Zap className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">No sequences created yet</p>
+            <Zap className="h-10 w-10 text-warm-300 mx-auto mb-3" />
+            <p className="text-sm text-warm-500 mb-4">No sequences created yet</p>
             <Link href="/growth/outreach/sequences/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
+              <Button variant="lime" className="rounded-sm">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
                 Create Your First Sequence
               </Button>
             </Link>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-1.5">
           {sequences.map((sequence) => (
-            <Card key={sequence.id}>
-              <CardHeader>
+            <Card key={sequence.id} className="rounded-sm border-warm-200 hover:border-ocean-400 transition-colors">
+              <CardHeader className="p-4 pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle>{sequence.name}</CardTitle>
-                    <CardDescription className="mt-1">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-sm font-medium text-warm-900">{sequence.name}</CardTitle>
+                    <CardDescription className="text-xs text-warm-500 mt-0.5">
                       {sequence.description || 'No description'}
                     </CardDescription>
                   </div>
                   {getStatusBadge(sequence.status)}
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4 pt-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-3 text-xs text-warm-500">
                     <span>{sequence._count?.messages || 0} steps</span>
                     {sequence.startDate && (
-                      <span>
-                        Started {new Date(sequence.startDate).toLocaleDateString()}
-                      </span>
+                      <>
+                        <span className="text-warm-300">•</span>
+                        <span>
+                          Started {new Date(sequence.startDate).toLocaleDateString()}
+                        </span>
+                      </>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Link href={`/growth/outreach/sequences/${sequence.id}`}>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="rounded-sm h-7 px-2 text-xs">
                         View Details
                       </Button>
                     </Link>
@@ -150,6 +153,7 @@ export function SequenceList() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleStatus(sequence.id, sequence.status)}
+                        className="rounded-sm h-7 px-2 text-xs"
                       >
                         {sequence.status === 'active' ? (
                           <>
@@ -158,7 +162,7 @@ export function SequenceList() {
                           </>
                         ) : (
                           <>
-                            <Play className="h-3 w-3 mr-1" />
+                            <Play className="h-3 w-3 mr-1 text-lime-600" />
                             Resume
                           </>
                         )}
@@ -168,6 +172,7 @@ export function SequenceList() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(sequence.id)}
+                      className="rounded-sm h-7 w-7 p-0 text-warm-500 hover:text-red-600"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

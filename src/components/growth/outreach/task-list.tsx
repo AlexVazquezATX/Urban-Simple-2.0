@@ -15,16 +15,16 @@ export function TaskList({ tasks, scheduledMessages }: TaskListProps) {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email':
-        return <Mail className="h-4 w-4" />
+        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
       case 'sms':
-        return <MessageSquare className="h-4 w-4" />
+        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
       case 'linkedin':
-        return <Linkedin className="h-4 w-4" />
+        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
       case 'instagram':
       case 'instagram_dm':
-        return <Instagram className="h-4 w-4" />
+        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
       default:
-        return <Clock className="h-4 w-4" />
+        return <Clock className="h-3.5 w-3.5 text-warm-500" />
     }
   }
 
@@ -58,43 +58,48 @@ export function TaskList({ tasks, scheduledMessages }: TaskListProps) {
   if (allTasks.length === 0) {
     return (
       <div className="text-center py-8">
-        <CheckCircle2 className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-        <p className="text-sm text-muted-foreground">No tasks scheduled for today</p>
+        <CheckCircle2 className="h-10 w-10 text-warm-300 mx-auto mb-2" />
+        <p className="text-sm text-warm-500">No tasks scheduled for today</p>
       </div>
     )
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1.5">
       {allTasks.slice(0, 10).map((task) => (
         <Link
           key={task.id}
           href={`/growth/prospects/${task.prospectId}`}
-          className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors"
+          className="flex items-start gap-3 px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors"
         >
-          <div className="mt-0.5">
+          <div className="mt-0.5 w-6 h-6 rounded-sm bg-warm-100 flex items-center justify-center flex-shrink-0">
             {getChannelIcon(task.channel || 'email')}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <p className="font-medium text-sm truncate">{task.prospectName}</p>
-              <Badge variant="outline" className="text-xs">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <p className="text-sm font-medium text-warm-900 truncate">{task.prospectName}</p>
+              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
                 {task.type === 'scheduled' ? 'Scheduled' : 'Follow-up'}
               </Badge>
             </div>
             {task.subject && (
-              <p className="text-xs text-muted-foreground truncate">{task.subject}</p>
+              <p className="text-xs text-warm-500 truncate">{task.subject}</p>
             )}
-            {task.scheduledAt && (
-              <p className="text-xs text-muted-foreground mt-1">
-                {format(new Date(task.scheduledAt), 'h:mm a')}
-              </p>
-            )}
-            {task.campaignName && (
-              <p className="text-xs text-muted-foreground mt-1">
-                From: {task.campaignName}
-              </p>
-            )}
+            <div className="flex items-center gap-2 mt-1">
+              {task.scheduledAt && (
+                <span className="text-[10px] text-warm-400">
+                  {format(new Date(task.scheduledAt), 'h:mm a')}
+                </span>
+              )}
+              {task.campaignName && (
+                <>
+                  <span className="text-[10px] text-warm-300">•</span>
+                  <span className="text-[10px] text-warm-400">
+                    {task.campaignName}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         </Link>
       ))}
