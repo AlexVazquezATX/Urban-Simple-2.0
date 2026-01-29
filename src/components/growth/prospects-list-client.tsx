@@ -123,6 +123,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [isEnrichingBulk, setIsEnrichingBulk] = useState(false)
   const [isFindingEmails, setIsFindingEmails] = useState(false)
   const [isFindingContacts, setIsFindingContacts] = useState(false)
+  const [isDiscoveringOwners, setIsDiscoveringOwners] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
 
@@ -658,6 +659,182 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     }
   }
 
+  // Bulk discover owners handler - BEST FOR HOSPITALITY (restaurants, hotels, venues)
+  // Uses Yelp + Google to find owner names, then Hunter.io to find their emails
+  const handleBulkDiscoverOwners = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select prospects to discover owners')
+      return
+    }
+
+    // Get selected prospects that have required info for discovery (businessName + city)
+    const selectedProspects = prospects.filter(p => selectedIds.has(p.id))
+    const prospectsToProcess = selectedProspects.filter(p => {
+      const address = p.address as any
+      return address?.city // Need at least a city for discovery
+    })
+
+    if (prospectsToProcess.length === 0) {
+      const noCity = selectedProspects.filter(p => !(p.address as any)?.city).length
+
+      toast.info(`Cannot discover owners: ${noCity} prospect${noCity > 1 ? 's are' : ' is'} missing city information`)
+      return
+    }
+
+    setIsDiscoveringOwners(true)
+    let successCount = 0
+    let totalContactsFound = 0
+    let failCount = 0
+
+    for (const prospect of prospectsToProcess) {
+      try {
+        const address = prospect.address as any
+
+        // Extract domain from website if available
+        let domain: string | undefined
+        if (prospect.website) {
+          try {
+            const url = new URL(prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`)
+            domain = url.hostname.replace(/^www\./, '')
+          } catch {
+            domain = prospect.website.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0]
+          }
+        }
+
+        console.log(`[Discover Owners] Searching for: ${prospect.companyName} in ${address.city}, ${address.state || 'unknown'}`)
+
+        // Call the discover API - this uses Yelp + Google + Hunter
+        const response = await fetch('/api/growth/email-prospecting/discover', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            businessName: prospect.companyName,
+            city: address.city,
+            state: address.state || undefined,
+            website: domain || undefined,
+          }),
+        })
+
+        console.log(`[Discover Owners] Response status: ${response.status}`)
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log(`[Discover Owners] API response:`, data)
+
+          // data.data contains ProspectSearchResult[]
+          // data.discovery contains { owners, businessInfo, hospitalityEmails }
+          // data.meta contains { count, ownersFound, emailsFound, sources }
+
+          const foundPeople = data.data || []
+          console.log(`[Discover Owners] Found ${foundPeople.length} contacts for ${prospect.companyName}`)
+
+          if (foundPeople.length > 0) {
+            // Create contacts from discovered people
+            const newContacts: Array<{
+              id: string
+              firstName: string
+              lastName: string
+              email?: string | null
+              phone?: string | null
+              title?: string | null
+            }> = []
+
+            // Prioritize contacts with emails, then owner names without emails
+            const withEmails = foundPeople.filter((p: any) => p.email)
+            const withoutEmails = foundPeople.filter((p: any) => !p.email && p.first_name)
+            const toCreate = [...withEmails, ...withoutEmails.slice(0, 2)] // Max 2 without emails
+
+            for (const person of toCreate) {
+              const contactData = {
+                firstName: person.first_name || 'Contact',
+                lastName: person.last_name || (person.email?.split('@')[0] || 'Unknown'),
+                email: person.email || null,
+                title: person.position || null,
+              }
+
+              const updateResponse = await fetch(`/api/growth/prospects/${prospect.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contact: contactData }),
+              })
+
+              if (updateResponse.ok) {
+                const updated = await updateResponse.json()
+                if (updated.contacts && updated.contacts.length > 0) {
+                  const latestContact = updated.contacts[updated.contacts.length - 1]
+                  newContacts.push(latestContact)
+                  totalContactsFound++
+                }
+              }
+            }
+
+            // Update business info if discovered
+            if (data.discovery?.businessInfo) {
+              const bizInfo = data.discovery.businessInfo
+              const updateData: any = {}
+
+              if (bizInfo.phone && !prospect.phone) {
+                updateData.phone = bizInfo.phone
+              }
+              if (bizInfo.website && !prospect.website) {
+                updateData.website = bizInfo.website
+              }
+              if (bizInfo.priceLevel && !prospect.priceLevel) {
+                updateData.priceLevel = bizInfo.priceLevel
+              }
+
+              if (Object.keys(updateData).length > 0) {
+                await fetch(`/api/growth/prospects/${prospect.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(updateData),
+                })
+              }
+            }
+
+            // Update local state with new contacts
+            if (newContacts.length > 0) {
+              setProspects(prev => prev.map(p =>
+                p.id === prospect.id
+                  ? {
+                      ...p,
+                      contacts: newContacts,
+                      phone: data.discovery?.businessInfo?.phone || p.phone,
+                      website: data.discovery?.businessInfo?.website || p.website,
+                      priceLevel: data.discovery?.businessInfo?.priceLevel || p.priceLevel,
+                    }
+                  : p
+              ))
+              successCount++
+            } else {
+              failCount++
+            }
+          } else {
+            console.log(`[Discover Owners] No contacts found for ${prospect.companyName}`)
+            failCount++
+          }
+        } else {
+          const errorText = await response.text()
+          console.error(`[Discover Owners] API error for ${prospect.companyName}:`, response.status, errorText)
+          failCount++
+        }
+      } catch (error) {
+        console.error('[Discover Owners] Error:', prospect.id, error)
+        failCount++
+      }
+    }
+
+    setIsDiscoveringOwners(false)
+    setSelectedIds(new Set())
+
+    if (successCount > 0) {
+      toast.success(`Discovered ${totalContactsFound} owner${totalContactsFound > 1 ? 's' : ''} for ${successCount} prospect${successCount > 1 ? 's' : ''}`)
+    }
+    if (failCount > 0) {
+      toast.info(`Could not find owners for ${failCount} prospect${failCount > 1 ? 's' : ''}`)
+    }
+  }
+
   // Prospect detail panel handlers
   const handleSelectProspect = (prospect: Prospect) => {
     setSelectedProspect(prospect)
@@ -936,9 +1113,30 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               <Button
                 size="sm"
                 variant="outline"
+                onClick={handleBulkDiscoverOwners}
+                disabled={isDiscoveringOwners}
+                className="rounded-sm bg-white border-plum-300 text-plum-700 hover:bg-plum-50"
+                title="Best for restaurants/hospitality - finds owner names from Yelp & Google, then finds their emails"
+              >
+                {isDiscoveringOwners ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Discovering...
+                  </>
+                ) : (
+                  <>
+                    <Target className="mr-1.5 h-3.5 w-3.5" />
+                    Discover Owners
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={handleBulkFindContacts}
                 disabled={isFindingContacts}
                 className="rounded-sm bg-white"
+                title="Search for contacts at company domains (Apollo/Hunter)"
               >
                 {isFindingContacts ? (
                   <>

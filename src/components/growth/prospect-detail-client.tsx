@@ -16,6 +16,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
   ArrowLeft,
   Mail,
   Phone,
@@ -36,6 +41,10 @@ import {
   Save,
   ExternalLink,
   ArrowRight,
+  Search,
+  CheckCircle2,
+  AlertCircle,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -118,6 +127,12 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
   const [isEnriching, setIsEnriching] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [activeTab, setActiveTab] = useState('details')
+
+  // Email finder state
+  const [isFindingEmail, setIsFindingEmail] = useState(false)
+  const [emailSuggestions, setEmailSuggestions] = useState<any[]>([])
+  const [showEmailSuggestions, setShowEmailSuggestions] = useState(false)
+  const [isVerifyingEmail, setIsVerifyingEmail] = useState<string | null>(null)
 
   // Form state
   const address = prospect.address as any || {}
@@ -291,6 +306,115 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
     }
   }
 
+  const handleFindEmail = async () => {
+    // Extract domain from website
+    const website = formData.website
+    if (!website) {
+      toast.error('Please add a website first to find emails')
+      return
+    }
+
+    // Parse contact name
+    const nameParts = formData.contactName.trim().split(' ')
+    const firstName = nameParts[0] || ''
+    const lastName = nameParts.slice(1).join(' ') || ''
+
+    if (!firstName) {
+      toast.error('Please add a contact name first')
+      return
+    }
+
+    // Extract domain from website URL
+    let domain = website
+    try {
+      const url = new URL(website.startsWith('http') ? website : `https://${website}`)
+      domain = url.hostname.replace(/^www\./, '')
+    } catch {
+      // If URL parsing fails, try to extract domain directly
+      domain = website.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0]
+    }
+
+    setIsFindingEmail(true)
+    setEmailSuggestions([])
+
+    try {
+      const response = await fetch('/api/growth/email-prospecting/search/person', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          domain,
+          title: formData.contactTitle || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to find email')
+      }
+
+      const data = await response.json()
+
+      if (data.results && data.results.length > 0) {
+        setEmailSuggestions(data.results)
+        setShowEmailSuggestions(true)
+        toast.success(`Found ${data.results.length} email suggestion${data.results.length > 1 ? 's' : ''}`)
+      } else {
+        toast.info('No email found for this contact')
+      }
+    } catch (error: any) {
+      console.error('Error finding email:', error)
+      toast.error(error.message || 'Failed to find email')
+    } finally {
+      setIsFindingEmail(false)
+    }
+  }
+
+  const handleVerifyEmail = async (email: string) => {
+    setIsVerifyingEmail(email)
+    try {
+      const response = await fetch('/api/growth/email-prospecting/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to verify email')
+      }
+
+      const data = await response.json()
+
+      // Update the suggestion with verification status
+      setEmailSuggestions(prev => prev.map(s =>
+        s.email === email
+          ? { ...s, verified: true, verificationResult: data }
+          : s
+      ))
+
+      if (data.is_valid_format && data.deliverability === 'DELIVERABLE') {
+        toast.success('Email verified successfully!')
+      } else if (data.deliverability === 'RISKY') {
+        toast.warning('Email is risky - proceed with caution')
+      } else {
+        toast.error('Email appears to be invalid')
+      }
+    } catch (error: any) {
+      console.error('Error verifying email:', error)
+      toast.error(error.message || 'Failed to verify email')
+    } finally {
+      setIsVerifyingEmail(null)
+    }
+  }
+
+  const handleSelectEmail = (email: string, source: string, confidence?: number) => {
+    setFormData({ ...formData, contactEmail: email })
+    setShowEmailSuggestions(false)
+    toast.success('Email added to contact')
+  }
+
   const getPriorityLabel = (priority: string) => {
     switch (priority) {
       case 'urgent': return '1st'
@@ -422,12 +546,124 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                 </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={formData.contactEmail}
-                    onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                    placeholder="john@company.com"
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      value={formData.contactEmail}
+                      onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
+                      placeholder="john@company.com"
+                      className="flex-1"
+                    />
+                    <Popover open={showEmailSuggestions} onOpenChange={setShowEmailSuggestions}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={handleFindEmail}
+                          disabled={isFindingEmail}
+                          title="Find email using Apollo.io"
+                          className="bg-bronze-50 hover:bg-bronze-100 border-bronze-200"
+                        >
+                          {isFindingEmail ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Search className="h-4 w-4 text-bronze-600" />
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-0" align="end">
+                        <div className="p-3 border-b">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-sm">Email Suggestions</h4>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                              onClick={() => setShowEmailSuggestions(false)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Click to use, or verify first
+                          </p>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto">
+                          {emailSuggestions.length === 0 ? (
+                            <div className="p-4 text-center text-sm text-muted-foreground">
+                              No suggestions found
+                            </div>
+                          ) : (
+                            emailSuggestions.map((suggestion, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3 border-b last:border-0 hover:bg-warm-50"
+                              >
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm truncate">
+                                      {suggestion.email}
+                                    </p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className="text-xs text-muted-foreground capitalize">
+                                        {suggestion.source || 'unknown'}
+                                      </span>
+                                      {suggestion.confidence && (
+                                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                          suggestion.confidence >= 80
+                                            ? 'bg-green-100 text-green-700'
+                                            : suggestion.confidence >= 50
+                                            ? 'bg-yellow-100 text-yellow-700'
+                                            : 'bg-gray-100 text-gray-700'
+                                        }`}>
+                                          {suggestion.confidence}%
+                                        </span>
+                                      )}
+                                      {suggestion.verified && (
+                                        suggestion.verificationResult?.deliverability === 'DELIVERABLE' ? (
+                                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                                        ) : (
+                                          <AlertCircle className="h-3.5 w-3.5 text-yellow-600" />
+                                        )
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 text-xs"
+                                      onClick={() => handleVerifyEmail(suggestion.email)}
+                                      disabled={isVerifyingEmail === suggestion.email || suggestion.verified}
+                                    >
+                                      {isVerifyingEmail === suggestion.email ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : suggestion.verified ? (
+                                        'Verified'
+                                      ) : (
+                                        'Verify'
+                                      )}
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs bg-bronze-500 hover:bg-bronze-600"
+                                      onClick={() => handleSelectEmail(
+                                        suggestion.email,
+                                        suggestion.source,
+                                        suggestion.confidence
+                                      )}
+                                    >
+                                      Use
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Phone</Label>

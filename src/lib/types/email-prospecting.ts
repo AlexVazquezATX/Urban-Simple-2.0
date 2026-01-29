@@ -68,11 +68,19 @@ export interface ProspectSearchResult {
   company_name?: string
   domain?: string
   linkedin?: string
-  source?: 'apollo' | 'pattern' | 'scraper' | 'hospitality_pattern' | 'manual'
+  source?: 'apollo' | 'hunter' | 'pattern' | 'scraper' | 'hospitality_pattern' | 'yelp' | 'google' | 'manual'
   notes?: string
 }
 
-export type SearchMethod = 'apollo' | 'pattern' | 'scraper' | 'hospitality' | 'all'
+// Search methods:
+// - 'apollo': Apollo.io database (good for B2B/enterprise, bad for local restaurants)
+// - 'hunter': Hunter.io (better for local businesses, finds ALL emails at a domain)
+// - 'pattern': DIY email pattern generation from name + domain
+// - 'scraper': Website email scraping
+// - 'hospitality': Role-based emails (info@, events@, gm@, etc.)
+// - 'discover': Full owner discovery workflow (Yelp + Google + Hunter)
+// - 'all': Try all methods with intelligent fallback
+export type SearchMethod = 'apollo' | 'hunter' | 'pattern' | 'scraper' | 'hospitality' | 'discover' | 'all'
 
 export interface FindProspectsOptions {
   domain: string
@@ -81,6 +89,10 @@ export interface FindProspectsOptions {
   seniorities?: string[]
   limit?: number
   verifyEmails?: boolean
+  // For 'discover' method - need business name and location
+  businessName?: string
+  city?: string
+  state?: string
 }
 
 export interface FindPersonOptions {
