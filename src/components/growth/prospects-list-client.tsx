@@ -660,7 +660,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   }
 
   // Bulk discover owners handler - BEST FOR HOSPITALITY (restaurants, hotels, venues)
-  // Uses Yelp + Google to find owner names, then Hunter.io to find their emails
+  // Uses Yelp + Google + Apollo + Hunter.io to find REAL owner names and emails
   const handleBulkDiscoverOwners = async () => {
     if (selectedIds.size === 0) {
       toast.error('Please select prospects to discover owners')
@@ -685,6 +685,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     let successCount = 0
     let totalContactsFound = 0
     let failCount = 0
+    let businessInfoUpdated = 0
 
     for (const prospect of prospectsToProcess) {
       try {
@@ -703,7 +704,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
         console.log(`[Discover Owners] Searching for: ${prospect.companyName} in ${address.city}, ${address.state || 'unknown'}`)
 
-        // Call the discover API - this uses Yelp + Google + Hunter
+        // Call the discover API - this uses Yelp + Google + Apollo + Hunter
         const response = await fetch('/api/growth/email-prospecting/discover', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -720,16 +721,26 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         if (response.ok) {
           const data = await response.json()
           console.log(`[Discover Owners] API response:`, data)
+          console.log(`[Discover Owners] Sources used:`, data.meta?.sources)
 
-          // data.data contains ProspectSearchResult[]
-          // data.discovery contains { owners, businessInfo, hospitalityEmails }
-          // data.meta contains { count, ownersFound, emailsFound, sources }
+          // data.data contains ONLY real people (from Yelp, Google, Hunter, Apollo)
+          // data.discovery.hospitalityEmails are SUGGESTIONS (not real people)
+          const realPeople = data.data || []
+          const hospitalitySuggestions = data.discovery?.hospitalityEmails || []
 
-          const foundPeople = data.data || []
-          console.log(`[Discover Owners] Found ${foundPeople.length} contacts for ${prospect.companyName}`)
+          console.log(`[Discover Owners] Found ${realPeople.length} REAL contacts, ${hospitalitySuggestions.length} hospitality suggestions`)
 
-          if (foundPeople.length > 0) {
-            // Create contacts from discovered people
+          // Only create contacts from REAL people with valid names
+          // Skip anyone with "Contact" as first name (those are fake placeholders)
+          const validPeople = realPeople.filter((p: any) =>
+            p.first_name &&
+            p.first_name !== 'Contact' &&
+            p.last_name &&
+            p.last_name !== 'Unknown'
+          )
+
+          if (validPeople.length > 0) {
+            // Create contacts from discovered REAL people
             const newContacts: Array<{
               id: string
               firstName: string
@@ -740,14 +751,14 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             }> = []
 
             // Prioritize contacts with emails, then owner names without emails
-            const withEmails = foundPeople.filter((p: any) => p.email)
-            const withoutEmails = foundPeople.filter((p: any) => !p.email && p.first_name)
+            const withEmails = validPeople.filter((p: any) => p.email)
+            const withoutEmails = validPeople.filter((p: any) => !p.email)
             const toCreate = [...withEmails, ...withoutEmails.slice(0, 2)] // Max 2 without emails
 
             for (const person of toCreate) {
               const contactData = {
-                firstName: person.first_name || 'Contact',
-                lastName: person.last_name || (person.email?.split('@')[0] || 'Unknown'),
+                firstName: person.first_name,
+                lastName: person.last_name,
                 email: person.email || null,
                 title: person.position || null,
               }
@@ -768,49 +779,67 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               }
             }
 
-            // Update business info if discovered
-            if (data.discovery?.businessInfo) {
-              const bizInfo = data.discovery.businessInfo
-              const updateData: any = {}
-
-              if (bizInfo.phone && !prospect.phone) {
-                updateData.phone = bizInfo.phone
-              }
-              if (bizInfo.website && !prospect.website) {
-                updateData.website = bizInfo.website
-              }
-              if (bizInfo.priceLevel && !prospect.priceLevel) {
-                updateData.priceLevel = bizInfo.priceLevel
-              }
-
-              if (Object.keys(updateData).length > 0) {
-                await fetch(`/api/growth/prospects/${prospect.id}`, {
-                  method: 'PATCH',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify(updateData),
-                })
-              }
-            }
-
             // Update local state with new contacts
             if (newContacts.length > 0) {
               setProspects(prev => prev.map(p =>
                 p.id === prospect.id
-                  ? {
-                      ...p,
-                      contacts: newContacts,
-                      phone: data.discovery?.businessInfo?.phone || p.phone,
-                      website: data.discovery?.businessInfo?.website || p.website,
-                      priceLevel: data.discovery?.businessInfo?.priceLevel || p.priceLevel,
-                    }
+                  ? { ...p, contacts: newContacts }
                   : p
               ))
               successCount++
-            } else {
-              failCount++
             }
-          } else {
-            console.log(`[Discover Owners] No contacts found for ${prospect.companyName}`)
+          }
+
+          // Update business info if discovered (even if no contacts found)
+          if (data.discovery?.businessInfo) {
+            const bizInfo = data.discovery.businessInfo
+            const updateData: any = {}
+
+            if (bizInfo.phone && !prospect.phone) {
+              updateData.phone = bizInfo.phone
+            }
+            if (bizInfo.website && !prospect.website) {
+              updateData.website = bizInfo.website
+            }
+            if (bizInfo.priceLevel && !prospect.priceLevel) {
+              updateData.priceLevel = bizInfo.priceLevel
+            }
+            // Store hospitality suggestions for later reference
+            if (hospitalitySuggestions.length > 0) {
+              updateData.discoveryData = {
+                hospitalitySuggestions,
+                discoveredAt: new Date().toISOString(),
+                sources: data.meta?.sources,
+              }
+            }
+
+            if (Object.keys(updateData).length > 0) {
+              await fetch(`/api/growth/prospects/${prospect.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updateData),
+              })
+              businessInfoUpdated++
+
+              // Update local state
+              setProspects(prev => prev.map(p =>
+                p.id === prospect.id
+                  ? {
+                      ...p,
+                      phone: updateData.phone || p.phone,
+                      website: updateData.website || p.website,
+                      priceLevel: updateData.priceLevel || p.priceLevel,
+                    }
+                  : p
+              ))
+            }
+          }
+
+          // If no real contacts but we got hospitality suggestions, count as partial success
+          if (validPeople.length === 0 && hospitalitySuggestions.length > 0) {
+            console.log(`[Discover Owners] No real people found for ${prospect.companyName}, but got ${hospitalitySuggestions.length} hospitality suggestions`)
+            // Don't count as fail - we still updated business info
+          } else if (validPeople.length === 0) {
             failCount++
           }
         } else {
@@ -827,11 +856,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     setIsDiscoveringOwners(false)
     setSelectedIds(new Set())
 
+    // Provide detailed feedback
     if (successCount > 0) {
-      toast.success(`Discovered ${totalContactsFound} owner${totalContactsFound > 1 ? 's' : ''} for ${successCount} prospect${successCount > 1 ? 's' : ''}`)
+      toast.success(`Found ${totalContactsFound} real owner${totalContactsFound > 1 ? 's' : ''} for ${successCount} business${successCount > 1 ? 'es' : ''}`)
     }
-    if (failCount > 0) {
-      toast.info(`Could not find owners for ${failCount} prospect${failCount > 1 ? 's' : ''}`)
+    if (businessInfoUpdated > 0 && successCount === 0) {
+      toast.info(`Updated business info for ${businessInfoUpdated} prospect${businessInfoUpdated > 1 ? 's' : ''}, but no owner names found. Try hospitality email patterns (info@, gm@, etc.)`)
+    }
+    if (failCount > 0 && successCount === 0 && businessInfoUpdated === 0) {
+      toast.warning(`Could not find owner info for ${failCount} prospect${failCount > 1 ? 's' : ''}. Try manual research or hospitality patterns.`)
     }
   }
 

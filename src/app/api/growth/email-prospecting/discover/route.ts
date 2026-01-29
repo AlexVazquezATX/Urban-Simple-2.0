@@ -50,21 +50,31 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Count real people (not hospitality patterns)
+    const realPeopleCount = discoveryResult.owners.length
+    const realEmailsCount = discoveryResult.owners.filter(o => o.email).length
+
     return NextResponse.json({
+      // data contains ONLY real people (from Yelp, Google, Hunter, Apollo)
       data: prospects,
       discovery: {
         owners: discoveryResult.owners,
         businessInfo: discoveryResult.businessInfo,
+        // Hospitality emails are SUGGESTIONS to try, not real contacts
         hospitalityEmails: discoveryResult.hospitalityEmails,
       },
       meta: {
         count: prospects.length,
+        realPeopleFound: realPeopleCount,
+        realEmailsFound: realEmailsCount,
+        hospitalitySuggestionsCount: discoveryResult.hospitalityEmails.length,
         ownersFound: discoveryResult.meta.ownerNamesFound.length,
         emailsFound: discoveryResult.meta.emailsFound.length,
         sources: {
           yelp: discoveryResult.meta.yelpFound,
           google: discoveryResult.meta.googleFound,
           hunter: discoveryResult.meta.hunterFound,
+          apollo: discoveryResult.meta.apolloFound,
         },
       },
     })

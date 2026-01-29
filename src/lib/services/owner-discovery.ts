@@ -5,8 +5,27 @@
 import { findBusinessOwner as findYelpOwner, type YelpBusinessInfo } from './yelp-scraper'
 import { findGoogleBusinessOwner, type GoogleBusinessInfo } from './google-business-scraper'
 import { searchDomain as hunterSearchDomain, findEmail as hunterFindEmail, getEmailPattern, generateFromPattern } from './hunter-service'
+import { searchContacts as apolloSearchContacts } from './apollo-service'
 import { generateHospitalityEmails } from './email-pattern-generator'
 import { ProspectSearchResult } from '@/lib/types/email-prospecting'
+
+// Hospitality-specific titles for Apollo search
+const HOSPITALITY_TITLES = [
+  'Owner',
+  'Co-Owner',
+  'Founder',
+  'General Manager',
+  'GM',
+  'Executive Chef',
+  'Chef',
+  'F&B Director',
+  'Food and Beverage Director',
+  'Restaurant Manager',
+  'Operations Manager',
+  'Managing Partner',
+  'Partner',
+  'Director of Operations',
+]
 
 export interface OwnerDiscoveryResult {
   businessName: string
@@ -18,9 +37,9 @@ export interface OwnerDiscoveryResult {
     title: string | null
     email: string | null
     emailConfidence: number
-    emailSource: 'hunter_finder' | 'hunter_pattern' | 'hunter_domain' | null
+    emailSource: 'hunter_finder' | 'hunter_pattern' | 'hunter_domain' | 'apollo' | null
     phone: string | null
-    source: 'yelp' | 'google' | 'hunter'
+    source: 'yelp' | 'google' | 'hunter' | 'apollo'
   }>
   businessInfo: {
     phone: string | null
@@ -47,6 +66,7 @@ export interface OwnerDiscoveryResult {
     yelpFound: boolean
     googleFound: boolean
     hunterFound: boolean
+    apolloFound: boolean
     ownerNamesFound: string[]
     emailsFound: string[]
   }
@@ -96,6 +116,7 @@ export async function discoverOwners(
       yelpFound: false,
       googleFound: false,
       hunterFound: false,
+      apolloFound: false,
       ownerNamesFound: [],
       emailsFound: [],
     },
@@ -332,9 +353,57 @@ export async function discoverOwners(
     }
   }
 
-  // ============ Step 5: Hospitality email fallback ============
+  // ============ Step 5: Apollo.io People Search (if still no owners) ============
+  // Apollo is better for B2B but worth trying with hospitality-specific titles
+  if (foundOwners.size === 0 && result.domain) {
+    console.log('[Owner Discovery] No owners found yet, trying Apollo.io People Search...')
+
+    try {
+      const apolloResult = await apolloSearchContacts({
+        organization_domains: [result.domain],
+        person_titles: HOSPITALITY_TITLES,
+        per_page: 10,
+      })
+
+      if (apolloResult?.contacts?.length) {
+        console.log(`[Owner Discovery] Apollo found ${apolloResult.contacts.length} contacts`)
+        result.meta.apolloFound = true
+
+        for (const contact of apolloResult.contacts) {
+          // Only add if we have a real name and email
+          if (contact.first_name && contact.last_name && contact.email) {
+            const key = `${contact.first_name.toLowerCase()}-${contact.last_name.toLowerCase()}`
+
+            if (!foundOwners.has(key)) {
+              foundOwners.set(key, {
+                name: contact.name || `${contact.first_name} ${contact.last_name}`,
+                firstName: contact.first_name,
+                lastName: contact.last_name,
+                title: contact.title || 'Contact',
+                email: contact.email,
+                emailConfidence: 85, // Apollo emails are generally reliable
+                emailSource: 'apollo',
+                phone: null, // Apollo doesn't include phone in basic contact info
+                source: 'apollo',
+              })
+              result.meta.ownerNamesFound.push(contact.name || `${contact.first_name} ${contact.last_name}`)
+              result.meta.emailsFound.push(contact.email)
+              console.log(`[Owner Discovery] Apollo: Added ${contact.name} <${contact.email}>`)
+            }
+          }
+        }
+      } else {
+        console.log('[Owner Discovery] Apollo found no contacts for this domain')
+      }
+    } catch (error) {
+      console.error('[Owner Discovery] Apollo search failed:', error)
+    }
+  }
+
+  // ============ Step 6: Hospitality email patterns (suggestions only) ============
+  // NOTE: These are NOT real people - they are pattern guesses to try
   if (includeHospitalityFallback && result.domain) {
-    console.log('[Owner Discovery] Adding hospitality email patterns...')
+    console.log('[Owner Discovery] Adding hospitality email patterns as suggestions...')
 
     const hospitalityEmails = generateHospitalityEmails(result.domain)
       .sort((a, b) => b.confidence - a.confidence)
@@ -358,6 +427,10 @@ export async function discoverOwners(
 /**
  * Convert discovery result to ProspectSearchResult array
  * For compatibility with existing prospect finder interface
+ *
+ * IMPORTANT: Only returns REAL people (from Yelp, Google, Hunter, Apollo)
+ * Hospitality patterns are NOT included here - they are available separately
+ * in discovery.hospitalityEmails as suggestions to try
  */
 export function toProspectSearchResults(
   discovery: OwnerDiscoveryResult
@@ -376,8 +449,8 @@ export function toProspectSearchResults(
         email_verified: false, // Not verified yet
         position: owner.title || undefined,
         domain: discovery.domain || undefined,
-        source: owner.emailSource === 'hunter_finder' || owner.emailSource === 'hunter_pattern'
-          ? 'pattern'
+        source: owner.source === 'apollo' ? 'apollo'
+          : owner.source === 'hunter' ? 'hunter'
           : 'manual',
         notes: `Found via ${owner.source}${owner.emailSource ? `, email from ${owner.emailSource}` : ''}`,
       })
@@ -394,22 +467,14 @@ export function toProspectSearchResults(
         position: owner.title || undefined,
         domain: discovery.domain || undefined,
         source: 'manual',
-        notes: `Owner found via ${owner.source}, email not found`,
+        notes: `Owner found via ${owner.source}, email not found - try hospitality patterns`,
       })
     }
   }
 
-  // Add hospitality pattern emails
-  for (const hospEmail of discovery.hospitalityEmails) {
-    results.push({
-      email: hospEmail.email,
-      email_confidence: hospEmail.confidence,
-      position: hospEmail.role,
-      domain: discovery.domain || undefined,
-      source: 'hospitality_pattern',
-      notes: `Role-based email pattern (${hospEmail.role})`,
-    })
-  }
+  // NOTE: We do NOT add hospitality patterns as contacts
+  // They are fake/guessed emails, not real people
+  // Access them via discovery.hospitalityEmails if needed
 
   return results
 }
