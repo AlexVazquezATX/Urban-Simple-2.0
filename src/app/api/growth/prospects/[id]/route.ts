@@ -120,6 +120,7 @@ export async function PATCH(
       convertedToClientId,
       discoveryData,
       contact,
+      contacts,
     } = body
 
     const prospect = await prisma.prospect.update({
@@ -151,8 +152,60 @@ export async function PATCH(
       },
     })
 
-    // Handle contact update
-    if (contact) {
+    // Handle multiple contacts (new format)
+    if (contacts && Array.isArray(contacts)) {
+      // Get existing contacts for this prospect
+      const existingContacts = await prisma.prospectContact.findMany({
+        where: { prospectId: id },
+        select: { id: true },
+      })
+      const existingIds = new Set(existingContacts.map(c => c.id))
+
+      // Track which contacts are in the update
+      const updatedIds = new Set<string>()
+
+      for (const c of contacts) {
+        if (c.id && existingIds.has(c.id)) {
+          // Update existing contact
+          updatedIds.add(c.id)
+          await prisma.prospectContact.update({
+            where: { id: c.id },
+            data: {
+              firstName: c.firstName || '',
+              lastName: c.lastName || '',
+              email: c.email,
+              phone: c.phone,
+              title: c.title,
+            },
+          })
+        } else if (c.firstName || c.lastName || c.email || c.title) {
+          // Create new contact
+          await prisma.prospectContact.create({
+            data: {
+              prospectId: id,
+              firstName: c.firstName || '',
+              lastName: c.lastName || '',
+              email: c.email,
+              phone: c.phone,
+              title: c.title,
+            },
+          })
+        }
+      }
+
+      // Delete contacts that were removed (not in the update)
+      const toDelete = [...existingIds].filter(id => !updatedIds.has(id))
+      if (toDelete.length > 0) {
+        await prisma.prospectContact.deleteMany({
+          where: {
+            id: { in: toDelete },
+            prospectId: id,
+          },
+        })
+      }
+    }
+    // Handle single contact update (legacy format)
+    else if (contact) {
       if (contact.id) {
         // Update existing contact
         await prisma.prospectContact.update({

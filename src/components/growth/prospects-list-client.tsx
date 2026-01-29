@@ -36,10 +36,13 @@ import {
   Trash2,
   RefreshCw,
   ArrowRight,
+  AtSign,
+  UserPlus,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { ProspectDetailPanel } from './prospect-detail-panel'
 
 interface Prospect {
   id: string
@@ -71,7 +74,7 @@ interface Prospect {
     firstName: string
     lastName: string
   } | null
-  _count: {
+  _count?: {
     activities: number
   }
 }
@@ -118,7 +121,10 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isEnrichingBulk, setIsEnrichingBulk] = useState(false)
+  const [isFindingEmails, setIsFindingEmails] = useState(false)
+  const [isFindingContacts, setIsFindingContacts] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
+  const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
 
   // Calculate stats for tabs
   const stats = useMemo(() => {
@@ -366,6 +372,306 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       }
     } catch (error) {
       toast.error('Failed to move prospects to pipeline')
+    }
+  }
+
+  // Bulk find emails handler
+  const handleBulkFindEmails = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select prospects to find emails')
+      return
+    }
+
+    // Debug: log the selected prospects to understand the data structure
+    const selectedProspects = prospects.filter(p => selectedIds.has(p.id))
+    console.log('Selected prospects:', selectedProspects.map(p => ({
+      id: p.id,
+      companyName: p.companyName,
+      website: p.website,
+      hasContacts: p.contacts?.length > 0,
+      firstContactEmail: p.contacts?.[0]?.email,
+    })))
+
+    // Get selected prospects that have a website but no email
+    const prospectsToProcess = prospects.filter(p =>
+      selectedIds.has(p.id) &&
+      p.website &&
+      p.contacts?.[0] &&
+      !p.contacts[0].email
+    )
+
+    if (prospectsToProcess.length === 0) {
+      // Provide more specific feedback
+      const withEmail = selectedProspects.filter(p => p.contacts?.[0]?.email).length
+      const noWebsite = selectedProspects.filter(p => !p.website).length
+      const noContact = selectedProspects.filter(p => !p.contacts?.[0]).length
+
+      let message = 'Cannot find emails: '
+      const reasons = []
+      if (withEmail > 0) reasons.push(`${withEmail} already have emails`)
+      if (noWebsite > 0) reasons.push(`${noWebsite} missing website`)
+      if (noContact > 0) reasons.push(`${noContact} missing contact name`)
+
+      toast.info(message + (reasons.length > 0 ? reasons.join(', ') : 'unknown issue'))
+      return
+    }
+
+    setIsFindingEmails(true)
+    let successCount = 0
+    let failCount = 0
+
+    for (const prospect of prospectsToProcess) {
+      try {
+        const contact = prospect.contacts[0]
+        const website = prospect.website!
+
+        // Extract domain from website
+        let domain = website
+        try {
+          const url = new URL(website.startsWith('http') ? website : `https://${website}`)
+          domain = url.hostname.replace(/^www\./, '')
+        } catch {
+          domain = website.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0]
+        }
+
+        const response = await fetch('/api/growth/email-prospecting/search/person', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: contact.firstName,
+            lastName: contact.lastName,
+            domain,
+            title: contact.title || undefined,
+          }),
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.results && data.results.length > 0) {
+            // Get the best email (highest confidence)
+            const bestEmail = data.results.sort((a: any, b: any) =>
+              (b.confidence || 0) - (a.confidence || 0)
+            )[0]
+
+            // Update the prospect with the found email
+            const updateResponse = await fetch(`/api/growth/prospects/${prospect.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contact: {
+                  id: contact.id,
+                  firstName: contact.firstName,
+                  lastName: contact.lastName,
+                  email: bestEmail.email,
+                  phone: contact.phone,
+                  title: contact.title,
+                },
+              }),
+            })
+
+            if (updateResponse.ok) {
+              // Update local state
+              setProspects(prev => prev.map(p =>
+                p.id === prospect.id
+                  ? {
+                      ...p,
+                      contacts: [{
+                        ...contact,
+                        email: bestEmail.email,
+                      }]
+                    }
+                  : p
+              ))
+              successCount++
+            } else {
+              failCount++
+            }
+          } else {
+            failCount++
+          }
+        } else {
+          failCount++
+        }
+      } catch (error) {
+        console.error('Error finding email for prospect:', prospect.id, error)
+        failCount++
+      }
+    }
+
+    setIsFindingEmails(false)
+    setSelectedIds(new Set())
+
+    if (successCount > 0) {
+      toast.success(`Found emails for ${successCount} prospect${successCount > 1 ? 's' : ''}`)
+    }
+    if (failCount > 0) {
+      toast.info(`Could not find emails for ${failCount} prospect${failCount > 1 ? 's' : ''}`)
+    }
+  }
+
+  // Bulk find contacts handler - discovers people at companies using domain search
+  const handleBulkFindContacts = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select prospects to find contacts')
+      return
+    }
+
+    // Get selected prospects that have a website but NO contacts
+    const selectedProspects = prospects.filter(p => selectedIds.has(p.id))
+    const prospectsToProcess = selectedProspects.filter(p =>
+      p.website && (!p.contacts || p.contacts.length === 0)
+    )
+
+    if (prospectsToProcess.length === 0) {
+      const withContacts = selectedProspects.filter(p => p.contacts?.length > 0).length
+      const noWebsite = selectedProspects.filter(p => !p.website).length
+
+      let message = 'Cannot find contacts: '
+      const reasons = []
+      if (withContacts > 0) reasons.push(`${withContacts} already have contacts`)
+      if (noWebsite > 0) reasons.push(`${noWebsite} missing website`)
+
+      toast.info(message + (reasons.length > 0 ? reasons.join(', ') : 'unknown issue'))
+      return
+    }
+
+    setIsFindingContacts(true)
+    let successCount = 0
+    let totalContactsFound = 0
+    let failCount = 0
+
+    for (const prospect of prospectsToProcess) {
+      try {
+        const website = prospect.website!
+
+        // Extract domain from website
+        let domain = website
+        try {
+          const url = new URL(website.startsWith('http') ? website : `https://${website}`)
+          domain = url.hostname.replace(/^www\./, '')
+        } catch {
+          domain = website.replace(/^(https?:\/\/)?(www\.)?/, '').split('/')[0]
+        }
+
+        console.log(`[Find Contacts] Searching domain: ${domain} for ${prospect.companyName}`)
+
+        // Call domain search API to find contacts at this company
+        // Use 'all' method to try Apollo + website scraping for better coverage
+        const response = await fetch('/api/growth/email-prospecting/search/domain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            domain,
+            method: 'all', // Try all methods: Apollo + scraper
+            limit: 5,
+            verifyEmails: false,
+          }),
+        })
+
+        console.log(`[Find Contacts] Response status: ${response.status}`)
+
+        if (response.ok) {
+          const data = await response.json()
+          console.log(`[Find Contacts] API response:`, data)
+          // API returns { data: prospects[], meta: {} }
+          const foundPeople = data.data || []
+          console.log(`[Find Contacts] Found ${foundPeople.length} people at ${domain}`)
+          if (foundPeople.length > 0) {
+            // Create contacts from the found people
+            const newContacts: Array<{
+              id: string
+              firstName: string
+              lastName: string
+              email?: string | null
+              phone?: string | null
+              title?: string | null
+            }> = []
+
+            for (const person of foundPeople) {
+              // Create contact for this person
+              // Handle cases where we only have email (from website scraper) vs full profile (from Apollo)
+              const hasName = person.first_name || person.last_name
+              const contactData = hasName
+                ? {
+                    firstName: person.first_name || '',
+                    lastName: person.last_name || '',
+                    email: person.email || null,
+                    title: person.position || null,
+                  }
+                : {
+                    // Email-only contact (from scraper) - use email prefix as placeholder
+                    firstName: 'Contact',
+                    lastName: person.email?.split('@')[0] || 'Unknown',
+                    email: person.email || null,
+                    title: person.notes || 'Found via website',
+                  }
+
+              const updateResponse = await fetch(`/api/growth/prospects/${prospect.id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contact: contactData }),
+              })
+
+              if (updateResponse.ok) {
+                const updated = await updateResponse.json()
+                // Get the newly created contact
+                if (updated.contacts && updated.contacts.length > 0) {
+                  const latestContact = updated.contacts[updated.contacts.length - 1]
+                  newContacts.push(latestContact)
+                  totalContactsFound++
+                }
+              }
+            }
+
+            // Update local state with all new contacts
+            if (newContacts.length > 0) {
+              setProspects(prev => prev.map(p =>
+                p.id === prospect.id
+                  ? { ...p, contacts: newContacts }
+                  : p
+              ))
+              successCount++
+            }
+          } else {
+            console.log(`[Find Contacts] No people found for ${domain}`)
+            failCount++
+          }
+        } else {
+          const errorText = await response.text()
+          console.error(`[Find Contacts] API error for ${domain}:`, response.status, errorText)
+          failCount++
+        }
+      } catch (error) {
+        console.error('[Find Contacts] Error finding contacts for prospect:', prospect.id, error)
+        failCount++
+      }
+    }
+
+    setIsFindingContacts(false)
+    setSelectedIds(new Set())
+
+    if (successCount > 0) {
+      toast.success(`Found ${totalContactsFound} contact${totalContactsFound > 1 ? 's' : ''} for ${successCount} prospect${successCount > 1 ? 's' : ''}`)
+    }
+    if (failCount > 0) {
+      toast.info(`Could not find contacts for ${failCount} prospect${failCount > 1 ? 's' : ''}`)
+    }
+  }
+
+  // Prospect detail panel handlers
+  const handleSelectProspect = (prospect: Prospect) => {
+    setSelectedProspect(prospect)
+  }
+
+  const handleClosePanel = () => {
+    setSelectedProspect(null)
+  }
+
+  const handleSaveProspect = (savedProspect?: Prospect) => {
+    if (savedProspect) {
+      setProspects(prev => prev.map(p =>
+        p.id === savedProspect.id ? { ...p, ...savedProspect } : p
+      ))
     }
   }
 
@@ -627,6 +933,44 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   </>
                 )}
               </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkFindContacts}
+                disabled={isFindingContacts}
+                className="rounded-sm bg-white"
+              >
+                {isFindingContacts ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Finding...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+                    Find Contacts
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkFindEmails}
+                disabled={isFindingEmails}
+                className="rounded-sm bg-white"
+              >
+                {isFindingEmails ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Finding...
+                  </>
+                ) : (
+                  <>
+                    <AtSign className="mr-1.5 h-3.5 w-3.5" />
+                    Find Emails
+                  </>
+                )}
+              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="rounded-sm bg-white">
@@ -760,7 +1104,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                       <tr
                         key={prospect.id}
                         className={`hover:bg-warm-50 cursor-pointer transition-colors ${selectedIds.has(prospect.id) ? 'bg-lime-50' : ''}`}
-                        onClick={() => router.push(`/growth/prospects/${prospect.id}`)}
+                        onClick={() => handleSelectProspect(prospect)}
                       >
                         <td className="p-3" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
@@ -776,7 +1120,18 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         {visibleColumns.includes('contact') && (
                           <td className="p-3 text-xs text-warm-600">
                             {primaryContact ? (
-                              <span>{primaryContact.firstName} {primaryContact.lastName}</span>
+                              <div className="flex items-center gap-1.5">
+                                <span>{primaryContact.firstName} {primaryContact.lastName}</span>
+                                {prospect.contacts.length > 1 && (
+                                  <Badge
+                                    variant="outline"
+                                    className="rounded-sm text-[9px] px-1 py-0 h-4 bg-warm-100 text-warm-600 border-warm-200"
+                                    title={`${prospect.contacts.length} contacts`}
+                                  >
+                                    +{prospect.contacts.length - 1}
+                                  </Badge>
+                                )}
+                              </div>
                             ) : (
                               <span className="text-warm-400">-</span>
                             )}
@@ -862,7 +1217,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="rounded-sm">
-                                <DropdownMenuItem onClick={() => router.push(`/growth/prospects/${prospect.id}`)}>
+                                <DropdownMenuItem onClick={() => handleSelectProspect(prospect)}>
                                   <Eye className="mr-2 h-3.5 w-3.5" />
                                   View Details
                                 </DropdownMenuItem>
@@ -918,6 +1273,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       <p className="text-xs text-warm-500 text-center mt-4">
         Showing {filteredProspects.length} of {prospects.length} leads
       </p>
+
+      {/* Prospect Detail Panel */}
+      {selectedProspect && (
+        <ProspectDetailPanel
+          prospect={selectedProspect}
+          onClose={handleClosePanel}
+          onSave={handleSaveProspect}
+        />
+      )}
     </div>
   )
 }

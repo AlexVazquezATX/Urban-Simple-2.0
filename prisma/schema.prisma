@@ -990,6 +990,14 @@ model ProspectContact {
   role            String  @default("primary") // primary, billing, operations, other
   isDecisionMaker Boolean @default(false) @map("is_decision_maker")
 
+  // Email Prospecting Fields
+  emailConfidence         Int?      @map("email_confidence") // 0-100 score
+  emailVerified           Boolean   @default(false) @map("email_verified")
+  emailVerifiedAt         DateTime? @map("email_verified_at")
+  emailVerificationStatus String?   @map("email_verification_status") // valid, invalid, risky, unknown
+  emailSource             String?   @map("email_source") // apollo, pattern, scraper, manual
+  linkedinUrl             String?   @map("linkedin_url")
+
   notes     String?  @db.Text
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -1277,6 +1285,25 @@ model GrowthAutomationLog {
   @@index([companyId, createdAt])
   @@index([type, status])
   @@map("growth_automation_logs")
+}
+
+model EmailProspectingLog {
+  id             String   @id @default(cuid())
+  companyId      String   @map("company_id")
+  userId         String   @map("user_id")
+  provider       String // apollo, abstract, scraper
+  endpoint       String // domain_search, person_search, verify
+  queryParams    Json?    @map("query_params")
+  creditsUsed    Int      @default(0) @map("credits_used")
+  resultsCount   Int      @default(0) @map("results_count")
+  responseTimeMs Int?     @map("response_time_ms")
+  success        Boolean  @default(true)
+  errorMessage   String?  @map("error_message") @db.Text
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([companyId, createdAt])
+  @@index([provider])
+  @@map("email_prospecting_logs")
 }
 
 model PulseGenerationLog {
