@@ -49,6 +49,7 @@ export interface FoodPhotoParams {
   outputFormat: OutputFormatId
   cuisineType?: string
   style?: string
+  styleReferenceBase64?: string // Optional style reference for consistent look
 }
 
 export interface BrandedPostParams {
@@ -82,42 +83,69 @@ export async function generateFoodPhoto(
 ): Promise<GeneratedImage | null> {
   const ai = getGenAI()
 
-  const { dishPhotoBase64, dishDescription, outputFormat, cuisineType, style } =
+  const { dishPhotoBase64, dishDescription, outputFormat, cuisineType, style, styleReferenceBase64 } =
     params
 
   // Build the enhanced prompt
-  const prompt = buildFoodPhotoPrompt({
+  let prompt = buildFoodPhotoPrompt({
     dishDescription,
     outputFormat,
     cuisineType,
     style,
   })
 
+  // Add style reference instructions if provided
+  if (styleReferenceBase64) {
+    prompt += `
+
+STYLE REFERENCE:
+A second image is provided as a style reference. Match these elements from it:
+- Same plate style, color, and shape
+- Same table/background surface and color
+- Same lighting style and mood
+- Same overall aesthetic and presentation style
+The goal is to make the dish photo look like it belongs in the same photo set as the reference.`
+  }
+
   const formatConfig = OUTPUT_FORMATS[outputFormat]
 
   console.log(
     '[Restaurant Studio] Generating food photo...',
     outputFormat,
-    formatConfig.aspectRatio
+    formatConfig.aspectRatio,
+    styleReferenceBase64 ? 'with style reference' : 'no style reference'
   )
 
-  // Parse the base64 data URL
+  // Parse the base64 data URL for dish photo
   const base64Match = dishPhotoBase64.match(/^data:([^;]+);base64,(.+)$/)
   const mimeType = base64Match?.[1] || 'image/jpeg'
   const imageData = base64Match?.[2] || dishPhotoBase64
 
-  // Build multimodal content with reference image
-  const contents = {
-    parts: [
-      { text: prompt },
-      {
-        inlineData: {
-          mimeType,
-          data: imageData,
-        },
+  // Build multimodal content parts
+  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+    { text: prompt },
+    {
+      inlineData: {
+        mimeType,
+        data: imageData,
       },
-    ],
+    },
+  ]
+
+  // Add style reference image if provided
+  if (styleReferenceBase64) {
+    const styleMatch = styleReferenceBase64.match(/^data:([^;]+);base64,(.+)$/)
+    const styleMimeType = styleMatch?.[1] || 'image/jpeg'
+    const styleImageData = styleMatch?.[2] || styleReferenceBase64
+    parts.push({
+      inlineData: {
+        mimeType: styleMimeType,
+        data: styleImageData,
+      },
+    })
   }
+
+  const contents = { parts }
 
   // Try Gemini 3 Pro Image first
   try {

@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         outputFormat,
         cuisineType,
         style,
+        styleReferenceBase64,
       } = body
 
       if (!dishPhotoBase64) {
@@ -59,6 +60,7 @@ export async function POST(request: Request) {
         outputFormat,
         cuisineType,
         hasDescription: !!dishDescription,
+        hasStyleReference: !!styleReferenceBase64,
       })
 
       const result = await generateFoodPhoto({
@@ -67,6 +69,7 @@ export async function POST(request: Request) {
         outputFormat: outputFormat as OutputFormatId,
         cuisineType,
         style,
+        styleReferenceBase64,
       })
 
       if (!result) {

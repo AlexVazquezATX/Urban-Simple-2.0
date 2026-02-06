@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Sparkles } from 'lucide-react'
+import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -44,6 +44,10 @@ export default function GeneratePage() {
   const [outputFormat, setOutputFormat] = useState<OutputFormatId>('menu')
   const [cuisineType, setCuisineType] = useState('')
   const [foodStyle, setFoodStyle] = useState('')
+
+  // Style Reference (optional - for consistent look across dishes)
+  const [styleReference, setStyleReference] = useState<string | null>(null)
+  const [showStyleReference, setShowStyleReference] = useState(false)
 
   // Branded Post Mode state
   const [postType, setPostType] = useState<BrandedPostType>('announcement')
@@ -108,6 +112,7 @@ export default function GeneratePage() {
               outputFormat,
               cuisineType: cuisineType || undefined,
               style: foodStyle || undefined,
+              styleReferenceBase64: styleReference || undefined,
             }
           : {
               mode: 'branded_post',
@@ -303,6 +308,76 @@ export default function GeneratePage() {
                       ))}
                     </select>
                   </div>
+                </div>
+
+                {/* Style Reference (Collapsible) */}
+                <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowStyleReference(!showStyleReference)}
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-warm-50 transition-colors"
+                    disabled={isGenerating}
+                  >
+                    <div>
+                      <span className="text-sm font-medium text-warm-700">Style Reference</span>
+                      <p className="text-xs text-warm-500 mt-0.5">
+                        Match the look of another dish photo (optional)
+                      </p>
+                    </div>
+                    {showStyleReference ? (
+                      <ChevronDown className="w-4 h-4 text-warm-500" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-warm-500" />
+                    )}
+                  </button>
+
+                  {showStyleReference && (
+                    <div className="px-4 pb-4 border-t border-warm-100">
+                      <p className="text-xs text-warm-500 mt-3 mb-3">
+                        Upload a previously generated image to match its plates, background, and styling.
+                      </p>
+
+                      {styleReference ? (
+                        <div className="relative aspect-video rounded-sm overflow-hidden bg-warm-100">
+                          <img
+                            src={styleReference}
+                            alt="Style reference"
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => setStyleReference(null)}
+                            className="absolute top-2 right-2 p-1.5 bg-warm-900/80 hover:bg-warm-900 rounded-sm text-white transition-colors"
+                            title="Remove reference"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="block cursor-pointer">
+                          <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
+                            <ImageIcon className="w-8 h-8 text-warm-400 mb-2" />
+                            <span className="text-sm text-warm-600">Upload reference image</span>
+                            <span className="text-xs text-warm-400 mt-1">JPG, PNG</span>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                const reader = new FileReader()
+                                reader.onload = (ev) => {
+                                  setStyleReference(ev.target?.result as string)
+                                }
+                                reader.readAsDataURL(file)
+                              }
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  )}
                 </div>
               </>
             )}
