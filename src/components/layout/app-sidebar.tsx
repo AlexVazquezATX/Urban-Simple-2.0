@@ -41,6 +41,7 @@ import {
   Palette,
   CheckSquare,
   AtSign,
+  Camera,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -159,6 +160,7 @@ export function AppSidebar() {
   const growthItems = [
     { href: '/growth', icon: Rocket, label: 'Daily Planner', exact: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/creative-hub', icon: Palette, label: 'Creative Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/creative-studio', icon: Camera, label: 'Creative Studio', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/email-finder', icon: AtSign, label: 'Email Finder', roles: ['SUPER_ADMIN', 'ADMIN'] },
