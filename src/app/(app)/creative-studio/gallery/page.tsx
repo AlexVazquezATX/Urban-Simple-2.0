@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
   Download,
@@ -11,6 +11,7 @@ import {
   ImageIcon,
   Camera,
   Sparkles,
+  Wand2,
   X,
   Filter,
 } from 'lucide-react'
@@ -45,6 +46,7 @@ interface ContentItem {
 type FilterMode = 'all' | 'food_photo' | 'branded_post'
 
 export default function GalleryPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [content, setContent] = useState<ContentItem[]>([])
   const [loading, setLoading] = useState(true)
@@ -223,8 +225,20 @@ export default function GalleryPage() {
                     </Badge>
 
                     {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                       <span className="text-white text-sm font-medium">View</span>
+                      {item.generatedImageUrl && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${item.id}`)
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1 bg-white/90 hover:bg-white rounded-sm text-xs font-medium text-plum-700 transition-colors"
+                        >
+                          <Wand2 className="w-3 h-3" />
+                          Use in Branded Post
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -269,7 +283,7 @@ export default function GalleryPage() {
 
       {/* Detail Modal */}
       <Dialog open={!!selectedItem} onOpenChange={() => setSelectedItem(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedItem?.mode === 'food_photo' ? (
@@ -289,7 +303,7 @@ export default function GalleryPage() {
                   <img
                     src={selectedItem.generatedImageUrl}
                     alt={selectedItem.headline || 'Generated image'}
-                    className="w-full h-auto"
+                    className="w-full h-auto max-h-[50vh] object-contain"
                   />
                 ) : (
                   <div className="aspect-square flex items-center justify-center">
@@ -331,27 +345,43 @@ export default function GalleryPage() {
               </div>
 
               {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 rounded-sm"
-                  onClick={() => handleDownload(selectedItem)}
-                >
-                  <Download className="w-4 h-4 mr-1.5" />
-                  Download
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-sm text-red-600 hover:text-red-700 hover:bg-red-50"
-                  onClick={() => handleDelete(selectedItem.id)}
-                  disabled={deleting === selectedItem.id}
-                >
-                  {deleting === selectedItem.id ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <Trash2 className="w-4 h-4" />
-                  )}
-                </Button>
+              <div className="space-y-2 pt-2">
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 rounded-sm"
+                    onClick={() => handleDownload(selectedItem)}
+                  >
+                    <Download className="w-4 h-4 mr-1.5" />
+                    Download
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDelete(selectedItem.id)}
+                    disabled={deleting === selectedItem.id}
+                  >
+                    {deleting === selectedItem.id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="w-4 h-4" />
+                    )}
+                  </Button>
+                </div>
+
+                {selectedItem.generatedImageUrl && (
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
+                    onClick={() => {
+                      setSelectedItem(null)
+                      router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${selectedItem.id}`)
+                    }}
+                  >
+                    <Wand2 className="w-4 h-4 mr-1.5" />
+                    Use in Branded Post
+                  </Button>
+                )}
               </div>
             </div>
           )}

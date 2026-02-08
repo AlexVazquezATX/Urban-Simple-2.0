@@ -8,6 +8,9 @@ import {
   Loader2,
   Palette,
   Check,
+  ImageIcon,
+  Upload,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +28,7 @@ interface BrandKit {
   cuisineType?: string | null
   preferredStyle?: string | null
   logoUrl?: string | null
+  iconUrl?: string | null
   isDefault: boolean
 }
 
@@ -49,6 +53,8 @@ export default function BrandKitPage() {
   const [secondaryColor, setSecondaryColor] = useState('#f5f5f5')
   const [cuisineType, setCuisineType] = useState('')
   const [preferredStyle, setPreferredStyle] = useState('')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  const [iconUrl, setIconUrl] = useState<string | null>(null)
 
   useEffect(() => {
     loadBrandKit()
@@ -67,9 +73,12 @@ export default function BrandKitPage() {
         setSecondaryColor(kit.secondaryColor || '#f5f5f5')
         setCuisineType(kit.cuisineType || '')
         setPreferredStyle(kit.preferredStyle || '')
+        setLogoUrl(kit.logoUrl || null)
+        setIconUrl(kit.iconUrl || null)
       }
     } catch (error) {
       console.error('Failed to load brand kit:', error)
+      toast.error('Failed to load brand kit. Please refresh the page.')
     } finally {
       setLoading(false)
     }
@@ -91,6 +100,8 @@ export default function BrandKitPage() {
             restaurantName,
             primaryColor,
             secondaryColor,
+            logoUrl: logoUrl || null,
+            iconUrl: iconUrl || null,
             cuisineType: cuisineType || null,
             preferredStyle: preferredStyle || null,
           }
@@ -98,6 +109,8 @@ export default function BrandKitPage() {
             restaurantName,
             primaryColor,
             secondaryColor,
+            logoUrl: logoUrl || null,
+            iconUrl: iconUrl || null,
             cuisineType: cuisineType || null,
             preferredStyle: preferredStyle || null,
             isDefault: true,
@@ -127,6 +140,32 @@ export default function BrandKitPage() {
   function applyPalette(palette: { primary: string; secondary: string }) {
     setPrimaryColor(palette.primary)
     setSecondaryColor(palette.secondary)
+  }
+
+  function handleImageUpload(
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (url: string | null) => void
+  ) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file')
+      return
+    }
+
+    // 2MB max for logos (stored as data URLs)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Image must be under 2MB')
+      return
+    }
+
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setter(ev.target?.result as string)
+    }
+    reader.readAsDataURL(file)
   }
 
   if (loading) {
@@ -176,6 +215,97 @@ export default function BrandKitPage() {
               placeholder="Your Restaurant Name"
               className="rounded-sm"
             />
+          </div>
+
+          {/* Logos & Icons */}
+          <div className="bg-white rounded-sm border border-warm-200 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <ImageIcon className="w-4 h-4 text-warm-500" />
+              <Label className="text-warm-700">Logos & Icons</Label>
+            </div>
+            <p className="text-xs text-warm-500 mb-4">
+              Upload your logo and icon to automatically include them in branded posts
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* Full Logo */}
+              <div>
+                <Label className="text-xs text-warm-500 mb-2 block">
+                  Full Logo
+                </Label>
+                {logoUrl ? (
+                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 bg-warm-50 overflow-hidden">
+                    <img
+                      src={logoUrl}
+                      alt="Restaurant logo"
+                      className="w-full h-full object-contain p-2"
+                    />
+                    <button
+                      onClick={() => setLogoUrl(null)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-warm-900/70 hover:bg-warm-900 rounded-sm text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
+                      <Upload className="w-5 h-5 text-warm-400 mb-1.5" />
+                      <span className="text-xs text-warm-500">Upload logo</span>
+                      <span className="text-[10px] text-warm-400 mt-0.5">PNG, SVG, JPG</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, setLogoUrl)}
+                    />
+                  </label>
+                )}
+                <p className="text-[10px] text-warm-400 mt-1">
+                  Main logo with text
+                </p>
+              </div>
+
+              {/* Icon / Mark */}
+              <div>
+                <Label className="text-xs text-warm-500 mb-2 block">
+                  Icon / Mark
+                </Label>
+                {iconUrl ? (
+                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 bg-warm-50 overflow-hidden">
+                    <img
+                      src={iconUrl}
+                      alt="Restaurant icon"
+                      className="w-full h-full object-contain p-2"
+                    />
+                    <button
+                      onClick={() => setIconUrl(null)}
+                      className="absolute top-1.5 right-1.5 p-1 bg-warm-900/70 hover:bg-warm-900 rounded-sm text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="block cursor-pointer">
+                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
+                      <Upload className="w-5 h-5 text-warm-400 mb-1.5" />
+                      <span className="text-xs text-warm-500">Upload icon</span>
+                      <span className="text-[10px] text-warm-400 mt-0.5">PNG, SVG, JPG</span>
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, setIconUrl)}
+                    />
+                  </label>
+                )}
+                <p className="text-[10px] text-warm-400 mt-1">
+                  Smaller mark or symbol
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Colors */}

@@ -15,6 +15,7 @@ export interface CreateBrandKitInput {
   companyId: string
   restaurantName: string
   logoUrl?: string
+  iconUrl?: string
   primaryColor: string
   secondaryColor?: string
   accentColor?: string
@@ -27,6 +28,7 @@ export interface CreateBrandKitInput {
 export interface UpdateBrandKitInput {
   restaurantName?: string
   logoUrl?: string
+  iconUrl?: string
   primaryColor?: string
   secondaryColor?: string
   accentColor?: string
@@ -86,6 +88,7 @@ export async function createBrandKit(input: CreateBrandKitInput) {
       companyId: input.companyId,
       restaurantName: input.restaurantName,
       logoUrl: input.logoUrl,
+      iconUrl: input.iconUrl,
       primaryColor: input.primaryColor,
       secondaryColor: input.secondaryColor,
       accentColor: input.accentColor,

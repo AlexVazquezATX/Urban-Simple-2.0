@@ -195,8 +195,9 @@ export function buildFoodPhotoPrompt(params: {
   outputFormat: OutputFormatId
   cuisineType?: string
   style?: string
+  additionalInstructions?: string
 }): string {
-  const { dishDescription, outputFormat, cuisineType, style } = params
+  const { dishDescription, outputFormat, cuisineType, style, additionalInstructions } = params
   const formatConfig = OUTPUT_FORMATS[outputFormat]
 
   const cuisineContext = cuisineType
@@ -226,7 +227,7 @@ QUALITY REQUIREMENTS:
 - Appetizing and irresistible
 - Perfect focus and exposure
 - High resolution, 8K quality
-- Photorealistic - must look like a real photograph, not AI-generated artwork`
+- Photorealistic - must look like a real photograph, not AI-generated artwork${additionalInstructions ? `\n\nADDITIONAL DIRECTIONS FROM THE USER:\n${additionalInstructions}` : ''}`
 }
 
 export function buildBrandedPostPrompt(params: {
@@ -235,7 +236,12 @@ export function buildBrandedPostPrompt(params: {
   restaurantName?: string
   primaryColor?: string
   secondaryColor?: string
+  applyBrandColors?: boolean
   style?: string
+  hasSourceImage?: boolean
+  hasLogo?: boolean
+  aspectRatio?: string
+  additionalInstructions?: string
 }): string {
   const {
     postType,
@@ -243,14 +249,49 @@ export function buildBrandedPostPrompt(params: {
     restaurantName,
     primaryColor,
     secondaryColor,
+    applyBrandColors = true,
     style,
+    hasSourceImage,
+    hasLogo,
+    aspectRatio,
+    additionalInstructions,
   } = params
   const postConfig = BRANDED_POST_TYPES[postType]
 
   const brandColors =
-    primaryColor || secondaryColor
-      ? `Brand colors: ${primaryColor || ''}${secondaryColor ? `, ${secondaryColor}` : ''}. `
+    applyBrandColors && (primaryColor || secondaryColor)
+      ? `Brand colors to use: ${primaryColor || ''}${secondaryColor ? `, ${secondaryColor}` : ''}. Use these as the primary palette for the graphic.`
       : ''
+
+  const aspectRatioInstruction = aspectRatio
+    ? `\nOUTPUT DIMENSIONS: The final image MUST be ${aspectRatio} aspect ratio.${
+        hasSourceImage
+          ? ` Crop or reframe the source image as needed to fit ${aspectRatio}. Do NOT keep the source image's original aspect ratio if it differs.`
+          : ''
+      }`
+    : ''
+
+  const sourceImageInstructions = hasSourceImage
+    ? `
+SOURCE IMAGE:
+A reference image is provided. Use this as the base photograph/background for the graphic.
+- Incorporate the reference image as the hero visual element
+- Apply brand overlay, text, and design elements ON TOP of this image
+- Maintain the visual quality and composition of the source image
+- Add appropriate darkening/gradient overlay where text will appear for readability
+- Do NOT replace the image - enhance it with branded graphic design elements
+- IMPORTANT: Crop/reframe to match the requested aspect ratio`
+    : ''
+
+  const logoInstructions = hasLogo
+    ? `
+LOGO:
+A restaurant logo image is provided. Incorporate it into the design:
+- Place the logo prominently but tastefully (typically top or bottom of the graphic)
+- Ensure the logo is clearly visible and not obscured by other elements
+- Size the logo appropriately - large enough to be recognizable but not overpowering
+- Maintain the logo's original proportions (do not stretch or distort it)`
+    : ''
 
   return `Create a professional restaurant marketing graphic.
 
@@ -260,16 +301,26 @@ LAYOUT: ${postConfig.layoutStyle}
 ${postConfig.promptModifier}
 
 ${restaurantName ? `Restaurant: ${restaurantName}` : ''}
-${headline ? `Headline/Text: "${headline}"` : ''}
+${headline ? `TEXT TO DISPLAY: "${headline}"` : ''}
 ${brandColors}
 ${style ? `Style preference: ${style}` : ''}
+${aspectRatioInstruction}
+${sourceImageInstructions}
+${logoInstructions}
+
+CRITICAL TEXT RULES:
+- ONLY render the EXACT text provided above in "TEXT TO DISPLAY"
+- Do NOT add, invent, fabricate, or modify ANY text whatsoever
+- Do NOT add dates, times, days of the week, prices, or any details not explicitly given
+- Do NOT add subtitles, taglines, calls-to-action, or supplementary text
+- If no text was provided, create a purely visual graphic with NO text at all
+- The restaurant name may be included if provided, but nothing else
 
 REQUIREMENTS:
 - Modern, professional design
 - Clear visual hierarchy
 - Social media optimized
-- Visually appealing and on-brand
-- High quality, sharp graphics`
+- High quality, sharp graphics${additionalInstructions ? `\n\nADDITIONAL DIRECTIONS FROM THE USER:\n${additionalInstructions}` : ''}`
 }
 
 // ============================================

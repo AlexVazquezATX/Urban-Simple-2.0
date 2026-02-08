@@ -1862,7 +1862,8 @@ model RestaurantBrandKit {
   id             String   @id @default(cuid())
   companyId      String   @map("company_id")
   restaurantName String   @map("restaurant_name")
-  logoUrl        String?  @map("logo_url")
+  logoUrl        String?  @map("logo_url") @db.Text // Full logo (data URL)
+  iconUrl        String?  @map("icon_url") @db.Text // Small icon/mark (data URL)
   primaryColor   String   @map("primary_color") // Hex color
   secondaryColor String?  @map("secondary_color") // Hex color
   accentColor    String?  @map("accent_color") // Hex color
@@ -1903,4 +1904,83 @@ model RestaurantStudioContent {
   @@index([companyId, mode])
   @@index([companyId, status])
   @@map("restaurant_studio_content")
+}
+
+// ============================================
+// STUDIO SUBSCRIPTION & USAGE (SaaS Admin)
+// For managing client subscriptions and tracking usage
+// ============================================
+
+enum StudioPlanTier {
+  TRIAL       // Free trial period
+  STARTER     // Basic plan - limited generations
+  PROFESSIONAL // Pro plan - more generations
+  ENTERPRISE  // Unlimited / custom pricing
+}
+
+model StudioSubscription {
+  id          String   @id @default(cuid())
+  companyId   String   @unique @map("company_id")
+
+  // Plan Details
+  planTier      StudioPlanTier @default(TRIAL) @map("plan_tier")
+  planName      String?        @map("plan_name") // Custom name for Enterprise
+
+  // Limits & Usage
+  monthlyGenerationsLimit Int @default(10) @map("monthly_generations_limit")
+  generationsUsedThisMonth Int @default(0) @map("generations_used_this_month")
+  usagePeriodStart DateTime @default(now()) @map("usage_period_start")
+
+  // Billing (Stripe integration)
+  stripeCustomerId     String? @map("stripe_customer_id")
+  stripeSubscriptionId String? @map("stripe_subscription_id")
+  stripePriceId        String? @map("stripe_price_id")
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  monthlyRate          Decimal? @db.Decimal(10, 2) @map("monthly_rate")
+
+  // Status
+  status       String   @default("active") // active, paused, cancelled, expired
+  trialEndsAt  DateTime? @map("trial_ends_at")
+  cancelledAt  DateTime? @map("cancelled_at")
+
+  // Onboarding
+  onboardedAt  DateTime? @map("onboarded_at")
+  onboardedBy  String?   @map("onboarded_by") // Admin user ID
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  usageLogs StudioUsageLog[]
+
+  @@index([status])
+  @@index([planTier])
+  @@map("studio_subscriptions")
+}
+
+model StudioUsageLog {
+  id             String   @id @default(cuid())
+  subscriptionId String   @map("subscription_id")
+  companyId      String   @map("company_id")
+
+  // What was generated
+  mode           String   // food_photo, branded_post
+  outputFormat   String?  @map("output_format")
+  aiModel        String?  @map("ai_model")
+
+  // Cost tracking (for future billing)
+  creditsUsed    Int      @default(1) @map("credits_used")
+  estimatedCost  Decimal? @db.Decimal(10, 4) @map("estimated_cost")
+
+  // Metadata
+  success        Boolean  @default(true)
+  errorMessage   String?  @map("error_message") @db.Text
+  generationTime Int?     @map("generation_time") // milliseconds
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  subscription StudioSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId, createdAt])
+  @@index([companyId, createdAt])
+  @@map("studio_usage_logs")
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Download, RefreshCw, Save, Loader2, ImageIcon } from 'lucide-react'
+import { Download, RefreshCw, Save, Loader2, ImageIcon, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -12,8 +12,10 @@ interface PreviewPanelProps {
   onRegenerate?: () => void
   onSave?: () => void
   onDownload?: () => void
+  onSendToBrandedPosts?: () => void
   isSaving?: boolean
   disabled?: boolean
+  mode?: string
 }
 
 export function PreviewPanel({
@@ -23,8 +25,10 @@ export function PreviewPanel({
   onRegenerate,
   onSave,
   onDownload,
+  onSendToBrandedPosts,
   isSaving = false,
   disabled = false,
+  mode,
 }: PreviewPanelProps) {
   // Convert aspect ratio string to padding-bottom percentage
   const getAspectRatioPadding = (ratio: string): string => {
@@ -97,41 +101,57 @@ export function PreviewPanel({
 
       {/* Actions */}
       {imageBase64 && (
-        <div className="px-4 pb-4 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 rounded-sm"
-            onClick={onRegenerate}
-            disabled={disabled || isGenerating}
-          >
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
-            Regenerate
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="flex-1 rounded-sm"
-            onClick={handleDownload}
-            disabled={disabled}
-          >
-            <Download className="w-3.5 h-3.5 mr-1.5" />
-            Download
-          </Button>
-          <Button
-            variant="lime"
-            size="sm"
-            className="flex-1 rounded-sm"
-            onClick={onSave}
-            disabled={disabled || isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-            ) : (
-              <Save className="w-3.5 h-3.5 mr-1.5" />
-            )}
-            Save
-          </Button>
+        <div className="px-4 pb-4 space-y-2">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-sm"
+              onClick={onRegenerate}
+              disabled={disabled || isGenerating}
+            >
+              <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+              Regenerate
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-sm"
+              onClick={handleDownload}
+              disabled={disabled}
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              Download
+            </Button>
+            <Button
+              variant="lime"
+              size="sm"
+              className="flex-1 rounded-sm"
+              onClick={onSave}
+              disabled={disabled || isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Save className="w-3.5 h-3.5 mr-1.5" />
+              )}
+              Save
+            </Button>
+          </div>
+
+          {/* Send to Branded Posts - only in food_photo mode */}
+          {mode === 'food_photo' && onSendToBrandedPosts && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
+              onClick={onSendToBrandedPosts}
+              disabled={disabled}
+            >
+              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+              Send to Branded Posts
+            </Button>
+          )}
         </div>
       )}
     </div>

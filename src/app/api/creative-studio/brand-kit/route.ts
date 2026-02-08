@@ -13,6 +13,8 @@ import {
   updateBrandKit,
   deleteBrandKit,
 } from '@/lib/services/restaurant-studio-service'
+import { getOrCreateSubscription } from '@/lib/services/studio-admin-service'
+import { canCreateBrandKit, getFeatureAccess } from '@/lib/config/studio-plans'
 
 // GET - List brand kits for company
 export async function GET(request: Request) {
@@ -65,10 +67,25 @@ export async function POST(request: Request) {
       )
     }
 
+    // Check brand kit limit for plan tier
+    const subscription = await getOrCreateSubscription(user.companyId)
+    const existingKits = await getBrandKitsByCompany(user.companyId)
+    if (!canCreateBrandKit(subscription.planTier, existingKits.length)) {
+      const features = getFeatureAccess(subscription.planTier)
+      const limitText = features.maxBrandKits === 0
+        ? 'Brand kits require a paid plan.'
+        : `Your plan allows ${features.maxBrandKits} brand kit${features.maxBrandKits === 1 ? '' : 's'}.`
+      return NextResponse.json(
+        { error: `${limitText} Upgrade to create more.` },
+        { status: 403 }
+      )
+    }
+
     const brandKit = await createBrandKit({
       companyId: user.companyId,
       restaurantName: body.restaurantName,
       logoUrl: body.logoUrl,
+      iconUrl: body.iconUrl,
       primaryColor: body.primaryColor,
       secondaryColor: body.secondaryColor,
       accentColor: body.accentColor,
@@ -108,6 +125,7 @@ export async function PUT(request: Request) {
     const brandKit = await updateBrandKit(body.id, {
       restaurantName: body.restaurantName,
       logoUrl: body.logoUrl,
+      iconUrl: body.iconUrl,
       primaryColor: body.primaryColor,
       secondaryColor: body.secondaryColor,
       accentColor: body.accentColor,

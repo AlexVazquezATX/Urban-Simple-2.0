@@ -1,5 +1,4 @@
-// Minimal middleware - just checks if user is logged in
-// No complex route protection - we'll add that when needed
+// Middleware - auth check + role-based protection for admin routes
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
@@ -32,13 +31,26 @@ export async function middleware(request: NextRequest) {
   response.headers.set('x-is-login-page', isLoginPage ? 'true' : 'false')
 
   // Protect authenticated routes - require login
-  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing')) {
+  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing') || request.nextUrl.pathname.startsWith('/admin')) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
     if (!user && !isLoginPage) {
       return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Admin routes require SUPER_ADMIN role
+    if (user && request.nextUrl.pathname.startsWith('/admin')) {
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('role')
+        .eq('auth_id', user.id)
+        .single()
+
+      if (!dbUser || dbUser.role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+      }
     }
   }
   

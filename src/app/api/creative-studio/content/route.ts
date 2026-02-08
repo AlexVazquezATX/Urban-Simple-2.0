@@ -9,6 +9,7 @@ import { getCurrentUser } from '@/lib/auth'
 import {
   createStudioContent,
   getContentByCompany,
+  getContentById,
   getRecentContent,
   getStudioStats,
   updateContent,
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
     const mode = searchParams.get('mode') as GenerationMode | null
     const status = searchParams.get('status')
     const outputFormat = searchParams.get('outputFormat')
@@ -33,6 +35,12 @@ export async function GET(request: Request) {
     const offset = searchParams.get('offset')
     const includeStats = searchParams.get('includeStats') === 'true'
     const recentOnly = searchParams.get('recent') === 'true'
+
+    // Fetch single content item by ID
+    if (id) {
+      const item = await getContentById(id)
+      return NextResponse.json({ content: item ? [item] : [] })
+    }
 
     // Quick recent content fetch for dashboard
     if (recentOnly) {

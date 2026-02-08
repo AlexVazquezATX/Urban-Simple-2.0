@@ -42,6 +42,7 @@ import {
   CheckSquare,
   AtSign,
   Camera,
+  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -54,11 +55,12 @@ interface SidebarState {
   clientRelations: boolean
   growth: boolean
   administrative: boolean
+  studioAdmin: boolean
 }
 
 function loadSidebarState(): SidebarState {
   if (typeof window === 'undefined') {
-    return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true }
+    return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true, studioAdmin: true }
   }
   try {
     const saved = localStorage.getItem(SIDEBAR_STATE_KEY)
@@ -68,7 +70,7 @@ function loadSidebarState(): SidebarState {
   } catch {
     // Ignore parse errors
   }
-  return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true }
+  return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true, studioAdmin: true }
 }
 
 function saveSidebarState(state: SidebarState) {
@@ -171,6 +173,10 @@ export function AppSidebar() {
   const administrativeItems = [
     { href: '/billing', icon: DollarSign, label: 'Billing & AR', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/invoices', icon: FileText, label: 'Invoices', roles: ['SUPER_ADMIN', 'ADMIN'] },
+  ]
+
+  const studioAdminItems = [
+    { href: '/admin/studio-clients', icon: Users, label: 'Studio Clients', roles: ['SUPER_ADMIN'] },
   ]
 
   const isActive = (href: string, exact?: boolean) => {
@@ -432,6 +438,62 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">
                 {administrativeItems.filter((item) => hasAccess(item.roles)).map((item) => {
+                  const Icon = item.icon
+                  const active = isActive(item.href)
+
+                  return (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        asChild
+                        className={cn(
+                          'h-10 px-3 rounded-sm transition-all duration-150 group',
+                          active
+                            ? 'bg-warm-200 text-warm-900'
+                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                        )}
+                      >
+                        <Link href={item.href} className="flex items-center gap-3">
+                          <Icon
+                            className={cn(
+                              'h-4.5 w-4.5 transition-colors duration-150',
+                              active
+                                ? 'text-lime-600'
+                                : 'text-warm-500 group-hover:text-warm-700'
+                            )}
+                          />
+                          <span className="font-medium text-[13px]">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          )}
+        </SidebarGroup>
+        )}
+
+        {/* Studio Admin */}
+        {studioAdminItems.filter((item) => hasAccess(item.roles)).length > 0 && (
+        <SidebarGroup className="mt-4">
+          <SidebarGroupLabel
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            onClick={() => toggleSection('studioAdmin')}
+          >
+            <span className="flex items-center gap-1.5">
+              <Shield className="h-3 w-3" />
+              Studio Admin
+            </span>
+            {sidebarState.studioAdmin ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+          </SidebarGroupLabel>
+          {sidebarState.studioAdmin && (
+            <SidebarGroupContent>
+              <SidebarMenu className="space-y-0.5">
+                {studioAdminItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
 

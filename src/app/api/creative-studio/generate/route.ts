@@ -17,6 +17,15 @@ import {
   createStudioContent,
   getBrandKitById,
 } from '@/lib/services/restaurant-studio-service'
+import {
+  canGenerate,
+  logGeneration,
+} from '@/lib/services/studio-admin-service'
+import {
+  getFeatureAccess,
+  isStyleAllowed,
+  isOutputFormatAllowed,
+} from '@/lib/config/studio-plans'
 import type { OutputFormatId, BrandedPostType } from '@/lib/config/restaurant-studio'
 
 export async function POST(request: Request) {
@@ -26,8 +35,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if user can generate (has remaining credits)
+    const usageCheck = await canGenerate(user.companyId)
+    if (!usageCheck.allowed) {
+      return NextResponse.json(
+        { error: usageCheck.reason || 'Generation limit reached' },
+        { status: 403 }
+      )
+    }
+
     const body = await request.json()
     const { mode, saveToLibrary = false } = body
+    const startTime = Date.now()
+    const planTier = usageCheck.planTier!
+    const features = getFeatureAccess(planTier)
 
     // ============================================
     // FOOD PHOTO MODE
@@ -40,6 +61,7 @@ export async function POST(request: Request) {
         cuisineType,
         style,
         styleReferenceBase64,
+        additionalInstructions,
       } = body
 
       if (!dishPhotoBase64) {
@@ -53,6 +75,22 @@ export async function POST(request: Request) {
         return NextResponse.json(
           { error: 'Output format is required' },
           { status: 400 }
+        )
+      }
+
+      // Feature gate: check output format access
+      if (!isOutputFormatAllowed(planTier, outputFormat)) {
+        return NextResponse.json(
+          { error: 'This output format requires a paid plan. Upgrade to unlock all formats.' },
+          { status: 403 }
+        )
+      }
+
+      // Feature gate: check style access
+      if (style && !isStyleAllowed(planTier, style)) {
+        return NextResponse.json(
+          { error: 'This style requires a paid plan. Upgrade to unlock all styles.' },
+          { status: 403 }
         )
       }
 
@@ -70,14 +108,34 @@ export async function POST(request: Request) {
         cuisineType,
         style,
         styleReferenceBase64,
+        additionalInstructions,
       })
 
       if (!result) {
+        // Log failed generation
+        await logGeneration({
+          companyId: user.companyId,
+          mode: 'food_photo',
+          outputFormat: outputFormat as OutputFormatId,
+          success: false,
+          errorMessage: 'Failed to generate image',
+          generationTime: Date.now() - startTime,
+        })
         return NextResponse.json(
           { error: 'Failed to generate image. Please try again.' },
           { status: 500 }
         )
       }
+
+      // Log successful generation
+      await logGeneration({
+        companyId: user.companyId,
+        mode: 'food_photo',
+        outputFormat: outputFormat as OutputFormatId,
+        aiModel: result.model,
+        success: true,
+        generationTime: Date.now() - startTime,
+      })
 
       // Optionally save to library
       let savedContent = null
@@ -107,6 +165,14 @@ export async function POST(request: Request) {
     // BRANDED POST MODE
     // ============================================
     if (mode === 'branded_post') {
+      // Feature gate: branded posts require paid plan
+      if (!features.brandedPosts) {
+        return NextResponse.json(
+          { error: 'Branded posts require a paid plan. Upgrade to create branded content.' },
+          { status: 403 }
+        )
+      }
+
       const {
         postType,
         headline,
@@ -114,6 +180,9 @@ export async function POST(request: Request) {
         style,
         aspectRatio = '1:1',
         logoBase64,
+        applyBrandColors = true,
+        sourceImageBase64,
+        additionalInstructions,
       } = body
 
       if (!postType) {
@@ -133,6 +202,8 @@ export async function POST(request: Request) {
         postType,
         hasHeadline: !!headline,
         hasBrandKit: !!brandKit,
+        hasSourceImage: !!sourceImageBase64,
+        hasLogo: !!logoBase64,
       })
 
       const result = await generateBrandedPost({
@@ -141,17 +212,37 @@ export async function POST(request: Request) {
         restaurantName: brandKit?.restaurantName,
         primaryColor: brandKit?.primaryColor,
         secondaryColor: brandKit?.secondaryColor || undefined,
+        applyBrandColors,
         style: style || brandKit?.preferredStyle,
         aspectRatio,
-        logoBase64,
+        logoBase64: logoBase64 || undefined,
+        sourceImageBase64,
+        additionalInstructions,
       })
 
       if (!result) {
+        // Log failed generation
+        await logGeneration({
+          companyId: user.companyId,
+          mode: 'branded_post',
+          success: false,
+          errorMessage: 'Failed to generate image',
+          generationTime: Date.now() - startTime,
+        })
         return NextResponse.json(
           { error: 'Failed to generate image. Please try again.' },
           { status: 500 }
         )
       }
+
+      // Log successful generation
+      await logGeneration({
+        companyId: user.companyId,
+        mode: 'branded_post',
+        aiModel: result.model,
+        success: true,
+        generationTime: Date.now() - startTime,
+      })
 
       // Optionally save to library
       let savedContent = null
@@ -191,7 +282,7 @@ export async function POST(request: Request) {
       error,
     })
     return NextResponse.json(
-      { error: `Failed to generate image: ${errorMessage}` },
+      { error: 'Something went wrong generating your image. Please try again.' },
       { status: 500 }
     )
   }

@@ -34,6 +34,9 @@ export function PublicNav() {
             <Link href="/blog" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Blog
             </Link>
+            <Link href="/pricing" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+              Pricing
+            </Link>
             <Link href="/our-team" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Our Team
             </Link>
@@ -90,6 +93,9 @@ export function PublicNav() {
             </Link>
             <Link href="/blog" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Blog
+            </Link>
+            <Link href="/pricing" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+              Pricing
             </Link>
             <Link href="/our-team" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Our Team

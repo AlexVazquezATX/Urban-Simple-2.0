@@ -50,6 +50,7 @@ export interface FoodPhotoParams {
   cuisineType?: string
   style?: string
   styleReferenceBase64?: string // Optional style reference for consistent look
+  additionalInstructions?: string
 }
 
 export interface BrandedPostParams {
@@ -58,9 +59,12 @@ export interface BrandedPostParams {
   restaurantName?: string
   primaryColor?: string
   secondaryColor?: string
+  applyBrandColors?: boolean
   style?: string
   aspectRatio?: '1:1' | '4:5' | '9:16' | '16:9'
   logoBase64?: string // Optional logo to include
+  sourceImageBase64?: string // Optional base image for branded overlay
+  additionalInstructions?: string
 }
 
 export interface GeneratedImage {
@@ -83,7 +87,7 @@ export async function generateFoodPhoto(
 ): Promise<GeneratedImage | null> {
   const ai = getGenAI()
 
-  const { dishPhotoBase64, dishDescription, outputFormat, cuisineType, style, styleReferenceBase64 } =
+  const { dishPhotoBase64, dishDescription, outputFormat, cuisineType, style, styleReferenceBase64, additionalInstructions } =
     params
 
   // Build the enhanced prompt
@@ -92,6 +96,7 @@ export async function generateFoodPhoto(
     outputFormat,
     cuisineType,
     style,
+    additionalInstructions,
   })
 
   // Add style reference instructions if provided
@@ -263,9 +268,12 @@ export async function generateBrandedPost(
     restaurantName,
     primaryColor,
     secondaryColor,
+    applyBrandColors = true,
     style,
     aspectRatio = '1:1',
     logoBase64,
+    sourceImageBase64,
+    additionalInstructions,
   } = params
 
   // Build the prompt
@@ -275,15 +283,33 @@ export async function generateBrandedPost(
     restaurantName,
     primaryColor,
     secondaryColor,
+    applyBrandColors,
     style,
+    hasSourceImage: !!sourceImageBase64,
+    hasLogo: !!logoBase64,
+    aspectRatio,
+    additionalInstructions,
   })
 
-  console.log('[Restaurant Studio] Generating branded post...', postType)
+  console.log('[Restaurant Studio] Generating branded post...', postType, sourceImageBase64 ? 'with source image' : 'no source image')
 
   // Build content parts
   const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
     { text: prompt },
   ]
+
+  // Add source/base image if provided (before logo)
+  if (sourceImageBase64) {
+    const imgMatch = sourceImageBase64.match(/^data:([^;]+);base64,(.+)$/)
+    if (imgMatch) {
+      parts.push({
+        inlineData: {
+          mimeType: imgMatch[1],
+          data: imgMatch[2],
+        },
+      })
+    }
+  }
 
   // Add logo if provided
   if (logoBase64) {

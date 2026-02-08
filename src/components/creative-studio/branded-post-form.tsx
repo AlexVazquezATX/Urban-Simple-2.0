@@ -35,6 +35,8 @@ interface BrandedPostFormProps {
   aspectRatio: '1:1' | '4:5' | '9:16' | '16:9'
   onAspectRatioChange: (ratio: '1:1' | '4:5' | '9:16' | '16:9') => void
   brandKit?: BrandKit | null
+  applyBrandColors?: boolean
+  onApplyBrandColorsChange?: (apply: boolean) => void
   disabled?: boolean
 }
 
@@ -64,6 +66,8 @@ export function BrandedPostForm({
   aspectRatio,
   onAspectRatioChange,
   brandKit,
+  applyBrandColors = true,
+  onApplyBrandColorsChange,
   disabled = false,
 }: BrandedPostFormProps) {
   return (
@@ -137,17 +141,42 @@ export function BrandedPostForm({
       {/* Brand Kit Info (if selected) */}
       {brandKit && (
         <div className="p-3 rounded-sm bg-warm-50 border border-warm-200">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-sm"
-              style={{ backgroundColor: brandKit.primaryColor }}
-            />
-            <div>
-              <p className="text-sm font-medium text-warm-900">
-                {brandKit.restaurantName}
-              </p>
-              <p className="text-xs text-warm-500">Brand colors will be applied</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'w-8 h-8 rounded-sm transition-opacity',
+                  !applyBrandColors && 'opacity-30'
+                )}
+                style={{ backgroundColor: brandKit.primaryColor }}
+              />
+              <div>
+                <p className="text-sm font-medium text-warm-900">
+                  {brandKit.restaurantName}
+                </p>
+                <p className="text-xs text-warm-500">
+                  {applyBrandColors ? 'Brand colors applied' : 'Brand colors off'}
+                </p>
+              </div>
             </div>
+            {onApplyBrandColorsChange && (
+              <button
+                onClick={() => onApplyBrandColorsChange(!applyBrandColors)}
+                disabled={disabled}
+                className={cn(
+                  'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
+                  applyBrandColors ? 'bg-plum-500' : 'bg-warm-300',
+                  disabled && 'opacity-50 cursor-not-allowed'
+                )}
+              >
+                <span
+                  className={cn(
+                    'inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform',
+                    applyBrandColors ? 'translate-x-4.5' : 'translate-x-0.75'
+                  )}
+                />
+              </button>
+            )}
           </div>
         </div>
       )}
