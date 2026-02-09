@@ -27,7 +27,7 @@ interface ContentItem {
   id: string
   mode: string
   outputFormat?: string | null
-  generatedImageUrl?: string | null
+  hasImage?: boolean
   headline?: string | null
   status: string
   createdAt: string
@@ -225,11 +225,12 @@ export default function CreativeStudioPage() {
                 <div className="rounded-sm border border-warm-200 overflow-hidden hover:border-lime-400 transition-colors">
                   {/* Image Preview */}
                   <div className="aspect-square bg-warm-100 relative">
-                    {item.generatedImageUrl ? (
+                    {item.hasImage ? (
                       <img
-                        src={item.generatedImageUrl}
+                        src={`/api/creative-studio/content/image?id=${item.id}`}
                         alt={item.headline || 'Generated image'}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

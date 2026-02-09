@@ -198,9 +198,19 @@ export async function getContentByCompany(
     where.outputFormat = filters.outputFormat
   }
 
-  return prisma.restaurantStudioContent.findMany({
+  // Select only lightweight fields — images served via /api/creative-studio/content/image
+  const items = await prisma.restaurantStudioContent.findMany({
     where,
-    include: {
+    select: {
+      id: true,
+      mode: true,
+      outputFormat: true,
+      headline: true,
+      bodyText: true,
+      status: true,
+      aiModel: true,
+      createdAt: true,
+      generatedImageUrl: true, // used to derive hasImage below, not sent to client
       brandKit: {
         select: {
           id: true,
@@ -213,6 +223,12 @@ export async function getContentByCompany(
     take: filters?.limit || 50,
     skip: filters?.offset || 0,
   })
+
+  // Strip heavy base64 data — client uses image endpoint for thumbnails
+  return items.map(({ generatedImageUrl, ...rest }) => ({
+    ...rest,
+    hasImage: !!generatedImageUrl,
+  }))
 }
 
 export async function getContentById(id: string) {
@@ -252,57 +268,57 @@ export async function deleteContent(id: string) {
 // ============================================
 
 export async function getStudioStats(companyId: string): Promise<StudioStats> {
-  // Get all content for stats
-  const allContent = await prisma.restaurantStudioContent.findMany({
-    where: { companyId },
-    select: {
-      mode: true,
-      outputFormat: true,
-      status: true,
-      createdAt: true,
-    },
-  })
-
-  // Calculate stats
-  const totalGenerations = allContent.length
-
-  const generationsByMode: Record<string, number> = {}
-  const generationsByFormat: Record<string, number> = {}
-  let savedContent = 0
-
-  // Get start of current month
   const now = new Date()
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-  let thisMonthGenerations = 0
 
-  for (const content of allContent) {
-    // By mode
-    generationsByMode[content.mode] =
-      (generationsByMode[content.mode] || 0) + 1
+  // Run all aggregate queries in parallel
+  const [totalCount, modeGroups, formatGroups, savedCount, thisMonthCount] =
+    await Promise.all([
+      prisma.restaurantStudioContent.count({
+        where: { companyId },
+      }),
+      prisma.restaurantStudioContent.groupBy({
+        by: ['mode'],
+        where: { companyId },
+        _count: true,
+      }),
+      prisma.restaurantStudioContent.groupBy({
+        by: ['outputFormat'],
+        where: { companyId, outputFormat: { not: null } },
+        _count: true,
+      }),
+      prisma.restaurantStudioContent.count({
+        where: {
+          companyId,
+          status: { in: ['saved', 'published'] },
+        },
+      }),
+      prisma.restaurantStudioContent.count({
+        where: {
+          companyId,
+          createdAt: { gte: monthStart },
+        },
+      }),
+    ])
 
-    // By format
-    if (content.outputFormat) {
-      generationsByFormat[content.outputFormat] =
-        (generationsByFormat[content.outputFormat] || 0) + 1
-    }
+  const generationsByMode: Record<string, number> = {}
+  for (const g of modeGroups) {
+    generationsByMode[g.mode] = g._count
+  }
 
-    // Saved count
-    if (content.status === 'saved' || content.status === 'published') {
-      savedContent++
-    }
-
-    // This month
-    if (content.createdAt >= monthStart) {
-      thisMonthGenerations++
+  const generationsByFormat: Record<string, number> = {}
+  for (const g of formatGroups) {
+    if (g.outputFormat) {
+      generationsByFormat[g.outputFormat] = g._count
     }
   }
 
   return {
-    totalGenerations,
+    totalGenerations: totalCount,
     generationsByMode,
     generationsByFormat,
-    thisMonthGenerations,
-    savedContent,
+    thisMonthGenerations: thisMonthCount,
+    savedContent: savedCount,
   }
 }
 
@@ -311,9 +327,16 @@ export async function getStudioStats(companyId: string): Promise<StudioStats> {
 // ============================================
 
 export async function getRecentContent(companyId: string, limit: number = 6) {
-  return prisma.restaurantStudioContent.findMany({
+  const items = await prisma.restaurantStudioContent.findMany({
     where: { companyId },
-    include: {
+    select: {
+      id: true,
+      mode: true,
+      outputFormat: true,
+      headline: true,
+      status: true,
+      createdAt: true,
+      generatedImageUrl: true,
       brandKit: {
         select: {
           id: true,
@@ -324,4 +347,9 @@ export async function getRecentContent(companyId: string, limit: number = 6) {
     orderBy: { createdAt: 'desc' },
     take: limit,
   })
+
+  return items.map(({ generatedImageUrl, ...rest }) => ({
+    ...rest,
+    hasImage: !!generatedImageUrl,
+  }))
 }

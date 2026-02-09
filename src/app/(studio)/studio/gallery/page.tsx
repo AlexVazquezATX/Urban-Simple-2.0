@@ -31,7 +31,7 @@ interface ContentItem {
   id: string
   mode: string
   outputFormat?: string | null
-  generatedImageUrl?: string | null
+  hasImage?: boolean
   headline?: string | null
   bodyText?: string | null
   status: string
@@ -42,6 +42,10 @@ interface ContentItem {
     restaurantName: string
     primaryColor: string
   } | null
+}
+
+function imageUrl(id: string) {
+  return `/api/creative-studio/content/image?id=${id}`
 }
 
 type FilterMode = 'all' | 'food_photo' | 'branded_post'
@@ -121,10 +125,10 @@ function StudioGalleryContent() {
   }
 
   function handleDownload(item: ContentItem) {
-    if (!item.generatedImageUrl) return
+    if (!item.hasImage) return
 
     const link = document.createElement('a')
-    link.href = item.generatedImageUrl
+    link.href = imageUrl(item.id)
     link.download = `studio-${item.mode}-${item.id.slice(0, 8)}.png`
     document.body.appendChild(link)
     link.click()
@@ -203,11 +207,12 @@ function StudioGalleryContent() {
               >
                 <div className="rounded-sm border border-warm-200 overflow-hidden bg-white hover:border-lime-400 hover:shadow-md transition-all">
                   <div className="aspect-square bg-warm-100 relative">
-                    {item.generatedImageUrl ? (
+                    {item.hasImage ? (
                       <img
-                        src={item.generatedImageUrl}
+                        src={imageUrl(item.id)}
                         alt={item.headline || 'Generated image'}
                         className="w-full h-full object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
@@ -232,7 +237,7 @@ function StudioGalleryContent() {
 
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                       <span className="text-white text-sm font-medium">View</span>
-                      {item.generatedImageUrl && (
+                      {item.hasImage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
@@ -302,10 +307,10 @@ function StudioGalleryContent() {
           {selectedItem && (
             <div className="space-y-4">
               <div className="rounded-sm overflow-hidden bg-warm-100 relative group">
-                {selectedItem.generatedImageUrl ? (
+                {selectedItem.hasImage ? (
                   <>
                     <img
-                      src={selectedItem.generatedImageUrl}
+                      src={imageUrl(selectedItem.id)}
                       alt={selectedItem.headline || 'Generated image'}
                       className="w-full h-auto max-h-[60vh] object-contain cursor-pointer"
                       onClick={() => setLightboxOpen(true)}
@@ -380,7 +385,7 @@ function StudioGalleryContent() {
                   </Button>
                 </div>
 
-                {selectedItem.generatedImageUrl && (
+                {selectedItem.hasImage && (
                   <Button
                     variant="outline"
                     className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
@@ -400,7 +405,7 @@ function StudioGalleryContent() {
       </Dialog>
 
       {/* Full-screen Lightbox */}
-      {lightboxOpen && selectedItem?.generatedImageUrl && (
+      {lightboxOpen && selectedItem?.hasImage && (
         <div
           className="fixed inset-0 z-100 bg-black/90 flex items-center justify-center p-4"
           onClick={() => setLightboxOpen(false)}
@@ -412,7 +417,7 @@ function StudioGalleryContent() {
             <X className="w-6 h-6" />
           </button>
           <img
-            src={selectedItem.generatedImageUrl}
+            src={imageUrl(selectedItem.id)}
             alt={selectedItem.headline || 'Generated image'}
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}
