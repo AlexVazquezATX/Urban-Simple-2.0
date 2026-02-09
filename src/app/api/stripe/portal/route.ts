@@ -9,11 +9,20 @@ import { getCurrentUser } from '@/lib/auth'
 import { stripe } from '@/lib/stripe'
 import { getOrCreateSubscription } from '@/lib/services/studio-admin-service'
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Accept optional returnUrl from request body
+    let returnUrl = '/creative-studio'
+    try {
+      const body = await request.json()
+      if (body.returnUrl) returnUrl = body.returnUrl
+    } catch {
+      // No body or invalid JSON — use default
     }
 
     const subscription = await getOrCreateSubscription(user.companyId)
@@ -27,7 +36,7 @@ export async function POST() {
 
     const session = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/creative-studio`,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}${returnUrl}`,
     })
 
     return NextResponse.json({ url: session.url })

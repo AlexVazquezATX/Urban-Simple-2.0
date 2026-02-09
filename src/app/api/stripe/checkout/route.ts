@@ -17,7 +17,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { planTier } = (await request.json()) as { planTier: string }
+    const { planTier, returnUrl } = (await request.json()) as { planTier: string; returnUrl?: string }
+
+    // Determine redirect URLs based on caller (studio vs admin)
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    const successPath = returnUrl || '/creative-studio'
+    const cancelPath = returnUrl?.startsWith('/studio') ? '/studio/account' : '/pricing'
 
     // Validate plan tier (only paid tiers)
     if (!['STARTER', 'PROFESSIONAL', 'ENTERPRISE'].includes(planTier)) {
@@ -55,7 +60,7 @@ export async function POST(request: Request) {
     if (subscription.stripeSubscriptionId) {
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: stripeCustomerId,
-        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/creative-studio`,
+        return_url: `${baseUrl}${successPath}`,
       })
       return NextResponse.json({ url: portalSession.url })
     }
@@ -66,8 +71,8 @@ export async function POST(request: Request) {
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/creative-studio?checkout=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/pricing?checkout=cancelled`,
+      success_url: `${baseUrl}${successPath}?checkout=success`,
+      cancel_url: `${baseUrl}${cancelPath}?checkout=cancelled`,
       metadata: {
         companyId: user.companyId,
         planTier,

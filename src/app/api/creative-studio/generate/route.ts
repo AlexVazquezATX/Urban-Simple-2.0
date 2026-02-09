@@ -185,6 +185,14 @@ export async function POST(request: Request) {
         additionalInstructions,
       } = body
 
+      // Feature gate: custom post type requires Pro or Max
+      if (postType === 'custom' && !features.customPosts) {
+        return NextResponse.json(
+          { error: 'Custom posts require a Pro or Max plan. Upgrade to unlock freeform creation.' },
+          { status: 403 }
+        )
+      }
+
       if (!postType) {
         return NextResponse.json(
           { error: 'Post type is required' },

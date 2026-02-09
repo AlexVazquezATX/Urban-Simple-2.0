@@ -50,6 +50,11 @@ export function PublicNav() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
+            <Link href="/products/creative-studio">
+              <Button variant="outline" size="default" className="border-ocean-200 text-ocean-700 hover:bg-ocean-50">
+                Creative Studio
+              </Button>
+            </Link>
             <Link href="/login">
               <Button variant="ghost" size="default">
                 Client Login
@@ -107,6 +112,9 @@ export function PublicNav() {
               Contact
             </Link>
             <div className="pt-4 space-y-3">
+              <Link href="/products/creative-studio" className="block">
+                <Button variant="outline" className="w-full border-ocean-200 text-ocean-700">Creative Studio</Button>
+              </Link>
               <Link href="/login" className="block">
                 <Button variant="secondary" className="w-full">Client Login</Button>
               </Link>

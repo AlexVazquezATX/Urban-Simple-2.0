@@ -50,7 +50,7 @@ const PLAN_OPTIONS = [
   { value: 'TRIAL', label: 'Trial', limit: 10, rate: 0 },
   { value: 'STARTER', label: 'Starter', limit: 50, rate: 29 },
   { value: 'PROFESSIONAL', label: 'Professional', limit: 200, rate: 79 },
-  { value: 'ENTERPRISE', label: 'Enterprise', limit: 99999, rate: 199 },
+  { value: 'ENTERPRISE', label: 'Max', limit: 99999, rate: 149 },
 ]
 
 const STATUS_OPTIONS = ['active', 'paused', 'cancelled', 'expired']

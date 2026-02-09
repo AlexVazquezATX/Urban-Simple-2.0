@@ -65,7 +65,7 @@ export const PLAN_CONFIGS: Record<StudioPlanTier, { limit: number; rate: number;
   TRIAL: { limit: 10, rate: 0, name: 'Free' },
   STARTER: { limit: 50, rate: 29, name: 'Starter' },
   PROFESSIONAL: { limit: 200, rate: 79, name: 'Pro' },
-  ENTERPRISE: { limit: 99999, rate: 199, name: 'Enterprise' },
+  ENTERPRISE: { limit: 99999, rate: 149, name: 'Max' },
 }
 
 // ============================================

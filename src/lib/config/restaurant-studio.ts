@@ -71,6 +71,7 @@ export type BrandedPostType =
   | 'quote'
   | 'event'
   | 'menu_feature'
+  | 'custom'
 
 export interface BrandedPostConfig {
   id: BrandedPostType
@@ -126,6 +127,15 @@ export const BRANDED_POST_TYPES: Record<BrandedPostType, BrandedPostConfig> = {
     promptModifier:
       'Menu feature promotional graphic. Beautiful food photography as hero element. Dish name and description elegantly integrated. Appetizing, makes viewer want to order. Premium restaurant marketing style.',
     icon: 'UtensilsCrossed',
+  },
+  custom: {
+    id: 'custom',
+    title: 'Custom',
+    description: 'Describe exactly what you want',
+    layoutStyle: 'User-directed creative vision',
+    promptModifier:
+      'Custom restaurant marketing graphic. Follow the user\'s creative direction precisely. Create a professional, polished result that matches their described vision.',
+    icon: 'Pencil',
   },
 }
 

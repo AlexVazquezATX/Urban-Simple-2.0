@@ -7,6 +7,7 @@ import {
   Quote,
   Calendar,
   UtensilsCrossed,
+  Pencil,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Input } from '@/components/ui/input'
@@ -47,6 +48,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   Quote,
   Calendar,
   UtensilsCrossed,
+  Pencil,
 }
 
 const ASPECT_RATIOS = [
@@ -120,21 +122,30 @@ export function BrandedPostForm({
         </div>
       </div>
 
+      {/* Custom mode hint */}
+      {postType === 'custom' && (
+        <div className="p-3 rounded-sm bg-plum-50 border border-plum-200">
+          <p className="text-sm text-plum-700">
+            Describe your vision in the <strong>Additional Directions</strong> box below. You have full creative control — tell the AI exactly what you want.
+          </p>
+        </div>
+      )}
+
       {/* Headline Input */}
       <div>
         <Label htmlFor="headline" className="text-warm-700 mb-2 block">
-          Headline / Text
+          {postType === 'custom' ? 'Text to Display (optional)' : 'Headline / Text'}
         </Label>
         <Input
           id="headline"
           value={headline}
           onChange={(e) => onHeadlineChange(e.target.value)}
-          placeholder="e.g., 20% Off This Weekend!"
+          placeholder={postType === 'custom' ? 'Leave empty for a purely visual graphic' : 'e.g., 20% Off This Weekend!'}
           disabled={disabled}
           className="rounded-sm"
         />
         <p className="text-xs text-warm-500 mt-1">
-          The main text to display on the graphic
+          {postType === 'custom' ? 'Optional — only add if you want text on the graphic' : 'The main text to display on the graphic'}
         </p>
       </div>
 

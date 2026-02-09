@@ -279,7 +279,7 @@ export default function StudioClientsPage() {
               <option value="TRIAL">Trial</option>
               <option value="STARTER">Starter</option>
               <option value="PROFESSIONAL">Professional</option>
-              <option value="ENTERPRISE">Enterprise</option>
+              <option value="ENTERPRISE">Max</option>
             </select>
           </div>
         </div>
@@ -475,7 +475,7 @@ export default function StudioClientsPage() {
                 <option value="TRIAL">Trial (10 generations, 14 days)</option>
                 <option value="STARTER">Starter ($29/mo, 50 generations)</option>
                 <option value="PROFESSIONAL">Professional ($79/mo, 200 generations)</option>
-                <option value="ENTERPRISE">Enterprise (Custom)</option>
+                <option value="ENTERPRISE">Max ($149/mo, Unlimited)</option>
               </select>
             </div>
 

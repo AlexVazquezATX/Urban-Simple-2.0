@@ -12,9 +12,9 @@ import {
   Camera,
   Sparkles,
   Wand2,
-  X,
   Filter,
   Maximize2,
+  X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -46,7 +46,7 @@ interface ContentItem {
 
 type FilterMode = 'all' | 'food_photo' | 'branded_post'
 
-export default function GalleryPage() {
+export default function StudioGalleryPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [content, setContent] = useState<ContentItem[]>([])
@@ -56,14 +56,12 @@ export default function GalleryPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
 
-  // Check for view parameter
   const viewId = searchParams.get('view')
 
   useEffect(() => {
     loadContent()
   }, [filterMode])
 
-  // Open detail modal if viewId is present
   useEffect(() => {
     if (viewId && content.length > 0) {
       const item = content.find((c) => c.id === viewId)
@@ -133,7 +131,7 @@ export default function GalleryPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
-                href="/creative-studio"
+                href="/studio"
                 className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
               >
                 <ArrowLeft className="w-4 h-4 text-warm-600" />
@@ -148,7 +146,7 @@ export default function GalleryPage() {
               </div>
             </div>
 
-            <Link href="/creative-studio/generate">
+            <Link href="/studio/generate">
               <Button variant="lime" size="sm" className="rounded-sm">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Create New
@@ -196,7 +194,6 @@ export default function GalleryPage() {
                 className="group cursor-pointer"
               >
                 <div className="rounded-sm border border-warm-200 overflow-hidden bg-white hover:border-lime-400 hover:shadow-md transition-all">
-                  {/* Image */}
                   <div className="aspect-square bg-warm-100 relative">
                     {item.generatedImageUrl ? (
                       <img
@@ -210,7 +207,6 @@ export default function GalleryPage() {
                       </div>
                     )}
 
-                    {/* Mode Badge */}
                     <Badge
                       className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-sm ${
                         item.mode === 'food_photo'
@@ -226,14 +222,13 @@ export default function GalleryPage() {
                       {item.mode === 'food_photo' ? 'Food' : 'Branded'}
                     </Badge>
 
-                    {/* Hover overlay */}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                       <span className="text-white text-sm font-medium">View</span>
                       {item.generatedImageUrl && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${item.id}`)
+                            router.push(`/studio/generate?mode=branded_post&sourceImageId=${item.id}`)
                           }}
                           className="flex items-center gap-1 px-2.5 py-1 bg-white/90 hover:bg-white rounded-sm text-xs font-medium text-plum-700 transition-colors"
                         >
@@ -244,7 +239,6 @@ export default function GalleryPage() {
                     </div>
                   </div>
 
-                  {/* Info */}
                   <div className="p-3">
                     <p className="text-sm text-warm-900 font-medium truncate">
                       {item.headline || item.outputFormat || 'Untitled'}
@@ -274,7 +268,7 @@ export default function GalleryPage() {
                 ? `No ${filterMode === 'food_photo' ? 'food photos' : 'branded posts'} saved yet.`
                 : 'Start creating to build your gallery.'}
             </p>
-            <Link href="/creative-studio/generate">
+            <Link href="/studio/generate">
               <Button variant="lime" size="sm" className="rounded-sm">
                 Create Your First Image
               </Button>
@@ -299,7 +293,6 @@ export default function GalleryPage() {
 
           {selectedItem && (
             <div className="space-y-4">
-              {/* Image */}
               <div className="rounded-sm overflow-hidden bg-warm-100 relative group">
                 {selectedItem.generatedImageUrl ? (
                   <>
@@ -324,7 +317,6 @@ export default function GalleryPage() {
                 )}
               </div>
 
-              {/* Details */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <p className="text-warm-500">Type</p>
@@ -356,7 +348,6 @@ export default function GalleryPage() {
                 )}
               </div>
 
-              {/* Actions */}
               <div className="space-y-2 pt-2">
                 <div className="flex gap-2">
                   <Button
@@ -387,7 +378,7 @@ export default function GalleryPage() {
                     className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
                     onClick={() => {
                       setSelectedItem(null)
-                      router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${selectedItem.id}`)
+                      router.push(`/studio/generate?mode=branded_post&sourceImageId=${selectedItem.id}`)
                     }}
                   >
                     <Wand2 className="w-4 h-4 mr-1.5" />

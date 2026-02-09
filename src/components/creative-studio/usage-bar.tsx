@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowUpCircle, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,8 @@ interface UsageData {
 
 export function UsageBar() {
   const router = useRouter()
+  const pathname = usePathname()
+  const isStudio = pathname.startsWith('/studio')
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [portalLoading, setPortalLoading] = useState(false)
 
@@ -48,7 +50,7 @@ export function UsageBar() {
       const res = await fetch('/api/stripe/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planTier: nextTier }),
+        body: JSON.stringify({ planTier: nextTier, ...(isStudio && { returnUrl: '/studio' }) }),
       })
       const data = await res.json()
       if (data.url) window.location.href = data.url
@@ -60,7 +62,11 @@ export function UsageBar() {
   async function handleManageBilling() {
     setPortalLoading(true)
     try {
-      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(isStudio ? { returnUrl: '/studio' } : {}),
+      })
       const data = await res.json()
       if (data.url) window.location.href = data.url
     } catch (error) {

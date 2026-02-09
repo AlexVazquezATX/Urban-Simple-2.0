@@ -19,8 +19,8 @@ export interface PlanFeatures {
   allStyles: boolean
   /** Can use branded post generator */
   brandedPosts: boolean
-  /** Can export platform-ready formats (Phase 4) */
-  platformExports: boolean
+  /** Can use custom/freeform branded post type */
+  customPosts: boolean
   /** Can use smart prompt buttons (Phase 4) */
   smartPrompts: boolean
   /** Display name for the plan */
@@ -32,7 +32,7 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     maxBrandKits: 0,
     allStyles: false,
     brandedPosts: false,
-    platformExports: false,
+    customPosts: false,
     smartPrompts: false,
     displayName: 'Free',
   },
@@ -40,7 +40,7 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     maxBrandKits: 1,
     allStyles: true,
     brandedPosts: true,
-    platformExports: false,
+    customPosts: false,
     smartPrompts: true,
     displayName: 'Starter',
   },
@@ -48,7 +48,7 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     maxBrandKits: 3,
     allStyles: true,
     brandedPosts: true,
-    platformExports: true,
+    customPosts: true,
     smartPrompts: true,
     displayName: 'Pro',
   },
@@ -56,9 +56,9 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     maxBrandKits: -1, // unlimited
     allStyles: true,
     brandedPosts: true,
-    platformExports: true,
+    customPosts: true,
     smartPrompts: true,
-    displayName: 'Enterprise',
+    displayName: 'Max',
   },
 }
 
@@ -151,7 +151,7 @@ export const PLAN_PRICING: PlanPricing[] = [
       'All photography styles',
       'Branded post generator',
       '3 brand kits',
-      'Platform-ready exports',
+      'Custom freeform posts',
       'Smart prompts',
     ],
     cta: 'Start Pro Plan',
@@ -159,18 +159,18 @@ export const PLAN_PRICING: PlanPricing[] = [
   },
   {
     tier: 'ENTERPRISE' as StudioPlanTier,
-    displayName: 'Enterprise',
-    price: 199,
-    description: 'For restaurant groups and agencies',
+    displayName: 'Max',
+    price: 149,
+    description: 'For busy restaurants and small chains',
     features: [
       'Unlimited generations',
       'All photography styles',
       'Branded post generator',
       'Unlimited brand kits',
-      'Platform-ready exports',
+      'Custom freeform posts',
       'Smart prompts',
       'Priority support',
     ],
-    cta: 'Start Enterprise Plan',
+    cta: 'Start Max Plan',
   },
 ]

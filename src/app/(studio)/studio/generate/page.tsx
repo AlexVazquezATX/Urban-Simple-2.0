@@ -39,15 +39,13 @@ interface BrandKit {
 
 type LogoChoice = 'none' | 'logo' | 'icon'
 
-export default function GeneratePage() {
+export default function StudioGeneratePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Read URL params for initial state (e.g., from gallery "Use in Branded Post")
   const initialUrlMode = searchParams.get('mode')
   const initialSourceImageId = searchParams.get('sourceImageId')
 
-  // Mode state - initialize from URL if present
   const [mode, setMode] = useState<GenerationMode>(
     initialUrlMode === 'branded_post' ? 'branded_post' : 'food_photo'
   )
@@ -59,7 +57,7 @@ export default function GeneratePage() {
   const [cuisineType, setCuisineType] = useState('')
   const [foodStyle, setFoodStyle] = useState('')
 
-  // Style Reference (optional - for consistent look across dishes)
+  // Style Reference
   const [styleReference, setStyleReference] = useState<string | null>(null)
   const [showStyleReference, setShowStyleReference] = useState(false)
 
@@ -71,25 +69,20 @@ export default function GeneratePage() {
   const [logoChoice, setLogoChoice] = useState<LogoChoice>('none')
   const [applyBrandColors, setApplyBrandColors] = useState(true)
 
-  // Additional prompt instructions (shared across modes)
   const [additionalInstructions, setAdditionalInstructions] = useState('')
 
-  // Source image state (for branded posts) - initialize from URL if present
   const [sourceImage, setSourceImage] = useState<string | null>(null)
   const [sourceImageType, setSourceImageType] = useState<'upload' | 'gallery' | 'none'>(
     initialSourceImageId ? 'gallery' : 'none'
   )
 
-  // Brand Kit state
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null)
   const [loadingBrandKit, setLoadingBrandKit] = useState(true)
 
-  // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [generatedAspectRatio, setGeneratedAspectRatio] = useState<string>('1:1')
 
-  // Saving state
   const [isSaving, setIsSaving] = useState(false)
 
   // Fetch source image data on mount if sourceImageId is in URL
@@ -107,14 +100,6 @@ export default function GeneratePage() {
     }
   }, [initialSourceImageId])
 
-  // Show checkout success toast
-  useEffect(() => {
-    if (searchParams.get('checkout') === 'success') {
-      toast.success('Subscription activated! You can now generate more content.')
-    }
-  }, [searchParams])
-
-  // Load default brand kit on mount
   useEffect(() => {
     loadBrandKit()
   }, [])
@@ -133,7 +118,6 @@ export default function GeneratePage() {
     }
   }
 
-  // Reset generation when mode changes
   useEffect(() => {
     setGeneratedImage(null)
     setAdditionalInstructions('')
@@ -243,7 +227,7 @@ export default function GeneratePage() {
       }
 
       toast.success('Saved to gallery!')
-      router.push('/creative-studio/gallery')
+      router.push('/studio/gallery')
     } catch (error) {
       toast.error('Failed to save image')
       console.error('Save error:', error)
@@ -255,12 +239,10 @@ export default function GeneratePage() {
   function handleSendToBrandedPosts() {
     if (!generatedImage) return
 
-    // Capture the image before clearing it
     const imageData = generatedImage.startsWith('data:')
       ? generatedImage
       : `data:image/png;base64,${generatedImage}`
 
-    // Switch to branded post mode and use the generated image as source
     setGeneratedImage(null)
     setSourceImageType('gallery')
     setSourceImage(imageData)
@@ -274,7 +256,7 @@ export default function GeneratePage() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
             <Link
-              href="/creative-studio"
+              href="/studio"
               className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
             >
               <ArrowLeft className="w-4 h-4 text-warm-600" />
@@ -314,7 +296,6 @@ export default function GeneratePage() {
             {/* Food Photo Mode Form */}
             {mode === 'food_photo' && (
               <>
-                {/* Photo Upload */}
                 <div className="bg-white rounded-sm border border-warm-200 p-4">
                   <Label className="text-warm-700 mb-3 block">Dish Photo</Label>
                   <DishPhotoUpload
@@ -325,7 +306,6 @@ export default function GeneratePage() {
                   />
                 </div>
 
-                {/* Output Format */}
                 <div className="bg-white rounded-sm border border-warm-200 p-4">
                   <Label className="text-warm-700 mb-3 block">Output Format</Label>
                   <OutputFormatSelector
@@ -335,7 +315,6 @@ export default function GeneratePage() {
                   />
                 </div>
 
-                {/* Optional Details */}
                 <div className="bg-white rounded-sm border border-warm-200 p-4 space-y-4">
                   <div>
                     <Label htmlFor="description" className="text-warm-700 mb-2 block">
@@ -392,7 +371,7 @@ export default function GeneratePage() {
                   </div>
                 </div>
 
-                {/* Style Reference (Collapsible) */}
+                {/* Style Reference */}
                 <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
                   <button
                     type="button"
@@ -467,7 +446,6 @@ export default function GeneratePage() {
             {/* Branded Post Mode Form */}
             {mode === 'branded_post' && (
               <>
-              {/* Source Image Picker */}
               <div className="bg-white rounded-sm border border-warm-200 p-4">
                 <Label className="text-warm-700 mb-3 block">Source Image</Label>
                 <ImageSourcePicker
@@ -496,7 +474,7 @@ export default function GeneratePage() {
                 />
               </div>
 
-              {/* Logo Picker - only show if brand kit has at least one logo */}
+              {/* Logo Picker */}
               {brandKit && (brandKit.logoUrl || brandKit.iconUrl) && (
                 <div className="bg-white rounded-sm border border-warm-200 p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -504,7 +482,6 @@ export default function GeneratePage() {
                     <Label className="text-warm-700">Include Logo</Label>
                   </div>
                   <div className="flex gap-2">
-                    {/* No Logo */}
                     <button
                       onClick={() => setLogoChoice('none')}
                       disabled={isGenerating}
@@ -527,7 +504,6 @@ export default function GeneratePage() {
                       </p>
                     </button>
 
-                    {/* Full Logo */}
                     {brandKit.logoUrl && (
                       <button
                         onClick={() => setLogoChoice('logo')}
@@ -541,11 +517,7 @@ export default function GeneratePage() {
                         )}
                       >
                         <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
-                          <img
-                            src={brandKit.logoUrl}
-                            alt="Logo"
-                            className="w-full h-full object-contain p-0.5"
-                          />
+                          <img src={brandKit.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5" />
                         </div>
                         <p className={cn(
                           'text-xs font-medium',
@@ -556,7 +528,6 @@ export default function GeneratePage() {
                       </button>
                     )}
 
-                    {/* Icon / Mark */}
                     {brandKit.iconUrl && (
                       <button
                         onClick={() => setLogoChoice('icon')}
@@ -570,11 +541,7 @@ export default function GeneratePage() {
                         )}
                       >
                         <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
-                          <img
-                            src={brandKit.iconUrl}
-                            alt="Icon"
-                            className="w-full h-full object-contain p-0.5"
-                          />
+                          <img src={brandKit.iconUrl} alt="Icon" className="w-full h-full object-contain p-0.5" />
                         </div>
                         <p className={cn(
                           'text-xs font-medium',
@@ -590,10 +557,17 @@ export default function GeneratePage() {
               </>
             )}
 
-            {/* Additional Instructions (both modes) */}
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
+            {/* Additional Instructions */}
+            <div className={cn(
+              'bg-white rounded-sm border p-4',
+              postType === 'custom' && mode === 'branded_post'
+                ? 'border-plum-300 ring-1 ring-plum-200'
+                : 'border-warm-200'
+            )}>
               <Label htmlFor="instructions" className="text-warm-700 mb-2 block">
-                Additional Directions (optional)
+                {postType === 'custom' && mode === 'branded_post'
+                  ? 'Creative Direction'
+                  : 'Additional Directions (optional)'}
               </Label>
               <textarea
                 id="instructions"
@@ -602,14 +576,18 @@ export default function GeneratePage() {
                 placeholder={
                   mode === 'food_photo'
                     ? 'e.g., Add a bottle of sake and shot glasses next to the dish, warm candlelight ambiance'
-                    : 'e.g., Use bold red text, add confetti elements, make it feel festive and celebratory'
+                    : postType === 'custom'
+                      ? 'e.g., A moody, dark-themed post with our dish as hero, subtle smoke effect, no text — just atmosphere and appetite appeal'
+                      : 'e.g., Use bold red text, add confetti elements, make it feel festive and celebratory'
                 }
                 disabled={isGenerating}
-                rows={3}
+                rows={postType === 'custom' && mode === 'branded_post' ? 5 : 3}
                 className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 resize-none disabled:opacity-50"
               />
               <p className="text-xs text-warm-500 mt-1.5">
-                Guide the AI with specific details about what you want in the final image
+                {postType === 'custom' && mode === 'branded_post'
+                  ? 'Describe exactly what you want — layout, mood, style, colors, elements'
+                  : 'Guide the AI with specific details about what you want in the final image'}
               </p>
             </div>
 
@@ -636,7 +614,7 @@ export default function GeneratePage() {
           </div>
 
           {/* Right Column - Preview */}
-          <div className="lg:sticky lg:top-6 lg:self-start">
+          <div className="lg:sticky lg:top-20 lg:self-start">
             <PreviewPanel
               imageBase64={generatedImage}
               aspectRatio={generatedAspectRatio}

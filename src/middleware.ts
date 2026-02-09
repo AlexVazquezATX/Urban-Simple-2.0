@@ -54,29 +54,65 @@ export async function middleware(request: NextRequest) {
     }
   }
   
-  // Handle root route - redirect authenticated users to dashboard
+  // Handle root route - redirect authenticated users based on role
   if (request.nextUrl.pathname === '/') {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // If logged in, redirect to dashboard
     if (user) {
+      // Check role to determine redirect destination
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('role')
+        .eq('auth_id', user.id)
+        .single()
+
+      if (dbUser?.role === 'CLIENT_USER') {
+        return NextResponse.redirect(new URL('/studio', request.url))
+      }
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
-
-    // Otherwise show landing page (handled by (public)/page.tsx)
   }
 
-  // Handle login page - redirect authenticated users to dashboard
+  // Handle login page - redirect authenticated users based on role
   if (request.nextUrl.pathname === '/login') {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // If already logged in, redirect to dashboard
     if (user) {
+      const { data: dbUser } = await supabase
+        .from('users')
+        .select('role')
+        .eq('auth_id', user.id)
+        .single()
+
+      if (dbUser?.role === 'CLIENT_USER') {
+        return NextResponse.redirect(new URL('/studio', request.url))
+      }
       return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+  }
+
+  // Protect /studio routes - require login (except login/signup pages)
+  if (request.nextUrl.pathname.startsWith('/studio')) {
+    const isStudioPublic =
+      request.nextUrl.pathname === '/studio/login' ||
+      request.nextUrl.pathname === '/studio/signup'
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    // Redirect authenticated users away from login/signup
+    if (user && isStudioPublic) {
+      return NextResponse.redirect(new URL('/studio', request.url))
+    }
+
+    // Redirect unauthenticated users to studio login
+    if (!user && !isStudioPublic) {
+      return NextResponse.redirect(new URL('/studio/login', request.url))
     }
   }
 
