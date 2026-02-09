@@ -30,8 +30,8 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/app/login'
   response.headers.set('x-is-login-page', isLoginPage ? 'true' : 'false')
 
-  // Protect authenticated routes - require login
-  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing') || request.nextUrl.pathname.startsWith('/admin')) {
+  // Protect authenticated routes - require login + role check
+  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing') || request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/creative-studio')) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -40,15 +40,20 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url))
     }
 
-    // Admin routes require SUPER_ADMIN role
-    if (user && request.nextUrl.pathname.startsWith('/admin')) {
+    if (user) {
       const { data: dbUser } = await supabase
         .from('users')
         .select('role')
         .eq('auth_id', user.id)
         .single()
 
-      if (!dbUser || dbUser.role !== 'SUPER_ADMIN') {
+      // CLIENT_USER cannot access admin routes — redirect to studio
+      if (dbUser?.role === 'CLIENT_USER') {
+        return NextResponse.redirect(new URL('/studio', request.url))
+      }
+
+      // Admin routes require SUPER_ADMIN role
+      if (request.nextUrl.pathname.startsWith('/admin') && dbUser?.role !== 'SUPER_ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
