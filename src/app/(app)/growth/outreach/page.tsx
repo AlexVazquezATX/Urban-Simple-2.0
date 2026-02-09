@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { OutreachDashboard } from '@/components/growth/outreach/outreach-dashboard'
@@ -12,6 +12,14 @@ import { OutreachSettings } from '@/components/growth/outreach/outreach-settings
 import { LayoutDashboard, Send, FileText, Zap, Users, Settings } from 'lucide-react'
 
 export default function OutreachPage() {
+  return (
+    <Suspense>
+      <OutreachContent />
+    </Suspense>
+  )
+}
+
+function OutreachContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   const [activeTab, setActiveTab] = useState(tabParam || 'dashboard')

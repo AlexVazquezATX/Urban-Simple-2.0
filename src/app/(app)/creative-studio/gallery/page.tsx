@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
@@ -47,6 +47,14 @@ interface ContentItem {
 type FilterMode = 'all' | 'food_photo' | 'branded_post'
 
 export default function GalleryPage() {
+  return (
+    <Suspense>
+      <GalleryContent />
+    </Suspense>
+  )
+}
+
+function GalleryContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [content, setContent] = useState<ContentItem[]>([])

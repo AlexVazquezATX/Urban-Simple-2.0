@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
   CheckSquare,
@@ -128,6 +128,14 @@ const STATUS_ICONS: Record<string, React.ReactNode> = {
 type ViewMode = 'list' | 'board' | 'calendar'
 
 export default function TasksPage() {
+  return (
+    <Suspense>
+      <TasksContent />
+    </Suspense>
+  )
+}
+
+function TasksContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 

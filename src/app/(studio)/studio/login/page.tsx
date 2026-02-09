@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -10,6 +10,14 @@ import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
 
 export default function StudioLoginPage() {
+  return (
+    <Suspense>
+      <StudioLoginContent />
+    </Suspense>
+  )
+}
+
+function StudioLoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')

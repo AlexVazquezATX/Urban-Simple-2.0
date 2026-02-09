@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
@@ -100,6 +100,14 @@ const STATUSES = [
 ]
 
 export default function ContentGalleryPage() {
+  return (
+    <Suspense>
+      <ContentGalleryContent />
+    </Suspense>
+  )
+}
+
+function ContentGalleryContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const [contents, setContents] = useState<CreativeContent[]>([])

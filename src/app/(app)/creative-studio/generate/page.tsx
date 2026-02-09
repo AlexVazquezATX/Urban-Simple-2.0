@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp } from 'lucide-react'
@@ -40,6 +40,14 @@ interface BrandKit {
 type LogoChoice = 'none' | 'logo' | 'icon'
 
 export default function GeneratePage() {
+  return (
+    <Suspense>
+      <GenerateContent />
+    </Suspense>
+  )
+}
+
+function GenerateContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
 

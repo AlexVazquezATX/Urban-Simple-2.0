@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -42,6 +42,14 @@ interface ContentItem {
 }
 
 export default function StudioDashboardPage() {
+  return (
+    <Suspense>
+      <StudioDashboardContent />
+    </Suspense>
+  )
+}
+
+function StudioDashboardContent() {
   const searchParams = useSearchParams()
   const [stats, setStats] = useState<StudioStats | null>(null)
   const [recentContent, setRecentContent] = useState<ContentItem[]>([])
