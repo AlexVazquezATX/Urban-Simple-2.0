@@ -3,6 +3,32 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+// Direct PostgREST call to look up user role — bypasses Supabase JS client
+// which has permission issues in Edge Runtime
+async function getUserRole(authId: string): Promise<string | null> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+  const res = await fetch(
+    `${url}/rest/v1/users?select=role&auth_id=eq.${authId}&limit=1`,
+    {
+      headers: {
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
+        'Accept': 'application/json',
+      },
+    }
+  )
+
+  if (!res.ok) {
+    console.error('[Middleware] Role lookup failed:', res.status, await res.text())
+    return null
+  }
+
+  const rows = await res.json()
+  return rows?.[0]?.role || null
+}
+
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
   const supabase = createServerClient(
@@ -41,24 +67,20 @@ export async function middleware(request: NextRequest) {
     }
 
     if (user) {
-      const { data: dbUser } = await supabase
-        .from('users')
-        .select('role')
-        .eq('auth_id', user.id)
-        .single()
+      const role = await getUserRole(user.id)
 
       // CLIENT_USER cannot access admin routes — redirect to studio
-      if (dbUser?.role === 'CLIENT_USER') {
+      if (role === 'CLIENT_USER') {
         return NextResponse.redirect(new URL('/studio', request.url))
       }
 
       // Admin routes require SUPER_ADMIN role
-      if (request.nextUrl.pathname.startsWith('/admin') && dbUser?.role !== 'SUPER_ADMIN') {
+      if (request.nextUrl.pathname.startsWith('/admin') && role !== 'SUPER_ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
   }
-  
+
   // Handle root route - redirect authenticated users based on role
   if (request.nextUrl.pathname === '/') {
     const {
@@ -66,14 +88,9 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (user) {
-      // Check role to determine redirect destination
-      const { data: dbUser } = await supabase
-        .from('users')
-        .select('role')
-        .eq('auth_id', user.id)
-        .single()
+      const role = await getUserRole(user.id)
 
-      if (dbUser?.role === 'CLIENT_USER') {
+      if (role === 'CLIENT_USER') {
         return NextResponse.redirect(new URL('/studio', request.url))
       }
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -87,13 +104,9 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (user) {
-      const { data: dbUser } = await supabase
-        .from('users')
-        .select('role')
-        .eq('auth_id', user.id)
-        .single()
+      const role = await getUserRole(user.id)
 
-      if (dbUser?.role === 'CLIENT_USER') {
+      if (role === 'CLIENT_USER') {
         return NextResponse.redirect(new URL('/studio', request.url))
       }
       return NextResponse.redirect(new URL('/dashboard', request.url))
@@ -140,6 +153,3 @@ export const config = {
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }
-
-
-
