@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp } from 'lucide-react'
+import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,7 @@ import {
   PreviewPanel,
   BrandedPostForm,
   ImageSourcePicker,
+  GalleryPickerDialog,
   UsageBar,
 } from '@/components/creative-studio'
 import {
@@ -68,6 +69,7 @@ function StudioGenerateContent() {
   // Style Reference
   const [styleReference, setStyleReference] = useState<string | null>(null)
   const [showStyleReference, setShowStyleReference] = useState(false)
+  const [styleGalleryOpen, setStyleGalleryOpen] = useState(false)
 
   // Branded Post Mode state
   const [postType, setPostType] = useState<BrandedPostType>('announcement')
@@ -75,6 +77,9 @@ function StudioGenerateContent() {
   const [brandedStyle, setBrandedStyle] = useState('minimal')
   const [aspectRatio, setAspectRatio] = useState<'1:1' | '4:5' | '9:16' | '16:9'>('1:1')
   const [logoChoice, setLogoChoice] = useState<LogoChoice>('none')
+  const [logoPlacement, setLogoPlacement] = useState('bottom-right')
+  const [logoSize, setLogoSize] = useState('medium')
+  const [logoOpacity, setLogoOpacity] = useState(100)
   const [applyBrandColors, setApplyBrandColors] = useState(true)
 
   const [additionalInstructions, setAdditionalInstructions] = useState('')
@@ -175,6 +180,9 @@ function StudioGenerateContent() {
                 logoChoice === 'logo' ? brandKit?.logoUrl || undefined :
                 logoChoice === 'icon' ? brandKit?.iconUrl || undefined :
                 undefined,
+              logoPlacement: logoChoice !== 'none' ? logoPlacement : undefined,
+              logoSize: logoChoice !== 'none' ? logoSize : undefined,
+              logoOpacity: logoChoice !== 'none' ? logoOpacity : undefined,
               sourceImageBase64: sourceImage || undefined,
               additionalInstructions: additionalInstructions.trim() || undefined,
             }
@@ -403,7 +411,7 @@ function StudioGenerateContent() {
                   {showStyleReference && (
                     <div className="px-4 pb-4 border-t border-warm-100">
                       <p className="text-xs text-warm-500 mt-3 mb-3">
-                        Upload a previously generated image to match its plates, background, and styling.
+                        Select a previously generated image to match its plates, background, and styling.
                       </p>
 
                       {styleReference ? (
@@ -422,31 +430,48 @@ function StudioGenerateContent() {
                           </button>
                         </div>
                       ) : (
-                        <label className="block cursor-pointer">
-                          <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
-                            <ImageIcon className="w-8 h-8 text-warm-400 mb-2" />
-                            <span className="text-sm text-warm-600">Upload reference image</span>
-                            <span className="text-xs text-warm-400 mt-1">JPG, PNG</span>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) {
-                                const reader = new FileReader()
-                                reader.onload = (ev) => {
-                                  setStyleReference(ev.target?.result as string)
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setStyleGalleryOpen(true)}
+                            disabled={isGenerating}
+                            className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors"
+                          >
+                            <Layers className="w-7 h-7 text-warm-400 mb-1.5" />
+                            <span className="text-sm text-warm-600">From Gallery</span>
+                          </button>
+                          <label className="block cursor-pointer">
+                            <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
+                              <ImageIcon className="w-7 h-7 text-warm-400 mb-1.5" />
+                              <span className="text-sm text-warm-600">Upload Image</span>
+                            </div>
+                            <input
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              disabled={isGenerating}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0]
+                                if (file) {
+                                  const reader = new FileReader()
+                                  reader.onload = (ev) => {
+                                    setStyleReference(ev.target?.result as string)
+                                  }
+                                  reader.readAsDataURL(file)
                                 }
-                                reader.readAsDataURL(file)
-                              }
-                            }}
-                          />
-                        </label>
+                              }}
+                            />
+                          </label>
+                        </div>
                       )}
                     </div>
                   )}
+
+                  <GalleryPickerDialog
+                    open={styleGalleryOpen}
+                    onOpenChange={setStyleGalleryOpen}
+                    onSelect={(imageDataUrl) => setStyleReference(imageDataUrl)}
+                  />
                 </div>
               </>
             )}
@@ -560,6 +585,89 @@ function StudioGenerateContent() {
                       </button>
                     )}
                   </div>
+
+                  {/* Logo Options — shown when a logo is selected */}
+                  {logoChoice !== 'none' && (
+                    <div className="mt-4 pt-4 border-t border-warm-100 space-y-4">
+                      {/* Placement */}
+                      <div>
+                        <Label className="text-warm-600 text-xs mb-2 block">Placement</Label>
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {([
+                            { value: 'top-left', label: 'TL' },
+                            { value: 'top-right', label: 'TR' },
+                            { value: 'center', label: 'C' },
+                            { value: 'bottom-left', label: 'BL' },
+                            { value: 'bottom-right', label: 'BR' },
+                          ] as const).map(({ value, label }) => (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setLogoPlacement(value)}
+                              disabled={isGenerating}
+                              className={cn(
+                                'px-2 py-1.5 rounded-sm border text-xs font-medium transition-all',
+                                logoPlacement === value
+                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
+                                  : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
+                                isGenerating && 'opacity-50 cursor-not-allowed'
+                              )}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Size */}
+                      <div>
+                        <Label className="text-warm-600 text-xs mb-2 block">Size</Label>
+                        <div className="grid grid-cols-3 gap-1.5">
+                          {(['small', 'medium', 'large'] as const).map((size) => (
+                            <button
+                              key={size}
+                              type="button"
+                              onClick={() => setLogoSize(size)}
+                              disabled={isGenerating}
+                              className={cn(
+                                'px-2 py-1.5 rounded-sm border text-xs font-medium capitalize transition-all',
+                                logoSize === size
+                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
+                                  : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
+                                isGenerating && 'opacity-50 cursor-not-allowed'
+                              )}
+                            >
+                              {size}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Opacity */}
+                      <div>
+                        <Label className="text-warm-600 text-xs mb-2 block">Opacity</Label>
+                        <div className="grid grid-cols-4 gap-1.5">
+                          {([25, 50, 75, 100] as const).map((opacity) => (
+                            <button
+                              key={opacity}
+                              type="button"
+                              onClick={() => setLogoOpacity(opacity)}
+                              disabled={isGenerating}
+                              className={cn(
+                                'px-2 py-1.5 rounded-sm border text-xs font-medium transition-all',
+                                logoOpacity === opacity
+                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
+                                  : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
+                                isGenerating && 'opacity-50 cursor-not-allowed'
+                              )}
+                            >
+                              {opacity}%
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               </>

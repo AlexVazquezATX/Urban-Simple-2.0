@@ -63,6 +63,9 @@ export interface BrandedPostParams {
   style?: string
   aspectRatio?: '1:1' | '4:5' | '9:16' | '16:9'
   logoBase64?: string // Optional logo to include
+  logoPlacement?: string // e.g. 'top-left', 'bottom-right', 'center'
+  logoSize?: string // 'small', 'medium', 'large'
+  logoOpacity?: number // 25, 50, 75, 100
   sourceImageBase64?: string // Optional base image for branded overlay
   additionalInstructions?: string
 }
@@ -272,6 +275,9 @@ export async function generateBrandedPost(
     style,
     aspectRatio = '1:1',
     logoBase64,
+    logoPlacement,
+    logoSize,
+    logoOpacity,
     sourceImageBase64,
     additionalInstructions,
   } = params
@@ -287,6 +293,9 @@ export async function generateBrandedPost(
     style,
     hasSourceImage: !!sourceImageBase64,
     hasLogo: !!logoBase64,
+    logoPlacement,
+    logoSize,
+    logoOpacity,
     aspectRatio,
     additionalInstructions,
   })

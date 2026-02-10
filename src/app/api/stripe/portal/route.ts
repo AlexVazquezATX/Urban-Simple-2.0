@@ -6,7 +6,7 @@
 
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { getOrCreateSubscription } from '@/lib/services/studio-admin-service'
 
 export async function POST(request: Request) {
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       )
     }
 
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await getStripe().billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}${returnUrl}`,
     })

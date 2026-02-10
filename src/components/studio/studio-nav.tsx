@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
+  Home,
   Camera,
   Layers,
   Palette,
@@ -35,6 +36,7 @@ interface UsageData {
 }
 
 const NAV_LINKS = [
+  { href: '/studio', label: 'Home', icon: Home, exact: true },
   { href: '/studio/generate', label: 'Generate', icon: Camera },
   { href: '/studio/gallery', label: 'Gallery', icon: Layers },
   { href: '/studio/brand-kit', label: 'Brand Kit', icon: Palette },
@@ -115,8 +117,8 @@ export function StudioNav() {
 
           {/* Desktop Nav Links */}
           <div className="hidden md:flex items-center gap-1 ml-8">
-            {NAV_LINKS.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href || pathname?.startsWith(href + '/')
+            {NAV_LINKS.map(({ href, label, icon: Icon, exact }) => {
+              const isActive = exact ? pathname === href : pathname === href || pathname?.startsWith(href + '/')
               return (
                 <Link
                   key={href}
@@ -216,8 +218,8 @@ export function StudioNav() {
       {mobileMenuOpen && (
         <div className="md:hidden bg-white border-t border-warm-200">
           <div className="px-4 py-3 space-y-1">
-            {NAV_LINKS.map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href || pathname?.startsWith(href + '/')
+            {NAV_LINKS.map(({ href, label, icon: Icon, exact }) => {
+              const isActive = exact ? pathname === href : pathname === href || pathname?.startsWith(href + '/')
               return (
                 <Link
                   key={href}

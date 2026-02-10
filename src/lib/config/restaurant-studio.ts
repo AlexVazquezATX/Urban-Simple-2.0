@@ -170,6 +170,11 @@ export const CUISINE_TYPES = [
 
 export const STYLE_PREFERENCES = [
   {
+    value: 'original',
+    label: 'Original',
+    description: 'Keep everything as-is, just enhance quality',
+  },
+  {
     value: 'minimal',
     label: 'Minimal & Clean',
     description: 'White space, simple, modern',
@@ -214,21 +219,42 @@ export function buildFoodPhotoPrompt(params: {
     ? `This is ${cuisineType} cuisine. `
     : ''
 
-  const styleContext = style
-    ? `Style preference: ${style}. `
-    : ''
+  const isOriginal = style === 'original'
 
-  return `You are a world-class food photographer. Transform this amateur dish photo into stunning professional food photography.
+  const styleContext = isOriginal
+    ? ''
+    : style
+      ? `Style preference: ${style}. `
+      : ''
 
-CRITICAL INSTRUCTIONS:
+  // When "Original" is selected, override the format's scene-changing instructions
+  // and only keep aspect ratio / composition guidance
+  const outputStyleBlock = isOriginal
+    ? `OUTPUT STYLE: Produce the image at ${formatConfig.aspectRatio} aspect ratio. Do NOT change the background, surface, props, or any objects in the scene. Keep the EXACT same table, plate, utensils, garnishes, and surroundings from the original photo. Only enhance: lighting quality, color accuracy, white balance, sharpness, noise reduction, and exposure. This is a retouch, NOT a reshoot.`
+    : `OUTPUT STYLE: ${formatConfig.promptModifier}`
+
+  const criticalInstructions = isOriginal
+    ? `CRITICAL INSTRUCTIONS — "ORIGINAL" MODE:
+- This is the EXACT photo from the reference image — preserve EVERYTHING
+- Keep the SAME background, table, surface, plate, utensils, props, and surroundings
+- Do NOT swap the background to white, marble, or anything else
+- Do NOT remove, add, or rearrange any objects in the scene
+- Do NOT change the camera angle or composition
+- ONLY improve: lighting, color grading, sharpness, white balance, exposure, and clarity
+- Think of this as professional photo retouching, NOT reshooting the image`
+    : `CRITICAL INSTRUCTIONS:
 - This is the EXACT dish from the reference image - maintain its identity precisely
 - Do NOT change the dish, ingredients, or plating arrangement
 - ONLY enhance: lighting, angle, background, styling, and visual quality
-- Make it look like it was shot by a professional food photographer
+- Make it look like it was shot by a professional food photographer`
+
+  return `You are a world-class food photographer. ${isOriginal ? 'Retouch and enhance this dish photo while preserving the original scene exactly.' : 'Transform this amateur dish photo into stunning professional food photography.'}
+
+${criticalInstructions}
 
 ${cuisineContext}${styleContext}
 
-OUTPUT STYLE: ${formatConfig.promptModifier}
+${outputStyleBlock}
 
 ${dishDescription ? `Dish description: ${dishDescription}` : ''}
 
@@ -250,6 +276,9 @@ export function buildBrandedPostPrompt(params: {
   style?: string
   hasSourceImage?: boolean
   hasLogo?: boolean
+  logoPlacement?: string
+  logoSize?: string
+  logoOpacity?: number
   aspectRatio?: string
   additionalInstructions?: string
 }): string {
@@ -263,6 +292,9 @@ export function buildBrandedPostPrompt(params: {
     style,
     hasSourceImage,
     hasLogo,
+    logoPlacement,
+    logoSize,
+    logoOpacity,
     aspectRatio,
     additionalInstructions,
   } = params
@@ -293,13 +325,26 @@ A reference image is provided. Use this as the base photograph/background for th
 - IMPORTANT: Crop/reframe to match the requested aspect ratio`
     : ''
 
+  const placementMap: Record<string, string> = {
+    'top-left': 'in the top-left corner',
+    'top-right': 'in the top-right corner',
+    'bottom-left': 'in the bottom-left corner',
+    'bottom-right': 'in the bottom-right corner',
+    'center': 'centered in the graphic',
+  }
+  const sizeMap: Record<string, string> = {
+    small: 'small and subtle',
+    medium: 'medium-sized',
+    large: 'large and prominent',
+  }
+
   const logoInstructions = hasLogo
     ? `
 LOGO:
 A restaurant logo image is provided. Incorporate it into the design:
-- Place the logo prominently but tastefully (typically top or bottom of the graphic)
+- Place the logo ${placementMap[logoPlacement || ''] || 'prominently but tastefully (typically top or bottom of the graphic)'}
 - Ensure the logo is clearly visible and not obscured by other elements
-- Size the logo appropriately - large enough to be recognizable but not overpowering
+- Size the logo ${sizeMap[logoSize || ''] || 'appropriately - large enough to be recognizable but not overpowering'}${logoOpacity && logoOpacity < 100 ? `\n- Render the logo at approximately ${logoOpacity}% opacity (semi-transparent / watermark effect)` : ''}
 - Maintain the logo's original proportions (do not stretch or distort it)`
     : ''
 

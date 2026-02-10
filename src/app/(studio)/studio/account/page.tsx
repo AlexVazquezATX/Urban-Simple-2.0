@@ -16,6 +16,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface UserData {
   firstName: string
@@ -75,9 +76,14 @@ export default function StudioAccountPage() {
         body: JSON.stringify({ planTier: targetTier, returnUrl: '/studio' }),
       })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error(data.error || 'Unable to start checkout. Please try again.')
+      }
     } catch (error) {
       console.error('Upgrade error:', error)
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setUpgradeLoading(false)
     }
@@ -89,12 +95,17 @@ export default function StudioAccountPage() {
       const res = await fetch('/api/stripe/portal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ returnUrl: '/studio' }),
+        body: JSON.stringify({ returnUrl: '/studio/account' }),
       })
       const data = await res.json()
-      if (data.url) window.location.href = data.url
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        toast.error(data.error || 'Unable to open billing portal. Please try again.')
+      }
     } catch (error) {
       console.error('Portal error:', error)
+      toast.error('Something went wrong. Please try again.')
     } finally {
       setPortalLoading(false)
     }

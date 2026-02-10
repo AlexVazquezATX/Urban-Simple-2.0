@@ -1,24 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(*)",
-      "Read(*)",
-      "Write(*)",
-      "Edit(*)",
-      "Bash(npx prisma generate:*)",
-      "Bash(npx tsc:*)",
-      "Bash(git commit:*)",
-      "Bash(git push:*)",
-      "Bash(npx prisma migrate dev:*)",
-      "Bash(npx prisma db push:*)",
-      "Bash(del \"c:\\\\Users\\\\avazq\\\\Documents\\\\Dev\\\\Urban Simple 2.0\\\\urbansimple\\\\src\\\\components\\\\creative-hub\\\\inspiration\\\\quick-post-sheet.tsx\")",
-      "Bash(npx eslint:*)",
-      "Bash(cd:*)",
-      "Bash(npx prisma:*)",
-      "Bash(ls:*)",
-      "Bash(cat:*)",
-      "Bash(npx next build)",
-      "Bash(curl:*)"
+      "Bash",
+      "Read",
+      "Write",
+      "Edit"
     ]
   }
 }
