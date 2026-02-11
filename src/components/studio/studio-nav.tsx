@@ -109,7 +109,7 @@ export function StudioNav() {
           {/* Logo */}
           <Link href="/studio" className="shrink-0 flex items-center gap-1">
             <Image
-              src="/images/BackHaus Logos/Backhaus Logo - Black3-Compact.png"
+              src="/images/backhaus-logos/backhaus-logo-compact.png"
               alt="BackHaus"
               width={140}
               height={28}

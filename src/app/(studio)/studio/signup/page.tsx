@@ -60,7 +60,7 @@ export default function StudioSignupPage() {
         <div className="text-center mb-8">
           <Link href="/studio" className="inline-flex items-center gap-1.5 justify-center">
             <Image
-              src="/images/BackHaus Logos/Backhaus Logo - Black3-Compact.png"
+              src="/images/backhaus-logos/backhaus-logo-compact.png"
               alt="BackHaus"
               width={200}
               height={40}
