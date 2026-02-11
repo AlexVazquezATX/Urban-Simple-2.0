@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -106,13 +107,16 @@ export function StudioNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href="/studio" className="flex items-baseline gap-1 shrink-0">
-            <span className="font-bold text-xl tracking-tight text-charcoal-900">
-              Urban
-            </span>
-            <span className="font-display italic text-xl text-bronze-600">
-              Studio
-            </span>
+          <Link href="/studio" className="shrink-0 flex items-center gap-1">
+            <Image
+              src="/images/BackHaus Logos/Backhaus Logo - Black3-Compact.png"
+              alt="BackHaus"
+              width={140}
+              height={28}
+              className="h-5 w-auto opacity-70"
+              priority
+            />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mb-0.5" />
           </Link>
 
           {/* Desktop Nav Links */}

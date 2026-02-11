@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
+import Image from 'next/image'
 
 export default function StudioLoginPage() {
   return (
@@ -58,15 +59,18 @@ function StudioLoginContent() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-baseline gap-1">
-            <span className="font-bold text-3xl tracking-tight text-charcoal-900">
-              Urban
-            </span>
-            <span className="font-display italic text-3xl text-bronze-600">
-              Studio
-            </span>
+          <Link href="/studio" className="inline-flex items-center gap-1.5 justify-center">
+            <Image
+              src="/images/BackHaus Logos/Backhaus Logo - Black3-Compact.png"
+              alt="BackHaus"
+              width={200}
+              height={40}
+              className="h-8 w-auto opacity-70"
+              priority
+            />
+            <span className="w-2 h-2 rounded-full bg-amber-500 mb-0.5" />
           </Link>
-          <p className="text-sm text-warm-500 mt-2">
+          <p className="text-sm text-warm-500 mt-3">
             AI-powered food photography & branded content
           </p>
         </div>
