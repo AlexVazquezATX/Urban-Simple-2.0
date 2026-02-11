@@ -19,8 +19,11 @@ export async function POST(request: Request) {
 
     const { planTier, returnUrl } = (await request.json()) as { planTier: string; returnUrl?: string }
 
-    // Determine redirect URLs based on caller (studio vs admin)
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL
+    // Determine redirect URLs — use request origin so BackHaus users
+    // get redirected back to backhaus.ai, not the admin domain
+    const proto = request.headers.get('x-forwarded-proto') || 'https'
+    const host = request.headers.get('host')
+    const baseUrl = host ? `${proto}://${host}` : process.env.NEXT_PUBLIC_APP_URL
     const successPath = returnUrl || '/creative-studio'
     const cancelPath = returnUrl?.startsWith('/studio') ? '/studio/account' : '/pricing'
 

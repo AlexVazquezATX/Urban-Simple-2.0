@@ -34,9 +34,14 @@ export async function POST(request: Request) {
       )
     }
 
+    // Use request origin so BackHaus users return to backhaus.ai
+    const proto = request.headers.get('x-forwarded-proto') || 'https'
+    const host = request.headers.get('host')
+    const baseUrl = host ? `${proto}://${host}` : process.env.NEXT_PUBLIC_APP_URL
+
     const session = await getStripe().billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}${returnUrl}`,
+      return_url: `${baseUrl}${returnUrl}`,
     })
 
     return NextResponse.json({ url: session.url })

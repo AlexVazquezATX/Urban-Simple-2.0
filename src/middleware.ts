@@ -1,10 +1,38 @@
-// Middleware - auth check + role-based protection for admin routes
+// Middleware - auth check + role-based protection + hostname routing
+//
+// Hostname routing (production only, controlled by BACKHAUS_DOMAIN env var):
+//   backhaus.ai  → serves (studio) routes only — customer-facing product
+//   krew42.com   → serves (app) + (public) routes — admin/internal
+//   localhost     → serves everything — development
 
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-// Direct PostgREST call to look up user role — bypasses Supabase JS client
-// which has permission issues in Edge Runtime
+// ============================================
+// HOSTNAME DETECTION
+// ============================================
+
+function isBackhausDomain(host: string): boolean {
+  const domain = process.env.BACKHAUS_DOMAIN
+  if (!domain) return false // Disabled in local dev
+  const bare = host.split(':')[0] // Strip port if present
+  return bare === domain || bare === `www.${domain}`
+}
+
+// Admin route prefixes — these should never be served on BackHaus
+const ADMIN_PREFIXES = [
+  '/dashboard', '/app', '/clients', '/invoices',
+  '/billing', '/admin', '/creative-studio', '/portal',
+]
+
+function isAdminRoute(pathname: string): boolean {
+  return ADMIN_PREFIXES.some((p) => pathname.startsWith(p))
+}
+
+// ============================================
+// ROLE LOOKUP (PostgREST — Edge Runtime safe)
+// ============================================
+
 async function getUserRole(authId: string): Promise<string | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -29,6 +57,10 @@ async function getUserRole(authId: string): Promise<string | null> {
   return rows?.[0]?.role || null
 }
 
+// ============================================
+// MIDDLEWARE
+// ============================================
+
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
   const supabase = createServerClient(
@@ -52,12 +84,57 @@ export async function middleware(request: NextRequest) {
   // Refresh session if needed
   await supabase.auth.getUser()
 
+  const pathname = request.nextUrl.pathname
+  const hostname = request.headers.get('host') || ''
+  const isBackhaus = isBackhausDomain(hostname)
+
+  // ---- BackHaus domain: only studio routes ----
+  if (isBackhaus) {
+    // Block admin routes → redirect to /studio
+    if (isAdminRoute(pathname)) {
+      return NextResponse.redirect(new URL('/studio', request.url))
+    }
+
+    // /login → /studio/login
+    if (pathname === '/login') {
+      return NextResponse.redirect(new URL('/studio/login', request.url))
+    }
+
+    // Root → authenticated? /studio : /studio/login
+    if (pathname === '/') {
+      const { data: { user } } = await supabase.auth.getUser()
+      return NextResponse.redirect(
+        new URL(user ? '/studio' : '/studio/login', request.url)
+      )
+    }
+
+    // /studio/* — standard studio auth guards
+    if (pathname.startsWith('/studio')) {
+      const isStudioPublic =
+        pathname === '/studio/login' || pathname === '/studio/signup'
+
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (user && isStudioPublic) {
+        return NextResponse.redirect(new URL('/studio', request.url))
+      }
+      if (!user && !isStudioPublic) {
+        return NextResponse.redirect(new URL('/studio/login', request.url))
+      }
+    }
+
+    // Everything else (API routes, static assets) passes through
+    return response
+  }
+
+  // ---- Admin domain (krew42.com / urbansimple.net / localhost) ----
+
   // Set header to indicate if this is login page
-  const isLoginPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/app/login'
+  const isLoginPage = pathname === '/login' || pathname === '/app/login'
   response.headers.set('x-is-login-page', isLoginPage ? 'true' : 'false')
 
   // Protect authenticated routes - require login + role check
-  if (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/app') || request.nextUrl.pathname.startsWith('/clients') || request.nextUrl.pathname.startsWith('/invoices') || request.nextUrl.pathname.startsWith('/billing') || request.nextUrl.pathname.startsWith('/admin') || request.nextUrl.pathname.startsWith('/creative-studio')) {
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/app') || pathname.startsWith('/clients') || pathname.startsWith('/invoices') || pathname.startsWith('/billing') || pathname.startsWith('/admin') || pathname.startsWith('/creative-studio')) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -75,14 +152,14 @@ export async function middleware(request: NextRequest) {
       }
 
       // Admin routes require SUPER_ADMIN role
-      if (request.nextUrl.pathname.startsWith('/admin') && role !== 'SUPER_ADMIN') {
+      if (pathname.startsWith('/admin') && role !== 'SUPER_ADMIN') {
         return NextResponse.redirect(new URL('/dashboard', request.url))
       }
     }
   }
 
   // Handle root route - redirect authenticated users based on role
-  if (request.nextUrl.pathname === '/') {
+  if (pathname === '/') {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -98,7 +175,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle login page - redirect authenticated users based on role
-  if (request.nextUrl.pathname === '/login') {
+  if (pathname === '/login') {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -114,10 +191,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect /studio routes - require login (except login/signup pages)
-  if (request.nextUrl.pathname.startsWith('/studio')) {
+  if (pathname.startsWith('/studio')) {
     const isStudioPublic =
-      request.nextUrl.pathname === '/studio/login' ||
-      request.nextUrl.pathname === '/studio/signup'
+      pathname === '/studio/login' ||
+      pathname === '/studio/signup'
 
     const {
       data: { user },
@@ -135,12 +212,12 @@ export async function middleware(request: NextRequest) {
   }
 
   // Protect /portal routes - require login
-  if (request.nextUrl.pathname.startsWith('/portal')) {
+  if (pathname.startsWith('/portal')) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user && !request.nextUrl.pathname.startsWith('/portal/login')) {
+    if (!user && !pathname.startsWith('/portal/login')) {
       return NextResponse.redirect(new URL('/portal/login', request.url))
     }
   }
