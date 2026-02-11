@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { ThrottledImage } from '@/components/studio/throttled-image'
 
 interface ContentItem {
   id: string
@@ -208,11 +209,10 @@ function StudioGalleryContent() {
                 <div className="rounded-sm border border-warm-200 overflow-hidden bg-white hover:border-lime-400 hover:shadow-md transition-all">
                   <div className="aspect-square bg-warm-100 relative">
                     {item.hasImage ? (
-                      <img
+                      <ThrottledImage
                         src={imageUrl(item.id)}
                         alt={item.headline || 'Generated image'}
                         className="w-full h-full object-cover"
-                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">

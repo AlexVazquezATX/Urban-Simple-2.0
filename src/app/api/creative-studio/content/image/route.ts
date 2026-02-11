@@ -35,18 +35,23 @@ export async function GET(request: Request) {
       return new NextResponse(null, { status: 404 })
     }
 
-    if (!content.generatedImageUrl) {
+    if (!content.generatedImageUrl || content.generatedImageUrl.length < 10) {
+      console.warn(`[Content Image API] No image data for id=${id}`)
       return new NextResponse(null, { status: 404 })
     }
 
-    // Parse data URL: "data:image/png;base64,<data>"
+    // Parse data URL: "data:image/png;base64,<data>" or "data:image/webp;base64,..."
     const match = content.generatedImageUrl.match(
-      /^data:image\/([\w+]+);base64,(.+)$/
+      /^data:image\/([\w+.-]+);base64,(.+)$/s
     )
 
     if (!match) {
-      // If it's a regular URL, redirect to it
-      return NextResponse.redirect(content.generatedImageUrl)
+      // If it starts with http, redirect to it
+      if (content.generatedImageUrl.startsWith('http')) {
+        return NextResponse.redirect(content.generatedImageUrl)
+      }
+      console.warn(`[Content Image API] Unrecognized image format for id=${id}, starts with: ${content.generatedImageUrl.slice(0, 40)}`)
+      return new NextResponse(null, { status: 404 })
     }
 
     const mimeType = `image/${match[1]}`

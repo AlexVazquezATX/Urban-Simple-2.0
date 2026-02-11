@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { UsageBar } from '@/components/creative-studio'
 import { toast } from 'sonner'
+import { ThrottledImage } from '@/components/studio/throttled-image'
 
 interface StudioStats {
   totalGenerations: number
@@ -242,11 +243,10 @@ function StudioDashboardContent() {
                 <div className="rounded-sm border border-warm-200 overflow-hidden hover:border-lime-400 transition-colors">
                   <div className="aspect-square bg-warm-100 relative">
                     {item.hasImage ? (
-                      <img
+                      <ThrottledImage
                         src={`/api/creative-studio/content/image?id=${item.id}`}
                         alt={item.headline || 'Generated image'}
                         className="w-full h-full object-cover"
-                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
