@@ -103,7 +103,7 @@ export async function middleware(request: NextRequest) {
     // Root → serve landing page (URL stays as /)
     if (pathname === '/') {
       const url = request.nextUrl.clone()
-      url.pathname = '/landing'
+      url.pathname = '/backhaus-home'
       return NextResponse.rewrite(url)
     }
 
