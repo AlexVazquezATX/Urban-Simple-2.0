@@ -27,6 +27,7 @@ import {
 } from '@/lib/config/restaurant-studio'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { ensureWebCompatible } from '@/lib/image-utils'
 
 interface BrandKit {
   id: string
@@ -450,14 +451,15 @@ function StudioGenerateContent() {
                               accept="image/*"
                               className="hidden"
                               disabled={isGenerating}
-                              onChange={(e) => {
+                              onChange={async (e) => {
                                 const file = e.target.files?.[0]
                                 if (file) {
+                                  const compatible = await ensureWebCompatible(file)
                                   const reader = new FileReader()
                                   reader.onload = (ev) => {
                                     setStyleReference(ev.target?.result as string)
                                   }
-                                  reader.readAsDataURL(file)
+                                  reader.readAsDataURL(compatible)
                                 }
                               }}
                             />

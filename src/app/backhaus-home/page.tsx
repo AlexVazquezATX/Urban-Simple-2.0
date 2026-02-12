@@ -996,14 +996,20 @@ function BackHausFooter() {
             <h4 className="text-sm font-medium text-white mb-3">Legal</h4>
             <ul className="space-y-2">
               <li>
-                <span className="text-sm text-charcoal-500">
+                <Link
+                  href="/studio/privacy"
+                  className="text-sm text-charcoal-400 hover:text-white transition-colors"
+                >
                   Privacy Policy
-                </span>
+                </Link>
               </li>
               <li>
-                <span className="text-sm text-charcoal-500">
+                <Link
+                  href="/studio/terms"
+                  className="text-sm text-charcoal-400 hover:text-white transition-colors"
+                >
                   Terms of Service
-                </span>
+                </Link>
               </li>
             </ul>
           </div>

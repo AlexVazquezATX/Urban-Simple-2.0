@@ -59,7 +59,7 @@ function StudioLoginContent() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/studio" className="inline-flex items-center gap-1.5 justify-center">
+          <Link href="/" className="inline-flex items-center gap-1.5 justify-center">
             <Image
               src="/images/backhaus-logos/backhaus-logo-compact.png"
               alt="BackHaus"
@@ -104,7 +104,7 @@ function StudioLoginContent() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@restaurant.com"
+                placeholder="you@yourbusiness.com"
                 required
                 autoComplete="email"
                 className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"

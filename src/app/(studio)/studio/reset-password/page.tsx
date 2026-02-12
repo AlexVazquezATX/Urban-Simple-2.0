@@ -83,7 +83,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/studio" className="inline-flex items-center gap-1.5 justify-center">
+          <Link href="/" className="inline-flex items-center gap-1.5 justify-center">
             <Image
               src="/images/backhaus-logos/backhaus-logo-compact.png"
               alt="BackHaus"

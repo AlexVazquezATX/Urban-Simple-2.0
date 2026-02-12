@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { createClient } from '@/lib/supabase/client'
 
 export default function StudioSignupPage() {
   const router = useRouter()
@@ -45,8 +46,20 @@ export default function StudioSignupPage() {
         return
       }
 
-      // Redirect to login with success message
-      router.push('/studio/login?registered=true')
+      // Auto-login and redirect to dashboard
+      const supabase = createClient()
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (loginError) {
+        // Account created but auto-login failed — fall back to login page
+        router.push('/studio/login?registered=true')
+        return
+      }
+
+      router.push('/studio')
     } catch {
       setError('Something went wrong. Please try again.')
       setLoading(false)
@@ -58,7 +71,7 @@ export default function StudioSignupPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/studio" className="inline-flex items-center gap-1.5 justify-center">
+          <Link href="/" className="inline-flex items-center gap-1.5 justify-center">
             <Image
               src="/images/backhaus-logos/backhaus-logo-compact.png"
               alt="BackHaus"
@@ -91,13 +104,13 @@ export default function StudioSignupPage() {
 
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="restaurantName">Restaurant Name</Label>
+              <Label htmlFor="restaurantName">Business Name</Label>
               <Input
                 id="restaurantName"
                 type="text"
                 value={restaurantName}
                 onChange={(e) => setRestaurantName(e.target.value)}
-                placeholder="e.g. The Golden Fork"
+                placeholder="e.g. The Golden Fork, Hilton Miami"
                 required
                 className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
               />
@@ -137,7 +150,7 @@ export default function StudioSignupPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@restaurant.com"
+                placeholder="you@yourbusiness.com"
                 required
                 autoComplete="email"
                 className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"

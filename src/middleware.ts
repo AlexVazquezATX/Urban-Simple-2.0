@@ -110,7 +110,12 @@ export async function middleware(request: NextRequest) {
     // /studio/* — standard studio auth guards
     if (pathname.startsWith('/studio')) {
       const isStudioPublic =
-        pathname === '/studio/login' || pathname === '/studio/signup'
+        pathname === '/studio/login' ||
+        pathname === '/studio/signup' ||
+        pathname === '/studio/forgot-password' ||
+        pathname === '/studio/reset-password' ||
+        pathname === '/studio/terms' ||
+        pathname === '/studio/privacy'
 
       const { data: { user } } = await supabase.auth.getUser()
 
@@ -189,11 +194,15 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect /studio routes - require login (except login/signup pages)
+  // Protect /studio routes - require login (except public pages)
   if (pathname.startsWith('/studio')) {
     const isStudioPublic =
       pathname === '/studio/login' ||
-      pathname === '/studio/signup'
+      pathname === '/studio/signup' ||
+      pathname === '/studio/forgot-password' ||
+      pathname === '/studio/reset-password' ||
+      pathname === '/studio/terms' ||
+      pathname === '/studio/privacy'
 
     const {
       data: { user },

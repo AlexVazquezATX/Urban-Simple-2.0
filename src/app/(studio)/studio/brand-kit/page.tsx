@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge'
 import { CUISINE_TYPES, STYLE_PREFERENCES } from '@/lib/config/restaurant-studio'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { ensureWebCompatible, isHeicFile } from '@/lib/image-utils'
 
 interface BrandKit {
   id: string
@@ -219,14 +220,14 @@ export default function StudioBrandKitPage() {
     setSecondaryColor(palette.secondary)
   }
 
-  function handleImageUpload(
+  async function handleImageUpload(
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (url: string | null) => void
   ) {
     const file = e.target.files?.[0]
     if (!file) return
 
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith('image/') && !isHeicFile(file)) {
       toast.error('Please upload an image file')
       return
     }
@@ -236,11 +237,12 @@ export default function StudioBrandKitPage() {
       return
     }
 
+    const compatible = await ensureWebCompatible(file)
     const reader = new FileReader()
     reader.onload = (ev) => {
       setter(ev.target?.result as string)
     }
-    reader.readAsDataURL(file)
+    reader.readAsDataURL(compatible)
   }
 
   if (loading) {

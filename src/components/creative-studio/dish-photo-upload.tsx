@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from 'react'
 import { Upload, X, Camera, Loader2, AlertCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ensureWebCompatible, isHeicFile } from '@/lib/image-utils'
 
 interface DishPhotoUploadProps {
   onImageSelect: (base64: string) => void
@@ -32,8 +33,8 @@ export function DishPhotoUpload({
     async (file: File) => {
       setError(null)
 
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
+      // Validate file type (allow HEIC from iPhones)
+      if (!file.type.startsWith('image/') && !isHeicFile(file)) {
         setError('Please upload an image file')
         return
       }
@@ -46,7 +47,9 @@ export function DishPhotoUpload({
 
       try {
         setIsProcessing(true)
-        const base64 = await compressAndConvertToBase64(file)
+        // Convert HEIC → JPEG if needed, then compress
+        const compatible = await ensureWebCompatible(file)
+        const base64 = await compressAndConvertToBase64(compatible)
         onImageSelect(base64)
       } catch (err) {
         console.error('Image processing error:', err)
@@ -182,7 +185,7 @@ export function DishPhotoUpload({
               or click to browse
             </p>
             <p className="text-xs text-warm-400 mt-3">
-              JPG, PNG up to 20MB
+              JPG, PNG, HEIC up to 20MB
             </p>
           </>
         )}
