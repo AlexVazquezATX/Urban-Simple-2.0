@@ -18,8 +18,10 @@ import {
   Menu,
   X,
   ChevronDown,
+  MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { FeedbackDialog } from '@/components/studio/feedback-dialog'
 
 interface UserData {
   firstName: string
@@ -64,6 +66,7 @@ export function StudioNav() {
   const [usage, setUsage] = useState<UsageData | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [accountMenuOpen, setAccountMenuOpen] = useState(false)
+  const [feedbackOpen, setFeedbackOpen] = useState(false)
   const accountMenuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -189,6 +192,13 @@ export function StudioNav() {
                     <CreditCard className="w-4 h-4" />
                     Billing
                   </Link>
+                  <button
+                    onClick={() => { setFeedbackOpen(true); setAccountMenuOpen(false) }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-warm-700 hover:bg-warm-50 w-full text-left"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    Feedback
+                  </button>
                   <div className="border-t border-warm-100 mt-1 pt-1">
                     <button
                       onClick={handleSignOut}
@@ -250,6 +260,13 @@ export function StudioNav() {
                 Account & Billing
               </Link>
               <button
+                onClick={() => setFeedbackOpen(true)}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-warm-600 hover:bg-warm-50 w-full text-left"
+              >
+                <MessageSquare className="w-4 h-4" />
+                Feedback
+              </button>
+              <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-red-600 hover:bg-red-50 w-full text-left"
               >
@@ -260,6 +277,7 @@ export function StudioNav() {
           </div>
         </div>
       )}
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </nav>
   )
 }

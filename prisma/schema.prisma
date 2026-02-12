@@ -39,6 +39,9 @@ model Company {
   contentTemplates  ContentTemplate[]
   automationLogs    GrowthAutomationLog[]
 
+  // Feedback
+  feedback Feedback[]
+
   @@map("companies")
 }
 
@@ -135,6 +138,9 @@ model User {
   tasks    Task[]
   taskTags TaskTag[]
   goals    Goal[]
+
+  // Feedback
+  feedback Feedback[]
 
   @@map("users")
 }
@@ -1983,4 +1989,25 @@ model StudioUsageLog {
   @@index([subscriptionId, createdAt])
   @@index([companyId, createdAt])
   @@map("studio_usage_logs")
+}
+
+// ============================================
+// FEEDBACK
+// ============================================
+
+model Feedback {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  companyId String   @map("company_id")
+  rating    Int      // 1-5
+  category  String   @default("general") // general, bug, feature_request
+  message   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, createdAt])
+  @@index([userId])
+  @@map("feedback")
 }
