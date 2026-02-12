@@ -100,12 +100,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/studio/login', request.url))
     }
 
-    // Root → authenticated? /studio : /studio/login
+    // Root → serve landing page (URL stays as /)
     if (pathname === '/') {
-      const { data: { user } } = await supabase.auth.getUser()
-      return NextResponse.redirect(
-        new URL(user ? '/studio' : '/studio/login', request.url)
-      )
+      const url = request.nextUrl.clone()
+      url.pathname = '/landing'
+      return NextResponse.rewrite(url)
     }
 
     // /studio/* — standard studio auth guards
