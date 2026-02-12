@@ -231,13 +231,18 @@ export async function getContentByCompany(
   }))
 }
 
-export async function getContentById(id: string) {
-  return prisma.restaurantStudioContent.findUnique({
+export async function getContentById(id: string, companyId?: string) {
+  const item = await prisma.restaurantStudioContent.findUnique({
     where: { id },
     include: {
       brandKit: true,
     },
   })
+  // If companyId provided, enforce ownership check
+  if (companyId && item && item.companyId !== companyId) {
+    return null
+  }
+  return item
 }
 
 export async function updateContentStatus(id: string, status: string) {

@@ -36,9 +36,9 @@ export async function GET(request: Request) {
     const includeStats = searchParams.get('includeStats') === 'true'
     const recentOnly = searchParams.get('recent') === 'true'
 
-    // Fetch single content item by ID
+    // Fetch single content item by ID (with ownership check)
     if (id) {
-      const item = await getContentById(id)
+      const item = await getContentById(id, user.companyId)
       return NextResponse.json({ content: item ? [item] : [] })
     }
 
