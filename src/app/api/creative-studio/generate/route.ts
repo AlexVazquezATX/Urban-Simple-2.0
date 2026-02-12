@@ -8,6 +8,7 @@
 
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
+import { checkRateLimit } from '@/lib/rate-limit'
 import {
   generateFoodPhoto,
   generateBrandedPost,
@@ -33,6 +34,15 @@ export async function POST(request: Request) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Rate limit: 20 generations per user per 5 minutes
+    const rl = checkRateLimit(`generate:${user.id}`, { limit: 20, windowSeconds: 300 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait a moment and try again.' },
+        { status: 429 }
+      )
     }
 
     // Check if user can generate (has remaining credits)

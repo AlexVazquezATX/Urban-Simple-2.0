@@ -9,6 +9,8 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { prisma } from '@/lib/db'
 import { getOrCreateSubscription } from '@/lib/services/studio-admin-service'
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
+import { sendWelcomeEmail } from '@/lib/studio-email'
 
 interface SignupInput {
   email: string
@@ -20,6 +22,16 @@ interface SignupInput {
 
 export async function POST(request: Request) {
   try {
+    // Rate limit: 5 signup attempts per IP per 15 minutes
+    const ip = getClientIp(request)
+    const rl = checkRateLimit(`signup:${ip}`, { limit: 5, windowSeconds: 900 })
+    if (!rl.allowed) {
+      return NextResponse.json(
+        { error: 'Too many signup attempts. Please try again in a few minutes.' },
+        { status: 429 }
+      )
+    }
+
     const body = (await request.json()) as SignupInput
 
     // Validate required fields
@@ -90,6 +102,13 @@ export async function POST(request: Request) {
 
     // Auto-create TRIAL subscription
     await getOrCreateSubscription(result.company.id)
+
+    // Send welcome email (non-blocking — don't fail signup if email fails)
+    sendWelcomeEmail({
+      to: body.email.toLowerCase(),
+      firstName: body.firstName.trim(),
+      restaurantName: body.restaurantName.trim(),
+    }).catch((err) => console.error('[Studio Signup] Welcome email failed:', err))
 
     return NextResponse.json({
       success: true,

@@ -176,7 +176,16 @@ export default function StudioSignupPage() {
           </form>
 
           <p className="text-xs text-warm-400 text-center mt-4">
-            Free plan includes 10 AI-generated images per month
+            Free plan includes 10 AI-generated images per month.
+            <br />
+            By signing up you agree to our{' '}
+            <Link href="/studio/terms" className="text-ocean-500 hover:text-ocean-600">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link href="/studio/privacy" className="text-ocean-500 hover:text-ocean-600">
+              Privacy Policy
+            </Link>
           </p>
         </div>
 

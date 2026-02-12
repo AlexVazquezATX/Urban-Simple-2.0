@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { StudioNav } from '@/components/studio/studio-nav'
 
-const PUBLIC_PATHS = ['/studio/login', '/studio/signup']
+const PUBLIC_PATHS = ['/studio/login', '/studio/signup', '/studio/forgot-password', '/studio/reset-password', '/studio/terms', '/studio/privacy']
 
 export default function StudioLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()

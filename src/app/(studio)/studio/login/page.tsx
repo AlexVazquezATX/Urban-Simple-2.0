@@ -111,7 +111,15 @@ function StudioLoginContent() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link
+                  href="/studio/forgot-password"
+                  className="text-xs text-ocean-600 hover:text-ocean-700"
+                >
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"

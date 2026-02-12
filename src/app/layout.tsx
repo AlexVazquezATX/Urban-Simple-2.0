@@ -23,8 +23,27 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Urban Simple",
-  description: "Urban Simple Platform",
+  title: {
+    default: "BackHaus — AI Creative Studio for Restaurants",
+    template: "%s — BackHaus",
+  },
+  description:
+    "Create stunning food photography and branded content with AI. Built for restaurants and hospitality.",
+  metadataBase: new URL("https://backhaus.ai"),
+  openGraph: {
+    type: "website",
+    siteName: "BackHaus",
+    title: "BackHaus — AI Creative Studio for Restaurants",
+    description:
+      "Create stunning food photography and branded content with AI. Built for restaurants and hospitality.",
+    url: "https://backhaus.ai",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "BackHaus — AI Creative Studio for Restaurants",
+    description:
+      "Create stunning food photography and branded content with AI. Built for restaurants and hospitality.",
+  },
 };
 
 export default function RootLayout({
