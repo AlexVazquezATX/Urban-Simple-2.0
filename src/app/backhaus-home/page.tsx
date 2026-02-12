@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   Camera,
   Palette,
@@ -45,6 +45,12 @@ const staggerContainer = {
 // ============================================
 // CONTENT DATA
 // ============================================
+
+const HERO_PAIRS = [
+  { before: '/images/landing/hero-before-1.jpg', after: '/images/landing/hero-after-1.jpg' },
+  { before: '/images/landing/hero-before-2.jpg', after: '/images/landing/hero-after-2.jpg' },
+  { before: '/images/landing/hero-before-3.jpg', after: '/images/landing/hero-after-3.jpg' },
+]
 
 const FEATURES = [
   {
@@ -92,6 +98,7 @@ const STEPS = [
     description:
       'Tell us what you want. "A rustic pasta dish on a wooden table" or pick from smart prompt suggestions.',
     icon: Upload,
+    image: '/images/landing/step-describe.jpg',
   },
   {
     number: '2',
@@ -99,6 +106,7 @@ const STEPS = [
     description:
       'Our AI creates professional food photography in seconds. Choose your style, format, and brand.',
     icon: Wand2,
+    image: '/images/landing/step-generate.jpg',
   },
   {
     number: '3',
@@ -106,6 +114,7 @@ const STEPS = [
     description:
       'Download your content and post directly to Instagram, update your menu, or add to your website.',
     icon: Download,
+    image: '/images/landing/step-publish.jpg',
   },
 ]
 
@@ -234,10 +243,23 @@ function BackHausNav() {
 }
 
 // ============================================
-// HERO
+// HERO WITH CAROUSEL
 // ============================================
 
 function HeroSection() {
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [paused, setPaused] = useState(false)
+
+  const advance = useCallback(() => {
+    setActiveIndex((prev) => (prev + 1) % HERO_PAIRS.length)
+  }, [])
+
+  useEffect(() => {
+    if (paused) return
+    const timer = setInterval(advance, 4500)
+    return () => clearInterval(timer)
+  }, [paused, advance])
+
   return (
     <section className="pt-28 pb-16 sm:pt-36 sm:pb-24 bg-cream-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -313,42 +335,78 @@ function HeroSection() {
             </motion.div>
           </motion.div>
 
-          {/* Right column — Before/After placeholder */}
+          {/* Right column — Before/After carousel */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
             className="relative"
+            onMouseEnter={() => setPaused(true)}
+            onMouseLeave={() => setPaused(false)}
           >
             <div className="rounded-2xl shadow-xl overflow-hidden border border-cream-200 bg-white">
-              <div className="grid grid-cols-2">
+              <div className="grid grid-cols-2 relative">
                 {/* Before */}
-                <div className="aspect-square bg-charcoal-100 border-r border-cream-200 flex flex-col items-center justify-center p-6 relative">
-                  <div className="absolute top-3 left-3">
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-charcoal-400 bg-charcoal-200 px-2 py-0.5 rounded">
+                <div className="aspect-square relative overflow-hidden bg-charcoal-100">
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-white bg-black/50 backdrop-blur-sm px-2 py-0.5 rounded">
                       Before
                     </span>
                   </div>
-                  <Camera className="w-10 h-10 text-charcoal-300 mb-3" />
-                  <p className="text-xs text-charcoal-400 text-center">
-                    Your phone photo
-                  </p>
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={`before-${activeIndex}`}
+                      src={HERO_PAIRS[activeIndex].before}
+                      alt="Phone photo"
+                      className="w-full h-full object-cover"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  </AnimatePresence>
                 </div>
+
                 {/* After */}
-                <div className="aspect-square bg-gradient-to-br from-honey-50 to-bronze-50 flex flex-col items-center justify-center p-6 relative">
-                  <div className="absolute top-3 right-3">
-                    <span className="text-[10px] font-medium uppercase tracking-wider text-honey-700 bg-honey-200 px-2 py-0.5 rounded">
+                <div className="aspect-square relative overflow-hidden bg-honey-50">
+                  <div className="absolute top-3 right-3 z-10">
+                    <span className="text-[10px] font-medium uppercase tracking-wider text-honey-900 bg-honey-300/70 backdrop-blur-sm px-2 py-0.5 rounded">
                       After
                     </span>
                   </div>
-                  <Sparkles className="w-10 h-10 text-honey-500 mb-3" />
-                  <p className="text-xs text-honey-700 text-center font-medium">
-                    AI-enhanced
-                  </p>
+                  <AnimatePresence mode="wait">
+                    <motion.img
+                      key={`after-${activeIndex}`}
+                      src={HERO_PAIRS[activeIndex].after}
+                      alt="AI-enhanced"
+                      className="w-full h-full object-cover"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.6 }}
+                    />
+                  </AnimatePresence>
                 </div>
+
+                {/* Center divider */}
+                <div className="absolute inset-y-0 left-1/2 w-0.5 bg-white -translate-x-1/2 z-10" />
               </div>
-              {/* Divider line */}
-              <div className="absolute inset-y-0 left-1/2 w-0.5 bg-gradient-to-b from-charcoal-300 via-honey-400 to-charcoal-300 -translate-x-1/2 pointer-events-none" />
+
+              {/* Dot indicators */}
+              <div className="flex items-center justify-center gap-2 py-3 bg-white">
+                {HERO_PAIRS.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveIndex(i)}
+                    className={cn(
+                      'w-2 h-2 rounded-full transition-all duration-300',
+                      i === activeIndex
+                        ? 'bg-honey-500 w-6'
+                        : 'bg-charcoal-200 hover:bg-charcoal-300'
+                    )}
+                  />
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
@@ -514,8 +572,12 @@ function HowItWorks() {
                 </span>
               </div>
               <div className="bg-white rounded-2xl border border-cream-200 p-6">
-                <div className="w-full aspect-[4/3] bg-cream-100 rounded-xl flex items-center justify-center mb-5">
-                  <step.icon className="w-10 h-10 text-charcoal-300" />
+                <div className="w-full aspect-[4/3] rounded-xl overflow-hidden mb-5">
+                  <img
+                    src={step.image}
+                    alt={step.title}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <h3 className="font-display text-xl font-medium text-charcoal-900 mb-2">
                   {step.title}
@@ -571,8 +633,12 @@ function BeforeAfterShowcase() {
           {/* Before */}
           <motion.div variants={fadeInUp}>
             <div className="rounded-2xl border-2 border-dashed border-charcoal-200 bg-charcoal-50 p-8 h-full">
-              <div className="aspect-[4/3] bg-charcoal-100 rounded-xl flex items-center justify-center mb-6">
-                <Camera className="w-14 h-14 text-charcoal-300" />
+              <div className="aspect-[4/3] rounded-xl overflow-hidden mb-6">
+                <img
+                  src="/images/landing/showcase-before.jpg"
+                  alt="Phone food photo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h3 className="font-display text-lg font-medium text-charcoal-700 mb-2">
                 Without BackHaus
@@ -601,8 +667,12 @@ function BeforeAfterShowcase() {
           {/* After */}
           <motion.div variants={fadeInUp}>
             <div className="rounded-2xl border border-honey-200 bg-gradient-to-br from-honey-50 to-bronze-50 p-8 shadow-lg h-full">
-              <div className="aspect-[4/3] bg-white/60 rounded-xl flex items-center justify-center mb-6 border border-honey-200">
-                <Sparkles className="w-14 h-14 text-honey-500" />
+              <div className="aspect-[4/3] rounded-xl overflow-hidden mb-6 border border-honey-200">
+                <img
+                  src="/images/landing/showcase-after.jpg"
+                  alt="AI-generated food photo"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <h3 className="font-display text-lg font-medium text-charcoal-900 mb-2">
                 With BackHaus

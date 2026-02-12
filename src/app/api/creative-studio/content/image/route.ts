@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
     // Parse data URL: "data:image/png;base64,<data>" or "data:image/webp;base64,..."
     const match = content.generatedImageUrl.match(
-      /^data:image\/([\w+.-]+);base64,(.+)$/s
+      /^data:image\/([\w+.-]+);base64,(.+)$/
     )
 
     if (!match) {
