@@ -53,7 +53,11 @@ export function DishPhotoUpload({
         onImageSelect(base64)
       } catch (err) {
         console.error('Image processing error:', err)
-        setError('Failed to process image. Please try another.')
+        const msg = err instanceof Error ? err.message : ''
+        setError(msg.includes('HEIC') || msg.includes('convert')
+          ? msg
+          : 'Failed to process image. Please try another.'
+        )
       } finally {
         setIsProcessing(false)
       }
