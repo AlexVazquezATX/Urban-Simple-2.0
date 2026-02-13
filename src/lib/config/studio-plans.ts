@@ -29,11 +29,11 @@ export interface PlanFeatures {
 
 export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
   TRIAL: {
-    maxBrandKits: 0,
-    allStyles: false,
-    brandedPosts: false,
+    maxBrandKits: 1,
+    allStyles: true,
+    brandedPosts: true,
     customPosts: false,
-    smartPrompts: false,
+    smartPrompts: true,
     displayName: 'Free',
   },
   STARTER: {
@@ -119,11 +119,13 @@ export const PLAN_PRICING: PlanPricing[] = [
     tier: 'TRIAL' as StudioPlanTier,
     displayName: 'Free',
     price: 0,
-    description: 'Try Creative Studio with limited features',
+    description: 'Experience the full Creative Studio',
     features: [
-      '10 generations per month',
-      'Minimal style only',
-      'Menu & Instagram formats',
+      '10 generations total',
+      'All photography styles',
+      'Branded post generator',
+      '1 brand kit',
+      'Smart prompts',
     ],
     cta: 'Get Started Free',
   },
