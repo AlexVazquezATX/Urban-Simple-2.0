@@ -6,11 +6,14 @@ import {
   Heading,
   Hr,
   Html,
+  Img,
   Preview,
   Section,
   Text,
 } from '@react-email/components'
 import * as React from 'react'
+
+const BASE_URL = 'https://backhaus.ai'
 
 interface WelcomeEmailProps {
   firstName: string
@@ -33,7 +36,13 @@ export const WelcomeEmail = ({
         <Container style={container}>
           {/* Header */}
           <Section style={header}>
-            <Heading style={heading}>BackHaus</Heading>
+            <Img
+              src={`${BASE_URL}/images/backhaus-logos/backhaus-logo-yellow.png`}
+              alt="BackHaus"
+              width="220"
+              height="auto"
+              style={logo}
+            />
             <Text style={subheading}>AI Creative Studio</Text>
           </Section>
 
@@ -74,12 +83,21 @@ export const WelcomeEmail = ({
 
           {/* Footer */}
           <Hr style={divider} />
-          <Text style={footer}>
-            BackHaus by Urban Simple
-          </Text>
-          <Text style={footerSmall}>
-            AI-powered food photography & branded content for restaurants
-          </Text>
+          <Section style={footerSection}>
+            <Img
+              src={`${BASE_URL}/images/backhaus-logos/backhaus-icon-yellow.png`}
+              alt="BH"
+              width="28"
+              height="28"
+              style={footerIcon}
+            />
+            <Text style={footer}>
+              BackHaus by Urban Simple
+            </Text>
+            <Text style={footerSmall}>
+              AI-powered food photography & branded content for hospitality
+            </Text>
+          </Section>
         </Container>
       </Body>
     </Html>
@@ -104,24 +122,21 @@ const container = {
 }
 
 const header = {
-  padding: '32px 24px',
+  padding: '36px 24px 28px',
   textAlign: 'center' as const,
   backgroundColor: '#292524',
 }
 
-const heading = {
-  fontSize: '32px',
-  fontWeight: 'bold',
-  color: '#ffffff',
-  margin: '0 0 8px',
+const logo = {
+  margin: '0 auto',
 }
 
 const subheading = {
-  fontSize: '14px',
+  fontSize: '13px',
   color: '#d4af37',
-  margin: '0',
+  margin: '12px 0 0',
   textTransform: 'uppercase' as const,
-  letterSpacing: '2px',
+  letterSpacing: '3px',
 }
 
 const body = {
@@ -172,16 +187,25 @@ const divider = {
   margin: '0 24px',
 }
 
+const footerSection = {
+  textAlign: 'center' as const,
+  padding: '16px 24px 0',
+}
+
+const footerIcon = {
+  margin: '0 auto 8px',
+}
+
 const footer = {
   color: '#6b7280',
   fontSize: '14px',
   textAlign: 'center' as const,
-  margin: '16px 24px 0',
+  margin: '0',
 }
 
 const footerSmall = {
   color: '#9ca3af',
   fontSize: '12px',
   textAlign: 'center' as const,
-  margin: '4px 24px 0',
+  margin: '4px 0 0',
 }
