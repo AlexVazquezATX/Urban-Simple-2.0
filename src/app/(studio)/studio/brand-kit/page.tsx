@@ -220,6 +220,30 @@ export default function StudioBrandKitPage() {
     setSecondaryColor(palette.secondary)
   }
 
+  function compressImage(file: File, maxDim: number = 600): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0, width, height)
+        // Use PNG for transparency support (logos), compressed quality
+        const dataUrl = canvas.toDataURL('image/png')
+        resolve(dataUrl)
+      }
+      img.onerror = () => reject(new Error('Failed to load image'))
+      img.src = URL.createObjectURL(file)
+    })
+  }
+
   async function handleImageUpload(
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (url: string | null) => void
@@ -232,17 +256,18 @@ export default function StudioBrandKitPage() {
       return
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Image must be under 2MB')
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be under 5MB')
       return
     }
 
-    const compatible = await ensureWebCompatible(file)
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      setter(ev.target?.result as string)
+    try {
+      const compatible = await ensureWebCompatible(file)
+      const dataUrl = await compressImage(compatible)
+      setter(dataUrl)
+    } catch {
+      toast.error('Failed to process image')
     }
-    reader.readAsDataURL(compatible)
   }
 
   if (loading) {
