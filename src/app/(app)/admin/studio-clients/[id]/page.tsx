@@ -13,6 +13,7 @@ import {
   Save,
   Loader2,
   ImageIcon,
+  Gift,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
@@ -32,6 +33,7 @@ interface ClientDetail {
   generationsUsed: number
   generationsLimit: number
   usagePercent: number
+  isComplementary: boolean
   monthlyRate?: number
   trialEndsAt?: string
   onboardedAt?: string
@@ -69,6 +71,7 @@ export default function StudioClientDetailPage({
   const [planTier, setPlanTier] = useState('')
   const [status, setStatus] = useState('')
   const [generationsLimit, setGenerationsLimit] = useState(0)
+  const [isComplementary, setIsComplementary] = useState(false)
 
   useEffect(() => {
     loadClient()
@@ -84,6 +87,7 @@ export default function StudioClientDetailPage({
         setPlanTier(data.client.planTier)
         setStatus(data.client.status)
         setGenerationsLimit(data.client.generationsLimit)
+        setIsComplementary(data.client.isComplementary || false)
       }
     } catch (error) {
       console.error('Failed to load client:', error)
@@ -105,6 +109,7 @@ export default function StudioClientDetailPage({
           planTier,
           status,
           monthlyGenerationsLimit: generationsLimit,
+          isComplementary,
         }),
       })
 
@@ -120,6 +125,7 @@ export default function StudioClientDetailPage({
               planTier: data.client.planTier,
               status: data.client.status,
               generationsLimit: data.client.generationsLimit,
+              isComplementary: data.client.isComplementary,
             }
           : null
       )
@@ -136,7 +142,8 @@ export default function StudioClientDetailPage({
     client &&
     (planTier !== client.planTier ||
       status !== client.status ||
-      generationsLimit !== client.generationsLimit)
+      generationsLimit !== client.generationsLimit ||
+      isComplementary !== (client.isComplementary || false))
 
   if (loading) {
     return (
@@ -180,9 +187,17 @@ export default function StudioClientDetailPage({
                   <Building2 className="w-5 h-5 text-warm-500" />
                 </div>
                 <div>
-                  <h1 className="text-lg font-display font-medium text-warm-900">
-                    {client.restaurantName || client.companyName}
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-lg font-display font-medium text-warm-900">
+                      {client.restaurantName || client.companyName}
+                    </h1>
+                    {client.isComplementary && (
+                      <Badge className="bg-purple-100 text-purple-700 text-xs rounded-sm">
+                        <Gift className="w-3 h-3 mr-1" />
+                        Comp
+                      </Badge>
+                    )}
+                  </div>
                   {client.restaurantName && (
                     <p className="text-sm text-warm-500">{client.companyName}</p>
                   )}
@@ -317,6 +332,43 @@ export default function StudioClientDetailPage({
                     onChange={(e) => setGenerationsLimit(parseInt(e.target.value) || 0)}
                     className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm"
                   />
+                </div>
+
+                <div className="sm:col-span-2 pt-3 border-t border-warm-100 mt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Gift className="w-4 h-4 text-purple-500" />
+                      <div>
+                        <p className="text-sm font-medium text-warm-900">Complementary Access</p>
+                        <p className="text-xs text-warm-500">Grant free Pro tier access (bypasses Stripe billing)</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isComplementary}
+                      onClick={() => {
+                        const newValue = !isComplementary
+                        setIsComplementary(newValue)
+                        if (newValue) {
+                          setPlanTier('PROFESSIONAL')
+                          setGenerationsLimit(200)
+                          setStatus('active')
+                        }
+                      }}
+                      className={cn(
+                        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
+                        isComplementary ? 'bg-purple-500' : 'bg-warm-300'
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition-transform',
+                          isComplementary ? 'translate-x-5' : 'translate-x-0'
+                        )}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

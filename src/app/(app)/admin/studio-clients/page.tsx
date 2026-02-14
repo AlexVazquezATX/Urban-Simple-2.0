@@ -14,6 +14,7 @@ import {
   ChevronRight,
   Loader2,
   Building2,
+  Gift,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,6 +40,7 @@ interface StudioClient {
   generationsUsed: number
   generationsLimit: number
   usagePercent: number
+  isComplementary: boolean
   lastActivity?: string
   createdAt: string
 }
@@ -82,6 +84,7 @@ export default function StudioClientsPage() {
     email: '',
     phone: '',
     planTier: 'TRIAL',
+    isComplementary: false,
   })
 
   useEffect(() => {
@@ -144,7 +147,7 @@ export default function StudioClientsPage() {
 
       toast.success('Client created successfully!')
       setShowAddModal(false)
-      setNewClient({ companyName: '', email: '', phone: '', planTier: 'TRIAL' })
+      setNewClient({ companyName: '', email: '', phone: '', planTier: 'TRIAL', isComplementary: false })
       loadData()
     } catch (error) {
       toast.error('Failed to create client')
@@ -333,14 +336,22 @@ export default function StudioClientsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <Badge
-                        className={cn(
-                          'text-xs rounded-sm',
-                          PLAN_COLORS[client.planTier] || PLAN_COLORS.TRIAL
+                      <div className="flex items-center gap-1.5">
+                        <Badge
+                          className={cn(
+                            'text-xs rounded-sm',
+                            PLAN_COLORS[client.planTier] || PLAN_COLORS.TRIAL
+                          )}
+                        >
+                          {client.planTier}
+                        </Badge>
+                        {client.isComplementary && (
+                          <Badge className="bg-purple-100 text-purple-700 text-xs rounded-sm">
+                            <Gift className="w-3 h-3 mr-0.5" />
+                            Comp
+                          </Badge>
                         )}
-                      >
-                        {client.planTier}
-                      </Badge>
+                      </div>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -470,13 +481,35 @@ export default function StudioClientsPage() {
                 onChange={(e) =>
                   setNewClient({ ...newClient, planTier: e.target.value })
                 }
-                className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm mt-1.5"
+                disabled={newClient.isComplementary}
+                className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm mt-1.5 disabled:opacity-50"
               >
                 <option value="TRIAL">Trial (10 generations, 14 days)</option>
                 <option value="STARTER">Starter ($29/mo, 50 generations)</option>
                 <option value="PROFESSIONAL">Professional ($79/mo, 200 generations)</option>
                 <option value="ENTERPRISE">Max ($149/mo, Unlimited)</option>
               </select>
+            </div>
+
+            <div className="flex items-center gap-2.5">
+              <input
+                id="isComplementary"
+                type="checkbox"
+                checked={newClient.isComplementary}
+                onChange={(e) => {
+                  const checked = e.target.checked
+                  setNewClient({
+                    ...newClient,
+                    isComplementary: checked,
+                    planTier: checked ? 'PROFESSIONAL' : 'TRIAL',
+                  })
+                }}
+                className="rounded border-warm-300 text-purple-500 focus:ring-purple-500"
+              />
+              <Label htmlFor="isComplementary" className="text-sm text-warm-700 flex items-center gap-1.5">
+                <Gift className="w-3.5 h-3.5 text-purple-500" />
+                Grant complementary Pro access (free, no billing)
+              </Label>
             </div>
 
             <DialogFooter>

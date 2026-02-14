@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { companyName, email, phone, planTier, monthlyGenerationsLimit } = body
+    const { companyName, email, phone, planTier, monthlyGenerationsLimit, isComplementary } = body
 
     if (!companyName?.trim()) {
       return NextResponse.json(
@@ -70,6 +70,7 @@ export async function POST(request: Request) {
       planTier: planTier || 'TRIAL',
       monthlyGenerationsLimit,
       onboardedBy: user.id,
+      isComplementary: isComplementary || false,
     }
 
     const client = await createStudioClient(input)

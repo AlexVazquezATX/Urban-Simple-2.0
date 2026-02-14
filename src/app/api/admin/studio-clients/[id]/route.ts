@@ -58,6 +58,7 @@ export async function PATCH(
       monthlyGenerationsLimit: body.monthlyGenerationsLimit,
       status: body.status,
       monthlyRate: body.monthlyRate,
+      isComplementary: body.isComplementary,
     }
 
     const client = await updateStudioClient(id, input)

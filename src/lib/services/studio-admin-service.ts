@@ -21,6 +21,7 @@ export interface StudioClientSummary {
   generationsUsed: number
   generationsLimit: number
   usagePercent: number
+  isComplementary: boolean
   lastActivity?: Date
   createdAt: Date
 }
@@ -51,6 +52,7 @@ export interface CreateStudioClientInput {
   planTier?: StudioPlanTier
   monthlyGenerationsLimit?: number
   onboardedBy?: string
+  isComplementary?: boolean
 }
 
 export interface UpdateStudioClientInput {
@@ -58,6 +60,7 @@ export interface UpdateStudioClientInput {
   monthlyGenerationsLimit?: number
   status?: string
   monthlyRate?: number
+  isComplementary?: boolean
 }
 
 // Plan tier configurations
@@ -144,6 +147,7 @@ export async function getStudioClients(options?: {
         generationsUsed: sub.generationsUsedThisMonth,
         generationsLimit: sub.monthlyGenerationsLimit,
         usagePercent,
+        isComplementary: sub.isComplementary,
         lastActivity: sub.usageLogs[0]?.createdAt,
         createdAt: sub.createdAt,
       }
@@ -223,6 +227,7 @@ export async function getStudioClientDetail(subscriptionId: string): Promise<Stu
     generationsUsed: subscription.generationsUsedThisMonth,
     generationsLimit: subscription.monthlyGenerationsLimit,
     usagePercent,
+    isComplementary: subscription.isComplementary,
     stripeCustomerId: subscription.stripeCustomerId || undefined,
     monthlyRate: subscription.monthlyRate ? Number(subscription.monthlyRate) : undefined,
     trialEndsAt: subscription.trialEndsAt || undefined,
@@ -238,9 +243,11 @@ export async function getStudioClientDetail(subscriptionId: string): Promise<Stu
  * Create a new studio client (company + subscription)
  */
 export async function createStudioClient(input: CreateStudioClientInput): Promise<StudioClientSummary> {
-  const { companyName, email, phone, planTier = 'TRIAL', monthlyGenerationsLimit, onboardedBy } = input
+  const { companyName, email, phone, planTier: inputPlanTier = 'TRIAL', monthlyGenerationsLimit, onboardedBy, isComplementary = false } = input
 
-  const planConfig = PLAN_CONFIGS[planTier]
+  // If complementary, force Pro tier settings
+  const effectivePlanTier = isComplementary ? 'PROFESSIONAL' as StudioPlanTier : inputPlanTier
+  const planConfig = PLAN_CONFIGS[effectivePlanTier]
   const limit = monthlyGenerationsLimit ?? planConfig.limit
 
   // Create company and subscription in transaction
@@ -258,11 +265,12 @@ export async function createStudioClient(input: CreateStudioClientInput): Promis
     const subscription = await tx.studioSubscription.create({
       data: {
         companyId: company.id,
-        planTier,
+        planTier: effectivePlanTier,
         planName: planConfig.name,
         monthlyGenerationsLimit: limit,
-        monthlyRate: planConfig.rate,
+        monthlyRate: isComplementary ? 0 : planConfig.rate,
         status: 'active',
+        isComplementary,
         onboardedAt: new Date(),
         onboardedBy,
       },
@@ -280,6 +288,7 @@ export async function createStudioClient(input: CreateStudioClientInput): Promis
     generationsUsed: 0,
     generationsLimit: limit,
     usagePercent: 0,
+    isComplementary: result.subscription.isComplementary,
     createdAt: result.subscription.createdAt,
   }
 }
@@ -304,6 +313,7 @@ export async function updateStudioClient(
       monthlyGenerationsLimit: input.monthlyGenerationsLimit,
       status: input.status,
       monthlyRate: input.monthlyRate,
+      isComplementary: input.isComplementary,
       planName: input.planTier ? PLAN_CONFIGS[input.planTier].name : undefined,
     },
   })
@@ -326,6 +336,7 @@ export async function updateStudioClient(
     generationsUsed: updatedSubscription.generationsUsedThisMonth,
     generationsLimit: updatedSubscription.monthlyGenerationsLimit,
     usagePercent,
+    isComplementary: updatedSubscription.isComplementary,
     createdAt: updatedSubscription.createdAt,
   }
 }
@@ -482,7 +493,7 @@ export async function getStudioAdminStats(): Promise<StudioAdminStats> {
       where: { createdAt: { gte: weekAgo } },
     }),
     prisma.studioSubscription.findMany({
-      where: { status: 'active', planTier: { not: 'TRIAL' } },
+      where: { status: 'active', planTier: { not: 'TRIAL' }, isComplementary: false },
       select: { monthlyRate: true },
     }),
   ])
@@ -532,6 +543,16 @@ export async function syncSubscriptionFromStripe(params: {
   status: string
   currentPeriodEnd: Date
 }): Promise<void> {
+  // Guard: do not overwrite complementary subscriptions
+  const existing = await prisma.studioSubscription.findUnique({
+    where: { companyId: params.companyId },
+    select: { isComplementary: true },
+  })
+  if (existing?.isComplementary) {
+    console.log(`[Stripe Sync] Skipping sync for complementary subscription: ${params.companyId}`)
+    return
+  }
+
   const planConfig = PLAN_CONFIGS[params.planTier]
 
   await prisma.studioSubscription.upsert({
@@ -567,6 +588,16 @@ export async function syncSubscriptionFromStripe(params: {
  * Mark subscription as cancelled (stays active until period end).
  */
 export async function handleSubscriptionCancelled(stripeSubscriptionId: string): Promise<void> {
+  // Guard: do not modify complementary subscriptions
+  const sub = await prisma.studioSubscription.findFirst({
+    where: { stripeSubscriptionId },
+    select: { isComplementary: true },
+  })
+  if (sub?.isComplementary) {
+    console.log('[Stripe Sync] Skipping cancellation for complementary subscription')
+    return
+  }
+
   await prisma.studioSubscription.updateMany({
     where: { stripeSubscriptionId },
     data: { cancelledAt: new Date() },
@@ -577,6 +608,16 @@ export async function handleSubscriptionCancelled(stripeSubscriptionId: string):
  * Downgrade to free tier when subscription actually expires.
  */
 export async function downgradeToFreeTier(stripeSubscriptionId: string): Promise<void> {
+  // Guard: do not downgrade complementary subscriptions
+  const sub = await prisma.studioSubscription.findFirst({
+    where: { stripeSubscriptionId },
+    select: { isComplementary: true },
+  })
+  if (sub?.isComplementary) {
+    console.log('[Stripe Sync] Skipping downgrade for complementary subscription')
+    return
+  }
+
   const planConfig = PLAN_CONFIGS.TRIAL
 
   await prisma.studioSubscription.updateMany({
@@ -599,6 +640,16 @@ export async function downgradeToFreeTier(stripeSubscriptionId: string): Promise
  * Pause subscription due to payment failure.
  */
 export async function pauseSubscription(stripeSubscriptionId: string): Promise<void> {
+  // Guard: do not pause complementary subscriptions
+  const sub = await prisma.studioSubscription.findFirst({
+    where: { stripeSubscriptionId },
+    select: { isComplementary: true },
+  })
+  if (sub?.isComplementary) {
+    console.log('[Stripe Sync] Skipping pause for complementary subscription')
+    return
+  }
+
   await prisma.studioSubscription.updateMany({
     where: { stripeSubscriptionId },
     data: { status: 'paused' },

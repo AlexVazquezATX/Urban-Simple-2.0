@@ -42,7 +42,6 @@ import {
   CheckSquare,
   AtSign,
   Camera,
-  Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -55,12 +54,12 @@ interface SidebarState {
   clientRelations: boolean
   growth: boolean
   administrative: boolean
-  studioAdmin: boolean
+  backhausAdmin: boolean
 }
 
 function loadSidebarState(): SidebarState {
   if (typeof window === 'undefined') {
-    return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true, studioAdmin: true }
+    return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true, backhausAdmin: true }
   }
   try {
     const saved = localStorage.getItem(SIDEBAR_STATE_KEY)
@@ -70,7 +69,7 @@ function loadSidebarState(): SidebarState {
   } catch {
     // Ignore parse errors
   }
-  return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true, studioAdmin: true }
+  return { admin: true, operations: true, clientRelations: true, growth: true, administrative: true, backhausAdmin: true }
 }
 
 function saveSidebarState(state: SidebarState) {
@@ -162,7 +161,6 @@ export function AppSidebar() {
   const growthItems = [
     { href: '/growth', icon: Rocket, label: 'Daily Planner', exact: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/creative-hub', icon: Palette, label: 'Creative Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
-    { href: '/creative-studio', icon: Camera, label: 'Creative Studio', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/email-finder', icon: AtSign, label: 'Email Finder', roles: ['SUPER_ADMIN', 'ADMIN'] },
@@ -175,8 +173,10 @@ export function AppSidebar() {
     { href: '/invoices', icon: FileText, label: 'Invoices', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
 
-  const studioAdminItems = [
+  const backhausAdminItems = [
+    { href: '/creative-studio', icon: Camera, label: 'Backhaus Studio', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/admin/studio-clients', icon: Users, label: 'Studio Clients', roles: ['SUPER_ADMIN'] },
+    { href: '/admin/feedback', icon: MessageSquare, label: 'Feedback', roles: ['SUPER_ADMIN'] },
   ]
 
   const isActive = (href: string, exact?: boolean) => {
@@ -263,7 +263,7 @@ export function AppSidebar() {
 
         {/* Growth */}
         {growthItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('growth')}
@@ -316,7 +316,7 @@ export function AppSidebar() {
 
         {/* Operations */}
         {operationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('operations')}
@@ -369,7 +369,7 @@ export function AppSidebar() {
 
         {/* Client Relations */}
         {clientRelationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('clientRelations')}
@@ -422,7 +422,7 @@ export function AppSidebar() {
 
         {/* Administrative */}
         {administrativeItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('administrative')}
@@ -473,27 +473,24 @@ export function AppSidebar() {
         </SidebarGroup>
         )}
 
-        {/* Studio Admin */}
-        {studioAdminItems.filter((item) => hasAccess(item.roles)).length > 0 && (
-        <SidebarGroup className="mt-4">
+        {/* BackHaus Admin */}
+        {backhausAdminItems.filter((item) => hasAccess(item.roles)).length > 0 && (
+        <SidebarGroup className="mt-2">
           <SidebarGroupLabel
             className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
-            onClick={() => toggleSection('studioAdmin')}
+            onClick={() => toggleSection('backhausAdmin')}
           >
-            <span className="flex items-center gap-1.5">
-              <Shield className="h-3 w-3" />
-              Studio Admin
-            </span>
-            {sidebarState.studioAdmin ? (
+            <span>Backhaus Admin</span>
+            {sidebarState.backhausAdmin ? (
               <ChevronDown className="h-3.5 w-3.5" />
             ) : (
               <ChevronRight className="h-3.5 w-3.5" />
             )}
           </SidebarGroupLabel>
-          {sidebarState.studioAdmin && (
+          {sidebarState.backhausAdmin && (
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">
-                {studioAdminItems.filter((item) => hasAccess(item.roles)).map((item) => {
+                {backhausAdminItems.filter((item) => hasAccess(item.roles)).map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
 
