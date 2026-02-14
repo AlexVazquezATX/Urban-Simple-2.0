@@ -440,7 +440,7 @@ export default function StudioBrandKitPage() {
                       <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
                         <Upload className="w-5 h-5 text-warm-400 mb-1.5" />
                         <span className="text-xs text-warm-500">Upload logo</span>
-                        <span className="text-[10px] text-warm-400 mt-0.5">PNG, SVG, JPG</span>
+                        <span className="text-[10px] text-warm-400 mt-0.5">PNG, JPG — max 5MB</span>
                       </div>
                       <input
                         type="file"
@@ -470,7 +470,7 @@ export default function StudioBrandKitPage() {
                       <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
                         <Upload className="w-5 h-5 text-warm-400 mb-1.5" />
                         <span className="text-xs text-warm-500">Upload icon</span>
-                        <span className="text-[10px] text-warm-400 mt-0.5">PNG, SVG, JPG</span>
+                        <span className="text-[10px] text-warm-400 mt-0.5">PNG, JPG — max 5MB</span>
                       </div>
                       <input
                         type="file"
