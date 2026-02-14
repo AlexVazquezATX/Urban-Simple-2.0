@@ -19,11 +19,13 @@ export default function StudioSignupPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showSignInLink, setShowSignInLink] = useState(false)
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setShowSignInLink(false)
 
     try {
       const res = await fetch('/api/studio/signup', {
@@ -41,6 +43,28 @@ export default function StudioSignupPage() {
       const data = await res.json()
 
       if (!res.ok) {
+        // Account already exists — try auto-login (handles case where previous signup
+        // succeeded but the response was lost due to network error)
+        if (res.status === 409) {
+          const supabase = createClient()
+          const { error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          })
+
+          if (!loginError) {
+            // Password matches — seamlessly recover and sign them in
+            router.push('/studio')
+            return
+          }
+
+          // Different password — show helpful message with sign-in link
+          setError('An account with this email already exists.')
+          setShowSignInLink(true)
+          setLoading(false)
+          return
+        }
+
         setError(data.error || 'Failed to create account')
         setLoading(false)
         return
@@ -99,6 +123,14 @@ export default function StudioSignupPage() {
           {error && (
             <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700 mb-4">
               {error}
+              {showSignInLink && (
+                <Link
+                  href="/studio/login"
+                  className="block mt-1.5 text-ocean-600 hover:text-ocean-700 font-medium"
+                >
+                  Sign in to your account &rarr;
+                </Link>
+              )}
             </div>
           )}
 
