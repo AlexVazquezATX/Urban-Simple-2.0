@@ -146,10 +146,17 @@ export function StudioNav() {
 
           {/* Right side: plan badge + account */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Plan tier badge */}
-            <Badge variant="outline" className={cn('text-xs font-medium', tierColor)}>
-              {tierLabel}
-            </Badge>
+            {/* Plan tier badge + upgrade link */}
+            <Link href="/studio/account" className="flex items-center gap-1.5 group">
+              <Badge variant="outline" className={cn('text-xs font-medium', tierColor)}>
+                {tierLabel}
+              </Badge>
+              {usage?.planTier === 'TRIAL' && (
+                <span className="text-xs text-ocean-500 group-hover:text-ocean-700 font-medium transition-colors">
+                  Upgrade
+                </span>
+              )}
+            </Link>
 
             {/* Account dropdown */}
             <div className="relative" ref={accountMenuRef}>
@@ -215,9 +222,14 @@ export function StudioNav() {
 
           {/* Mobile: plan badge + hamburger */}
           <div className="flex md:hidden items-center gap-2">
-            <Badge variant="outline" className={cn('text-[10px] font-medium', tierColor)}>
-              {tierLabel}
-            </Badge>
+            <Link href="/studio/account" className="flex items-center gap-1">
+              <Badge variant="outline" className={cn('text-[10px] font-medium', tierColor)}>
+                {tierLabel}
+              </Badge>
+              {usage?.planTier === 'TRIAL' && (
+                <span className="text-[10px] text-ocean-500 font-medium">Upgrade</span>
+              )}
+            </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 text-warm-600 hover:text-warm-900"

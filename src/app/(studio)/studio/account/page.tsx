@@ -127,12 +127,15 @@ export default function StudioAccountPage() {
     ? Math.round((usage.generationsUsed / usage.generationsLimit) * 100)
     : 0
 
-  // Determine next upgrade tier
-  const nextTier =
-    usage?.planTier === 'TRIAL' ? 'STARTER' :
-    usage?.planTier === 'STARTER' ? 'PROFESSIONAL' :
-    usage?.planTier === 'PROFESSIONAL' ? 'ENTERPRISE' :
-    null
+  // All upgrade tiers above current plan
+  const PLAN_OPTIONS = [
+    { tier: 'STARTER', price: '$29', generations: '50', description: 'For getting started with AI content' },
+    { tier: 'PROFESSIONAL', price: '$59', generations: '200', description: 'For active content creators', popular: true },
+    { tier: 'ENTERPRISE', price: '$99', generations: 'Unlimited', description: 'For high-volume teams' },
+  ]
+
+  const currentTierIndex = ['TRIAL', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'].indexOf(usage?.planTier || 'TRIAL')
+  const availableUpgrades = PLAN_OPTIONS.filter((_, i) => i >= currentTierIndex)
 
   return (
     <div className="min-h-screen bg-warm-50">
@@ -236,54 +239,98 @@ export default function StudioAccountPage() {
           )}
         </div>
 
-        {/* Upgrade / Manage */}
-        <div className="bg-white rounded-sm border border-warm-200 p-5">
-          <div className="flex items-center gap-2 mb-4">
-            <Zap className="w-4 h-4 text-warm-500" />
-            <h2 className="text-sm font-medium text-warm-700">Plan Management</h2>
+        {/* Available Plans */}
+        {availableUpgrades.length > 0 && !isPaused && (
+          <div className="bg-white rounded-sm border border-warm-200 p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Zap className="w-4 h-4 text-warm-500" />
+              <h2 className="text-sm font-medium text-warm-700">
+                {usage?.planTier === 'TRIAL' ? 'Upgrade Your Plan' : 'Plan Options'}
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              {availableUpgrades.map((plan) => {
+                const isCurrent = plan.tier === usage?.planTier
+                return (
+                  <div
+                    key={plan.tier}
+                    className={cn(
+                      'rounded-sm border p-4 flex items-center justify-between gap-4',
+                      plan.popular && !isCurrent ? 'border-ocean-300 bg-ocean-50/30' : 'border-warm-200',
+                      isCurrent && 'border-lime-300 bg-lime-50/30'
+                    )}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <span className="text-sm font-semibold text-warm-900">
+                          {TIER_LABELS[plan.tier]}
+                        </span>
+                        {plan.popular && !isCurrent && (
+                          <Badge className="bg-ocean-100 text-ocean-700 text-[10px] px-1.5 py-0">
+                            Popular
+                          </Badge>
+                        )}
+                        {isCurrent && (
+                          <Badge className="bg-lime-100 text-lime-700 text-[10px] px-1.5 py-0">
+                            Current
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-warm-500">{plan.description}</p>
+                      <p className="text-xs text-warm-500 mt-0.5">
+                        {plan.generations} generations/mo
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-lg font-bold text-warm-900">{plan.price}</p>
+                      <p className="text-[10px] text-warm-400">/month</p>
+                    </div>
+                    {!isCurrent && (
+                      <Button
+                        size="sm"
+                        className={cn(
+                          'shrink-0',
+                          plan.popular
+                            ? 'bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700'
+                            : ''
+                        )}
+                        variant={plan.popular ? 'default' : 'outline'}
+                        onClick={() => handleUpgrade(plan.tier)}
+                        disabled={upgradeLoading}
+                      >
+                        {upgradeLoading ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          'Upgrade'
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
+        )}
 
-          <div className="space-y-3">
-            {/* Upgrade button (only if not Max) */}
-            {nextTier && !isPaused && (
-              <Button
-                className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700"
-                onClick={() => handleUpgrade(nextTier)}
-                disabled={upgradeLoading}
-              >
-                {upgradeLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <ArrowUpCircle className="w-4 h-4 mr-2" />
-                )}
-                Upgrade to {TIER_LABELS[nextTier]}
-              </Button>
-            )}
-
-            {/* Manage Billing (for paying customers) */}
-            {usage?.hasStripeSubscription && !isPaused && (
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={handleManageBilling}
-                disabled={portalLoading}
-              >
-                {portalLoading ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <CreditCard className="w-4 h-4 mr-2" />
-                )}
-                Manage Billing & Subscription
-              </Button>
-            )}
-
-            {!usage?.hasStripeSubscription && usage?.planTier === 'TRIAL' && (
-              <p className="text-sm text-warm-500 text-center">
-                You&apos;re on the free plan. Upgrade to unlock more generations and features.
-              </p>
-            )}
+        {/* Manage Billing (for paying customers) */}
+        {usage?.hasStripeSubscription && !isPaused && (
+          <div className="bg-white rounded-sm border border-warm-200 p-5">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={handleManageBilling}
+              disabled={portalLoading}
+            >
+              {portalLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CreditCard className="w-4 h-4 mr-2" />
+              )}
+              Manage Billing & Subscription
+            </Button>
           </div>
-        </div>
+        )}
 
         {/* Account Info */}
         {user && (
