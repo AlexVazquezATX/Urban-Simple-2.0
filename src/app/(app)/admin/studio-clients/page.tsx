@@ -485,8 +485,8 @@ export default function StudioClientsPage() {
                 className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm mt-1.5 disabled:opacity-50"
               >
                 <option value="TRIAL">Free (10 generations total)</option>
-                <option value="STARTER">Starter ($29/mo, 50 generations)</option>
-                <option value="PROFESSIONAL">Pro ($59/mo, 200 generations)</option>
+                <option value="STARTER">Starter ($29/mo, 100 generations)</option>
+                <option value="PROFESSIONAL">Pro ($59/mo, 300 generations)</option>
                 <option value="ENTERPRISE">Max ($99/mo, 1,000 generations)</option>
               </select>
             </div>

@@ -129,8 +129,8 @@ export default function StudioAccountPage() {
 
   // All upgrade tiers above current plan
   const PLAN_OPTIONS = [
-    { tier: 'STARTER', price: '$29', generations: '50', description: 'For getting started with AI content' },
-    { tier: 'PROFESSIONAL', price: '$59', generations: '200', description: 'For active content creators', popular: true },
+    { tier: 'STARTER', price: '$29', generations: '100', description: 'For getting started with AI content' },
+    { tier: 'PROFESSIONAL', price: '$59', generations: '300', description: 'For active content creators', popular: true },
     { tier: 'ENTERPRISE', price: '$99', generations: '1,000', description: 'For high-volume teams' },
   ]
 

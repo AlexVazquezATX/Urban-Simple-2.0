@@ -135,7 +135,7 @@ export const PLAN_PRICING: PlanPricing[] = [
     price: 29,
     description: 'For restaurants getting started with AI content',
     features: [
-      '50 generations per month',
+      '100 generations per month',
       'All photography styles',
       'Branded post generator',
       '1 brand kit',
@@ -149,7 +149,7 @@ export const PLAN_PRICING: PlanPricing[] = [
     price: 59,
     description: 'For busy restaurants and small chains',
     features: [
-      '200 generations per month',
+      '300 generations per month',
       'All photography styles',
       'Branded post generator',
       '3 brand kits',

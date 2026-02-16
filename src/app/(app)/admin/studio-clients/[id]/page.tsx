@@ -50,8 +50,8 @@ interface ClientDetail {
 
 const PLAN_OPTIONS = [
   { value: 'TRIAL', label: 'Free', limit: 10, rate: 0 },
-  { value: 'STARTER', label: 'Starter', limit: 50, rate: 29 },
-  { value: 'PROFESSIONAL', label: 'Pro', limit: 200, rate: 59 },
+  { value: 'STARTER', label: 'Starter', limit: 100, rate: 29 },
+  { value: 'PROFESSIONAL', label: 'Pro', limit: 300, rate: 59 },
   { value: 'ENTERPRISE', label: 'Max', limit: 1000, rate: 99 },
 ]
 

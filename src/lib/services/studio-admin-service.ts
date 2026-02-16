@@ -66,8 +66,8 @@ export interface UpdateStudioClientInput {
 // Plan tier configurations
 export const PLAN_CONFIGS: Record<StudioPlanTier, { limit: number; rate: number; name: string }> = {
   TRIAL: { limit: 10, rate: 0, name: 'Free' },
-  STARTER: { limit: 50, rate: 29, name: 'Starter' },
-  PROFESSIONAL: { limit: 200, rate: 59, name: 'Pro' },
+  STARTER: { limit: 100, rate: 29, name: 'Starter' },
+  PROFESSIONAL: { limit: 300, rate: 59, name: 'Pro' },
   ENTERPRISE: { limit: 1000, rate: 99, name: 'Max' },
 }
 
