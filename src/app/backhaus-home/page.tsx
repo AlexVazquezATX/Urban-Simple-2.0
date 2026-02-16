@@ -57,7 +57,7 @@ const FEATURES = [
     icon: Camera,
     title: 'AI Food Photography',
     description:
-      'Generate stunning food photos from text descriptions. Choose from multiple styles — minimal, rustic, editorial, and more.',
+      'Upload your own photos or describe what you need — our AI turns them into stunning, professional shots. Choose from multiple styles — minimal, rustic, editorial, and more.',
   },
   {
     icon: Palette,
@@ -94,17 +94,17 @@ const FEATURES = [
 const STEPS = [
   {
     number: '1',
-    title: 'Describe',
+    title: 'Upload',
     description:
-      'Tell us what you want. "A rustic pasta dish on a wooden table" or pick from smart prompt suggestions.',
+      'Snap a photo with your phone and upload it — or describe what you want from scratch. Our AI works with your real content, not stock images.',
     icon: Upload,
     image: '/images/landing/step-describe.jpg',
   },
   {
     number: '2',
-    title: 'Generate',
+    title: 'Enhance',
     description:
-      'Our AI creates professional food photography in seconds. Choose your style, format, and brand.',
+      'Our AI transforms your photos into professional food photography in seconds. Pick a style, refine the setting, and add your branding.',
     icon: Wand2,
     image: '/images/landing/step-generate.jpg',
   },
@@ -292,8 +292,8 @@ function HeroSection() {
               variants={fadeInUp}
               className="text-lg sm:text-xl text-charcoal-600 leading-relaxed mb-8 max-w-xl"
             >
-              AI-generated food photography, branded social posts, and marketing
-              content for restaurants. No photographer needed.
+              Turn your phone photos into professional food photography, branded
+              social posts, and marketing content. No photographer needed.
             </motion.p>
 
             <motion.div
