@@ -49,10 +49,10 @@ interface ClientDetail {
 }
 
 const PLAN_OPTIONS = [
-  { value: 'TRIAL', label: 'Trial', limit: 10, rate: 0 },
+  { value: 'TRIAL', label: 'Free', limit: 10, rate: 0 },
   { value: 'STARTER', label: 'Starter', limit: 50, rate: 29 },
-  { value: 'PROFESSIONAL', label: 'Professional', limit: 200, rate: 79 },
-  { value: 'ENTERPRISE', label: 'Max', limit: 99999, rate: 149 },
+  { value: 'PROFESSIONAL', label: 'Pro', limit: 200, rate: 59 },
+  { value: 'ENTERPRISE', label: 'Max', limit: 1000, rate: 99 },
 ]
 
 const STATUS_OPTIONS = ['active', 'paused', 'cancelled', 'expired']
@@ -323,7 +323,7 @@ export default function StudioClientDetailPage({
 
                 <div>
                   <Label htmlFor="limit" className="text-warm-600 text-xs">
-                    Monthly Generation Limit
+                    {planTier === 'TRIAL' ? 'Total' : 'Monthly'} Generation Limit
                   </Label>
                   <input
                     id="limit"
@@ -408,7 +408,7 @@ export default function StudioClientDetailPage({
             {/* Usage Card */}
             <div className="bg-white rounded-sm border border-warm-200 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-medium text-warm-900">Usage This Month</h2>
+                <h2 className="text-sm font-medium text-warm-900">{client.planTier === 'TRIAL' ? 'Usage (Lifetime)' : 'Usage This Month'}</h2>
                 <Badge
                   className={cn(
                     'text-xs rounded-sm',

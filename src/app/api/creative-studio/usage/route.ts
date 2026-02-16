@@ -21,6 +21,7 @@ export async function GET() {
       planTier: subscription.planTier,
       generationsUsed: subscription.generationsUsedThisMonth,
       generationsLimit: subscription.monthlyGenerationsLimit,
+      isLifetime: subscription.planTier === 'TRIAL',
       status: subscription.status,
       hasStripeSubscription: !!subscription.stripeSubscriptionId,
       cancelledAt: subscription.cancelledAt,

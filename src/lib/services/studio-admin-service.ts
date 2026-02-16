@@ -67,8 +67,8 @@ export interface UpdateStudioClientInput {
 export const PLAN_CONFIGS: Record<StudioPlanTier, { limit: number; rate: number; name: string }> = {
   TRIAL: { limit: 10, rate: 0, name: 'Free' },
   STARTER: { limit: 50, rate: 29, name: 'Starter' },
-  PROFESSIONAL: { limit: 200, rate: 79, name: 'Pro' },
-  ENTERPRISE: { limit: 99999, rate: 149, name: 'Max' },
+  PROFESSIONAL: { limit: 200, rate: 59, name: 'Pro' },
+  ENTERPRISE: { limit: 1000, rate: 99, name: 'Max' },
 }
 
 // ============================================
@@ -392,7 +392,10 @@ export async function canGenerate(companyId: string): Promise<{
 
   // Check usage limit
   if (subscription.generationsUsedThisMonth >= subscription.monthlyGenerationsLimit) {
-    return { allowed: false, reason: `You've used all ${subscription.monthlyGenerationsLimit} generations for this month. Upgrade your plan for more.`, ...base }
+    const reason = subscription.planTier === 'TRIAL'
+      ? `You've used all ${subscription.monthlyGenerationsLimit} free generations. Upgrade your plan to keep creating.`
+      : `You've used all ${subscription.monthlyGenerationsLimit} generations for this month. Upgrade your plan for more.`
+    return { allowed: false, reason, ...base }
   }
 
   return { allowed: true, ...base }
@@ -413,9 +416,12 @@ export async function logGeneration(params: {
   const subscription = await getOrCreateSubscription(params.companyId)
 
   // Check if we need to reset the usage period (new month)
+  // TRIAL is a lifetime cap (no monthly reset) — only paid plans reset
   const now = new Date()
   const periodStart = subscription.usagePeriodStart
-  if (now.getMonth() !== periodStart.getMonth() || now.getFullYear() !== periodStart.getFullYear()) {
+  const isNewMonth = now.getMonth() !== periodStart.getMonth() || now.getFullYear() !== periodStart.getFullYear()
+
+  if (isNewMonth && subscription.planTier !== 'TRIAL') {
     await prisma.studioSubscription.update({
       where: { id: subscription.id },
       data: {

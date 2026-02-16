@@ -131,7 +131,7 @@ export default function StudioAccountPage() {
   const PLAN_OPTIONS = [
     { tier: 'STARTER', price: '$29', generations: '50', description: 'For getting started with AI content' },
     { tier: 'PROFESSIONAL', price: '$59', generations: '200', description: 'For active content creators', popular: true },
-    { tier: 'ENTERPRISE', price: '$99', generations: 'Unlimited', description: 'For high-volume teams' },
+    { tier: 'ENTERPRISE', price: '$99', generations: '1,000', description: 'For high-volume teams' },
   ]
 
   const currentTierIndex = ['TRIAL', 'STARTER', 'PROFESSIONAL', 'ENTERPRISE'].indexOf(usage?.planTier || 'TRIAL')
@@ -208,7 +208,7 @@ export default function StudioAccountPage() {
           <div className="mb-4">
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-warm-500">
-                {usage?.generationsUsed || 0} / {usage?.generationsLimit || 0} generations this month
+                {usage?.generationsUsed || 0} / {usage?.generationsLimit || 0} generations{usage?.planTier === 'TRIAL' ? ' total' : ' this month'}
               </span>
               <span className="text-warm-500 font-medium">{percent}%</span>
             </div>

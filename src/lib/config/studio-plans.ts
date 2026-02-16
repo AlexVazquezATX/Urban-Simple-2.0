@@ -146,7 +146,7 @@ export const PLAN_PRICING: PlanPricing[] = [
   {
     tier: 'PROFESSIONAL' as StudioPlanTier,
     displayName: 'Pro',
-    price: 79,
+    price: 59,
     description: 'For busy restaurants and small chains',
     features: [
       '200 generations per month',
@@ -162,10 +162,10 @@ export const PLAN_PRICING: PlanPricing[] = [
   {
     tier: 'ENTERPRISE' as StudioPlanTier,
     displayName: 'Max',
-    price: 149,
+    price: 99,
     description: 'For busy restaurants and small chains',
     features: [
-      'Unlimited generations',
+      '1,000 generations per month',
       'All photography styles',
       'Branded post generator',
       'Unlimited brand kits',
