@@ -69,8 +69,55 @@ export async function GET(
       ].join(','))
     }
 
+    // Service line items
+    if (preview.serviceLineItems.length > 0) {
+      rows.push('')
+      rows.push('Service Line Items')
+      rows.push([
+        'Description',
+        'Facility',
+        '',
+        'Unit Rate',
+        'Quantity',
+        'Tax Behavior',
+        'Line Tax',
+        'Line Total',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        'Notes',
+      ].join(','))
+
+      for (const si of preview.serviceLineItems) {
+        rows.push([
+          csvEscape(si.description),
+          csvEscape(si.locationName || ''),
+          '',
+          si.unitRate.toFixed(2),
+          String(si.quantity),
+          si.taxBehavior,
+          si.lineItemTax.toFixed(2),
+          si.lineItemTotal.toFixed(2),
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          csvEscape(si.notes || ''),
+        ].join(','))
+      }
+    }
+
     // Summary rows
     rows.push('')
+    rows.push(`Facility Subtotal,,,,,,,$${(preview.subtotal - preview.serviceSubtotal).toFixed(2)}`)
+    if (preview.serviceLineItems.length > 0) {
+      rows.push(`Service Subtotal,,,,,,,$${preview.serviceSubtotal.toFixed(2)}`)
+    }
     rows.push(`Subtotal,,,,,,,$${preview.subtotal.toFixed(2)}`)
     rows.push(`Tax (${(preview.taxRate * 100).toFixed(2)}%),,,,,,,$${preview.taxAmount.toFixed(2)}`)
     rows.push(`Total,,,,,,,$${preview.total.toFixed(2)}`)

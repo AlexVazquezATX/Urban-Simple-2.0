@@ -669,6 +669,7 @@ function ServiceItemsSection({
             facilities={facilities}
             defaultYear={year}
             defaultMonth={month}
+            onSuccess={onRefresh}
           >
             <Button variant="outline" size="sm" className="rounded-sm border-warm-200 text-warm-700 h-7 text-xs">
               <Plus className="h-3 w-3 mr-1" />
@@ -733,6 +734,7 @@ function ServiceItemsSection({
                         item={si}
                         defaultYear={year}
                         defaultMonth={month}
+                        onSuccess={onRefresh}
                       >
                         <Button
                           variant="ghost"

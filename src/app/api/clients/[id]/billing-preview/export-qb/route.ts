@@ -84,6 +84,26 @@ export async function GET(
       ].join(','))
     }
 
+    // Service line items
+    for (const si of preview.serviceLineItems) {
+      let desc = si.description
+      if (si.locationName) desc += ` — ${si.locationName}`
+      if (si.notes) desc += ` (${si.notes})`
+
+      rows.push([
+        csvEscape(invoiceNo),
+        csvEscape(customerName),
+        invoiceDate,
+        dueDate,
+        csvEscape(desc),
+        String(si.quantity),
+        si.unitRate.toFixed(2),
+        si.lineItemTotal.toFixed(2),
+        si.taxBehavior === 'TAX_INCLUDED' ? 'NON' : 'TAX',
+        csvEscape(memo),
+      ].join(','))
+    }
+
     // Tax line (if any)
     if (preview.taxAmount > 0) {
       rows.push([

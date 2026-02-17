@@ -177,6 +177,46 @@ export default async function PrintSchedulePage({
             </table>
           </div>
 
+          {/* Service line items */}
+          {preview.serviceLineItems.length > 0 && (
+            <div className="summary-section">
+              <h2>Service Line Items</h2>
+              <table className="summary-table">
+                <thead>
+                  <tr>
+                    <th>Description</th>
+                    <th>Facility</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th style={{ textAlign: 'right' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {preview.serviceLineItems.map((si) => (
+                    <tr key={si.id}>
+                      <td>
+                        {si.description}
+                        {si.notes && <span style={{ color: '#a39e97', marginLeft: 4, fontSize: '8px' }}>({si.notes})</span>}
+                      </td>
+                      <td>{si.locationName || '-'}</td>
+                      <td>{si.quantity !== 1 ? si.quantity : '1'}</td>
+                      <td>${si.unitRate.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                      <td className="amount">
+                        ${si.lineItemTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  ))}
+                  <tr className="total-row">
+                    <td colSpan={4}>Service Subtotal ({preview.serviceLineItems.length} items)</td>
+                    <td className="amount">
+                      ${preview.serviceSubtotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* Inactive facilities */}
           {inactiveFacilities.length > 0 && (
             <div className="inactive-section">

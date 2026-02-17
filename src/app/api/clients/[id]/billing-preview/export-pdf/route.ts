@@ -172,12 +172,14 @@ function buildPdf(preview: BillingPreview): jsPDF {
     ]
   })
 
-  // Totals row
+  // Facility subtotal row
+  const facilitySubtotal = preview.lineItems.reduce((s, li) => s + li.lineItemTotal, 0)
+  const facilityTax = preview.lineItems.reduce((s, li) => s + li.lineItemTax, 0)
   body.push([
-    { content: `Total (${preview.activeFacilityCount} facilities)`, styles: { fontStyle: 'bold' } } as any,
+    { content: `Facility Subtotal (${preview.activeFacilityCount} active)`, styles: { fontStyle: 'bold' } } as any,
     '', '', '', '',
-    { content: fmt(preview.taxAmount), styles: { fontStyle: 'bold' } } as any,
-    { content: fmt(preview.total), styles: { fontStyle: 'bold' } } as any,
+    { content: fmt(facilityTax), styles: { fontStyle: 'bold' } } as any,
+    { content: fmt(facilitySubtotal), styles: { fontStyle: 'bold' } } as any,
     '',
   ])
 
@@ -222,6 +224,78 @@ function buildPdf(preview: BillingPreview): jsPDF {
       }
     },
   })
+
+  // ── Service Line Items table ────────────────────────
+  if (preview.serviceLineItems.length > 0) {
+    let serviceTableY = (doc as any).lastAutoTable?.finalY || tableStartY + 200
+    serviceTableY += 14
+
+    const serviceHead = [['Description', 'Facility', 'Qty', 'Rate', 'Tax', 'Total', 'Notes']]
+    const serviceBody: any[][] = preview.serviceLineItems.map(si => [
+      si.description,
+      si.locationName || '-',
+      si.quantity !== 1 ? String(si.quantity) : '1',
+      fmt(si.unitRate),
+      fmt(si.lineItemTax),
+      fmt(si.lineItemTotal),
+      si.notes || '-',
+    ])
+
+    const serviceTax = preview.serviceLineItems.reduce((s, si) => s + si.lineItemTax, 0)
+    const serviceTotal = preview.serviceLineItems.reduce((s, si) => s + si.lineItemTotal, 0)
+    serviceBody.push([
+      { content: `Service Subtotal (${preview.serviceLineItems.length} items)`, styles: { fontStyle: 'bold' } } as any,
+      '', '', '',
+      { content: fmt(serviceTax), styles: { fontStyle: 'bold' } } as any,
+      { content: fmt(serviceTotal), styles: { fontStyle: 'bold' } } as any,
+      '',
+    ])
+
+    // Check if we need a new page
+    if (serviceTableY > doc.internal.pageSize.getHeight() - 120) {
+      doc.addPage()
+      serviceTableY = 40
+    }
+
+    doc.setFontSize(10)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(60, 55, 50)
+    doc.text('Service Line Items', margin, serviceTableY)
+
+    autoTable(doc, {
+      startY: serviceTableY + 6,
+      head: serviceHead,
+      body: serviceBody,
+      margin: { left: margin, right: margin },
+      theme: 'grid',
+      headStyles: {
+        fillColor: [245, 243, 240],
+        textColor: [80, 75, 70],
+        fontSize: 8,
+        fontStyle: 'bold',
+        cellPadding: 5,
+      },
+      bodyStyles: {
+        fontSize: 8,
+        cellPadding: 4,
+        textColor: [50, 50, 50],
+      },
+      columnStyles: {
+        0: { cellWidth: 'auto' },
+        2: { halign: 'right' },
+        3: { halign: 'right' },
+        4: { halign: 'right' },
+        5: { halign: 'right' },
+      },
+      alternateRowStyles: { fillColor: [252, 252, 250] },
+      didParseCell: (data) => {
+        if (data.row.index === serviceBody.length - 1 && data.section === 'body') {
+          data.cell.styles.fillColor = [245, 243, 240]
+          data.cell.styles.fontStyle = 'bold'
+        }
+      },
+    })
+  }
 
   // ── Explanation notes ─────────────────────────────────
   const finalY = (doc as any).lastAutoTable?.finalY || tableStartY + 200

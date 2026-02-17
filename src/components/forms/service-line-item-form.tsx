@@ -61,6 +61,7 @@ interface ServiceLineItemFormProps {
   item?: any // existing item for editing
   defaultYear?: number
   defaultMonth?: number
+  onSuccess?: () => void
   children: React.ReactNode
 }
 
@@ -70,6 +71,7 @@ export function ServiceLineItemForm({
   item,
   defaultYear,
   defaultMonth,
+  onSuccess,
   children,
 }: ServiceLineItemFormProps) {
   const [open, setOpen] = useState(false)
@@ -125,6 +127,7 @@ export function ServiceLineItemForm({
 
       toast.success(isEditing ? 'Service item updated' : 'Service item added')
       setOpen(false)
+      onSuccess?.()
       router.refresh()
     } catch (error: any) {
       toast.error(error.message || 'Failed to save service item')
@@ -149,6 +152,7 @@ export function ServiceLineItemForm({
       }
       toast.success('Service item deleted')
       setOpen(false)
+      onSuccess?.()
       router.refresh()
     } catch (error: any) {
       toast.error(error.message || 'Failed to delete')
