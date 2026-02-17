@@ -29,6 +29,7 @@ import { SeasonalRuleForm } from '@/components/forms/seasonal-rule-form'
 import { MonthlyOverrideForm } from '@/components/forms/monthly-override-form'
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const MONTH_SHORT = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 function formatDays(days: number[]): string {
   if (days.length === 0) return '-'
@@ -159,6 +160,7 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
                   <TableHead className="text-warm-500 font-medium">Frequency</TableHead>
                   <TableHead className="text-warm-500 font-medium">Days</TableHead>
                   <TableHead className="text-warm-500 font-medium">Seasonal</TableHead>
+                  <TableHead className="text-warm-500 font-medium">Overrides</TableHead>
                   <TableHead className="text-warm-500 font-medium w-10"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -216,6 +218,9 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
                       ) : (
                         <span className="text-warm-400">-</span>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <OverrideIndicator overrides={facility.monthlyOverrides || []} />
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -284,5 +289,47 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
         )}
       </CardContent>
     </Card>
+  )
+}
+
+function OverrideIndicator({ overrides }: { overrides: any[] }) {
+  if (overrides.length === 0) {
+    return <span className="text-warm-400">-</span>
+  }
+
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {overrides.map((o: any) => {
+        const isCurrent = o.year === currentYear && o.month === currentMonth
+        const isPast = o.year < currentYear || (o.year === currentYear && o.month < currentMonth)
+
+        let detail = ''
+        if (o.overrideStatus) detail = o.overrideStatus.toLowerCase()
+        else if (o.pauseStartDay && o.pauseEndDay) detail = `pause ${o.pauseStartDay}–${o.pauseEndDay}`
+        else if (o.overrideRate !== null && o.overrideRate !== undefined) detail = 'rate'
+
+        return (
+          <Badge
+            key={o.id}
+            title={detail ? `${MONTH_SHORT[o.month]} ${o.year}: ${detail}` : `${MONTH_SHORT[o.month]} ${o.year}`}
+            className={`rounded-sm text-[10px] px-1.5 py-0 cursor-default ${
+              isCurrent
+                ? 'bg-orange-100 text-orange-700 border-orange-200'
+                : isPast
+                  ? 'bg-warm-100 text-warm-500 border-warm-200'
+                  : 'bg-amber-50 text-amber-700 border-amber-200'
+            }`}
+          >
+            <Calendar className="h-2.5 w-2.5 mr-0.5" />
+            {MONTH_SHORT[o.month]}
+            {o.year !== currentYear && ` '${String(o.year).slice(2)}`}
+          </Badge>
+        )
+      })}
+    </div>
   )
 }
