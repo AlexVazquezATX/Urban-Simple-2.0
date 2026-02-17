@@ -32,6 +32,21 @@ export interface BillingExplanation {
   deltaReason: string | null
 }
 
+export interface ServiceLineItemData {
+  id: string
+  facilityProfileId: string | null
+  locationName: string | null // resolved from facility → location
+  description: string
+  quantity: number
+  unitRate: number
+  lineItemTotal: number // quantity * unitRate
+  taxBehavior: string
+  lineItemTax: number
+  notes: string | null
+  performedDate: string | null
+  status: string
+}
+
 export interface BillingPreview {
   clientId: string
   clientName: string
@@ -39,7 +54,9 @@ export interface BillingPreview {
   month: number
   monthLabel: string
   lineItems: FacilityLineItem[]
+  serviceLineItems: ServiceLineItemData[]
   subtotal: number
+  serviceSubtotal: number
   taxRate: number
   taxAmount: number
   total: number

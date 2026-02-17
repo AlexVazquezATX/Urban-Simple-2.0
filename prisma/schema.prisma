@@ -233,6 +233,7 @@ model Client {
   loyaltyTransactions   LoyaltyTransaction[]
   convertedFromProspect Prospect?            @relation("ProspectToClient")
   facilityProfiles      FacilityProfile[]
+  serviceLineItems      ServiceLineItem[]
 
   @@map("clients")
 }
@@ -2089,6 +2090,7 @@ model FacilityProfile {
 
   seasonalRules    SeasonalRule[]
   monthlyOverrides MonthlyOverride[]
+  serviceLineItems ServiceLineItem[]
 
   @@index([clientId])
   @@index([status])
@@ -2141,4 +2143,31 @@ model MonthlyOverride {
   @@index([facilityProfileId])
   @@index([year, month])
   @@map("monthly_overrides")
+}
+
+model ServiceLineItem {
+  id                String  @id @default(cuid())
+  clientId          String  @map("client_id")
+  facilityProfileId String? @map("facility_profile_id") // optional — can be client-level
+
+  year        Int
+  month       Int // 1-12
+  description String
+  quantity    Decimal @default(1) @db.Decimal(10, 2)
+  unitRate    Decimal @map("unit_rate") @db.Decimal(10, 2)
+  taxBehavior TaxBehavior @default(INHERIT_CLIENT) @map("tax_behavior")
+  notes       String? @db.Text
+
+  performedDate DateTime? @map("performed_date") @db.Date
+  status        String    @default("pending") // pending, approved, invoiced
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client          Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  facilityProfile FacilityProfile? @relation(fields: [facilityProfileId], references: [id], onDelete: SetNull)
+
+  @@index([clientId, year, month])
+  @@index([facilityProfileId])
+  @@map("service_line_items")
 }

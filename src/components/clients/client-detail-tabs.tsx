@@ -329,7 +329,13 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
 
       {/* Billing Preview Tab */}
       <TabsContent value="billing" className="mt-4">
-        <BillingPreviewTab clientId={client.id} />
+        <BillingPreviewTab
+          clientId={client.id}
+          facilities={(client.facilityProfiles || []).map((fp: any) => ({
+            id: fp.id,
+            location: { name: fp.location?.name || 'Unknown' },
+          }))}
+        />
       </TabsContent>
 
       {/* Calendar Tab */}

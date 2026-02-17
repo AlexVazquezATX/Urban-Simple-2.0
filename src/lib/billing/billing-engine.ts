@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db'
-import type { BillingPreview, FacilityLineItem, BillingExplanation } from './billing-types'
+import type { BillingPreview, FacilityLineItem, BillingExplanation, ServiceLineItemData } from './billing-types'
 
 const MONTH_LABELS = [
   '', 'January', 'February', 'March', 'April', 'May', 'June',
@@ -196,9 +196,51 @@ export async function generateBillingPreview(
     })
   }
 
+  // --- Service Line Items ---
+  const rawServiceItems = await prisma.serviceLineItem.findMany({
+    where: { clientId, year, month },
+    include: {
+      facilityProfile: {
+        select: { location: { select: { name: true } } },
+      },
+    },
+    orderBy: { createdAt: 'asc' },
+  })
+
+  const serviceLineItems: ServiceLineItemData[] = rawServiceItems.map((si) => {
+    const qty = Number(si.quantity)
+    const rate = Number(si.unitRate)
+    const lineTotal = roundCents(qty * rate)
+    const tb = si.taxBehavior as string
+    let tax = 0
+    if (!client.taxExempt) {
+      if (tb === 'INHERIT_CLIENT' || tb === 'PRE_TAX') {
+        tax = roundCents(lineTotal * clientTaxRate)
+      }
+    }
+    return {
+      id: si.id,
+      facilityProfileId: si.facilityProfileId,
+      locationName: si.facilityProfile?.location?.name || null,
+      description: si.description,
+      quantity: qty,
+      unitRate: rate,
+      lineItemTotal: lineTotal,
+      taxBehavior: tb,
+      lineItemTax: tax,
+      notes: si.notes,
+      performedDate: si.performedDate ? si.performedDate.toISOString().split('T')[0] : null,
+      status: si.status,
+    }
+  })
+
   // --- Totals ---
-  const subtotal = roundCents(lineItems.reduce((sum, li) => sum + li.lineItemTotal, 0))
-  const taxAmount = roundCents(lineItems.reduce((sum, li) => sum + li.lineItemTax, 0))
+  const facilitySubtotal = roundCents(lineItems.reduce((sum, li) => sum + li.lineItemTotal, 0))
+  const serviceSubtotal = roundCents(serviceLineItems.reduce((sum, si) => sum + si.lineItemTotal, 0))
+  const subtotal = roundCents(facilitySubtotal + serviceSubtotal)
+  const facilityTax = roundCents(lineItems.reduce((sum, li) => sum + li.lineItemTax, 0))
+  const serviceTax = roundCents(serviceLineItems.reduce((sum, si) => sum + si.lineItemTax, 0))
+  const taxAmount = roundCents(facilityTax + serviceTax)
   const total = roundCents(subtotal + taxAmount)
 
   // --- Previous month delta ---
@@ -225,7 +267,9 @@ export async function generateBillingPreview(
     month,
     monthLabel: MONTH_LABELS[month],
     lineItems,
+    serviceLineItems,
     subtotal,
+    serviceSubtotal,
     taxRate: clientTaxRate,
     taxAmount,
     total,
@@ -380,6 +424,23 @@ async function generatePreviousMonthTotal(
       }
     }
     total += lineTotal + lineTax
+  }
+
+  // Include service line items
+  const prevServiceItems = await prisma.serviceLineItem.findMany({
+    where: { clientId, year, month },
+    select: { quantity: true, unitRate: true, taxBehavior: true },
+  })
+  for (const si of prevServiceItems) {
+    const siTotal = roundCents(Number(si.quantity) * Number(si.unitRate))
+    let siTax = 0
+    if (!client.taxExempt) {
+      const tb = si.taxBehavior as string
+      if (tb === 'INHERIT_CLIENT' || tb === 'PRE_TAX') {
+        siTax = roundCents(siTotal * clientTaxRate)
+      }
+    }
+    total += siTotal + siTax
   }
 
   return roundCents(total)

@@ -40,7 +40,9 @@ import {
   FileDown,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { BillingPreview, FacilityLineItem } from '@/lib/billing/billing-types'
+import { Plus, Wrench, Edit } from 'lucide-react'
+import type { BillingPreview, FacilityLineItem, ServiceLineItemData } from '@/lib/billing/billing-types'
+import { ServiceLineItemForm } from '@/components/forms/service-line-item-form'
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -85,9 +87,10 @@ function StatusDot({ status }: { status: string }) {
 
 interface BillingPreviewTabProps {
   clientId: string
+  facilities?: Array<{ id: string; location: { name: string } }>
 }
 
-export function BillingPreviewTab({ clientId }: BillingPreviewTabProps) {
+export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabProps) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
@@ -351,27 +354,59 @@ export function BillingPreviewTab({ clientId }: BillingPreviewTabProps) {
                       onToggle={handleToggleFacility}
                     />
                   ))}
-                  {/* Totals row */}
-                  <TableRow className="border-warm-200 bg-warm-50 font-medium">
-                    <TableCell colSpan={3} className="text-sm text-warm-800">
-                      Total ({preview.activeFacilityCount} facilities)
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-warm-800">
-                      {formatCurrency(preview.subtotal)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-warm-800">
-                      {formatCurrency(preview.taxAmount)}
-                    </TableCell>
-                    <TableCell className="text-right text-sm text-warm-900 font-semibold">
-                      {formatCurrency(preview.total)}
-                    </TableCell>
-                  </TableRow>
+                  {/* Facility subtotal row */}
+                  {(() => {
+                    const facilitySubtotal = preview.lineItems.reduce((s, li) => s + li.lineItemTotal, 0)
+                    const facilityTax = preview.lineItems.reduce((s, li) => s + li.lineItemTax, 0)
+                    return (
+                      <TableRow className="border-warm-200 bg-warm-50 font-medium">
+                        <TableCell colSpan={3} className="text-sm text-warm-800">
+                          Facility Subtotal ({preview.activeFacilityCount} active)
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-warm-800">
+                          {formatCurrency(facilitySubtotal)}
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-warm-800">
+                          {formatCurrency(facilityTax)}
+                        </TableCell>
+                        <TableCell className="text-right text-sm text-warm-900 font-semibold">
+                          {formatCurrency(facilitySubtotal + facilityTax)}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })()}
                 </TableBody>
               </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Service Line Items */}
+      <ServiceItemsSection
+        clientId={clientId}
+        preview={preview}
+        facilities={facilities}
+        year={year}
+        month={month}
+        onRefresh={fetchPreview}
+      />
+
+      {/* Grand total — only shown if there are service items */}
+      {preview.serviceLineItems.length > 0 && (
+        <Card className="border-ocean-200 bg-ocean-50">
+          <CardContent className="p-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-display font-medium text-ocean-800">
+                Grand Total (facilities + services)
+              </p>
+              <p className="text-lg font-display font-bold text-ocean-900">
+                {formatCurrency(preview.total)}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Explanation panel */}
       <ExplanationPanel preview={preview} />
@@ -588,6 +623,143 @@ function ExplanationPanel({ preview }: { preview: BillingPreview }) {
           <div className="pt-1 border-t border-warm-200">
             <span className="font-medium text-warm-700">Month-over-month:</span>{' '}
             {explanation.deltaReason}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+function ServiceItemsSection({
+  clientId,
+  preview,
+  facilities,
+  year,
+  month,
+  onRefresh,
+}: {
+  clientId: string
+  preview: BillingPreview
+  facilities?: Array<{ id: string; location: { name: string } }>
+  year: number
+  month: number
+  onRefresh: () => void
+}) {
+  const items = preview.serviceLineItems || []
+  const serviceTotal = items.reduce((s, si) => s + si.lineItemTotal, 0)
+  const serviceTax = items.reduce((s, si) => s + si.lineItemTax, 0)
+
+  return (
+    <Card className="border-warm-200">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Wrench className="h-4 w-4 text-warm-500" />
+            <CardTitle className="text-sm font-display font-medium text-warm-900">
+              Service Line Items
+            </CardTitle>
+            {items.length > 0 && (
+              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
+                {items.length}
+              </Badge>
+            )}
+          </div>
+          <ServiceLineItemForm
+            clientId={clientId}
+            facilities={facilities}
+            defaultYear={year}
+            defaultMonth={month}
+          >
+            <Button variant="outline" size="sm" className="rounded-sm border-warm-200 text-warm-700 h-7 text-xs">
+              <Plus className="h-3 w-3 mr-1" />
+              Add Service
+            </Button>
+          </ServiceLineItemForm>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        {items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
+            <Wrench className="h-6 w-6 text-warm-300 mb-2" />
+            <p className="text-xs text-warm-500">
+              No ad-hoc services for this month
+            </p>
+            <p className="text-[10px] text-warm-400 mt-1">
+              Add one-time charges like deep cleaning, high dusting, etc.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-warm-200 hover:bg-transparent">
+                  <TableHead className="text-warm-600 text-xs font-medium">Description</TableHead>
+                  <TableHead className="text-warm-600 text-xs font-medium">Facility</TableHead>
+                  <TableHead className="text-warm-600 text-xs font-medium text-right">Qty</TableHead>
+                  <TableHead className="text-warm-600 text-xs font-medium text-right">Rate</TableHead>
+                  <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>
+                  <TableHead className="text-warm-600 text-xs font-medium text-right">Total</TableHead>
+                  <TableHead className="text-warm-600 text-xs font-medium w-8"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {items.map((si) => (
+                  <TableRow key={si.id} className="border-warm-200">
+                    <TableCell className="py-2">
+                      <span className="text-sm text-warm-800">{si.description}</span>
+                      {si.notes && (
+                        <p className="text-[10px] text-warm-400 mt-0.5">{si.notes}</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-2 text-xs text-warm-600">
+                      {si.locationName || <span className="text-warm-400">-</span>}
+                    </TableCell>
+                    <TableCell className="py-2 text-right text-xs text-warm-700">
+                      {si.quantity !== 1 ? si.quantity : '1'}
+                    </TableCell>
+                    <TableCell className="py-2 text-right text-sm text-warm-800">
+                      {formatCurrency(si.unitRate)}
+                    </TableCell>
+                    <TableCell className="py-2 text-right text-xs text-warm-600">
+                      {formatCurrency(si.lineItemTax)}
+                    </TableCell>
+                    <TableCell className="py-2 text-right text-sm font-medium text-warm-800">
+                      {formatCurrency(si.lineItemTotal)}
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <ServiceLineItemForm
+                        clientId={clientId}
+                        facilities={facilities}
+                        item={si}
+                        defaultYear={year}
+                        defaultMonth={month}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 rounded-sm text-warm-400 hover:text-warm-700"
+                        >
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                      </ServiceLineItemForm>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {/* Service subtotal */}
+                <TableRow className="border-warm-200 bg-warm-50 font-medium">
+                  <TableCell colSpan={4} className="text-sm text-warm-800">
+                    Service Subtotal
+                  </TableCell>
+                  <TableCell className="text-right text-sm text-warm-800">
+                    {formatCurrency(serviceTax)}
+                  </TableCell>
+                  <TableCell className="text-right text-sm text-warm-900 font-semibold">
+                    {formatCurrency(serviceTotal + serviceTax)}
+                  </TableCell>
+                  <TableCell />
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>
