@@ -30,7 +30,13 @@ async function ClientsList() {
     },
   })
 
-  return <ClientsListClient clients={clients} />
+  // Convert Decimal fields to plain numbers for client component serialization
+  const serializedClients = clients.map((c) => ({
+    ...c,
+    taxRate: c.taxRate ? Number(c.taxRate) : null,
+  }))
+
+  return <ClientsListClient clients={serializedClients} />
 }
 
 function ClientsListSkeleton() {

@@ -54,6 +54,22 @@ export async function GET(
             createdAt: 'desc',
           },
         },
+        facilityProfiles: {
+          include: {
+            location: {
+              select: { id: true, name: true, address: true, isActive: true },
+            },
+            seasonalRules: {
+              where: { isActive: true },
+              orderBy: { createdAt: 'desc' },
+            },
+            monthlyOverrides: {
+              orderBy: [{ year: 'desc' }, { month: 'desc' }],
+              take: 3,
+            },
+          },
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+        },
       },
     })
 

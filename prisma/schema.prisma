@@ -77,6 +77,36 @@ enum UserRole {
   CLIENT_USER
 }
 
+enum FacilityStatus {
+  ACTIVE
+  PAUSED
+  SEASONAL_PAUSED
+  PENDING_APPROVAL
+  CLOSED
+}
+
+enum RateType {
+  FLAT_MONTHLY
+  DERIVED
+}
+
+enum TaxBehavior {
+  INHERIT_CLIENT
+  TAX_INCLUDED
+  PRE_TAX
+}
+
+enum BillingDisplayMode {
+  TAX_INCLUDED_TOTAL
+  PRE_TAX_ONLY
+}
+
+enum OverrideStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
 model User {
   id             String    @id @default(cuid())
   authId         String?   @unique @map("auth_id") // Supabase auth user id
@@ -180,6 +210,8 @@ model Client {
   paymentTerms           String   @default("NET_30") @map("payment_terms") // NET_15, NET_30, DUE_ON_RECEIPT
   preferredPaymentMethod String?  @map("preferred_payment_method") // ach, credit_card, check
   taxExempt              Boolean  @default(false) @map("tax_exempt")
+  taxRate                Decimal? @map("tax_rate") @db.Decimal(5, 4) // e.g. 0.0825 for 8.25%
+  billingDisplayMode     BillingDisplayMode @default(PRE_TAX_ONLY) @map("billing_display_mode")
   notes                  String?
   status                 String   @default("active") // active, inactive, churned
   healthScore            Int?     @map("health_score") // 0-100
@@ -200,6 +232,7 @@ model Client {
   issues                Issue[]
   loyaltyTransactions   LoyaltyTransaction[]
   convertedFromProspect Prospect?            @relation("ProspectToClient")
+  facilityProfiles      FacilityProfile[]
 
   @@map("clients")
 }
@@ -251,6 +284,7 @@ model Location {
   reviews           ServiceReview[]
   issues            Issue[]
   serviceAgreements ServiceAgreement[]
+  facilityProfile   FacilityProfile?
 
   @@map("locations")
 }
@@ -2011,4 +2045,100 @@ model Feedback {
   @@index([companyId, createdAt])
   @@index([userId])
   @@map("feedback")
+}
+
+// ============================================
+// FACILITY MANAGEMENT (Complex Client Accounts)
+// ============================================
+
+model FacilityProfile {
+  id         String @id @default(cuid())
+  clientId   String @map("client_id")
+  locationId String @unique @map("location_id")
+
+  // Categorization
+  category String? // restaurant, bar, pool, gym, spa, marina, etc.
+
+  // Pricing
+  defaultMonthlyRate Decimal   @map("default_monthly_rate") @db.Decimal(10, 2)
+  rateType           RateType  @default(FLAT_MONTHLY) @map("rate_type")
+  taxBehavior        TaxBehavior @default(INHERIT_CLIENT) @map("tax_behavior")
+
+  // Status & Lifecycle
+  status         FacilityStatus @default(PENDING_APPROVAL)
+  goLiveDate     DateTime?      @map("go_live_date") @db.Date
+  pauseStartDate DateTime?      @map("pause_start_date") @db.Date
+  pauseEndDate   DateTime?      @map("pause_end_date") @db.Date
+
+  // Seasonal
+  seasonalRulesEnabled Boolean @default(false) @map("seasonal_rules_enabled")
+
+  // Schedule
+  normalDaysOfWeek       Int[]   @default([]) @map("normal_days_of_week") // 0=Sun, 1=Mon ... 6=Sat
+  normalFrequencyPerWeek Int     @default(0) @map("normal_frequency_per_week")
+  scopeOfWorkNotes       String? @map("scope_of_work_notes") @db.Text
+
+  // Ordering
+  sortOrder Int @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+
+  seasonalRules    SeasonalRule[]
+  monthlyOverrides MonthlyOverride[]
+
+  @@index([clientId])
+  @@index([status])
+  @@map("facility_profiles")
+}
+
+model SeasonalRule {
+  id                String @id @default(cuid())
+  facilityProfileId String @map("facility_profile_id")
+
+  activeMonths Int[] @default([]) @map("active_months")  // 1-12
+  pausedMonths Int[] @default([]) @map("paused_months")  // 1-12
+
+  effectiveYearStart Int? @map("effective_year_start")
+  effectiveYearEnd   Int? @map("effective_year_end")
+
+  notes    String?  @db.Text
+  isActive Boolean  @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  facilityProfile FacilityProfile @relation(fields: [facilityProfileId], references: [id], onDelete: Cascade)
+
+  @@index([facilityProfileId])
+  @@map("seasonal_rules")
+}
+
+model MonthlyOverride {
+  id                String @id @default(cuid())
+  facilityProfileId String @map("facility_profile_id")
+
+  year  Int
+  month Int // 1-12
+
+  overrideStatus     OverrideStatus? @map("override_status")
+  overrideFrequency  Int?            @map("override_frequency")
+  overrideDaysOfWeek Int[]           @default([]) @map("override_days_of_week")
+  overrideRate       Decimal?        @map("override_rate") @db.Decimal(10, 2)
+  pauseStartDay      Int?            @map("pause_start_day") // 1-31, partial-month pause
+  pauseEndDay        Int?            @map("pause_end_day")   // 1-31, partial-month pause
+  overrideNotes      String?         @map("override_notes") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  facilityProfile FacilityProfile @relation(fields: [facilityProfileId], references: [id], onDelete: Cascade)
+
+  @@unique([facilityProfileId, year, month])
+  @@index([facilityProfileId])
+  @@index([year, month])
+  @@map("monthly_overrides")
 }
