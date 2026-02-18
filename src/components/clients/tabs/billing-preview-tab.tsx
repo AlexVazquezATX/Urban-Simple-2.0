@@ -98,6 +98,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [hideTax, setHideTax] = useState(false)
 
   const fetchPreview = useCallback(async () => {
     setLoading(true)
@@ -145,16 +146,18 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
     setMonth(now.getMonth() + 1)
   }
 
+  const taxParam = hideTax ? '&hideTax=1' : ''
+
   const handleExportCsv = () => {
-    window.open(`/api/clients/${clientId}/billing-preview/export?year=${year}&month=${month}`, '_blank')
+    window.open(`/api/clients/${clientId}/billing-preview/export?year=${year}&month=${month}${taxParam}`, '_blank')
   }
 
   const handleExportPdf = () => {
-    window.open(`/api/clients/${clientId}/billing-preview/export-pdf?year=${year}&month=${month}`, '_blank')
+    window.open(`/api/clients/${clientId}/billing-preview/export-pdf?year=${year}&month=${month}${taxParam}`, '_blank')
   }
 
   const handleExportQb = () => {
-    window.open(`/api/clients/${clientId}/billing-preview/export-qb?year=${year}&month=${month}`, '_blank')
+    window.open(`/api/clients/${clientId}/billing-preview/export-qb?year=${year}&month=${month}${taxParam}`, '_blank')
   }
 
   const handleToggleFacility = async (facilityId: string, activate: boolean) => {
@@ -259,17 +262,27 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
           )}
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-sm border-warm-200 text-warm-700"
-            >
-              <Download className="h-3.5 w-3.5 mr-1.5" />
-              Export
-            </Button>
-          </DropdownMenuTrigger>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <Switch
+              checked={hideTax}
+              onCheckedChange={setHideTax}
+              className="data-[state=checked]:bg-ocean-500 data-[state=unchecked]:bg-warm-300"
+            />
+            <span className="text-xs text-warm-600">Hide Tax</span>
+          </label>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-sm border-warm-200 text-warm-700"
+              >
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                Export
+              </Button>
+            </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={handleExportPdf}>
               <FileDown className="h-3.5 w-3.5 mr-2" />
@@ -285,25 +298,28 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
 
       {/* Summary cards */}
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+      <div className={`grid gap-3 grid-cols-2 ${hideTax ? 'md:grid-cols-3' : 'md:grid-cols-4'}`}>
         <SummaryCard
           label="Subtotal"
           value={formatCurrency(preview.subtotal)}
         />
-        <SummaryCard
-          label={`Tax (${formatPercent(preview.taxRate)})`}
-          value={formatCurrency(preview.taxAmount)}
-        />
+        {!hideTax && (
+          <SummaryCard
+            label={`Tax (${formatPercent(preview.taxRate)})`}
+            value={formatCurrency(preview.taxAmount)}
+          />
+        )}
         <SummaryCard
           label="Total"
-          value={formatCurrency(preview.total)}
+          value={formatCurrency(hideTax ? preview.subtotal : preview.total)}
           highlight
         />
         <DeltaCard
-          currentTotal={preview.total}
+          currentTotal={hideTax ? preview.subtotal : preview.total}
           previousTotal={preview.previousMonthTotal}
           deltaAmount={preview.explanation.deltaAmount}
         />
@@ -341,7 +357,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
                     <TableHead className="text-warm-600 text-xs font-medium">Status</TableHead>
                     <TableHead className="text-warm-600 text-xs font-medium">Schedule</TableHead>
                     <TableHead className="text-warm-600 text-xs font-medium text-right">Rate</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>
+                    {!hideTax && <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>}
                     <TableHead className="text-warm-600 text-xs font-medium text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -352,6 +368,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
                       item={li}
                       toggling={toggling}
                       onToggle={handleToggleFacility}
+                      hideTax={hideTax}
                     />
                   ))}
                   {/* Facility subtotal row */}
@@ -366,11 +383,13 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
                         <TableCell className="text-right text-sm text-warm-800">
                           {formatCurrency(facilitySubtotal)}
                         </TableCell>
-                        <TableCell className="text-right text-sm text-warm-800">
-                          {formatCurrency(facilityTax)}
-                        </TableCell>
+                        {!hideTax && (
+                          <TableCell className="text-right text-sm text-warm-800">
+                            {formatCurrency(facilityTax)}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right text-sm text-warm-900 font-semibold">
-                          {formatCurrency(facilitySubtotal + facilityTax)}
+                          {formatCurrency(hideTax ? facilitySubtotal : facilitySubtotal + facilityTax)}
                         </TableCell>
                       </TableRow>
                     )
@@ -390,6 +409,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
         year={year}
         month={month}
         onRefresh={fetchPreview}
+        hideTax={hideTax}
       />
 
       {/* Grand total — only shown if there are service items */}
@@ -401,7 +421,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
                 Grand Total (facilities + services)
               </p>
               <p className="text-lg font-display font-bold text-ocean-900">
-                {formatCurrency(preview.total)}
+                {formatCurrency(hideTax ? preview.subtotal : preview.total)}
               </p>
             </div>
           </CardContent>
@@ -484,10 +504,12 @@ function LineItemRow({
   item,
   toggling,
   onToggle,
+  hideTax,
 }: {
   item: FacilityLineItem
   toggling: string | null
   onToggle: (facilityId: string, activate: boolean) => void
+  hideTax?: boolean
 }) {
   const dimmed = !item.includedInTotal
   const canToggle = item.effectiveStatus === 'ACTIVE' || item.effectiveStatus === 'PAUSED'
@@ -546,13 +568,15 @@ function LineItemRow({
           <span className="line-through text-warm-400">{formatCurrency(item.effectiveRate)}</span>
         )}
       </TableCell>
-      <TableCell className="py-2 text-right text-xs text-warm-600">
-        {item.includedInTotal ? formatCurrency(item.lineItemTax) : '-'}
-      </TableCell>
+      {!hideTax && (
+        <TableCell className="py-2 text-right text-xs text-warm-600">
+          {item.includedInTotal ? formatCurrency(item.lineItemTax) : '-'}
+        </TableCell>
+      )}
       <TableCell className="py-2 text-right text-sm font-medium text-warm-800">
         {item.includedInTotal ? (
           <div>
-            {formatCurrency(item.lineItemTotal)}
+            {formatCurrency(hideTax ? item.lineItemTotal : item.lineItemTotal)}
             {item.isProRated && (
               <Badge className="ml-1 text-[9px] px-1 py-0 bg-orange-100 text-orange-700 border-orange-200">
                 Pro-rated
@@ -637,6 +661,7 @@ function ServiceItemsSection({
   year,
   month,
   onRefresh,
+  hideTax,
 }: {
   clientId: string
   preview: BillingPreview
@@ -644,6 +669,7 @@ function ServiceItemsSection({
   year: number
   month: number
   onRefresh: () => void
+  hideTax?: boolean
 }) {
   const items = preview.serviceLineItems || []
   const serviceTotal = items.reduce((s, si) => s + si.lineItemTotal, 0)
@@ -698,7 +724,7 @@ function ServiceItemsSection({
                   <TableHead className="text-warm-600 text-xs font-medium">Facility</TableHead>
                   <TableHead className="text-warm-600 text-xs font-medium text-right">Qty</TableHead>
                   <TableHead className="text-warm-600 text-xs font-medium text-right">Rate</TableHead>
-                  <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>
+                  {!hideTax && <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>}
                   <TableHead className="text-warm-600 text-xs font-medium text-right">Total</TableHead>
                   <TableHead className="text-warm-600 text-xs font-medium w-8"></TableHead>
                 </TableRow>
@@ -721,9 +747,11 @@ function ServiceItemsSection({
                     <TableCell className="py-2 text-right text-sm text-warm-800">
                       {formatCurrency(si.unitRate)}
                     </TableCell>
-                    <TableCell className="py-2 text-right text-xs text-warm-600">
-                      {formatCurrency(si.lineItemTax)}
-                    </TableCell>
+                    {!hideTax && (
+                      <TableCell className="py-2 text-right text-xs text-warm-600">
+                        {formatCurrency(si.lineItemTax)}
+                      </TableCell>
+                    )}
                     <TableCell className="py-2 text-right text-sm font-medium text-warm-800">
                       {formatCurrency(si.lineItemTotal)}
                     </TableCell>
@@ -749,14 +777,19 @@ function ServiceItemsSection({
                 ))}
                 {/* Service subtotal */}
                 <TableRow className="border-warm-200 bg-warm-50 font-medium">
-                  <TableCell colSpan={4} className="text-sm text-warm-800">
+                  <TableCell colSpan={hideTax ? 3 : 4} className="text-sm text-warm-800">
                     Service Subtotal
                   </TableCell>
                   <TableCell className="text-right text-sm text-warm-800">
-                    {formatCurrency(serviceTax)}
+                    {formatCurrency(serviceTotal)}
                   </TableCell>
+                  {!hideTax && (
+                    <TableCell className="text-right text-sm text-warm-800">
+                      {formatCurrency(serviceTax)}
+                    </TableCell>
+                  )}
                   <TableCell className="text-right text-sm text-warm-900 font-semibold">
-                    {formatCurrency(serviceTotal + serviceTax)}
+                    {formatCurrency(hideTax ? serviceTotal : serviceTotal + serviceTax)}
                   </TableCell>
                   <TableCell />
                 </TableRow>

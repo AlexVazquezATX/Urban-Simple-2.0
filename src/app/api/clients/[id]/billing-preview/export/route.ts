@@ -24,108 +24,203 @@ export async function GET(
       return NextResponse.json({ error: 'Month must be between 1 and 12' }, { status: 400 })
     }
 
+    const hideTax = searchParams.get('hideTax') === '1'
     const preview = await generateBillingPreview(id, user.companyId, year, month)
 
     // Build CSV
     const rows: string[] = []
-    rows.push([
-      'Facility',
-      'Category',
-      'Status',
-      'Monthly Rate',
-      'Frequency',
-      'Tax Behavior',
-      'Line Tax',
-      'Line Total',
-      'Included',
-      'Override',
-      'Pro-Rated',
-      'Scheduled Days',
-      'Active Days',
-      'Pause Range',
-      'Notes',
-    ].join(','))
 
-    for (const li of preview.lineItems) {
-      const pauseRange = li.pauseStartDay && li.pauseEndDay
-        ? `${li.pauseStartDay}-${li.pauseEndDay}`
-        : ''
+    if (hideTax) {
       rows.push([
-        csvEscape(li.locationName),
-        csvEscape(li.category || ''),
-        li.effectiveStatus,
-        li.effectiveRate.toFixed(2),
-        `${li.effectiveFrequency}x/week`,
-        li.taxBehavior,
-        li.lineItemTax.toFixed(2),
-        li.lineItemTotal.toFixed(2),
-        li.includedInTotal ? 'Yes' : 'No',
-        li.isOverridden ? 'Yes' : 'No',
-        li.isProRated ? 'Yes' : 'No',
-        li.scheduledDays !== null ? String(li.scheduledDays) : '',
-        li.activeDays !== null ? String(li.activeDays) : '',
-        pauseRange,
-        csvEscape(li.overrideNotes || ''),
-      ].join(','))
-    }
-
-    // Service line items
-    if (preview.serviceLineItems.length > 0) {
-      rows.push('')
-      rows.push('Service Line Items')
-      rows.push([
-        'Description',
         'Facility',
-        '',
-        'Unit Rate',
-        'Quantity',
-        'Tax Behavior',
-        'Line Tax',
+        'Category',
+        'Status',
+        'Monthly Rate',
+        'Frequency',
         'Line Total',
-        '',
-        '',
-        '',
-        '',
-        '',
-        '',
+        'Included',
+        'Override',
+        'Pro-Rated',
+        'Scheduled Days',
+        'Active Days',
+        'Pause Range',
         'Notes',
       ].join(','))
 
-      for (const si of preview.serviceLineItems) {
+      for (const li of preview.lineItems) {
+        const pauseRange = li.pauseStartDay && li.pauseEndDay
+          ? `${li.pauseStartDay}-${li.pauseEndDay}`
+          : ''
         rows.push([
-          csvEscape(si.description),
-          csvEscape(si.locationName || ''),
-          '',
-          si.unitRate.toFixed(2),
-          String(si.quantity),
-          si.taxBehavior,
-          si.lineItemTax.toFixed(2),
-          si.lineItemTotal.toFixed(2),
-          '',
-          '',
-          '',
-          '',
-          '',
-          '',
-          csvEscape(si.notes || ''),
+          csvEscape(li.locationName),
+          csvEscape(li.category || ''),
+          li.effectiveStatus,
+          li.effectiveRate.toFixed(2),
+          `${li.effectiveFrequency}x/week`,
+          li.lineItemTotal.toFixed(2),
+          li.includedInTotal ? 'Yes' : 'No',
+          li.isOverridden ? 'Yes' : 'No',
+          li.isProRated ? 'Yes' : 'No',
+          li.scheduledDays !== null ? String(li.scheduledDays) : '',
+          li.activeDays !== null ? String(li.activeDays) : '',
+          pauseRange,
+          csvEscape(li.overrideNotes || ''),
         ].join(','))
       }
-    }
 
-    // Summary rows
-    rows.push('')
-    rows.push(`Facility Subtotal,,,,,,,$${(preview.subtotal - preview.serviceSubtotal).toFixed(2)}`)
-    if (preview.serviceLineItems.length > 0) {
-      rows.push(`Service Subtotal,,,,,,,$${preview.serviceSubtotal.toFixed(2)}`)
-    }
-    rows.push(`Subtotal,,,,,,,$${preview.subtotal.toFixed(2)}`)
-    rows.push(`Tax (${(preview.taxRate * 100).toFixed(2)}%),,,,,,,$${preview.taxAmount.toFixed(2)}`)
-    rows.push(`Total,,,,,,,$${preview.total.toFixed(2)}`)
+      // Service line items
+      if (preview.serviceLineItems.length > 0) {
+        rows.push('')
+        rows.push('Service Line Items')
+        rows.push([
+          'Description',
+          'Facility',
+          '',
+          'Unit Rate',
+          'Quantity',
+          'Line Total',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          'Notes',
+        ].join(','))
 
-    if (preview.previousMonthTotal !== null) {
-      rows.push(`Previous Month,,,,,,,$${preview.previousMonthTotal.toFixed(2)}`)
-      if (preview.explanation.deltaAmount !== null) {
-        rows.push(`Delta,,,,,,,$${preview.explanation.deltaAmount.toFixed(2)}`)
+        for (const si of preview.serviceLineItems) {
+          rows.push([
+            csvEscape(si.description),
+            csvEscape(si.locationName || ''),
+            '',
+            si.unitRate.toFixed(2),
+            String(si.quantity),
+            si.lineItemTotal.toFixed(2),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            csvEscape(si.notes || ''),
+          ].join(','))
+        }
+      }
+
+      // Summary rows (no tax)
+      rows.push('')
+      rows.push(`Facility Subtotal,,,,,$${(preview.subtotal - preview.serviceSubtotal).toFixed(2)}`)
+      if (preview.serviceLineItems.length > 0) {
+        rows.push(`Service Subtotal,,,,,$${preview.serviceSubtotal.toFixed(2)}`)
+      }
+      rows.push(`Total,,,,,$${preview.subtotal.toFixed(2)}`)
+
+      if (preview.previousMonthTotal !== null) {
+        rows.push(`Previous Month,,,,,$${preview.previousMonthTotal.toFixed(2)}`)
+        if (preview.explanation.deltaAmount !== null) {
+          rows.push(`Delta,,,,,$${preview.explanation.deltaAmount.toFixed(2)}`)
+        }
+      }
+    } else {
+      rows.push([
+        'Facility',
+        'Category',
+        'Status',
+        'Monthly Rate',
+        'Frequency',
+        'Tax Behavior',
+        'Line Tax',
+        'Line Total',
+        'Included',
+        'Override',
+        'Pro-Rated',
+        'Scheduled Days',
+        'Active Days',
+        'Pause Range',
+        'Notes',
+      ].join(','))
+
+      for (const li of preview.lineItems) {
+        const pauseRange = li.pauseStartDay && li.pauseEndDay
+          ? `${li.pauseStartDay}-${li.pauseEndDay}`
+          : ''
+        rows.push([
+          csvEscape(li.locationName),
+          csvEscape(li.category || ''),
+          li.effectiveStatus,
+          li.effectiveRate.toFixed(2),
+          `${li.effectiveFrequency}x/week`,
+          li.taxBehavior,
+          li.lineItemTax.toFixed(2),
+          li.lineItemTotal.toFixed(2),
+          li.includedInTotal ? 'Yes' : 'No',
+          li.isOverridden ? 'Yes' : 'No',
+          li.isProRated ? 'Yes' : 'No',
+          li.scheduledDays !== null ? String(li.scheduledDays) : '',
+          li.activeDays !== null ? String(li.activeDays) : '',
+          pauseRange,
+          csvEscape(li.overrideNotes || ''),
+        ].join(','))
+      }
+
+      // Service line items
+      if (preview.serviceLineItems.length > 0) {
+        rows.push('')
+        rows.push('Service Line Items')
+        rows.push([
+          'Description',
+          'Facility',
+          '',
+          'Unit Rate',
+          'Quantity',
+          'Tax Behavior',
+          'Line Tax',
+          'Line Total',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          'Notes',
+        ].join(','))
+
+        for (const si of preview.serviceLineItems) {
+          rows.push([
+            csvEscape(si.description),
+            csvEscape(si.locationName || ''),
+            '',
+            si.unitRate.toFixed(2),
+            String(si.quantity),
+            si.taxBehavior,
+            si.lineItemTax.toFixed(2),
+            si.lineItemTotal.toFixed(2),
+            '',
+            '',
+            '',
+            '',
+            '',
+            '',
+            csvEscape(si.notes || ''),
+          ].join(','))
+        }
+      }
+
+      // Summary rows
+      rows.push('')
+      rows.push(`Facility Subtotal,,,,,,,$${(preview.subtotal - preview.serviceSubtotal).toFixed(2)}`)
+      if (preview.serviceLineItems.length > 0) {
+        rows.push(`Service Subtotal,,,,,,,$${preview.serviceSubtotal.toFixed(2)}`)
+      }
+      rows.push(`Subtotal,,,,,,,$${preview.subtotal.toFixed(2)}`)
+      rows.push(`Tax (${(preview.taxRate * 100).toFixed(2)}%),,,,,,,$${preview.taxAmount.toFixed(2)}`)
+      rows.push(`Total,,,,,,,$${preview.total.toFixed(2)}`)
+
+      if (preview.previousMonthTotal !== null) {
+        rows.push(`Previous Month,,,,,,,$${preview.previousMonthTotal.toFixed(2)}`)
+        if (preview.explanation.deltaAmount !== null) {
+          rows.push(`Delta,,,,,,,$${preview.explanation.deltaAmount.toFixed(2)}`)
+        }
       }
     }
 

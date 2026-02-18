@@ -29,6 +29,7 @@ export async function GET(
       return NextResponse.json({ error: 'Month must be between 1 and 12' }, { status: 400 })
     }
 
+    const hideTax = searchParams.get('hideTax') === '1'
     const preview = await generateBillingPreview(id, user.companyId, year, month)
 
     // QuickBooks-compatible invoice CSV format
@@ -45,7 +46,7 @@ export async function GET(
       'ItemQuantity',
       'ItemRate',
       'ItemAmount',
-      'TaxCode',
+      ...(hideTax ? [] : ['TaxCode']),
       'Memo',
     ].join(','))
 
@@ -79,7 +80,7 @@ export async function GET(
         '1',
         li.lineItemTotal.toFixed(2),
         li.lineItemTotal.toFixed(2),
-        li.taxBehavior === 'TAX_INCLUDED' ? 'NON' : 'TAX',
+        ...(hideTax ? [] : [li.taxBehavior === 'TAX_INCLUDED' ? 'NON' : 'TAX']),
         csvEscape(memo),
       ].join(','))
     }
@@ -99,13 +100,13 @@ export async function GET(
         String(si.quantity),
         si.unitRate.toFixed(2),
         si.lineItemTotal.toFixed(2),
-        si.taxBehavior === 'TAX_INCLUDED' ? 'NON' : 'TAX',
+        ...(hideTax ? [] : [si.taxBehavior === 'TAX_INCLUDED' ? 'NON' : 'TAX']),
         csvEscape(memo),
       ].join(','))
     }
 
-    // Tax line (if any)
-    if (preview.taxAmount > 0) {
+    // Tax line (if any) — omitted when hideTax
+    if (!hideTax && preview.taxAmount > 0) {
       rows.push([
         csvEscape(invoiceNo),
         csvEscape(customerName),

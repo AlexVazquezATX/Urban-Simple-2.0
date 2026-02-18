@@ -47,8 +47,9 @@ export async function GET(
       return NextResponse.json({ error: 'Month must be between 1 and 12' }, { status: 400 })
     }
 
+    const hideTax = searchParams.get('hideTax') === '1'
     const preview = await generateBillingPreview(id, user.companyId, year, month)
-    const pdf = buildPdf(preview)
+    const pdf = buildPdf(preview, hideTax)
 
     const filename = `${preview.clientName.replace(/[^a-zA-Z0-9]/g, '_')}_billing_${year}_${String(month).padStart(2, '0')}.pdf`
 
@@ -67,7 +68,7 @@ export async function GET(
   }
 }
 
-function buildPdf(preview: BillingPreview): jsPDF {
+function buildPdf(preview: BillingPreview, hideTax = false): jsPDF {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' })
   const pageWidth = doc.internal.pageSize.getWidth()
   const margin = 40
@@ -96,22 +97,25 @@ function buildPdf(preview: BillingPreview): jsPDF {
   doc.setTextColor(0, 0, 0)
   const boxY = 94
   const boxH = 44
-  const boxCount = 4
   const gap = 12
   const availW = pageWidth - margin * 2
-  const boxW = (availW - gap * (boxCount - 1)) / boxCount
 
-  const summaryItems = [
+  const summaryItems: Array<{ label: string; value: string; highlight?: boolean }> = [
     { label: 'Subtotal', value: fmt(preview.subtotal) },
-    { label: `Tax (${(preview.taxRate * 100).toFixed(2)}%)`, value: fmt(preview.taxAmount) },
-    { label: 'Total', value: fmt(preview.total), highlight: true },
-    {
-      label: 'vs. Prior Month',
-      value: preview.previousMonthTotal !== null && preview.explanation.deltaAmount !== null
-        ? `${preview.explanation.deltaAmount >= 0 ? '+' : ''}${fmt(preview.explanation.deltaAmount)}`
-        : 'N/A',
-    },
   ]
+  if (!hideTax) {
+    summaryItems.push({ label: `Tax (${(preview.taxRate * 100).toFixed(2)}%)`, value: fmt(preview.taxAmount) })
+  }
+  summaryItems.push({ label: 'Total', value: fmt(hideTax ? preview.subtotal : preview.total), highlight: true })
+  summaryItems.push({
+    label: 'vs. Prior Month',
+    value: preview.previousMonthTotal !== null && preview.explanation.deltaAmount !== null
+      ? `${preview.explanation.deltaAmount >= 0 ? '+' : ''}${fmt(preview.explanation.deltaAmount)}`
+      : 'N/A',
+  })
+
+  const boxCount = summaryItems.length
+  const boxW = (availW - gap * (boxCount - 1)) / boxCount
 
   summaryItems.forEach((item, i) => {
     const x = margin + i * (boxW + gap)
@@ -142,7 +146,9 @@ function buildPdf(preview: BillingPreview): jsPDF {
   doc.setTextColor(0, 0, 0)
   const tableStartY = boxY + boxH + 20
 
-  const head = [['Facility', 'Category', 'Status', 'Schedule', 'Rate', 'Tax', 'Total', 'Notes']]
+  const head = hideTax
+    ? [['Facility', 'Category', 'Status', 'Schedule', 'Rate', 'Total', 'Notes']]
+    : [['Facility', 'Category', 'Status', 'Schedule', 'Rate', 'Tax', 'Total', 'Notes']]
 
   const body = preview.lineItems.map(li => {
     const schedule = li.includedInTotal
@@ -160,6 +166,18 @@ function buildPdf(preview: BillingPreview): jsPDF {
     if (li.isProRated) notes.push('Pro-rated')
     if (li.overrideNotes) notes.push(li.overrideNotes)
 
+    if (hideTax) {
+      return [
+        li.locationName,
+        li.category || '-',
+        li.effectiveStatus.replace('_', ' '),
+        schedule,
+        rateStr,
+        li.includedInTotal ? fmt(li.lineItemTotal) : '$0.00',
+        notes.join('; ') || '-',
+      ]
+    }
+
     return [
       li.locationName,
       li.category || '-',
@@ -175,13 +193,26 @@ function buildPdf(preview: BillingPreview): jsPDF {
   // Facility subtotal row
   const facilitySubtotal = preview.lineItems.reduce((s, li) => s + li.lineItemTotal, 0)
   const facilityTax = preview.lineItems.reduce((s, li) => s + li.lineItemTax, 0)
-  body.push([
-    { content: `Facility Subtotal (${preview.activeFacilityCount} active)`, styles: { fontStyle: 'bold' } } as any,
-    '', '', '', '',
-    { content: fmt(facilityTax), styles: { fontStyle: 'bold' } } as any,
-    { content: fmt(facilitySubtotal), styles: { fontStyle: 'bold' } } as any,
-    '',
-  ])
+
+  if (hideTax) {
+    body.push([
+      { content: `Facility Subtotal (${preview.activeFacilityCount} active)`, styles: { fontStyle: 'bold' } } as any,
+      '', '', '', '',
+      { content: fmt(facilitySubtotal), styles: { fontStyle: 'bold' } } as any,
+      '',
+    ])
+  } else {
+    body.push([
+      { content: `Facility Subtotal (${preview.activeFacilityCount} active)`, styles: { fontStyle: 'bold' } } as any,
+      '', '', '', '',
+      { content: fmt(facilityTax), styles: { fontStyle: 'bold' } } as any,
+      { content: fmt(facilitySubtotal), styles: { fontStyle: 'bold' } } as any,
+      '',
+    ])
+  }
+
+  const totalColIdx = hideTax ? 5 : 6
+  const taxColIdx = hideTax ? -1 : 5
 
   autoTable(doc, {
     startY: tableStartY,
@@ -204,8 +235,8 @@ function buildPdf(preview: BillingPreview): jsPDF {
     columnStyles: {
       0: { cellWidth: 'auto' }, // Facility
       4: { halign: 'right' },  // Rate
-      5: { halign: 'right' },  // Tax
-      6: { halign: 'right' },  // Total
+      ...(hideTax ? {} : { 5: { halign: 'right' } }),  // Tax (only if shown)
+      [totalColIdx]: { halign: 'right' },  // Total
     },
     alternateRowStyles: { fillColor: [252, 252, 250] },
     didParseCell: (data) => {
@@ -230,26 +261,51 @@ function buildPdf(preview: BillingPreview): jsPDF {
     let serviceTableY = (doc as any).lastAutoTable?.finalY || tableStartY + 200
     serviceTableY += 14
 
-    const serviceHead = [['Description', 'Facility', 'Qty', 'Rate', 'Tax', 'Total', 'Notes']]
-    const serviceBody: any[][] = preview.serviceLineItems.map(si => [
-      si.description,
-      si.locationName || '-',
-      si.quantity !== 1 ? String(si.quantity) : '1',
-      fmt(si.unitRate),
-      fmt(si.lineItemTax),
-      fmt(si.lineItemTotal),
-      si.notes || '-',
-    ])
+    const serviceHead = hideTax
+      ? [['Description', 'Facility', 'Qty', 'Rate', 'Total', 'Notes']]
+      : [['Description', 'Facility', 'Qty', 'Rate', 'Tax', 'Total', 'Notes']]
+
+    const serviceBody: any[][] = preview.serviceLineItems.map(si => {
+      if (hideTax) {
+        return [
+          si.description,
+          si.locationName || '-',
+          si.quantity !== 1 ? String(si.quantity) : '1',
+          fmt(si.unitRate),
+          fmt(si.lineItemTotal),
+          si.notes || '-',
+        ]
+      }
+      return [
+        si.description,
+        si.locationName || '-',
+        si.quantity !== 1 ? String(si.quantity) : '1',
+        fmt(si.unitRate),
+        fmt(si.lineItemTax),
+        fmt(si.lineItemTotal),
+        si.notes || '-',
+      ]
+    })
 
     const serviceTax = preview.serviceLineItems.reduce((s, si) => s + si.lineItemTax, 0)
     const serviceTotal = preview.serviceLineItems.reduce((s, si) => s + si.lineItemTotal, 0)
-    serviceBody.push([
-      { content: `Service Subtotal (${preview.serviceLineItems.length} items)`, styles: { fontStyle: 'bold' } } as any,
-      '', '', '',
-      { content: fmt(serviceTax), styles: { fontStyle: 'bold' } } as any,
-      { content: fmt(serviceTotal), styles: { fontStyle: 'bold' } } as any,
-      '',
-    ])
+
+    if (hideTax) {
+      serviceBody.push([
+        { content: `Service Subtotal (${preview.serviceLineItems.length} items)`, styles: { fontStyle: 'bold' } } as any,
+        '', '', '',
+        { content: fmt(serviceTotal), styles: { fontStyle: 'bold' } } as any,
+        '',
+      ])
+    } else {
+      serviceBody.push([
+        { content: `Service Subtotal (${preview.serviceLineItems.length} items)`, styles: { fontStyle: 'bold' } } as any,
+        '', '', '',
+        { content: fmt(serviceTax), styles: { fontStyle: 'bold' } } as any,
+        { content: fmt(serviceTotal), styles: { fontStyle: 'bold' } } as any,
+        '',
+      ])
+    }
 
     // Check if we need a new page
     if (serviceTableY > doc.internal.pageSize.getHeight() - 120) {
@@ -280,13 +336,20 @@ function buildPdf(preview: BillingPreview): jsPDF {
         cellPadding: 4,
         textColor: [50, 50, 50],
       },
-      columnStyles: {
-        0: { cellWidth: 'auto' },
-        2: { halign: 'right' },
-        3: { halign: 'right' },
-        4: { halign: 'right' },
-        5: { halign: 'right' },
-      },
+      columnStyles: hideTax
+        ? {
+            0: { cellWidth: 'auto' },
+            2: { halign: 'right' },
+            3: { halign: 'right' },
+            4: { halign: 'right' },
+          }
+        : {
+            0: { cellWidth: 'auto' },
+            2: { halign: 'right' },
+            3: { halign: 'right' },
+            4: { halign: 'right' },
+            5: { halign: 'right' },
+          },
       alternateRowStyles: { fillColor: [252, 252, 250] },
       didParseCell: (data) => {
         if (data.row.index === serviceBody.length - 1 && data.section === 'body') {
