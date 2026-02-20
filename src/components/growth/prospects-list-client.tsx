@@ -43,6 +43,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { ProspectDetailPanel } from './prospect-detail-panel'
+import { ProspectForm } from './prospect-form'
 
 interface Prospect {
   id: string
@@ -962,12 +963,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               Import
             </Button>
           </Link>
-          <Link href="/growth/prospects/new">
+          <ProspectForm>
             <Button variant="lime" size="sm" className="rounded-sm">
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               Add Lead
             </Button>
-          </Link>
+          </ProspectForm>
         </div>
       </div>
 
