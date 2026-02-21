@@ -12,14 +12,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       query,
-      location,
+      location: rawLocation,
       city,
       state,
       type, // restaurant, bar, hotel, etc.
       priceLevel, // $, $$, $$$, $$$$
       minRating,
-      sources, // ['google_places', 'yelp']
+      sources = ['google_places', 'yelp'], // default to both
     } = body
+
+    // Build location string from city/state if location not provided directly
+    const location = rawLocation || (city && state ? `${city}, ${state}` : city || state || '')
+
+    if (!location) {
+      return NextResponse.json(
+        { error: 'Location is required. Provide "location" (e.g. "Austin, TX") or "city" and "state" separately.' },
+        { status: 400 }
+      )
+    }
 
     const results: any[] = []
 
@@ -158,14 +168,24 @@ export async function POST(request: NextRequest) {
       return acc
     }, [])
 
+    // Report which sources were actually available
+    const warnings: string[] = []
+    if (sources.includes('google_places') && !process.env.GOOGLE_PLACES_API_KEY) {
+      warnings.push('Google Places API key not configured — skipped')
+    }
+    if (sources.includes('yelp') && !process.env.YELP_API_KEY) {
+      warnings.push('Yelp API key not configured — skipped')
+    }
+
     return NextResponse.json({
       results: uniqueResults,
       total: uniqueResults.length,
+      ...(warnings.length > 0 && { warnings }),
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in discovery search:', error)
     return NextResponse.json(
-      { error: 'Failed to search for prospects' },
+      { error: error.message || 'Failed to search for prospects' },
       { status: 500 }
     )
   }

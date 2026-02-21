@@ -230,6 +230,41 @@ POST /api/growth/outreach/auto-draft
 
 Optional: add `"templateId": "..."` to use a saved template.
 
+### Step 10 — Discover prospects by location (Google Places + Yelp)
+
+Search for businesses in a specific area. Requires `location` (or `city` + `state`). The `sources` array defaults to both if omitted.
+
+```json
+POST /api/growth/discovery/search
+{
+  "location": "Austin, TX",
+  "type": "restaurant",
+  "sources": ["google_places", "yelp"],
+  "minRating": 4.0
+}
+```
+
+Alternative using `city` and `state` separately:
+```json
+{
+  "city": "Austin",
+  "state": "TX",
+  "type": "bar",
+  "minRating": 3.5
+}
+```
+
+Response includes a `warnings` array if any API keys are not configured on the server:
+```json
+{
+  "results": [...],
+  "total": 15,
+  "warnings": ["Yelp API key not configured — skipped"]
+}
+```
+
+> Note: This endpoint requires `GOOGLE_PLACES_API_KEY` and/or `YELP_API_KEY` to be configured on the Krew42 backend. If neither is configured, results will be empty. If you get `{ "results": [], "total": 0, "warnings": [...] }`, tell Ali — it means the API keys need to be added to Vercel.
+
 ---
 
 ## Full Endpoint Reference
