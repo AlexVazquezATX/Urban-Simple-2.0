@@ -123,8 +123,8 @@ POST /api/growth/outreach/generate
 }
 ```
 
-Options for `tone`: "friendly", "professional", "casual", "formal"
-Options for `purpose`: "cold_outreach", "follow_up", "check_in", "re_engage"
+Options for `tone`: "friendly", "professional", "casual", "warm"
+Options for `purpose`: "cold_outreach", "follow_up", "re_engagement"
 
 Response:
 ```json
@@ -150,6 +150,35 @@ POST /api/growth/outreach/send-email
   "to": "jane@geraldinescounter.com",
   "subject": "Quick question about Geraldines Counter",
   "body": "<p>Hi Jane,</p><p>Your email body here as HTML...</p>"
+}
+```
+
+### Step 7b — Generate content for a sequence step (no prospect needed)
+
+Use this to generate template content for a specific step in a sequence. Does NOT require a prospect ID — good for building reusable sequence templates.
+
+```json
+POST /api/growth/outreach/sequences/generate-step
+{
+  "channel": "email",
+  "stepNumber": 1,
+  "totalSteps": 3,
+  "sequenceName": "Geraldines Counter - Outreach",
+  "sequenceDescription": "3-step email sequence for Geraldines Counter",
+  "tone": "friendly"
+}
+```
+
+All fields except `sequenceDescription` and `tone` are **required**.
+
+Response:
+```json
+{
+  "success": true,
+  "content": {
+    "subject": "...",
+    "body": "..."
+  }
 }
 ```
 
@@ -321,3 +350,31 @@ All errors return JSON: `{ "error": "description" }`
 - `sequences` POST requires `name` and `messages` array — each message needs at least `channel` and `body`
 - The `address` field on prospects is a JSON object: `{"street": "...", "city": "...", "state": "..."}`
 - Always use `www.krew42.com` — never `krew42.com`
+- `generate-step` requires `channel`, `stepNumber`, `totalSteps`, and `sequenceName` — all four are mandatory
+- `generate` (standalone) requires `prospectId` — the prospect must exist in the system first
+- AI generation endpoints may take 5-15 seconds — do NOT assume timeout, wait for the response
+
+---
+
+## Troubleshooting
+
+### 401 Unauthorized
+- Verify the API key starts with `us_live_`
+- Verify you're using `https://www.krew42.com` (with `www`)
+- The bare domain `krew42.com` does a 307 redirect that **strips the Authorization header**
+- Check that the key hasn't been revoked in Growth > API Keys
+
+### 500 with "AI generation failed" message
+- The error message now includes the actual cause from Google's Gemini API
+- If you see "model not found" or "no longer available": tell Ali — the Gemini model needs updating on the backend
+- If you see "API key not valid": the Google Gemini API key on the server needs to be checked (this is NOT your `us_live_` key — it's a backend config)
+
+### 400 Bad Request
+- Read the error message carefully — it tells you which fields are missing
+- Double-check field names: `companyNames` (array) not `companyName`, `prospectIds` (array) not `prospectId`
+- For sequences: the `messages` array must have objects with at least `channel` and `body`
+
+### POST requests fail silently or return HTML
+- You're probably using PowerShell's `curl` alias instead of `curl.exe`
+- Always use `curl.exe` for POST/PATCH/DELETE
+- Always write JSON to a temp file first: `Set-Content -Path "C:\temp\body.json" -Value '...'` then `curl.exe -d @C:\temp\body.json`
