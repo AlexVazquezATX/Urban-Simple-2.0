@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
         select: { prospectId: true },
       })
 
-      if (message) {
+      if (message?.prospectId) {
         await prisma.prospectActivity.updateMany({
           where: {
             prospectId: message.prospectId,
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
         select: { prospectId: true },
       })
 
-      if (message) {
+      if (message?.prospectId) {
         await prisma.prospectActivity.updateMany({
           where: {
             prospectId: message.prospectId,

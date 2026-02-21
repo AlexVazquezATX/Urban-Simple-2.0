@@ -1156,9 +1156,9 @@ model OutreachCampaign {
 }
 
 model OutreachMessage {
-  id         String @id @default(cuid())
-  campaignId String @map("campaign_id")
-  prospectId String @map("prospect_id")
+  id         String  @id @default(cuid())
+  campaignId String  @map("campaign_id")
+  prospectId String? @map("prospect_id") // null for sequence templates, set when assigned to a prospect
 
   step      Int // order in sequence (1, 2, 3...)
   delayDays Int @default(0) @map("delay_days") // days after previous step
@@ -1184,7 +1184,7 @@ model OutreachMessage {
   createdAt DateTime @default(now()) @map("created_at")
 
   campaign OutreachCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  prospect Prospect         @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+  prospect Prospect?        @relation(fields: [prospectId], references: [id], onDelete: Cascade)
 
   @@index([campaignId, step])
   @@index([prospectId])

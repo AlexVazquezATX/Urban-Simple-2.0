@@ -176,8 +176,8 @@ export async function GET(request: NextRequest) {
       scheduledMessages: scheduledMessages.map((m) => ({
         id: m.id,
         prospectId: m.prospectId,
-        prospectName: m.prospect.companyName,
-        contactEmail: m.prospect.contacts[0]?.email,
+        prospectName: m.prospect?.companyName ?? null,
+        contactEmail: m.prospect?.contacts[0]?.email ?? null,
         channel: m.channel,
         subject: m.subject,
         scheduledAt: m.scheduledAt,

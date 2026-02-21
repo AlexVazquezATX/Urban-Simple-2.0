@@ -43,12 +43,12 @@ export async function GET(request: NextRequest) {
       messages: pendingMessages.map((m) => ({
         id: m.id,
         prospectId: m.prospectId,
-        prospectName: m.prospect.companyName,
-        contactName: m.prospect.contacts[0]
+        prospectName: m.prospect?.companyName ?? null,
+        contactName: m.prospect?.contacts[0]
           ? `${m.prospect.contacts[0].firstName} ${m.prospect.contacts[0].lastName}`
           : null,
-        contactEmail: m.prospect.contacts[0]?.email,
-        contactPhone: m.prospect.contacts[0]?.phone,
+        contactEmail: m.prospect?.contacts[0]?.email ?? null,
+        contactPhone: m.prospect?.contacts[0]?.phone ?? null,
         channel: m.channel,
         subject: m.subject,
         body: m.body,

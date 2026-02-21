@@ -69,6 +69,12 @@ export async function POST(request: NextRequest) {
     const results = []
 
     for (const message of readyMessages) {
+      // Skip messages without a prospect (sequence templates)
+      if (!message.prospect || !message.prospectId) {
+        results.push({ messageId: message.id, action: 'skipped', reason: 'no_prospect' })
+        continue
+      }
+
       // Check if prospect replied (stop sequence on reply)
       const hasReply = message.prospect.activities.some(
         (a) => a.outcome === 'interested' && a.createdAt > message.createdAt
@@ -123,7 +129,7 @@ export async function POST(request: NextRequest) {
           // Log activity
           await prisma.prospectActivity.create({
             data: {
-              prospectId: message.prospectId,
+              prospectId: message.prospectId!, // guaranteed non-null by guard above
               userId: message.campaign.createdById, // Use campaign creator as user
               type: message.channel === 'email' ? 'email' : 
                     message.channel === 'sms' ? 'sms' :
@@ -139,7 +145,7 @@ export async function POST(request: NextRequest) {
 
           // Update prospect last contacted
           await prisma.prospect.update({
-            where: { id: message.prospectId },
+            where: { id: message.prospectId! },
             data: {
               lastContactedAt: new Date(),
             },
