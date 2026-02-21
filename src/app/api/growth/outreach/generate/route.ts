@@ -117,10 +117,10 @@ export async function POST(request: NextRequest) {
         personalizationNotes: generated.personalizationNotes,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating outreach message:', error)
     return NextResponse.json(
-      { error: 'Failed to generate outreach message' },
+      { error: error.message || 'Failed to generate outreach message' },
       { status: 500 }
     )
   }

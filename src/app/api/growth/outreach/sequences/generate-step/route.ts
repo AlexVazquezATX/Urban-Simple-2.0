@@ -49,10 +49,10 @@ export async function POST(request: NextRequest) {
         body: generated.body,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating sequence step content:', error)
     return NextResponse.json(
-      { error: 'Failed to generate sequence step content' },
+      { error: error.message || 'Failed to generate sequence step content' },
       { status: 500 }
     )
   }

@@ -61,11 +61,11 @@ export async function generateOutreachMessage(
   const { channel, prospect, template, tone = 'friendly', purpose = 'cold_outreach', customInstructions } = options
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     // Build context about the prospect
     const prospectContext = buildProspectContext(prospect)
-    
+
     // Build template context if provided
     const templateContext = template ? buildTemplateContext(template) : ''
 
@@ -92,9 +92,9 @@ export async function generateOutreachMessage(
       channel,
       personalizationNotes: parsed.notes,
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating outreach message:', error)
-    throw new Error('Failed to generate outreach message')
+    throw new Error(`AI generation failed: ${error.message || 'Unknown error'}`)
   }
 }
 
@@ -307,7 +307,7 @@ export async function generateSequenceStepContent(
   } = options
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
 
     const channelGuidelines = {
       email: 'Professional email format with clear subject line. Keep body concise (3-4 paragraphs max).',
@@ -396,9 +396,9 @@ ${channel === 'email' ? 'Provide both subject and body.' : 'Provide only the mes
       subject: parsed.subject,
       body: parsed.body,
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating sequence step content:', error)
-    throw new Error('Failed to generate sequence step content')
+    throw new Error(`AI generation failed: ${error.message || 'Unknown error'}`)
   }
 }
 
