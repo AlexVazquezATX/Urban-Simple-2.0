@@ -101,11 +101,12 @@ const ALL_COLUMNS = [
   { id: 'estimatedValue', label: 'Value', alwaysVisible: false },
   { id: 'source', label: 'Source', alwaysVisible: false },
   { id: 'aiEnriched', label: 'Enriched', alwaysVisible: false },
+  { id: 'createdAt', label: 'Date Added', alwaysVisible: false },
   { id: 'actions', label: 'Actions', alwaysVisible: true },
 ]
 
 const DEFAULT_VISIBLE_COLUMNS = [
-  'companyName', 'contact', 'status', 'businessType', 'priceLevel', 'priority', 'address', 'email', 'estimatedValue', 'actions'
+  'companyName', 'contact', 'status', 'businessType', 'priceLevel', 'priority', 'address', 'email', 'estimatedValue', 'createdAt', 'actions'
 ]
 
 export function ProspectsListClient({ prospects: initialProspects }: ProspectsListClientProps) {
@@ -1315,6 +1316,17 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('aiEnriched') && (
                     <th className="p-3 text-left text-xs font-medium text-warm-700">Enriched</th>
                   )}
+                  {visibleColumns.includes('createdAt') && (
+                    <th className="p-3 text-left">
+                      <button
+                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        onClick={() => handleSort('createdAt')}
+                      >
+                        Date Added
+                        <SortIcon field="createdAt" />
+                      </button>
+                    </th>
+                  )}
                   {visibleColumns.includes('actions') && (
                     <th className="w-16 p-3 text-left text-xs font-medium text-warm-700">Actions</th>
                   )}
@@ -1438,6 +1450,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                             ) : (
                               <span className="text-warm-400 text-xs">-</span>
                             )}
+                          </td>
+                        )}
+                        {visibleColumns.includes('createdAt') && (
+                          <td className="p-3 text-xs text-warm-600">
+                            {new Date(prospect.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
                           </td>
                         )}
                         {visibleColumns.includes('actions') && (
