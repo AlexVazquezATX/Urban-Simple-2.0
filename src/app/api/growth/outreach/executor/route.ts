@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 
 /**
  * Sequence Executor - Runs as a cron job to auto-send approved follow-up messages
@@ -8,11 +8,13 @@ import { getCurrentUser } from '@/lib/auth'
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify this is an internal cron call (add auth header check in production)
+    // Verify auth: cron secret OR API key
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
+    const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`
+    const apiKeyUser = !isCron ? await getAuthenticatedUser(request) : null
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!isCron && !apiKeyUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { automatePipelineStage, detectHotProspects } from '@/lib/ai/pipeline-automator'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 
 /**
  * Automate pipeline stage transitions
@@ -8,11 +9,13 @@ import { automatePipelineStage, detectHotProspects } from '@/lib/ai/pipeline-aut
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify this is an internal cron call
+    // Verify auth: cron secret OR API key
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
+    const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`
+    const apiKeyUser = !isCron ? await getAuthenticatedUser(request) : null
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!isCron && !apiKeyUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 
 // POST /api/growth/discovery/scrape - Extract businesses from a URL using AI
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { Resend } from 'resend'
 
 // Initialize Resend lazily to avoid build-time errors
@@ -14,7 +14,7 @@ function getResend() {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

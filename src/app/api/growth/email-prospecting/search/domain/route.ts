@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { findProspectsAtCompany } from '@/lib/services/prospect-finder'
 import { SearchMethod } from '@/lib/types/email-prospecting'
 
@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now()
 
   try {
-    const user = await getCurrentUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     // Try to log error
     try {
-      const user = await getCurrentUser()
+      const user = await getAuthenticatedUser(request)
       if (user) {
         await prisma.emailProspectingLog.create({
           data: {

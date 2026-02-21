@@ -42,6 +42,7 @@ import {
   CheckSquare,
   AtSign,
   Camera,
+  Key,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -166,6 +167,7 @@ export function AppSidebar() {
     { href: '/growth/email-finder', icon: AtSign, label: 'Email Finder', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/discovery', icon: Search, label: 'AI Discovery', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/pipeline', icon: TrendingUp, label: 'Pipeline', roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { href: '/growth/api-keys', icon: Key, label: 'API Keys', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
 
   const administrativeItems = [

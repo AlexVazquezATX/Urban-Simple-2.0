@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { discoverOwners, toProspectSearchResults } from '@/lib/services/owner-discovery'
 
 // POST /api/growth/email-prospecting/discover
@@ -8,7 +8,7 @@ import { discoverOwners, toProspectSearchResults } from '@/lib/services/owner-di
 // This is the BEST method for hospitality businesses
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    const user = await getAuthenticatedUser(request)
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
 
     // Log failure
     try {
-      const user = await getCurrentUser()
+      const user = await getAuthenticatedUser(request)
       if (user) {
         await prisma.emailProspectingLog.create({
           data: {

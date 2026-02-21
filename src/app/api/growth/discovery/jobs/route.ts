@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { getCurrentUser } from '@/lib/auth'
+import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { scoreProspect } from '@/lib/ai/prospect-scorer'
 
 /**
@@ -9,11 +9,13 @@ import { scoreProspect } from '@/lib/ai/prospect-scorer'
  */
 export async function POST(request: NextRequest) {
   try {
-    // Verify this is an internal cron call
+    // Verify auth: cron secret OR API key
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
+    const isCron = cronSecret && authHeader === `Bearer ${cronSecret}`
+    const apiKeyUser = !isCron ? await getAuthenticatedUser(request) : null
 
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!isCron && !apiKeyUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
