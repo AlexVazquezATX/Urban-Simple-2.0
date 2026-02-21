@@ -61,7 +61,7 @@ export async function generateOutreachMessage(
   const { channel, prospect, template, tone = 'friendly', purpose = 'cold_outreach', customInstructions } = options
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     // Build context about the prospect
     const prospectContext = buildProspectContext(prospect)
@@ -307,7 +307,7 @@ export async function generateSequenceStepContent(
   } = options
 
   try {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     const channelGuidelines = {
       email: 'Professional email format with clear subject line. Keep body concise (3-4 paragraphs max).',
