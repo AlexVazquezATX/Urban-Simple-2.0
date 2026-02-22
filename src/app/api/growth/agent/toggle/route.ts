@@ -21,15 +21,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'enabled must be a boolean' }, { status: 400 })
     }
 
-    const config = await prisma.growthAgentConfig.findUnique({
+    // Upsert: create a default config if none exists yet
+    let config = await prisma.growthAgentConfig.findUnique({
       where: { companyId: user.companyId },
     })
 
     if (!config) {
-      return NextResponse.json(
-        { error: 'Agent config not found. Create a config first.' },
-        { status: 404 }
-      )
+      config = await prisma.growthAgentConfig.create({
+        data: { companyId: user.companyId },
+      })
     }
 
     // If enabling, validate that targets are configured
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       const types = config.targetBusinessTypes || []
       if (locations.length === 0 || types.length === 0) {
         return NextResponse.json(
-          { error: 'Configure target locations and business types before enabling the agent' },
+          { error: 'Configure target locations and business types before enabling the agent. Add at least one location and one business type, then save.' },
           { status: 400 }
         )
       }

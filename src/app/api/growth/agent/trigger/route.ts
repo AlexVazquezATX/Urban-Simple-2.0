@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { prisma } from '@/lib/db'
 import { runAgentCycle, type AgentStage } from '@/lib/services/growth-agent'
 
 export const maxDuration = 300
@@ -33,6 +34,13 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Ensure a config record exists (create defaults if first use)
+    await prisma.growthAgentConfig.upsert({
+      where: { companyId: user.companyId },
+      create: { companyId: user.companyId },
+      update: {},
+    })
 
     const result = await runAgentCycle(user.companyId, {
       forceStage: stage || undefined,
