@@ -45,6 +45,7 @@ export async function POST(request: NextRequest) {
     const result = await runAgentCycle(user.companyId, {
       forceStage: stage || undefined,
       forceDryRun: typeof dryRun === 'boolean' ? dryRun : undefined,
+      manualTrigger: true,
     })
 
     return NextResponse.json(result)

@@ -72,7 +72,7 @@ export interface AgentCycleResult {
  */
 export async function runAgentCycle(
   companyId: string,
-  options?: { forceStage?: AgentStage; forceDryRun?: boolean }
+  options?: { forceStage?: AgentStage; forceDryRun?: boolean; manualTrigger?: boolean }
 ): Promise<AgentCycleResult> {
   const startTime = Date.now()
 
@@ -96,7 +96,7 @@ export async function runAgentCycle(
     }
   }
 
-  if (!config.isEnabled && !options?.forceStage) {
+  if (!config.isEnabled && !options?.forceStage && !options?.manualTrigger) {
     return {
       configId: config.id,
       companyId,
@@ -127,7 +127,7 @@ export async function runAgentCycle(
   }
 
   // Check active hours (skip for manual triggers)
-  if (!options?.forceStage && !isWithinActiveHours(config)) {
+  if (!options?.forceStage && !options?.manualTrigger && !isWithinActiveHours(config)) {
     return {
       configId: config.id,
       companyId,
