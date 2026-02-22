@@ -15,6 +15,11 @@ import {
   determineBestChannel,
   type ProspectData,
 } from '@/lib/ai/outreach-composer'
+import {
+  buildProspectFilter,
+  type FilterCriteria,
+  type ProcessingMode,
+} from '@/lib/services/growth-agent-filter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -284,6 +289,13 @@ async function getStageWorkCounts(
     generate_outreach: 0,
   }
 
+  // Build base prospect filter from processing mode
+  const baseFilter = buildProspectFilter(
+    companyId,
+    (config.processingMode || 'all') as ProcessingMode,
+    (config.filterCriteria || {}) as FilterCriteria
+  )
+
   // Discovery: always work if not at daily limit and has targets configured
   const targetLocations = (config.targetLocations as any[]) || []
   const targetTypes = (config.targetBusinessTypes as string[]) || []
@@ -298,7 +310,7 @@ async function getStageWorkCounts(
   // Enrich: prospects that are new and not yet enriched
   counts.enrich = await prisma.prospect.count({
     where: {
-      companyId,
+      ...baseFilter,
       status: 'new',
       aiEnriched: false,
     },
@@ -307,7 +319,7 @@ async function getStageWorkCounts(
   // Find emails: enriched prospects with no email contacts
   const prospectsWithoutEmails = await prisma.prospect.findMany({
     where: {
-      companyId,
+      ...baseFilter,
       aiEnriched: true,
       contacts: { none: { email: { not: null } } },
     },
@@ -324,7 +336,7 @@ async function getStageWorkCounts(
   // Score: enriched prospects without AI score
   counts.score = await prisma.prospect.count({
     where: {
-      companyId,
+      ...baseFilter,
       aiEnriched: true,
       aiScore: null,
     },
@@ -333,7 +345,7 @@ async function getStageWorkCounts(
   // Generate outreach: scored prospects above threshold with email but no outreach message
   const outreachCandidates = await prisma.prospect.findMany({
     where: {
-      companyId,
+      ...baseFilter,
       aiScore: { gte: config.minScoreForOutreach },
       contacts: { some: { email: { not: null } } },
       outreachMessages: { none: {} },
@@ -484,9 +496,15 @@ async function processEnrich(
   batchSize: number,
   isDryRun: boolean
 ): Promise<StageResult> {
+  const baseFilter = buildProspectFilter(
+    companyId,
+    (config.processingMode || 'all') as ProcessingMode,
+    (config.filterCriteria || {}) as FilterCriteria
+  )
+
   const prospects = await prisma.prospect.findMany({
     where: {
-      companyId,
+      ...baseFilter,
       status: 'new',
       aiEnriched: false,
     },
@@ -597,9 +615,15 @@ async function processFindEmails(
   batchSize: number,
   isDryRun: boolean
 ): Promise<StageResult> {
+  const baseFilter = buildProspectFilter(
+    companyId,
+    (config.processingMode || 'all') as ProcessingMode,
+    (config.filterCriteria || {}) as FilterCriteria
+  )
+
   const prospects = await prisma.prospect.findMany({
     where: {
-      companyId,
+      ...baseFilter,
       aiEnriched: true,
       contacts: { none: { email: { not: null } } },
     },
@@ -687,9 +711,15 @@ async function processScore(
   batchSize: number,
   isDryRun: boolean
 ): Promise<StageResult> {
+  const baseFilter = buildProspectFilter(
+    companyId,
+    (config.processingMode || 'all') as ProcessingMode,
+    (config.filterCriteria || {}) as FilterCriteria
+  )
+
   const prospects = await prisma.prospect.findMany({
     where: {
-      companyId,
+      ...baseFilter,
       aiEnriched: true,
       aiScore: null,
     },
@@ -758,9 +788,15 @@ async function processGenerateOutreach(
   batchSize: number,
   isDryRun: boolean
 ): Promise<StageResult> {
+  const baseFilter = buildProspectFilter(
+    companyId,
+    (config.processingMode || 'all') as ProcessingMode,
+    (config.filterCriteria || {}) as FilterCriteria
+  )
+
   const prospects = await prisma.prospect.findMany({
     where: {
-      companyId,
+      ...baseFilter,
       aiScore: { gte: config.minScoreForOutreach },
       contacts: { some: { email: { not: null } } },
       outreachMessages: { none: {} },

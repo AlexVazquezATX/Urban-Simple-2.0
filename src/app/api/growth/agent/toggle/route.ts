@@ -32,8 +32,8 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // If enabling, validate that targets are configured
-    if (enabled) {
+    // If enabling, validate that targets are configured (unless in queued mode)
+    if (enabled && config.processingMode !== 'queued') {
       const locations = (config.targetLocations as any[]) || []
       const types = config.targetBusinessTypes || []
       if (locations.length === 0 || types.length === 0) {

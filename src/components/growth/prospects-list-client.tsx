@@ -38,6 +38,7 @@ import {
   ArrowRight,
   AtSign,
   UserPlus,
+  Bot,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -60,6 +61,8 @@ interface Prospect {
   address?: any
   aiEnriched?: boolean
   priceLevel?: string | null
+  agentQueued?: boolean
+  agentQueuedAt?: string | null
   lastContactedAt?: string | null
   createdAt: string
   contacts: Array<{
@@ -125,6 +128,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [isEnrichingBulk, setIsEnrichingBulk] = useState(false)
   const [isFindingEmails, setIsFindingEmails] = useState(false)
   const [isFindingContacts, setIsFindingContacts] = useState(false)
+  const [isQueueing, setIsQueueing] = useState(false)
   const [isDiscoveringOwners, setIsDiscoveringOwners] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
@@ -143,6 +147,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       }).length,
       hotLeads: prospects.filter(p => p.priority === 'high' || p.priority === 'urgent').length,
       followUp: prospects.filter(p => p.status === 'contacted' || p.status === 'engaged').length,
+      queued: prospects.filter(p => p.agentQueued).length,
     }
   }, [prospects])
 
@@ -190,6 +195,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         matchesTab = prospect.priority === 'high' || prospect.priority === 'urgent'
       } else if (activeTab === 'follow_up') {
         matchesTab = prospect.status === 'contacted' || prospect.status === 'engaged'
+      } else if (activeTab === 'queued') {
+        matchesTab = prospect.agentQueued === true
       }
 
       return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTab
@@ -661,6 +668,43 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     }
   }
 
+  // Queue for Agent handler
+  const handleQueueForAgent = async (action: 'add' | 'remove' = 'add') => {
+    if (selectedIds.size === 0) {
+      toast.error('No prospects selected')
+      return
+    }
+    setIsQueueing(true)
+    try {
+      const res = await fetch('/api/growth/agent/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prospectIds: Array.from(selectedIds),
+          action,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error)
+        return
+      }
+      setProspects((prev) =>
+        prev.map((p) =>
+          selectedIds.has(p.id)
+            ? { ...p, agentQueued: action === 'add', agentQueuedAt: action === 'add' ? new Date().toISOString() : null }
+            : p
+        )
+      )
+      toast.success(data.message)
+      setSelectedIds(new Set())
+    } catch {
+      toast.error('Failed to update agent queue')
+    } finally {
+      setIsQueueing(false)
+    }
+  }
+
   // Bulk discover owners handler - BEST FOR HOSPITALITY (restaurants, hotels, venues)
   // Uses Yelp + Google + Apollo + Hunter.io to find REAL owner names and emails
   const handleBulkDiscoverOwners = async () => {
@@ -1079,6 +1123,9 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <TabsTrigger value="contact_today" className="text-xs rounded-sm data-[state=active]:bg-white">Contact Today ({stats.contactToday})</TabsTrigger>
             <TabsTrigger value="hot_leads" className="text-xs rounded-sm data-[state=active]:bg-white">Hot ({stats.hotLeads})</TabsTrigger>
             <TabsTrigger value="follow_up" className="text-xs rounded-sm data-[state=active]:bg-white">Follow-Up ({stats.followUp})</TabsTrigger>
+            {stats.queued > 0 && (
+              <TabsTrigger value="queued" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-purple-700">Queued ({stats.queued})</TabsTrigger>
+            )}
           </TabsList>
         </Tabs>
 
@@ -1201,6 +1248,26 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   <>
                     <AtSign className="mr-1.5 h-3.5 w-3.5" />
                     Find Emails
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => handleQueueForAgent('add')}
+                disabled={isQueueing}
+                className="rounded-sm bg-white border-purple-300 text-purple-700 hover:bg-purple-50"
+                title="Add selected prospects to the Growth Agent processing queue"
+              >
+                {isQueueing ? (
+                  <>
+                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    Queuing...
+                  </>
+                ) : (
+                  <>
+                    <Bot className="mr-1.5 h-3.5 w-3.5" />
+                    Queue for Agent
                   </>
                 )}
               </Button>
@@ -1358,7 +1425,14 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         </td>
                         {visibleColumns.includes('companyName') && (
                           <td className="p-3">
-                            <div className="text-sm font-medium text-warm-900">{prospect.companyName}</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm font-medium text-warm-900">{prospect.companyName}</span>
+                              {prospect.agentQueued && (
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-purple-300 text-purple-600">
+                                  Queued
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                         )}
                         {visibleColumns.includes('contact') && (

@@ -20,7 +20,12 @@ const DEFAULT_CONFIG = {
   activeHoursStart: 8,
   activeHoursEnd: 22,
   timezone: 'America/Chicago',
+  processingMode: 'all',
+  filterCriteria: {},
 }
+
+const VALID_PROCESSING_MODES = ['all', 'filtered', 'queued']
+const VALID_FILTER_KEYS = ['businessTypes', 'priceLevels', 'cities', 'tags', 'sources']
 
 // GET /api/growth/agent/config — Get agent config
 export async function GET(request: NextRequest) {
@@ -74,15 +79,39 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'minScoreForOutreach must be between 0 and 100' }, { status: 400 })
     }
 
-    // If enabling, require targets
-    if (body.isEnabled === true) {
-      const locations = body.targetLocations
-      const types = body.targetBusinessTypes
-      if (!locations || !Array.isArray(locations) || locations.length === 0) {
-        return NextResponse.json({ error: 'At least one target location is required to enable the agent' }, { status: 400 })
+    // Validate processingMode
+    if (body.processingMode !== undefined && !VALID_PROCESSING_MODES.includes(body.processingMode)) {
+      return NextResponse.json({ error: 'processingMode must be "all", "filtered", or "queued"' }, { status: 400 })
+    }
+
+    // Validate filterCriteria structure
+    if (body.filterCriteria !== undefined) {
+      const fc = body.filterCriteria
+      if (typeof fc !== 'object' || Array.isArray(fc)) {
+        return NextResponse.json({ error: 'filterCriteria must be an object' }, { status: 400 })
       }
-      if (!types || !Array.isArray(types) || types.length === 0) {
-        return NextResponse.json({ error: 'At least one target business type is required to enable the agent' }, { status: 400 })
+      for (const key of Object.keys(fc)) {
+        if (!VALID_FILTER_KEYS.includes(key)) {
+          return NextResponse.json({ error: `filterCriteria contains unknown key: ${key}` }, { status: 400 })
+        }
+        if (fc[key] !== undefined && (!Array.isArray(fc[key]) || !fc[key].every((v: any) => typeof v === 'string'))) {
+          return NextResponse.json({ error: `filterCriteria.${key} must be a string array` }, { status: 400 })
+        }
+      }
+    }
+
+    // If enabling, require targets (unless in queued mode where discovery isn't needed)
+    if (body.isEnabled === true) {
+      const mode = body.processingMode || 'all'
+      if (mode !== 'queued') {
+        const locations = body.targetLocations
+        const types = body.targetBusinessTypes
+        if (!locations || !Array.isArray(locations) || locations.length === 0) {
+          return NextResponse.json({ error: 'At least one target location is required to enable the agent (unless in Queued mode)' }, { status: 400 })
+        }
+        if (!types || !Array.isArray(types) || types.length === 0) {
+          return NextResponse.json({ error: 'At least one target business type is required to enable the agent (unless in Queued mode)' }, { status: 400 })
+        }
       }
     }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/db'
+import { buildProspectFilter, type FilterCriteria, type ProcessingMode } from '@/lib/services/growth-agent-filter'
 
 // GET /api/growth/agent/stats — Pipeline funnel stats and daily usage
 export async function GET(request: NextRequest) {
@@ -75,15 +76,33 @@ export async function GET(request: NextRequest) {
       dailyUsage[run.stage] = (dailyUsage[run.stage] || 0) + run.itemsSucceeded
     }
 
-    // Get config for rate limits
+    // Get config for rate limits and processing mode
     const config = await prisma.growthAgentConfig.findUnique({
       where: { companyId },
       select: {
         maxDiscoveriesPerDay: true,
         maxEmailsPerDay: true,
         maxOutreachPerDay: true,
+        processingMode: true,
+        filterCriteria: true,
       },
     })
+
+    // Queue count (always useful)
+    const queuedCount = await prisma.prospect.count({
+      where: { companyId, agentQueued: true },
+    })
+
+    // Filtered count (only when in filtered mode)
+    let filteredCount: number | null = null
+    if (config?.processingMode === 'filtered') {
+      const filter = buildProspectFilter(
+        companyId,
+        'filtered',
+        (config.filterCriteria || {}) as FilterCriteria
+      )
+      filteredCount = await prisma.prospect.count({ where: filter })
+    }
 
     // Discovered this week
     const discoveredThisWeek = await prisma.prospect.count({
@@ -120,6 +139,9 @@ export async function GET(request: NextRequest) {
           }
         : null,
       discoveredThisWeek,
+      queuedCount,
+      filteredCount,
+      processingMode: config?.processingMode || 'all',
     })
   } catch (error: any) {
     console.error('Error fetching agent stats:', error)

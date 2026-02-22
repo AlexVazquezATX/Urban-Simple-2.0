@@ -29,6 +29,8 @@ async function ProspectsList() {
       address: true,
       aiEnriched: true,
       priceLevel: true,
+      agentQueued: true,
+      agentQueuedAt: true,
       lastContactedAt: true,
       createdAt: true,
       contacts: {
@@ -65,6 +67,7 @@ async function ProspectsList() {
     ...prospect,
     estimatedValue: prospect.estimatedValue ? Number(prospect.estimatedValue) : null,
     lastContactedAt: prospect.lastContactedAt ? prospect.lastContactedAt.toISOString() : null,
+    agentQueuedAt: prospect.agentQueuedAt ? prospect.agentQueuedAt.toISOString() : null,
     createdAt: prospect.createdAt.toISOString(),
   }))
 

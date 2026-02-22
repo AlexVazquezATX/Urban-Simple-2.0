@@ -24,7 +24,11 @@ import {
   Plus,
   X,
   RefreshCw,
+  Filter,
+  ListChecks,
+  Globe,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -50,6 +54,14 @@ interface AgentConfig {
   activeHoursStart: number
   activeHoursEnd: number
   timezone: string
+  processingMode: 'all' | 'filtered' | 'queued'
+  filterCriteria: {
+    businessTypes?: string[]
+    priceLevels?: string[]
+    cities?: string[]
+    tags?: string[]
+    sources?: string[]
+  }
 }
 
 interface AgentStats {
@@ -75,6 +87,9 @@ interface AgentStats {
     outreach: { used: number; max: number }
   } | null
   discoveredThisWeek: number
+  queuedCount: number
+  filteredCount: number | null
+  processingMode: string
 }
 
 interface AgentRun {
@@ -137,7 +152,12 @@ export function GrowthAgentDashboard() {
 
       if (configRes.ok) {
         const data = await configRes.json()
-        setConfig(data.config)
+        // Ensure new fields have defaults for configs created before this migration
+        setConfig({
+          ...data.config,
+          processingMode: data.config.processingMode || 'all',
+          filterCriteria: data.config.filterCriteria || {},
+        })
       }
       if (statsRes.ok) {
         const data = await statsRes.json()
@@ -332,6 +352,14 @@ export function GrowthAgentDashboard() {
             value={stats.funnel.pendingApproval}
             highlight={stats.funnel.pendingApproval > 0}
           />
+          {stats.queuedCount > 0 && (
+            <StatCard
+              icon={<ListChecks className="h-4 w-4" />}
+              label="In Queue"
+              value={stats.queuedCount}
+              highlight
+            />
+          )}
         </div>
       )}
 
@@ -345,6 +373,199 @@ export function GrowthAgentDashboard() {
           <CardContent className="space-y-6">
             {config && (
               <>
+                {/* Processing Mode */}
+                <div className="space-y-2">
+                  <Label className="font-semibold">Processing Mode</Label>
+                  <p className="text-xs text-gray-500 mb-2">
+                    Controls which prospects the agent processes through the pipeline
+                  </p>
+                  <div className="flex rounded-lg border overflow-hidden">
+                    {([
+                      { value: 'all' as const, label: 'All Prospects', icon: Globe, desc: 'Process everything' },
+                      { value: 'filtered' as const, label: 'Filtered', icon: Filter, desc: 'Match criteria' },
+                      { value: 'queued' as const, label: 'Queued Only', icon: ListChecks, desc: 'Hand-picked' },
+                    ]).map((mode) => (
+                      <button
+                        key={mode.value}
+                        onClick={() => setConfig({ ...config, processingMode: mode.value })}
+                        className={cn(
+                          'flex-1 px-3 py-2.5 text-sm font-medium transition-colors border-r last:border-r-0',
+                          config.processingMode === mode.value
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                        )}
+                      >
+                        <div className="flex items-center justify-center gap-1.5">
+                          <mode.icon className="h-3.5 w-3.5" />
+                          {mode.label}
+                        </div>
+                        <div className="text-[10px] font-normal opacity-70">{mode.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Filter Criteria (shown when mode is 'filtered') */}
+                {config.processingMode === 'filtered' && (
+                  <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <Label className="font-semibold text-blue-800">Filter Criteria</Label>
+                    <p className="text-xs text-blue-600">
+                      Agent will only process prospects matching these criteria
+                    </p>
+
+                    {/* Business Types filter */}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Business Types</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {BUSINESS_TYPES.map((type) => (
+                          <label key={type} className="flex items-center gap-1.5 text-sm">
+                            <Checkbox
+                              checked={(config.filterCriteria.businessTypes || []).includes(type)}
+                              onCheckedChange={(checked) => {
+                                const current = config.filterCriteria.businessTypes || []
+                                const updated = checked
+                                  ? [...current, type]
+                                  : current.filter((t) => t !== type)
+                                setConfig({
+                                  ...config,
+                                  filterCriteria: { ...config.filterCriteria, businessTypes: updated },
+                                })
+                              }}
+                            />
+                            <span className="capitalize">{type.replace('_', ' ')}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Price Levels filter */}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Price Levels</Label>
+                      <div className="flex gap-3">
+                        {['$', '$$', '$$$', '$$$$'].map((level) => (
+                          <label key={level} className="flex items-center gap-1.5 text-sm">
+                            <Checkbox
+                              checked={(config.filterCriteria.priceLevels || []).includes(level)}
+                              onCheckedChange={(checked) => {
+                                const current = config.filterCriteria.priceLevels || []
+                                const updated = checked
+                                  ? [...current, level]
+                                  : current.filter((l) => l !== level)
+                                setConfig({
+                                  ...config,
+                                  filterCriteria: { ...config.filterCriteria, priceLevels: updated },
+                                })
+                              }}
+                            />
+                            <span>{level}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Cities filter */}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Cities</Label>
+                      <div className="flex flex-wrap gap-1 mb-1">
+                        {(config.filterCriteria.cities || []).map((city, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {city}
+                            <button
+                              onClick={() => {
+                                const updated = (config.filterCriteria.cities || []).filter((_, idx) => idx !== i)
+                                setConfig({ ...config, filterCriteria: { ...config.filterCriteria, cities: updated } })
+                              }}
+                              className="ml-1"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <Input
+                        placeholder="Type city name, press Enter"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value.trim()
+                            if (val) {
+                              const current = config.filterCriteria.cities || []
+                              setConfig({
+                                ...config,
+                                filterCriteria: { ...config.filterCriteria, cities: [...current, val] },
+                              })
+                              ;(e.target as HTMLInputElement).value = ''
+                            }
+                          }
+                        }}
+                        className="w-48"
+                      />
+                    </div>
+
+                    {/* Tags filter */}
+                    <div className="space-y-1">
+                      <Label className="text-xs text-gray-500">Tags</Label>
+                      <div className="flex flex-wrap gap-1 mb-1">
+                        {(config.filterCriteria.tags || []).map((tag, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">
+                            {tag}
+                            <button
+                              onClick={() => {
+                                const updated = (config.filterCriteria.tags || []).filter((_, idx) => idx !== i)
+                                setConfig({ ...config, filterCriteria: { ...config.filterCriteria, tags: updated } })
+                              }}
+                              className="ml-1"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                      <Input
+                        placeholder="Type tag name, press Enter"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value.trim()
+                            if (val) {
+                              const current = config.filterCriteria.tags || []
+                              setConfig({
+                                ...config,
+                                filterCriteria: { ...config.filterCriteria, tags: [...current, val] },
+                              })
+                              ;(e.target as HTMLInputElement).value = ''
+                            }
+                          }
+                        }}
+                        className="w-48"
+                      />
+                    </div>
+
+                    {/* Show matching count */}
+                    {stats?.filteredCount !== null && stats?.filteredCount !== undefined && (
+                      <p className="text-sm text-blue-700 font-medium">
+                        {stats.filteredCount} prospects match these criteria
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Queue info (shown when mode is 'queued') */}
+                {config.processingMode === 'queued' && (
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label className="font-semibold text-purple-800">Agent Queue</Label>
+                        <p className="text-xs text-purple-600 mt-1">
+                          Select prospects in the Prospects table and click &quot;Queue for Agent&quot; to add them
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-purple-800">{stats?.queuedCount || 0}</p>
+                        <p className="text-xs text-purple-600">in queue</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Target Locations */}
                 <div className="space-y-2">
                   <Label className="font-semibold">Target Locations</Label>

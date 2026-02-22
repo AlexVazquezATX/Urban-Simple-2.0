@@ -1030,6 +1030,10 @@ model Prospect {
   autoEnriched  Boolean @default(false) @map("auto_enriched")
   enrichedData  Json?   @map("enriched_data") // LinkedIn URL, decision maker, etc.
 
+  // Agent Queue
+  agentQueued   Boolean   @default(false) @map("agent_queued")
+  agentQueuedAt DateTime? @map("agent_queued_at")
+
   // Metadata
   tags                String[] @default([])
   notes               String?  @db.Text
@@ -1051,6 +1055,7 @@ model Prospect {
   outreachMessages OutreachMessage[]
 
   @@index([companyId, status])
+  @@index([companyId, agentQueued])
   @@index([assignedToId])
   @@index([source])
   @@index([createdAt])
@@ -1442,6 +1447,10 @@ model GrowthAgentConfig {
   activeHoursStart Int    @default(8) @map("active_hours_start")
   activeHoursEnd   Int    @default(22) @map("active_hours_end")
   timezone         String @default("America/Chicago")
+
+  // Processing scope
+  processingMode String @default("all") @map("processing_mode") // 'all' | 'filtered' | 'queued'
+  filterCriteria Json   @default("{}") @map("filter_criteria")   // { businessTypes?, priceLevels?, cities?, tags?, sources? }
 
   // Pause/resume
   pausedAt    DateTime? @map("paused_at")
