@@ -45,6 +45,9 @@ model Company {
   // API Keys
   apiKeys ApiKey[]
 
+  // Growth Agent
+  growthAgentConfig GrowthAgentConfig?
+
   @@map("companies")
 }
 
@@ -1399,6 +1402,89 @@ model PulseGenerationLog {
   @@index([userId, createdAt])
   @@index([type, status])
   @@map("pulse_generation_logs")
+}
+
+// ============================================
+// GROWTH AGENT - Autonomous Pipeline
+// ============================================
+
+model GrowthAgentConfig {
+  id        String @id @default(cuid())
+  companyId String @unique @map("company_id")
+
+  // Master toggle
+  isEnabled Boolean @default(false) @map("is_enabled")
+  isDryRun  Boolean @default(true) @map("is_dry_run")
+
+  // Target criteria
+  targetLocations    Json     @default("[]") @map("target_locations") // [{city, state}]
+  targetBusinessTypes String[] @default([]) @map("target_business_types")
+  targetSources      String[] @default(["google_places", "yelp"]) @map("target_sources")
+  minRating          Float?   @map("min_rating")
+  priceLevels        String[] @default([]) @map("price_levels")
+
+  // Processing thresholds
+  minScoreForOutreach Int @default(60) @map("min_score_for_outreach")
+  batchSize           Int @default(5) @map("batch_size")
+
+  // Rate limiting
+  maxDiscoveriesPerDay Int @default(20) @map("max_discoveries_per_day")
+  maxEmailsPerDay      Int @default(10) @map("max_emails_per_day")
+  maxOutreachPerDay    Int @default(10) @map("max_outreach_per_day")
+
+  // Outreach settings
+  defaultCampaignId String? @map("default_campaign_id")
+  defaultTemplateId String? @map("default_template_id")
+  outreachTone      String  @default("friendly") @map("outreach_tone")
+  outreachChannel   String  @default("email") @map("outreach_channel")
+
+  // Scheduling
+  activeHoursStart Int    @default(8) @map("active_hours_start")
+  activeHoursEnd   Int    @default(22) @map("active_hours_end")
+  timezone         String @default("America/Chicago")
+
+  // Pause/resume
+  pausedAt    DateTime? @map("paused_at")
+  pauseReason String?   @map("pause_reason")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  runs    GrowthAgentRun[]
+
+  @@index([isEnabled])
+  @@map("growth_agent_configs")
+}
+
+model GrowthAgentRun {
+  id       String @id @default(cuid())
+  configId String @map("config_id")
+
+  stage    String // discover, enrich, find_emails, score, generate_outreach
+  status   String @default("running") // running, completed, failed, skipped
+  isDryRun Boolean @default(false) @map("is_dry_run")
+
+  // Results
+  itemsProcessed Int @default(0) @map("items_processed")
+  itemsSucceeded Int @default(0) @map("items_succeeded")
+  itemsFailed    Int @default(0) @map("items_failed")
+  itemsSkipped   Int @default(0) @map("items_skipped")
+
+  // Details
+  details      Json?   @default("{}")
+  errorMessage String? @map("error_message") @db.Text
+
+  // Timing
+  startedAt   DateTime  @default(now()) @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  durationMs  Int?      @map("duration_ms")
+
+  config GrowthAgentConfig @relation(fields: [configId], references: [id], onDelete: Cascade)
+
+  @@index([configId, startedAt])
+  @@index([stage, status])
+  @@map("growth_agent_runs")
 }
 
 // ============================================
