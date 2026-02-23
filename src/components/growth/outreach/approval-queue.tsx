@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
   CheckCircle2,
@@ -16,6 +17,8 @@ import {
   Copy,
   Sparkles,
   Loader2,
+  Pencil,
+  RefreshCw,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -43,6 +46,9 @@ export function ApprovalQueue() {
   const [approving, setApproving] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editedBody, setEditedBody] = useState<string>('')
+  const [editedSubject, setEditedSubject] = useState<string>('')
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchQueue()
@@ -134,6 +140,86 @@ export function ApprovalQueue() {
       toast.error('Failed to approve all messages')
     } finally {
       setApproving(false)
+    }
+  }
+
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editedBody.trim()) {
+      toast.error('Message body cannot be empty')
+      return
+    }
+
+    setSavingEdit(true)
+    try {
+      const response = await fetch('/api/growth/outreach/approval-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'edit',
+          messageId,
+          body: editedBody,
+          subject: editedSubject || undefined,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save edit')
+      }
+
+      const data = await response.json()
+
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === messageId
+            ? { ...m, body: data.message.body, subject: data.message.subject, isAiGenerated: false }
+            : m
+        )
+      )
+
+      setEditingId(null)
+      setEditedBody('')
+      setEditedSubject('')
+      toast.success('Message updated')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to save changes')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const handleRegenerate = async (messageId: string) => {
+    setRegeneratingId(messageId)
+    try {
+      const response = await fetch('/api/growth/outreach/approval-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'regenerate',
+          messageId,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to regenerate')
+      }
+
+      const data = await response.json()
+
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === messageId
+            ? { ...m, body: data.message.body, subject: data.message.subject ?? m.subject, isAiGenerated: true }
+            : m
+        )
+      )
+
+      toast.success('Message regenerated')
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to regenerate message')
+    } finally {
+      setRegeneratingId(null)
     }
   }
 
@@ -325,19 +411,21 @@ export function ApprovalQueue() {
                     </div>
                   </div>
 
-                  {/* Message Content */}
-                  {message.subject && (
+                  {/* Subject (display only when not editing) */}
+                  {message.subject && editingId !== message.id && (
                     <div>
                       <p className="text-[10px] font-medium text-warm-500 uppercase tracking-wide mb-0.5">Subject</p>
                       <p className="text-sm text-warm-900">{message.subject}</p>
                     </div>
                   )}
+
+                  {/* Message Content */}
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
                       <p className="text-[10px] font-medium text-warm-500 uppercase tracking-wide">Message</p>
                       {(message.channel === 'linkedin' ||
                         message.channel === 'instagram' ||
-                        message.channel === 'instagram_dm') && (
+                        message.channel === 'instagram_dm') && editingId !== message.id && (
                         <Button
                           size="sm"
                           variant="ghost"
@@ -351,6 +439,17 @@ export function ApprovalQueue() {
                     </div>
                     {editingId === message.id ? (
                       <div className="space-y-2">
+                        {message.channel === 'email' && (
+                          <div>
+                            <p className="text-[10px] font-medium text-warm-500 uppercase tracking-wide mb-0.5">Subject</p>
+                            <Input
+                              value={editedSubject}
+                              onChange={(e) => setEditedSubject(e.target.value)}
+                              placeholder="Email subject"
+                              className="rounded-sm border-warm-200 text-sm"
+                            />
+                          </div>
+                        )}
                         <Textarea
                           value={editedBody}
                           onChange={(e) => setEditedBody(e.target.value)}
@@ -361,13 +460,18 @@ export function ApprovalQueue() {
                           <Button
                             size="sm"
                             variant="lime"
-                            onClick={() => {
-                              // TODO: Save edited message
-                              setEditingId(null)
-                            }}
+                            onClick={() => handleSaveEdit(message.id)}
+                            disabled={savingEdit}
                             className="rounded-sm"
                           >
-                            Save
+                            {savingEdit ? (
+                              <>
+                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              'Save'
+                            )}
                           </Button>
                           <Button
                             size="sm"
@@ -375,12 +479,19 @@ export function ApprovalQueue() {
                             onClick={() => {
                               setEditingId(null)
                               setEditedBody('')
+                              setEditedSubject('')
                             }}
+                            disabled={savingEdit}
                             className="rounded-sm"
                           >
                             Cancel
                           </Button>
                         </div>
+                      </div>
+                    ) : regeneratingId === message.id ? (
+                      <div className="flex items-center justify-center py-6 bg-warm-50 rounded-sm border border-warm-200">
+                        <Loader2 className="h-4 w-4 animate-spin text-plum-500 mr-2" />
+                        <span className="text-xs text-warm-500">Generating new message...</span>
                       </div>
                     ) : (
                       <div className="text-sm whitespace-pre-wrap bg-warm-50 p-2.5 rounded-sm border border-warm-200 text-warm-700">
@@ -397,12 +508,34 @@ export function ApprovalQueue() {
                       onClick={() => {
                         setEditingId(message.id)
                         setEditedBody(message.body)
+                        setEditedSubject(message.subject || '')
                       }}
+                      disabled={regeneratingId === message.id}
                       className="h-6 px-2 text-xs text-warm-500 hover:text-ocean-600"
                     >
+                      <Pencil className="h-3 w-3 mr-1" />
                       Edit
                     </Button>
-                    <span className="text-[10px] text-warm-400">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => handleRegenerate(message.id)}
+                      disabled={regeneratingId !== null}
+                      className="h-6 px-2 text-xs text-warm-500 hover:text-plum-600"
+                    >
+                      {regeneratingId === message.id ? (
+                        <>
+                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          Regenerating...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-3 w-3 mr-1" />
+                          Regenerate
+                        </>
+                      )}
+                    </Button>
+                    <span className="text-[10px] text-warm-400 ml-auto">
                       Created {format(new Date(message.createdAt), 'MMM d, h:mm a')}
                     </span>
                   </div>

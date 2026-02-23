@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import {
+  generateOutreachMessage,
+  type ProspectData,
+} from '@/lib/ai/outreach-composer'
 
 export async function GET(request: NextRequest) {
   try {
@@ -100,6 +104,114 @@ export async function POST(request: NextRequest) {
       })
     }
 
+    // Edit: update message body/subject
+    if (action === 'edit') {
+      const { messageId, body: newBody, subject: newSubject } = body
+
+      if (!messageId || typeof messageId !== 'string') {
+        return NextResponse.json({ error: 'Message ID required' }, { status: 400 })
+      }
+      if (!newBody || typeof newBody !== 'string' || newBody.trim().length === 0) {
+        return NextResponse.json({ error: 'Message body cannot be empty' }, { status: 400 })
+      }
+
+      const existing = await prisma.outreachMessage.findFirst({
+        where: {
+          id: messageId,
+          approvalStatus: 'pending',
+          prospect: { companyId: user.companyId },
+        },
+      })
+
+      if (!existing) {
+        return NextResponse.json({ error: 'Message not found or not editable' }, { status: 404 })
+      }
+
+      const updateData: any = {
+        body: newBody.trim(),
+        isAiGenerated: false,
+      }
+      if (newSubject !== undefined) {
+        updateData.subject = newSubject.trim() || null
+      }
+
+      const updated = await prisma.outreachMessage.update({
+        where: { id: messageId },
+        data: updateData,
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: { id: updated.id, body: updated.body, subject: updated.subject },
+      })
+    }
+
+    // Regenerate: AI rewrites the message
+    if (action === 'regenerate') {
+      const { messageId, customInstructions } = body
+
+      if (!messageId || typeof messageId !== 'string') {
+        return NextResponse.json({ error: 'Message ID required' }, { status: 400 })
+      }
+
+      const existing = await prisma.outreachMessage.findFirst({
+        where: {
+          id: messageId,
+          approvalStatus: 'pending',
+          prospect: { companyId: user.companyId },
+        },
+        include: {
+          prospect: { include: { contacts: true } },
+        },
+      })
+
+      if (!existing || !existing.prospect) {
+        return NextResponse.json({ error: 'Message not found or not regeneratable' }, { status: 404 })
+      }
+
+      const prospect = existing.prospect
+      const prospectData: ProspectData = {
+        companyName: prospect.companyName,
+        businessType: prospect.businessType || undefined,
+        industry: prospect.industry || undefined,
+        address: prospect.address as any,
+        website: prospect.website || undefined,
+        priceLevel: prospect.priceLevel || undefined,
+        contacts: prospect.contacts.map((c) => ({
+          firstName: c.firstName,
+          lastName: c.lastName,
+          title: c.title || undefined,
+          email: c.email || undefined,
+        })),
+        notes: prospect.notes || undefined,
+        aiScore: prospect.aiScore || undefined,
+        aiScoreReason: prospect.aiScoreReason || undefined,
+      }
+
+      const generated = await generateOutreachMessage({
+        channel: existing.channel as any,
+        prospect: prospectData,
+        tone: 'friendly',
+        purpose: 'cold_outreach',
+        customInstructions: customInstructions || undefined,
+      })
+
+      const updated = await prisma.outreachMessage.update({
+        where: { id: messageId },
+        data: {
+          body: generated.body,
+          subject: generated.subject || existing.subject,
+          isAiGenerated: true,
+        },
+      })
+
+      return NextResponse.json({
+        success: true,
+        message: { id: updated.id, body: updated.body, subject: updated.subject },
+      })
+    }
+
+    // Approve / Reject: bulk action on message IDs
     if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
       return NextResponse.json(
         { error: 'Message IDs required' },
