@@ -384,8 +384,9 @@ export async function runFullPipeline(
         },
       })
 
-      // If the batch processed nothing or errored, stop this stage
+      // Stop this stage if: nothing processed, all failed, or error
       if (result.processed === 0 || stageError) break
+      if (result.succeeded === 0) break // All items failed — don't retry the same batch
 
       // In dry run, prospects don't change state — only run one batch per stage
       if (isDryRun) break
