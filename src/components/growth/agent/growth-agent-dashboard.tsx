@@ -222,21 +222,43 @@ export function GrowthAgentDashboard() {
     }
   }
 
-  const handleTrigger = async (stage?: string) => {
-    const label = stage || 'full cycle'
+  const handleTrigger = async (stage?: string, fullPipeline?: boolean) => {
+    const label = fullPipeline ? 'full pipeline' : (stage || 'full cycle')
     setTriggerLoading(label)
     try {
       const res = await fetch('/api/growth/agent/trigger', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ stage: stage || undefined }),
+        body: JSON.stringify({
+          stage: stage || undefined,
+          fullPipeline: fullPipeline || undefined,
+        }),
       })
       const data = await res.json()
       if (!res.ok) {
         toast.error(data.error)
         return
       }
-      if (data.stage === 'none') {
+
+      // Full pipeline response
+      if (fullPipeline && data.stages) {
+        const stages = data.stages as Array<{
+          stage: string; totalSucceeded: number; totalFailed: number
+        }>
+        if (stages.length === 0) {
+          toast.info('No pending work in any stage')
+        } else {
+          const summary = stages
+            .map(s => `${s.stage}: ${s.totalSucceeded} done`)
+            .join(' → ')
+          const totalTime = (data.durationMs / 1000).toFixed(1)
+          toast.success(
+            `Pipeline complete${data.isDryRun ? ' (dry run)' : ''}: ${summary} (${totalTime}s)`
+          )
+        }
+      }
+      // Single stage response
+      else if (data.stage === 'none') {
         toast.info(data.details?.reason || 'No work pending')
       } else {
         toast.success(
@@ -809,11 +831,11 @@ export function GrowthAgentDashboard() {
               </Button>
             ))}
             <Button
-              onClick={() => handleTrigger()}
+              onClick={() => handleTrigger(undefined, true)}
               disabled={triggerLoading !== null}
               className="bg-amber-600 hover:bg-amber-700"
             >
-              {triggerLoading === 'full cycle' ? (
+              {triggerLoading === 'full pipeline' ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
               ) : (
                 <Play className="h-4 w-4 mr-2" />

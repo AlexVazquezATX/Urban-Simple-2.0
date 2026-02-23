@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/db'
-import { runAgentCycle, type AgentStage } from '@/lib/services/growth-agent'
+import { runAgentCycle, runFullPipeline, type AgentStage } from '@/lib/services/growth-agent'
 
 export const maxDuration = 300
 
@@ -13,7 +13,7 @@ const VALID_STAGES: AgentStage[] = [
   'generate_outreach',
 ]
 
-// POST /api/growth/agent/trigger — Run one agent cycle manually
+// POST /api/growth/agent/trigger — Run one agent cycle or the full pipeline
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { stage, dryRun } = body
+    const { stage, dryRun, fullPipeline } = body
 
     if (stage && !VALID_STAGES.includes(stage)) {
       return NextResponse.json(
@@ -42,6 +42,15 @@ export async function POST(request: NextRequest) {
       update: {},
     })
 
+    // Full pipeline: run ALL stages until no work remains
+    if (fullPipeline) {
+      const result = await runFullPipeline(user.companyId, {
+        forceDryRun: typeof dryRun === 'boolean' ? dryRun : undefined,
+      })
+      return NextResponse.json(result)
+    }
+
+    // Single stage or auto-detect next stage
     const result = await runAgentCycle(user.companyId, {
       forceStage: stage || undefined,
       forceDryRun: typeof dryRun === 'boolean' ? dryRun : undefined,

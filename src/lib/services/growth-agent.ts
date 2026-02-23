@@ -255,6 +255,190 @@ export async function runAgentCycle(
 }
 
 // ---------------------------------------------------------------------------
+// Full pipeline runner — processes ALL stages until no work remains
+// ---------------------------------------------------------------------------
+
+export interface PipelineStageResult {
+  stage: AgentStage
+  batches: number
+  totalProcessed: number
+  totalSucceeded: number
+  totalFailed: number
+  totalSkipped: number
+  durationMs: number
+  error?: string
+}
+
+export interface FullPipelineResult {
+  configId: string
+  companyId: string
+  isDryRun: boolean
+  stages: PipelineStageResult[]
+  totalProcessed: number
+  totalSucceeded: number
+  totalFailed: number
+  durationMs: number
+  stoppedEarly?: string
+}
+
+/**
+ * Run the full pipeline for a company — loops through all stages,
+ * processing every batch until there's no work left.
+ * Skips discovery (external API search) — only processes existing prospects.
+ */
+export async function runFullPipeline(
+  companyId: string,
+  options?: { forceDryRun?: boolean }
+): Promise<FullPipelineResult> {
+  const startTime = Date.now()
+
+  const config = await prisma.growthAgentConfig.findUnique({
+    where: { companyId },
+  })
+
+  if (!config) {
+    return {
+      configId: '',
+      companyId,
+      isDryRun: true,
+      stages: [],
+      totalProcessed: 0,
+      totalSucceeded: 0,
+      totalFailed: 0,
+      durationMs: Date.now() - startTime,
+      stoppedEarly: 'No agent config found',
+    }
+  }
+
+  const isDryRun = options?.forceDryRun ?? config.isDryRun
+  const batchSize = config.batchSize
+
+  // Post-discovery stages only — discovery uses external APIs and has its own button
+  const PIPELINE_STAGES: AgentStage[] = ['enrich', 'find_emails', 'score', 'generate_outreach']
+  const stageResults: PipelineStageResult[] = []
+  let grandProcessed = 0
+  let grandSucceeded = 0
+  let grandFailed = 0
+
+  for (const stage of PIPELINE_STAGES) {
+    const stageStart = Date.now()
+    let batches = 0
+    let stageProcessed = 0
+    let stageSucceeded = 0
+    let stageFailed = 0
+    let stageSkipped = 0
+    let stageError: string | undefined
+
+    // Keep running this stage until no more work
+    // Safety cap: max 50 batches per stage to prevent runaway loops
+    const MAX_BATCHES = 50
+    while (batches < MAX_BATCHES) {
+      // Check if there's work for this stage
+      const workCounts = await getStageWorkCounts(companyId, config)
+      if (workCounts[stage] <= 0) break
+
+      let result: StageResult
+      try {
+        switch (stage) {
+          case 'enrich':
+            result = await processEnrich(companyId, config, batchSize, isDryRun)
+            break
+          case 'find_emails':
+            result = await processFindEmails(companyId, config, batchSize, isDryRun)
+            break
+          case 'score':
+            result = await processScore(companyId, config, batchSize, isDryRun)
+            break
+          case 'generate_outreach':
+            result = await processGenerateOutreach(companyId, config, batchSize, isDryRun)
+            break
+          default:
+            result = { processed: 0, succeeded: 0, failed: 0, skipped: 0, details: {} }
+        }
+      } catch (err: any) {
+        stageError = err.message || 'Unknown error'
+        result = { processed: 0, succeeded: 0, failed: 0, skipped: 0, details: { error: stageError } }
+      }
+
+      batches++
+      stageProcessed += result.processed
+      stageSucceeded += result.succeeded
+      stageFailed += result.failed
+      stageSkipped += result.skipped
+
+      // Log each batch run
+      await prisma.growthAgentRun.create({
+        data: {
+          configId: config.id,
+          stage,
+          status: stageError ? 'failed' : 'completed',
+          isDryRun,
+          itemsProcessed: result.processed,
+          itemsSucceeded: result.succeeded,
+          itemsFailed: result.failed,
+          itemsSkipped: result.skipped,
+          details: { ...result.details, pipelineBatch: batches },
+          errorMessage: stageError,
+          completedAt: new Date(),
+          durationMs: Date.now() - stageStart,
+        },
+      })
+
+      // If the batch processed nothing or errored, stop this stage
+      if (result.processed === 0 || stageError) break
+
+      // In dry run, prospects don't change state — only run one batch per stage
+      if (isDryRun) break
+    }
+
+    if (stageProcessed > 0 || stageError) {
+      stageResults.push({
+        stage,
+        batches,
+        totalProcessed: stageProcessed,
+        totalSucceeded: stageSucceeded,
+        totalFailed: stageFailed,
+        totalSkipped: stageSkipped,
+        durationMs: Date.now() - stageStart,
+        error: stageError,
+      })
+      grandProcessed += stageProcessed
+      grandSucceeded += stageSucceeded
+      grandFailed += stageFailed
+    }
+  }
+
+  // Log the overall pipeline run
+  await prisma.growthAutomationLog.create({
+    data: {
+      companyId,
+      type: 'pipeline',
+      status: grandFailed > 0 ? 'partial' : 'completed',
+      details: {
+        agent: true,
+        fullPipeline: true,
+        isDryRun,
+        stages: stageResults.map(s => ({ stage: s.stage, succeeded: s.totalSucceeded, failed: s.totalFailed })),
+        totalProcessed: grandProcessed,
+        totalSucceeded: grandSucceeded,
+        totalFailed: grandFailed,
+      },
+    },
+  })
+
+  return {
+    configId: config.id,
+    companyId,
+    isDryRun,
+    stages: stageResults,
+    totalProcessed: grandProcessed,
+    totalSucceeded: grandSucceeded,
+    totalFailed: grandFailed,
+    durationMs: Date.now() - startTime,
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Stage work detection
 // ---------------------------------------------------------------------------
 
