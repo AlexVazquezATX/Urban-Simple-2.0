@@ -5,7 +5,7 @@
 import { findBusinessOwner as findYelpOwner, type YelpBusinessInfo } from './yelp-scraper'
 import { findGoogleBusinessOwner, type GoogleBusinessInfo } from './google-business-scraper'
 import { searchDomain as hunterSearchDomain, findEmail as hunterFindEmail, getEmailPattern, generateFromPattern } from './hunter-service'
-import { searchContacts as apolloSearchContacts } from './apollo-service'
+import { searchContacts as apolloSearchContacts, enrichPerson as apolloEnrichPerson } from './apollo-service'
 import { generateHospitalityEmails } from './email-pattern-generator'
 import { scrapeOwnerNames, type ScrapedOwner } from './website-scraper'
 import { verifyEmail } from './email-verification'
@@ -316,9 +316,22 @@ export async function discoverOwners(
           const name = contact.name || `${contact.first_name} ${contact.last_name}`
           result.meta.ownerNamesFound.push(name)
 
-          // Apollo often has emails
-          if (contact.email) {
-            result.meta.emailsFound.push(contact.email)
+          // Search endpoint doesn't return emails — enrich to get them
+          let email: string | null = contact.email || null
+          if (!email && result.domain) {
+            try {
+              const enriched = await apolloEnrichPerson(contact.first_name, contact.last_name, result.domain)
+              if (enriched?.email) {
+                email = enriched.email
+                console.log(`[Owner Discovery] Apollo enrichment found email for ${name}: ${email}`)
+              }
+            } catch {
+              // Enrichment failed, continue without email
+            }
+          }
+
+          if (email) {
+            result.meta.emailsFound.push(email)
           }
 
           foundOwners.set(key, {
@@ -326,13 +339,13 @@ export async function discoverOwners(
             firstName: contact.first_name,
             lastName: contact.last_name,
             title: contact.title || 'Contact',
-            email: contact.email || null,
-            emailConfidence: contact.email ? 85 : 0,
-            emailSource: contact.email ? 'apollo' : null,
+            email,
+            emailConfidence: email ? 85 : 0,
+            emailSource: email ? 'apollo' : null,
             phone: null,
             source: 'apollo',
           })
-          console.log(`[Owner Discovery] Apollo: Added "${name}"${contact.email ? ` <${contact.email}>` : ''}`)
+          console.log(`[Owner Discovery] Apollo: Added "${name}"${email ? ` <${email}>` : ''}`)
         }
       }
     }
@@ -386,15 +399,29 @@ export async function discoverOwners(
           if (!foundOwners.has(key)) {
             const name = contact.name || `${contact.first_name} ${contact.last_name}`
             result.meta.ownerNamesFound.push(name)
-            if (contact.email) result.meta.emailsFound.push(contact.email)
+
+            // Enrich to get email
+            let email: string | null = contact.email || null
+            if (!email && result.domain) {
+              try {
+                const enriched = await apolloEnrichPerson(contact.first_name, contact.last_name, result.domain)
+                if (enriched?.email) {
+                  email = enriched.email
+                }
+              } catch {
+                // Continue without email
+              }
+            }
+
+            if (email) result.meta.emailsFound.push(email)
             foundOwners.set(key, {
               name,
               firstName: contact.first_name,
               lastName: contact.last_name,
               title: contact.title || 'Contact',
-              email: contact.email || null,
-              emailConfidence: contact.email ? 85 : 0,
-              emailSource: contact.email ? 'apollo' : null,
+              email,
+              emailConfidence: email ? 85 : 0,
+              emailSource: email ? 'apollo' : null,
               phone: null,
               source: 'apollo',
             })

@@ -10,12 +10,14 @@ interface ApolloSearchParams {
   // Person filters
   person_titles?: string[]
   person_seniorities?: string[]
+  person_locations?: string[]
 
   // Company filters
   organization_domains?: string[]
   organization_ids?: string[]
   organization_num_employees_ranges?: string[]
   organization_locations?: string[]
+  q_keywords?: string
 
   // Pagination
   page?: number
@@ -45,10 +47,12 @@ export async function searchContacts(
       per_page: params.per_page || 25,
       person_titles: params.person_titles,
       person_seniorities: params.person_seniorities,
+      person_locations: params.person_locations,
       organization_domains: params.organization_domains,
       organization_ids: params.organization_ids,
       q_organization_num_employees_ranges: params.organization_num_employees_ranges,
       organization_locations: params.organization_locations,
+      q_keywords: params.q_keywords,
     }),
   })
 
