@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
           yelp: discoveryResult.meta.yelpFound,
           google: discoveryResult.meta.googleFound,
           hunter: discoveryResult.meta.hunterFound,
-          apollo: discoveryResult.meta.apolloFound,
         },
       },
     })

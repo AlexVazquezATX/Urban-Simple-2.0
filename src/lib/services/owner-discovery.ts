@@ -5,29 +5,12 @@
 import { findBusinessOwner as findYelpOwner, type YelpBusinessInfo } from './yelp-scraper'
 import { findGoogleBusinessOwner, type GoogleBusinessInfo } from './google-business-scraper'
 import { searchDomain as hunterSearchDomain, findEmail as hunterFindEmail, getEmailPattern, generateFromPattern } from './hunter-service'
-import { searchContacts as apolloSearchContacts, enrichPerson as apolloEnrichPerson } from './apollo-service'
+// Apollo removed — using Hunter exclusively for email discovery
 import { generateHospitalityEmails } from './email-pattern-generator'
 import { scrapeOwnerNames, type ScrapedOwner } from './website-scraper'
 import { verifyEmail } from './email-verification'
 import { ProspectSearchResult } from '@/lib/types/email-prospecting'
 
-// Hospitality-specific titles for Apollo search
-const HOSPITALITY_TITLES = [
-  'Owner',
-  'Co-Owner',
-  'Founder',
-  'General Manager',
-  'GM',
-  'Executive Chef',
-  'Chef',
-  'F&B Director',
-  'Food and Beverage Director',
-  'Restaurant Manager',
-  'Operations Manager',
-  'Managing Partner',
-  'Partner',
-  'Director of Operations',
-]
 
 export interface OwnerDiscoveryResult {
   businessName: string
@@ -39,9 +22,9 @@ export interface OwnerDiscoveryResult {
     title: string | null
     email: string | null
     emailConfidence: number
-    emailSource: 'hunter_finder' | 'hunter_pattern' | 'hunter_domain' | 'apollo' | null
+    emailSource: 'hunter_finder' | 'hunter_pattern' | 'hunter_domain' | null
     phone: string | null
-    source: 'yelp' | 'google' | 'hunter' | 'apollo'
+    source: 'yelp' | 'google' | 'hunter'
   }>
   businessInfo: {
     phone: string | null
@@ -68,7 +51,6 @@ export interface OwnerDiscoveryResult {
     yelpFound: boolean
     googleFound: boolean
     hunterFound: boolean
-    apolloFound: boolean
     ownerNamesFound: string[]
     emailsFound: string[]
   }
@@ -85,10 +67,10 @@ interface DiscoverOwnersOptions {
 /**
  * Main entry point: Discover business owners and their emails
  *
- * NEW PARALLEL WORKFLOW:
- * 1. Run Apollo + Yelp + Google + Website scrape IN PARALLEL
+ * WORKFLOW:
+ * 1. Run Yelp + Google + Website scrape IN PARALLEL to find owner names
  * 2. Merge all discovered owner names
- * 3. For each name, use Hunter Email Finder
+ * 3. For each name, use Hunter Email Finder to get their email
  * 4. If still no people, Hunter Domain Search with seniority filters
  * 5. If still no people, progressive hospitality pattern verification
  * 6. Always include hospitality pattern emails as suggestions
@@ -119,7 +101,6 @@ export async function discoverOwners(
       yelpFound: false,
       googleFound: false,
       hunterFound: false,
-      apolloFound: false,
       ownerNamesFound: [],
       emailsFound: [],
     },
@@ -135,19 +116,13 @@ export async function discoverOwners(
   }
 
   // ============ STEP 1: PARALLEL DISCOVERY ============
-  // Run Apollo, Yelp, Google, and Website scrape all at once
-  console.log('[Owner Discovery] Starting parallel search: Apollo + Yelp + Google + Website...')
-
-  type YelpResult = { status: 'fulfilled'; value: YelpBusinessInfo | null } | { status: 'rejected'; reason: unknown }
-  type GoogleResult = { status: 'fulfilled'; value: GoogleBusinessInfo | null } | { status: 'rejected'; reason: unknown }
-  type ApolloResult = { status: 'fulfilled'; value: { contacts: any[] } | null } | { status: 'rejected'; reason: unknown }
-  type WebsiteResult = { status: 'fulfilled'; value: { owners: ScrapedOwner[]; emails: any[] } | null } | { status: 'rejected'; reason: unknown }
+  // Run Yelp, Google, and Website scrape all at once
+  console.log('[Owner Discovery] Starting parallel search: Yelp + Google + Website...')
 
   // Build parallel promises
   const parallelPromises: [
     Promise<YelpBusinessInfo | null>,
     Promise<GoogleBusinessInfo | null>,
-    Promise<{ contacts: any[] } | null>,
     Promise<{ owners: ScrapedOwner[]; emails: any[] } | null>
   ] = [
     // Yelp search
@@ -160,25 +135,6 @@ export async function discoverOwners(
       console.error('[Owner Discovery] Google failed:', err)
       return null
     }),
-    // Apollo search (needs domain - may return null if no domain yet)
-    (async () => {
-      // If we have a domain, search Apollo by title
-      const domain = result.domain
-      if (!domain) {
-        console.log('[Owner Discovery] Apollo: Skipping - no domain yet')
-        return null
-      }
-      try {
-        return await apolloSearchContacts({
-          organization_domains: [domain],
-          person_titles: HOSPITALITY_TITLES,
-          per_page: 10,
-        })
-      } catch (err) {
-        console.error('[Owner Discovery] Apollo failed:', err)
-        return null
-      }
-    })(),
     // Website scrape (needs domain)
     (async () => {
       const domain = result.domain
@@ -195,7 +151,7 @@ export async function discoverOwners(
     })(),
   ]
 
-  const [yelpResult, googleResult, apolloResult, websiteResult] = await Promise.all(parallelPromises)
+  const [yelpResult, googleResult, websiteResult] = await Promise.all(parallelPromises)
 
   // ============ PROCESS YELP RESULTS ============
   if (yelpResult) {
@@ -304,53 +260,6 @@ export async function discoverOwners(
     }
   }
 
-  // ============ PROCESS APOLLO RESULTS ============
-  if (apolloResult?.contacts?.length) {
-    console.log(`[Owner Discovery] Apollo: Found ${apolloResult.contacts.length} contacts`)
-    result.meta.apolloFound = true
-
-    for (const contact of apolloResult.contacts) {
-      if (contact.first_name && contact.last_name) {
-        const key = `${contact.first_name.toLowerCase()}-${contact.last_name.toLowerCase()}`
-        if (!foundOwners.has(key)) {
-          const name = contact.name || `${contact.first_name} ${contact.last_name}`
-          result.meta.ownerNamesFound.push(name)
-
-          // Search endpoint doesn't return emails — enrich to get them
-          let email: string | null = contact.email || null
-          if (!email && result.domain) {
-            try {
-              const enriched = await apolloEnrichPerson(contact.first_name, contact.last_name, result.domain)
-              if (enriched?.email) {
-                email = enriched.email
-                console.log(`[Owner Discovery] Apollo enrichment found email for ${name}: ${email}`)
-              }
-            } catch {
-              // Enrichment failed, continue without email
-            }
-          }
-
-          if (email) {
-            result.meta.emailsFound.push(email)
-          }
-
-          foundOwners.set(key, {
-            name,
-            firstName: contact.first_name,
-            lastName: contact.last_name,
-            title: contact.title || 'Contact',
-            email,
-            emailConfidence: email ? 85 : 0,
-            emailSource: email ? 'apollo' : null,
-            phone: null,
-            source: 'apollo',
-          })
-          console.log(`[Owner Discovery] Apollo: Added "${name}"${email ? ` <${email}>` : ''}`)
-        }
-      }
-    }
-  }
-
   // ============ PROCESS WEBSITE SCRAPE RESULTS ============
   if (websiteResult?.owners?.length) {
     console.log(`[Owner Discovery] Website: Found ${websiteResult.owners.length} potential owners`)
@@ -376,80 +285,34 @@ export async function discoverOwners(
     }
   }
 
-  // ============ STEP 2: SECOND PARALLEL ROUND (if we got domain from Yelp/Google) ============
-  // If we didn't have a domain before but got one from Yelp/Google, run Apollo + Website now
-  if (result.domain && !apolloResult && !websiteResult) {
-    console.log('[Owner Discovery] Running second round: Apollo + Website with discovered domain...')
+  // ============ STEP 2: WEBSITE SCRAPE (if we got domain from Yelp/Google) ============
+  if (result.domain && !websiteResult) {
+    console.log('[Owner Discovery] Running website scrape with discovered domain...')
 
-    const [secondApollo, secondWebsite] = await Promise.all([
-      apolloSearchContacts({
-        organization_domains: [result.domain],
-        person_titles: HOSPITALITY_TITLES,
-        per_page: 10,
-      }).catch(() => null),
-      scrapeOwnerNames(result.domain).catch(() => null),
-    ])
-
-    // Process second Apollo results
-    if (secondApollo?.contacts?.length) {
-      result.meta.apolloFound = true
-      for (const contact of secondApollo.contacts) {
-        if (contact.first_name && contact.last_name) {
-          const key = `${contact.first_name.toLowerCase()}-${contact.last_name.toLowerCase()}`
-          if (!foundOwners.has(key)) {
-            const name = contact.name || `${contact.first_name} ${contact.last_name}`
-            result.meta.ownerNamesFound.push(name)
-
-            // Enrich to get email
-            let email: string | null = contact.email || null
-            if (!email && result.domain) {
-              try {
-                const enriched = await apolloEnrichPerson(contact.first_name, contact.last_name, result.domain)
-                if (enriched?.email) {
-                  email = enriched.email
-                }
-              } catch {
-                // Continue without email
-              }
-            }
-
-            if (email) result.meta.emailsFound.push(email)
+    try {
+      const secondWebsite = await scrapeOwnerNames(result.domain)
+      if (secondWebsite?.owners?.length) {
+        for (const scraped of secondWebsite.owners) {
+          const { firstName, lastName } = splitName(scraped.name)
+          const key = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
+          if (!foundOwners.has(key) && firstName && lastName) {
+            result.meta.ownerNamesFound.push(scraped.name)
             foundOwners.set(key, {
-              name,
-              firstName: contact.first_name,
-              lastName: contact.last_name,
-              title: contact.title || 'Contact',
-              email,
-              emailConfidence: email ? 85 : 0,
-              emailSource: email ? 'apollo' : null,
+              name: scraped.name,
+              firstName,
+              lastName,
+              title: scraped.title || 'Owner',
+              email: null,
+              emailConfidence: 0,
+              emailSource: null,
               phone: null,
-              source: 'apollo',
+              source: 'google',
             })
           }
         }
       }
-    }
-
-    // Process second website results
-    if (secondWebsite?.owners?.length) {
-      for (const scraped of secondWebsite.owners) {
-        const { firstName, lastName } = splitName(scraped.name)
-        const key = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
-        if (!foundOwners.has(key) && firstName && lastName) {
-          result.meta.ownerNamesFound.push(scraped.name)
-          foundOwners.set(key, {
-            name: scraped.name,
-            firstName,
-            lastName,
-            title: scraped.title || 'Owner',
-            email: null,
-            emailConfidence: 0,
-            emailSource: null,
-            phone: null,
-            source: 'google',
-          })
-        }
-      }
+    } catch {
+      // Website scrape failed, continue
     }
   }
 
@@ -470,7 +333,7 @@ export async function discoverOwners(
 
     // Find emails for owners who don't have one yet
     for (const [key, owner] of foundOwners) {
-      if (owner.email) continue // Already have email (from Apollo)
+      if (owner.email) continue // Already have email
 
       try {
         // Method 1: Hunter Email Finder
@@ -604,7 +467,7 @@ export async function discoverOwners(
  * Convert discovery result to ProspectSearchResult array
  * For compatibility with existing prospect finder interface
  *
- * IMPORTANT: Only returns REAL people (from Yelp, Google, Hunter, Apollo)
+ * IMPORTANT: Only returns REAL people (from Yelp, Google, Hunter)
  * Hospitality patterns are NOT included here - they are available separately
  * in discovery.hospitalityEmails as suggestions to try
  */
@@ -625,9 +488,7 @@ export function toProspectSearchResults(
         email_verified: false, // Not verified yet
         position: owner.title || undefined,
         domain: discovery.domain || undefined,
-        source: owner.source === 'apollo' ? 'apollo'
-          : owner.source === 'hunter' ? 'hunter'
-          : 'manual',
+        source: owner.source === 'hunter' ? 'hunter' : 'manual',
         notes: `Found via ${owner.source}${owner.emailSource ? `, email from ${owner.emailSource}` : ''}`,
       })
     }

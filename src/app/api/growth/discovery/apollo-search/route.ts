@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
-import { searchContacts } from '@/lib/services/apollo-service'
+import { searchDomain } from '@/lib/services/hunter-service'
 
-// GET /api/growth/discovery/apollo-search?location=Austin,Texas,United States&keywords=restaurant&page=1
+// GET /api/growth/discovery/hunter-search?domain=mmlhospitality.com
+// Test endpoint to see what Hunter finds for a given domain
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthenticatedUser(request)
@@ -11,56 +12,58 @@ export async function GET(request: NextRequest) {
     }
 
     const params = request.nextUrl.searchParams
-    const location = params.get('location') || 'Austin, Texas, United States'
-    const keywords = params.get('keywords') || undefined
-    const page = parseInt(params.get('page') || '1', 10)
-    const perPage = Math.min(parseInt(params.get('per_page') || '25', 10), 100)
+    const domain = params.get('domain')
+    const limit = Math.min(parseInt(params.get('limit') || '10', 10), 100)
+    const type = (params.get('type') as 'personal' | 'generic') || undefined
+    const seniority = params.get('seniority')?.split(',') || undefined
+    const department = params.get('department')?.split(',') || undefined
 
-    const titles = params.get('titles')?.split(',') || [
-      'Owner',
-      'Co-Owner',
-      'Founder',
-      'General Manager',
-      'Managing Partner',
-      'Partner',
-      'Executive Chef',
-      'Director of Operations',
-      'F&B Director',
-      'Restaurant Manager',
-    ]
+    if (!domain) {
+      return NextResponse.json(
+        { error: 'domain parameter required. Example: ?domain=mmlhospitality.com' },
+        { status: 400 }
+      )
+    }
 
-    const result = await searchContacts({
-      organization_locations: [location],
-      person_titles: titles,
-      q_keywords: keywords,
-      page,
-      per_page: perPage,
+    const result = await searchDomain(domain, {
+      limit,
+      type,
+      seniority,
+      department,
     })
 
+    if (!result) {
+      return NextResponse.json({
+        domain,
+        error: 'No results — Hunter API key may not be configured or domain not found',
+      })
+    }
+
     // Format for easy reading
-    const formatted = result.contacts.map((c) => ({
-      name: c.name || `${c.first_name} ${c.last_name}`,
-      title: c.title,
-      company: c.organization?.name,
-      website: c.organization?.website_url,
-      industry: c.organization?.industry,
-      employees: c.organization?.estimated_num_employees,
-      linkedin: c.linkedin_url,
-      seniority: c.seniority,
+    const contacts = (result.emails || []).map((e) => ({
+      name: [e.first_name, e.last_name].filter(Boolean).join(' ') || null,
+      email: e.value,
+      confidence: e.confidence,
+      type: e.type,
+      position: e.position,
+      seniority: e.seniority,
+      department: e.department,
+      phone: e.phone_number,
+      linkedin: e.linkedin,
     }))
 
     return NextResponse.json({
-      location,
-      keywords: keywords || '(none)',
-      pagination: result.pagination,
-      total: result.pagination.total_entries,
-      showing: formatted.length,
-      contacts: formatted,
+      domain: result.domain,
+      organization: result.organization,
+      industry: result.industry,
+      pattern: result.pattern,
+      total_emails: contacts.length,
+      contacts,
     })
   } catch (error: any) {
-    console.error('Apollo search error:', error)
+    console.error('Hunter search error:', error)
     return NextResponse.json(
-      { error: error.message || 'Apollo search failed' },
+      { error: error.message || 'Hunter search failed' },
       { status: 500 }
     )
   }
