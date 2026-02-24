@@ -11,7 +11,7 @@ const DEFAULT_CONFIG = {
   minRating: null,
   priceLevels: [],
   minScoreForOutreach: 60,
-  batchSize: 5,
+  batchSize: 10,
   maxDiscoveriesPerDay: 20,
   maxEmailsPerDay: 10,
   maxOutreachPerDay: 10,

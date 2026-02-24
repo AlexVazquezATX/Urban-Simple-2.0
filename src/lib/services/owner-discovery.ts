@@ -366,16 +366,29 @@ export async function discoverOwners(
   }
 
   // ============ STEP 4: HUNTER DOMAIN SEARCH WITH SENIORITY FILTERS ============
-  if (foundOwners.size === 0 && result.domain) {
-    console.log('[Owner Discovery] No owners found, trying Hunter domain search with seniority filters...')
+  // Run domain search if we still have no emails — even if we found owner names,
+  // Hunter Email Finder often can't match individual people at small businesses.
+  // Domain search finds ALL emails at the domain, which is Hunter's real strength.
+  const anyOwnerHasEmail = Array.from(foundOwners.values()).some((o) => o.email)
+  if (!anyOwnerHasEmail && result.domain) {
+    console.log('[Owner Discovery] No emails found yet, trying Hunter domain search...')
 
     try {
-      const domainResults = await hunterSearchDomain(result.domain, {
+      // First try with seniority filters for decision-makers
+      let domainResults = await hunterSearchDomain(result.domain, {
         limit: 10,
         type: 'personal',
         seniority: ['owner', 'executive', 'senior'],
-        department: ['executive', 'management'],
       })
+
+      // If no results, retry without filters — small restaurants often don't have seniority tags
+      if (!domainResults?.emails?.length) {
+        console.log('[Owner Discovery] No results with seniority filter, retrying without filters...')
+        domainResults = await hunterSearchDomain(result.domain, {
+          limit: 10,
+          type: 'personal',
+        })
+      }
 
       if (domainResults?.emails?.length) {
         result.meta.hunterFound = true
@@ -383,7 +396,19 @@ export async function discoverOwners(
         for (const email of domainResults.emails) {
           if (email.first_name && email.last_name) {
             const key = `${email.first_name.toLowerCase()}-${email.last_name.toLowerCase()}`
-            if (!foundOwners.has(key)) {
+            const existing = foundOwners.get(key)
+
+            if (existing && !existing.email && email.value) {
+              // We already have this person (from Yelp/Google) but without email — fill it in
+              existing.email = email.value
+              existing.emailConfidence = email.confidence
+              existing.emailSource = 'hunter_domain'
+              if (email.phone_number && !existing.phone) existing.phone = email.phone_number
+              result.meta.emailsFound.push(email.value)
+              result.meta.hunterFound = true
+              console.log(`[Owner Discovery] Hunter domain search: matched existing owner ${existing.name} → ${email.value}`)
+            } else if (!existing) {
+              // New person from domain search
               foundOwners.set(key, {
                 name: `${email.first_name} ${email.last_name}`,
                 firstName: email.first_name,

@@ -806,15 +806,21 @@ async function processFindEmails(
     (config.filterCriteria || {}) as FilterCriteria
   )
 
-  const prospects = await prisma.prospect.findMany({
+  // Fetch candidates, then filter out already-searched prospects in code
+  const candidates = await prisma.prospect.findMany({
     where: {
       ...baseFilter,
       aiEnriched: true,
       contacts: { none: { email: { not: null } } },
     },
-    orderBy: { createdAt: 'asc' },
-    take: batchSize,
+    orderBy: { enrichmentDate: 'desc' }, // Most recently enriched first
+    take: batchSize * 3, // Fetch extra to account for already-searched
   })
+
+  // Skip prospects we've already searched for emails
+  const prospects = candidates
+    .filter((p) => !(p.discoveryData as any)?.emailSearchedAt)
+    .slice(0, batchSize)
 
   let succeeded = 0
   let failed = 0
@@ -844,28 +850,65 @@ async function processFindEmails(
         website: prospect.website || undefined,
       })
 
-      // Create contacts for discovered owners
+      // Upsert contacts for discovered owners (avoid duplicates on re-runs)
       let emailFound = false
       for (const owner of result.owners) {
         if (!owner.firstName && !owner.lastName) continue
 
-        await prisma.prospectContact.create({
-          data: {
+        // Check if this contact already exists for this prospect
+        const existing = await prisma.prospectContact.findFirst({
+          where: {
             prospectId: prospect.id,
             firstName: owner.firstName || '',
             lastName: owner.lastName || '',
-            email: owner.email,
-            phone: owner.phone,
-            title: owner.title,
-            role: 'primary',
-            isDecisionMaker: true,
-            emailConfidence: owner.emailConfidence,
-            emailSource: owner.emailSource || undefined,
           },
         })
 
+        if (existing) {
+          // Update with new data if we now have an email
+          if (owner.email && !existing.email) {
+            await prisma.prospectContact.update({
+              where: { id: existing.id },
+              data: {
+                email: owner.email,
+                emailConfidence: owner.emailConfidence,
+                emailSource: owner.emailSource || undefined,
+                phone: owner.phone || existing.phone,
+                title: owner.title || existing.title,
+              },
+            })
+          }
+        } else {
+          await prisma.prospectContact.create({
+            data: {
+              prospectId: prospect.id,
+              firstName: owner.firstName || '',
+              lastName: owner.lastName || '',
+              email: owner.email,
+              phone: owner.phone,
+              title: owner.title,
+              role: 'primary',
+              isDecisionMaker: true,
+              emailConfidence: owner.emailConfidence,
+              emailSource: owner.emailSource || undefined,
+            },
+          })
+        }
+
         if (owner.email) emailFound = true
       }
+
+      // Mark that we've attempted email search (prevents re-processing on next run)
+      await prisma.prospect.update({
+        where: { id: prospect.id },
+        data: {
+          discoveryData: {
+            ...((prospect.discoveryData as any) || {}),
+            emailSearchedAt: new Date().toISOString(),
+            emailSearchResult: emailFound ? 'found' : 'not_found',
+          },
+        },
+      })
 
       if (emailFound) {
         succeeded++
