@@ -40,9 +40,9 @@ export async function searchContacts(
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache',
+      'X-Api-Key': APOLLO_API_KEY,
     },
     body: JSON.stringify({
-      api_key: APOLLO_API_KEY,
       page: params.page || 1,
       per_page: params.per_page || 25,
       person_titles: params.person_titles,
@@ -119,9 +119,9 @@ export async function enrichPerson(
     headers: {
       'Content-Type': 'application/json',
       'Cache-Control': 'no-cache',
+      'X-Api-Key': APOLLO_API_KEY,
     },
     body: JSON.stringify({
-      api_key: APOLLO_API_KEY,
       first_name: firstName,
       last_name: lastName,
       organization_domain: domain,
@@ -154,8 +154,9 @@ export async function getAccountInfo(): Promise<{
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      'X-Api-Key': APOLLO_API_KEY,
     },
-    body: JSON.stringify({ api_key: APOLLO_API_KEY }),
+    body: JSON.stringify({}),
   })
 
   if (!response.ok) {
