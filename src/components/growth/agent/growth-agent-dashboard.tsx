@@ -1101,11 +1101,21 @@ export function GrowthAgentDashboard() {
                 </div>
               )}
 
-              {cfResult.durationMs && (
-                <p className="text-xs text-gray-400 text-right">
-                  Completed in {(cfResult.durationMs / 1000).toFixed(1)}s
-                </p>
-              )}
+              <div className="flex items-center justify-between">
+                {cfResult.created > 0 && (
+                  <a
+                    href="/growth/prospects"
+                    className="text-xs text-green-700 hover:underline font-medium"
+                  >
+                    View {cfResult.created} new prospects in Prospects list →
+                  </a>
+                )}
+                {cfResult.durationMs && (
+                  <p className="text-xs text-gray-400">
+                    Completed in {(cfResult.durationMs / 1000).toFixed(1)}s
+                  </p>
+                )}
+              </div>
             </div>
           )}
         </CardContent>

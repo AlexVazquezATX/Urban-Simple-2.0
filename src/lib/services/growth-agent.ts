@@ -1537,6 +1537,8 @@ export async function contactFirstDiscovery(
           sourceDetail: 'Contact-First Discovery',
           aiEnriched: true,
           enrichmentDate: new Date(),
+          aiScore: 70,
+          aiScoreReason: 'Contact-First Discovery — verified email available',
           discoveryData: {
             source: biz.source,
             rating: discovery.businessInfo.rating || biz.rating,

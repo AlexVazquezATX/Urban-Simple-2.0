@@ -24,26 +24,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!campaignId) {
-      return NextResponse.json(
-        { error: 'Campaign ID required' },
-        { status: 400 }
-      )
-    }
+    // Resolve campaign — auto-create if not provided or 'auto'
+    let resolvedCampaignId = campaignId
+    if (!campaignId || campaignId === 'auto') {
+      // Find existing active campaign or create one
+      const existing = await prisma.outreachCampaign.findFirst({
+        where: { companyId: user.companyId, status: 'active' },
+        orderBy: { createdAt: 'desc' },
+      })
 
-    // Verify campaign exists and belongs to user
-    const campaign = await prisma.outreachCampaign.findFirst({
-      where: {
-        id: campaignId,
-        companyId: user.companyId,
-      },
-    })
-
-    if (!campaign) {
-      return NextResponse.json(
-        { error: 'Campaign not found' },
-        { status: 404 }
-      )
+      if (existing) {
+        resolvedCampaignId = existing.id
+      } else {
+        const created = await prisma.outreachCampaign.create({
+          data: {
+            companyId: user.companyId,
+            createdById: user.id,
+            name: `Outreach Campaign — ${new Date().toLocaleDateString()}`,
+            description: 'Auto-created campaign for outreach generation',
+            status: 'active',
+          },
+        })
+        resolvedCampaignId = created.id
+      }
+    } else {
+      // Verify provided campaign exists and belongs to user
+      const campaign = await prisma.outreachCampaign.findFirst({
+        where: { id: campaignId, companyId: user.companyId },
+      })
+      if (!campaign) {
+        return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
+      }
     }
 
     // Fetch template if provided
@@ -64,9 +75,7 @@ export async function POST(request: NextRequest) {
         id: { in: prospectIds },
         companyId: user.companyId,
       },
-      include: {
-        contacts: true,
-      },
+      include: { contacts: true },
     })
 
     const results = []
@@ -74,7 +83,6 @@ export async function POST(request: NextRequest) {
     // Generate messages for each prospect
     for (const prospect of prospects) {
       try {
-        // Build prospect data
         const prospectData: ProspectData = {
           companyName: prospect.companyName,
           businessType: prospect.businessType || undefined,
@@ -93,10 +101,8 @@ export async function POST(request: NextRequest) {
           aiScoreReason: prospect.aiScoreReason || undefined,
         }
 
-        // Determine best channel
         const channel = determineBestChannel(prospectData)
 
-        // Generate message
         const generated = await generateOutreachMessage({
           channel: channel as any,
           prospect: prospectData,
@@ -115,10 +121,9 @@ export async function POST(request: NextRequest) {
             : undefined,
         })
 
-        // Create outreach message (step 1, pending approval)
         const message = await prisma.outreachMessage.create({
           data: {
-            campaignId,
+            campaignId: resolvedCampaignId,
             prospectId: prospect.id,
             step: 1,
             delayDays: 0,

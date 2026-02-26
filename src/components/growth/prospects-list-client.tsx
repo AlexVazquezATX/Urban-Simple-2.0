@@ -132,6 +132,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [isFindingContacts, setIsFindingContacts] = useState(false)
   const [isQueueing, setIsQueueing] = useState(false)
   const [isDiscoveringOwners, setIsDiscoveringOwners] = useState(false)
+  const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
 
@@ -925,6 +926,53 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     }
   }
 
+  // Generate outreach for selected prospects
+  const handleBulkGenerateOutreach = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select prospects')
+      return
+    }
+
+    // Filter to prospects that have email contacts
+    const selectedProspects = prospects.filter((p) => selectedIds.has(p.id))
+    const withEmails = selectedProspects.filter((p) =>
+      p.contacts.some((c) => c.email)
+    )
+
+    if (withEmails.length === 0) {
+      toast.error(
+        `None of the ${selectedProspects.length} selected prospects have email contacts. Find emails first.`
+      )
+      return
+    }
+
+    setIsGeneratingOutreach(true)
+    try {
+      const res = await fetch('/api/growth/outreach/auto-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prospectIds: withEmails.map((p) => p.id),
+          campaignId: 'auto',
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to generate outreach')
+        return
+      }
+      toast.success(
+        `Generated ${data.generated} outreach email${data.generated !== 1 ? 's' : ''}. Opening approval queue...`
+      )
+      setSelectedIds(new Set())
+      router.push('/growth/outreach')
+    } catch {
+      toast.error('Failed to generate outreach')
+    } finally {
+      setIsGeneratingOutreach(false)
+    }
+  }
+
   // Prospect detail panel handlers
   const handleSelectProspect = (prospect: Prospect) => {
     setSelectedProspect(prospect)
@@ -1233,6 +1281,20 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   <Bot className="mr-1.5 h-3.5 w-3.5" />
                 )}
                 Queue
+              </Button>
+
+              <Button
+                size="sm"
+                className="rounded-sm bg-green-700 hover:bg-green-800 text-white"
+                onClick={handleBulkGenerateOutreach}
+                disabled={isGeneratingOutreach}
+              >
+                {isGeneratingOutreach ? (
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Mail className="mr-1.5 h-3.5 w-3.5" />
+                )}
+                Outreach
               </Button>
 
               {/* More actions dropdown */}
