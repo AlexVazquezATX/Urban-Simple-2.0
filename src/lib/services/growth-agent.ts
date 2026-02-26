@@ -284,7 +284,10 @@ export interface FullPipelineResult {
 /**
  * Run the full pipeline for a company — loops through all stages,
  * processing every batch until there's no work left.
- * Skips discovery (external API search) — only processes existing prospects.
+ *
+ * Goal-driven: if find_emails doesn't hit the email target and discovery
+ * hasn't maxed out, the pipeline loops back to discover → enrich → find_emails
+ * to keep feeding fresh prospects into the funnel.
  */
 export async function runFullPipeline(
   companyId: string,
@@ -312,15 +315,15 @@ export async function runFullPipeline(
 
   const isDryRun = options?.forceDryRun ?? config.isDryRun
   const batchSize = config.batchSize
+  const emailTarget = config.maxEmailsPerDay || 10
 
-  // Post-discovery stages only — discovery uses external APIs and has its own button
-  const PIPELINE_STAGES: AgentStage[] = ['enrich', 'find_emails', 'score', 'generate_outreach']
   const stageResults: PipelineStageResult[] = []
   let grandProcessed = 0
   let grandSucceeded = 0
   let grandFailed = 0
 
-  for (const stage of PIPELINE_STAGES) {
+  // Helper: run a single stage until no more work
+  const runStage = async (stage: AgentStage): Promise<PipelineStageResult | null> => {
     const stageStart = Date.now()
     let batches = 0
     let stageProcessed = 0
@@ -329,17 +332,17 @@ export async function runFullPipeline(
     let stageSkipped = 0
     let stageError: string | undefined
 
-    // Keep running this stage until no more work
-    // Safety cap: max 50 batches per stage to prevent runaway loops
     const MAX_BATCHES = 50
     while (batches < MAX_BATCHES) {
-      // Check if there's work for this stage
       const workCounts = await getStageWorkCounts(companyId, config)
       if (workCounts[stage] <= 0) break
 
       let result: StageResult
       try {
         switch (stage) {
+          case 'discover':
+            result = await processDiscover(companyId, config, batchSize, isDryRun)
+            break
           case 'enrich':
             result = await processEnrich(companyId, config, batchSize, isDryRun)
             break
@@ -366,7 +369,6 @@ export async function runFullPipeline(
       stageFailed += result.failed
       stageSkipped += result.skipped
 
-      // Log each batch run
       await prisma.growthAgentRun.create({
         data: {
           configId: config.id,
@@ -384,16 +386,13 @@ export async function runFullPipeline(
         },
       })
 
-      // Stop this stage if: nothing processed, all failed, or error
       if (result.processed === 0 || stageError) break
-      if (result.succeeded === 0) break // All items failed — don't retry the same batch
-
-      // In dry run, prospects don't change state — only run one batch per stage
+      if (result.succeeded === 0) break
       if (isDryRun) break
     }
 
     if (stageProcessed > 0 || stageError) {
-      stageResults.push({
+      const sr: PipelineStageResult = {
         stage,
         batches,
         totalProcessed: stageProcessed,
@@ -402,14 +401,75 @@ export async function runFullPipeline(
         totalSkipped: stageSkipped,
         durationMs: Date.now() - stageStart,
         error: stageError,
-      })
+      }
+      stageResults.push(sr)
       grandProcessed += stageProcessed
       grandSucceeded += stageSucceeded
       grandFailed += stageFailed
+      return sr
     }
+    return null
   }
 
+  // Helper: count how many emails we've found so far today
+  const countEmailsFound = async (): Promise<number> => {
+    const baseFilter = buildProspectFilter(
+      companyId,
+      (config.processingMode || 'all') as ProcessingMode,
+      (config.filterCriteria || {}) as FilterCriteria
+    )
+    return prisma.prospect.count({
+      where: {
+        ...baseFilter,
+        aiEnriched: true,
+        contacts: { some: { email: { not: null } } },
+      },
+    })
+  }
+
+  // --- Main pipeline loop ---
+  // Phase 1: Run initial stages (enrich → find_emails)
+  await runStage('enrich')
+  const emailResult = await runStage('find_emails')
+  let emailsFound = emailResult?.totalSucceeded || 0
+
+  // Phase 2: If we haven't hit the email target, loop back to discover more
+  // Safety cap: max 3 pipeline loops to prevent runaway API spend
+  const MAX_PIPELINE_LOOPS = 3
+  let loopCount = 0
+  while (emailsFound < emailTarget && loopCount < MAX_PIPELINE_LOOPS && !isDryRun) {
+    loopCount++
+    console.log(`[Growth Agent] Pipeline loop ${loopCount}: ${emailsFound}/${emailTarget} emails found, discovering more...`)
+
+    // Check if discovery can still run (has targets configured and hasn't hit daily cap)
+    const workCounts = await getStageWorkCounts(companyId, config)
+    if (workCounts.discover <= 0) {
+      console.log('[Growth Agent] Discovery cap reached or no targets configured, stopping loops')
+      break
+    }
+
+    // Discover → Enrich → Find Emails
+    const discoverResult = await runStage('discover')
+    if (!discoverResult || discoverResult.totalSucceeded === 0) {
+      console.log('[Growth Agent] Discovery found nothing new, stopping loops')
+      break
+    }
+
+    await runStage('enrich')
+    const moreEmails = await runStage('find_emails')
+    emailsFound += moreEmails?.totalSucceeded || 0
+  }
+
+  if (loopCount > 0) {
+    console.log(`[Growth Agent] Pipeline completed after ${loopCount} discovery loop(s): ${emailsFound} emails found`)
+  }
+
+  // Phase 3: Score and generate outreach for everything we've gathered
+  await runStage('score')
+  await runStage('generate_outreach')
+
   // Log the overall pipeline run
+  const totalEmails = await countEmailsFound()
   await prisma.growthAutomationLog.create({
     data: {
       companyId,
@@ -419,6 +479,9 @@ export async function runFullPipeline(
         agent: true,
         fullPipeline: true,
         isDryRun,
+        pipelineLoops: loopCount + 1,
+        emailTarget,
+        emailsInDatabase: totalEmails,
         stages: stageResults.map(s => ({ stage: s.stage, succeeded: s.totalSucceeded, failed: s.totalFailed })),
         totalProcessed: grandProcessed,
         totalSucceeded: grandSucceeded,
@@ -502,6 +565,7 @@ async function getStageWorkCounts(
   })
 
   // Find emails: enriched prospects with no email contacts
+  // Daily cap is based on emails actually FOUND (succeeded), not prospects searched
   const prospectsWithoutEmails = await prisma.prospect.findMany({
     where: {
       ...baseFilter,
@@ -806,130 +870,149 @@ async function processFindEmails(
     (config.filterCriteria || {}) as FilterCriteria
   )
 
-  // Fetch candidates, then filter out already-searched prospects in code
-  const candidates = await prisma.prospect.findMany({
-    where: {
-      ...baseFilter,
-      aiEnriched: true,
-      contacts: { none: { email: { not: null } } },
-    },
-    orderBy: { enrichmentDate: 'desc' }, // Most recently enriched first
-    take: batchSize * 3, // Fetch extra to account for already-searched
-  })
-
-  // Skip prospects we've already searched for emails
-  const prospects = candidates
-    .filter((p) => !(p.discoveryData as any)?.emailSearchedAt)
-    .slice(0, batchSize)
-
+  const emailTarget = config.maxEmailsPerDay || 10
+  let totalProcessed = 0
   let succeeded = 0
   let failed = 0
   const foundEmails: Array<{ prospect: string; email: string | null }> = []
 
-  for (const prospect of prospects) {
-    try {
-      const address = prospect.address as any
-      const city = address?.city || ''
-      const state = address?.state || ''
+  // Goal-driven loop: keep pulling candidates until we find enough emails
+  // or run out of prospects to search. Safety cap: 5 rounds max.
+  const MAX_ROUNDS = 5
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    // Fetch candidates, then filter out already-searched prospects in code
+    const candidates = await prisma.prospect.findMany({
+      where: {
+        ...baseFilter,
+        aiEnriched: true,
+        contacts: { none: { email: { not: null } } },
+      },
+      orderBy: { enrichmentDate: 'desc' },
+      take: batchSize * 3,
+    })
 
-      if (!city) {
-        failed++
-        continue
-      }
+    const prospects = candidates
+      .filter((p) => !(p.discoveryData as any)?.emailSearchedAt)
+      .slice(0, batchSize)
 
-      if (isDryRun) {
-        succeeded++
-        foundEmails.push({ prospect: prospect.companyName, email: '(dry run)' })
-        continue
-      }
+    if (prospects.length === 0) break // No more candidates to search
 
-      const result = await discoverOwners({
-        businessName: prospect.companyName,
-        city,
-        state,
-        website: prospect.website || undefined,
-      })
+    for (const prospect of prospects) {
+      // Stop early if we've hit the email target
+      if (succeeded >= emailTarget) break
 
-      // Upsert contacts for discovered owners (avoid duplicates on re-runs)
-      let emailFound = false
-      for (const owner of result.owners) {
-        if (!owner.firstName && !owner.lastName) continue
+      try {
+        const address = prospect.address as any
+        const city = address?.city || ''
+        const state = address?.state || ''
 
-        // Check if this contact already exists for this prospect
-        const existing = await prisma.prospectContact.findFirst({
-          where: {
-            prospectId: prospect.id,
-            firstName: owner.firstName || '',
-            lastName: owner.lastName || '',
-          },
+        if (!city) {
+          failed++
+          totalProcessed++
+          continue
+        }
+
+        if (isDryRun) {
+          succeeded++
+          totalProcessed++
+          foundEmails.push({ prospect: prospect.companyName, email: '(dry run)' })
+          continue
+        }
+
+        const result = await discoverOwners({
+          businessName: prospect.companyName,
+          city,
+          state,
+          website: prospect.website || undefined,
         })
 
-        if (existing) {
-          // Update with new data if we now have an email
-          if (owner.email && !existing.email) {
-            await prisma.prospectContact.update({
-              where: { id: existing.id },
-              data: {
-                email: owner.email,
-                emailConfidence: owner.emailConfidence,
-                emailSource: owner.emailSource || undefined,
-                phone: owner.phone || existing.phone,
-                title: owner.title || existing.title,
-              },
-            })
-          }
-        } else {
-          await prisma.prospectContact.create({
-            data: {
+        // Upsert contacts for discovered owners (avoid duplicates on re-runs)
+        let emailFound = false
+        for (const owner of result.owners) {
+          if (!owner.firstName && !owner.lastName) continue
+
+          const existing = await prisma.prospectContact.findFirst({
+            where: {
               prospectId: prospect.id,
               firstName: owner.firstName || '',
               lastName: owner.lastName || '',
-              email: owner.email,
-              phone: owner.phone,
-              title: owner.title,
-              role: 'primary',
-              isDecisionMaker: true,
-              emailConfidence: owner.emailConfidence,
-              emailSource: owner.emailSource || undefined,
             },
           })
+
+          if (existing) {
+            if (owner.email && !existing.email) {
+              await prisma.prospectContact.update({
+                where: { id: existing.id },
+                data: {
+                  email: owner.email,
+                  emailConfidence: owner.emailConfidence,
+                  emailSource: owner.emailSource || undefined,
+                  phone: owner.phone || existing.phone,
+                  title: owner.title || existing.title,
+                },
+              })
+            }
+          } else {
+            await prisma.prospectContact.create({
+              data: {
+                prospectId: prospect.id,
+                firstName: owner.firstName || '',
+                lastName: owner.lastName || '',
+                email: owner.email,
+                phone: owner.phone,
+                title: owner.title,
+                role: 'primary',
+                isDecisionMaker: true,
+                emailConfidence: owner.emailConfidence,
+                emailSource: owner.emailSource || undefined,
+              },
+            })
+          }
+
+          if (owner.email) emailFound = true
         }
 
-        if (owner.email) emailFound = true
-      }
-
-      // Mark that we've attempted email search (prevents re-processing on next run)
-      await prisma.prospect.update({
-        where: { id: prospect.id },
-        data: {
-          discoveryData: {
-            ...((prospect.discoveryData as any) || {}),
-            emailSearchedAt: new Date().toISOString(),
-            emailSearchResult: emailFound ? 'found' : 'not_found',
+        // Mark that we've attempted email search (prevents re-processing on next run)
+        await prisma.prospect.update({
+          where: { id: prospect.id },
+          data: {
+            discoveryData: {
+              ...((prospect.discoveryData as any) || {}),
+              emailSearchedAt: new Date().toISOString(),
+              emailSearchResult: emailFound ? 'found' : 'not_found',
+            },
           },
-        },
-      })
+        })
 
-      if (emailFound) {
-        succeeded++
-        const bestEmail = result.owners.find((o) => o.email)?.email || null
-        foundEmails.push({ prospect: prospect.companyName, email: bestEmail })
-      } else {
+        totalProcessed++
+        if (emailFound) {
+          succeeded++
+          const bestEmail = result.owners.find((o) => o.email)?.email || null
+          foundEmails.push({ prospect: prospect.companyName, email: bestEmail })
+        } else {
+          failed++
+          foundEmails.push({ prospect: prospect.companyName, email: null })
+        }
+      } catch (error: any) {
+        console.error(`[Growth Agent] Error finding emails for ${prospect.companyName}:`, error.message)
         failed++
-        foundEmails.push({ prospect: prospect.companyName, email: null })
+        totalProcessed++
       }
-    } catch (error: any) {
-      console.error(`[Growth Agent] Error finding emails for ${prospect.companyName}:`, error.message)
-      failed++
+    }
+
+    // If we've hit the email target, stop searching
+    if (succeeded >= emailTarget) {
+      console.log(`[Growth Agent] Email target reached: ${succeeded}/${emailTarget}`)
+      break
     }
   }
 
   return {
-    processed: prospects.length,
+    processed: totalProcessed,
     succeeded,
     failed,
     skipped: 0,
-    details: { foundEmails },
+    details: { foundEmails, emailTarget, rounds: 'goal-driven' },
   }
 }
 

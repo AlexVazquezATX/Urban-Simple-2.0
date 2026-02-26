@@ -15,7 +15,21 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { prospectIds, action } = body
+    const { prospectIds, action, clearAll } = body
+
+    // Clear entire queue for this company
+    if (clearAll === true) {
+      const result = await prisma.prospect.updateMany({
+        where: { companyId: user.companyId, agentQueued: true },
+        data: { agentQueued: false, agentQueuedAt: null },
+      })
+      return NextResponse.json({
+        success: true,
+        updated: result.count,
+        action: 'clear',
+        message: `Cleared ${result.count} prospects from queue`,
+      })
+    }
 
     if (!prospectIds || !Array.isArray(prospectIds) || prospectIds.length === 0) {
       return NextResponse.json({ error: 'No prospect IDs provided' }, { status: 400 })

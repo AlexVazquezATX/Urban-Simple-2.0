@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -138,6 +138,19 @@ export function GrowthAgentDashboard() {
   const [saving, setSaving] = useState(false)
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null)
 
+  // Track unsaved config edits so auto-refresh doesn't overwrite them
+  const configDirty = useRef(false)
+
+  // Wrapper that marks config as dirty whenever the user edits locally
+  const updateConfig = useCallback((updater: AgentConfig | ((prev: AgentConfig | null) => AgentConfig | null)) => {
+    configDirty.current = true
+    if (typeof updater === 'function') {
+      setConfig(updater)
+    } else {
+      setConfig(updater)
+    }
+  }, [])
+
   // New location form
   const [newCity, setNewCity] = useState('')
   const [newState, setNewState] = useState('')
@@ -150,7 +163,7 @@ export function GrowthAgentDashboard() {
         fetch('/api/growth/agent/runs?limit=20'),
       ])
 
-      if (configRes.ok) {
+      if (configRes.ok && !configDirty.current) {
         const data = await configRes.json()
         // Ensure new fields have defaults for configs created before this migration
         setConfig({
@@ -213,6 +226,7 @@ export function GrowthAgentDashboard() {
         toast.error(data.error)
         return
       }
+      configDirty.current = false
       setConfig(data.config)
       toast.success('Configuration saved')
     } catch {
@@ -275,7 +289,7 @@ export function GrowthAgentDashboard() {
 
   const addLocation = () => {
     if (!newCity.trim() || !newState.trim() || !config) return
-    setConfig({
+    updateConfig({
       ...config,
       targetLocations: [...config.targetLocations, { city: newCity.trim(), state: newState.trim() }],
     })
@@ -285,7 +299,7 @@ export function GrowthAgentDashboard() {
 
   const removeLocation = (index: number) => {
     if (!config) return
-    setConfig({
+    updateConfig({
       ...config,
       targetLocations: config.targetLocations.filter((_, i) => i !== index),
     })
@@ -296,7 +310,7 @@ export function GrowthAgentDashboard() {
     const types = config.targetBusinessTypes.includes(type)
       ? config.targetBusinessTypes.filter((t) => t !== type)
       : [...config.targetBusinessTypes, type]
-    setConfig({ ...config, targetBusinessTypes: types })
+    updateConfig({ ...config, targetBusinessTypes: types })
   }
 
   if (loading) {
@@ -409,7 +423,7 @@ export function GrowthAgentDashboard() {
                     ]).map((mode) => (
                       <button
                         key={mode.value}
-                        onClick={() => setConfig({ ...config, processingMode: mode.value })}
+                        onClick={() => updateConfig({ ...config, processingMode: mode.value })}
                         className={cn(
                           'flex-1 px-3 py-2.5 text-sm font-medium transition-colors border-r last:border-r-0',
                           config.processingMode === mode.value
@@ -427,12 +441,13 @@ export function GrowthAgentDashboard() {
                   </div>
                 </div>
 
-                {/* Filter Criteria (shown when mode is 'filtered') */}
+                {/* Pipeline Filter (shown when mode is 'filtered') */}
                 {config.processingMode === 'filtered' && (
                   <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <Label className="font-semibold text-blue-800">Filter Criteria</Label>
+                    <Label className="font-semibold text-blue-800">Pipeline Filter</Label>
                     <p className="text-xs text-blue-600">
-                      Agent will only process prospects matching these criteria
+                      Only prospects already in your database that match these criteria will be
+                      enriched, emailed, scored, and contacted. This does NOT control discovery.
                     </p>
 
                     {/* Business Types filter */}
@@ -448,7 +463,7 @@ export function GrowthAgentDashboard() {
                                 const updated = checked
                                   ? [...current, type]
                                   : current.filter((t) => t !== type)
-                                setConfig({
+                                updateConfig({
                                   ...config,
                                   filterCriteria: { ...config.filterCriteria, businessTypes: updated },
                                 })
@@ -473,7 +488,7 @@ export function GrowthAgentDashboard() {
                                 const updated = checked
                                   ? [...current, level]
                                   : current.filter((l) => l !== level)
-                                setConfig({
+                                updateConfig({
                                   ...config,
                                   filterCriteria: { ...config.filterCriteria, priceLevels: updated },
                                 })
@@ -495,7 +510,7 @@ export function GrowthAgentDashboard() {
                             <button
                               onClick={() => {
                                 const updated = (config.filterCriteria.cities || []).filter((_, idx) => idx !== i)
-                                setConfig({ ...config, filterCriteria: { ...config.filterCriteria, cities: updated } })
+                                updateConfig({ ...config, filterCriteria: { ...config.filterCriteria, cities: updated } })
                               }}
                               className="ml-1"
                             >
@@ -511,7 +526,7 @@ export function GrowthAgentDashboard() {
                             const val = (e.target as HTMLInputElement).value.trim()
                             if (val) {
                               const current = config.filterCriteria.cities || []
-                              setConfig({
+                              updateConfig({
                                 ...config,
                                 filterCriteria: { ...config.filterCriteria, cities: [...current, val] },
                               })
@@ -533,7 +548,7 @@ export function GrowthAgentDashboard() {
                             <button
                               onClick={() => {
                                 const updated = (config.filterCriteria.tags || []).filter((_, idx) => idx !== i)
-                                setConfig({ ...config, filterCriteria: { ...config.filterCriteria, tags: updated } })
+                                updateConfig({ ...config, filterCriteria: { ...config.filterCriteria, tags: updated } })
                               }}
                               className="ml-1"
                             >
@@ -549,7 +564,7 @@ export function GrowthAgentDashboard() {
                             const val = (e.target as HTMLInputElement).value.trim()
                             if (val) {
                               const current = config.filterCriteria.tags || []
-                              setConfig({
+                              updateConfig({
                                 ...config,
                                 filterCriteria: { ...config.filterCriteria, tags: [...current, val] },
                               })
@@ -572,7 +587,7 @@ export function GrowthAgentDashboard() {
 
                 {/* Queue info (shown when mode is 'queued') */}
                 {config.processingMode === 'queued' && (
-                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
+                  <div className="p-4 bg-purple-50 rounded-lg border border-purple-200 space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
                         <Label className="font-semibold text-purple-800">Agent Queue</Label>
@@ -585,12 +600,51 @@ export function GrowthAgentDashboard() {
                         <p className="text-xs text-purple-600">in queue</p>
                       </div>
                     </div>
+                    {(stats?.queuedCount || 0) > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-red-300 text-red-600 hover:bg-red-50"
+                        onClick={async () => {
+                          if (!confirm(`Clear all ${stats?.queuedCount} prospects from the queue?`)) return
+                          try {
+                            const res = await fetch('/api/growth/agent/queue', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ clearAll: true }),
+                            })
+                            const data = await res.json()
+                            if (!res.ok) {
+                              toast.error(data.error)
+                              return
+                            }
+                            toast.success(data.message)
+                            fetchData()
+                          } catch {
+                            toast.error('Failed to clear queue')
+                          }
+                        }}
+                      >
+                        <X className="h-3.5 w-3.5 mr-1.5" />
+                        Clear Queue
+                      </Button>
+                    )}
                   </div>
                 )}
 
+                {/* Discovery Search Settings */}
+                <div className="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <div>
+                    <Label className="font-semibold text-green-800">Discovery Search Settings</Label>
+                    <p className="text-xs text-green-600">
+                      Where the agent searches for NEW leads on Google Places and Yelp.
+                      These settings control what gets added to your prospect database.
+                    </p>
+                  </div>
+
                 {/* Target Locations */}
                 <div className="space-y-2">
-                  <Label className="font-semibold">Target Locations</Label>
+                  <Label className="font-semibold">Search Locations</Label>
                   <div className="space-y-2">
                     {config.targetLocations.map((loc, i) => (
                       <div key={i} className="flex items-center gap-2 text-sm">
@@ -626,9 +680,9 @@ export function GrowthAgentDashboard() {
                   </div>
                 </div>
 
-                {/* Business Types */}
+                {/* Business Types for Discovery */}
                 <div className="space-y-2">
-                  <Label className="font-semibold">Business Types</Label>
+                  <Label className="font-semibold">Search Business Types</Label>
                   <div className="flex flex-wrap gap-2">
                     {BUSINESS_TYPES.map((type) => (
                       <label key={type} className="flex items-center gap-1.5 text-sm">
@@ -641,6 +695,7 @@ export function GrowthAgentDashboard() {
                     ))}
                   </div>
                 </div>
+                </div>
 
                 {/* Min Score */}
                 <div className="space-y-2">
@@ -649,7 +704,7 @@ export function GrowthAgentDashboard() {
                   </Label>
                   <Slider
                     value={[config.minScoreForOutreach]}
-                    onValueChange={(values: number[]) => setConfig({ ...config, minScoreForOutreach: values[0] })}
+                    onValueChange={(values: number[]) => updateConfig({ ...config, minScoreForOutreach: values[0] })}
                     min={0}
                     max={100}
                     step={5}
@@ -662,7 +717,7 @@ export function GrowthAgentDashboard() {
                     <Label>Tone</Label>
                     <Select
                       value={config.outreachTone}
-                      onValueChange={(v) => setConfig({ ...config, outreachTone: v })}
+                      onValueChange={(v) => updateConfig({ ...config, outreachTone: v })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -679,7 +734,7 @@ export function GrowthAgentDashboard() {
                     <Label>Channel</Label>
                     <Select
                       value={config.outreachChannel}
-                      onValueChange={(v) => setConfig({ ...config, outreachChannel: v })}
+                      onValueChange={(v) => updateConfig({ ...config, outreachChannel: v })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -694,7 +749,10 @@ export function GrowthAgentDashboard() {
 
                 {/* Rate Limits */}
                 <div className="space-y-2">
-                  <Label className="font-semibold">Daily Rate Limits</Label>
+                  <Label className="font-semibold">Daily Caps</Label>
+                  <p className="text-xs text-gray-500">
+                    Max items the agent will process per day across all runs. Once a cap is reached, that stage stops until tomorrow.
+                  </p>
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <Label className="text-xs text-gray-500">Discoveries</Label>
@@ -704,7 +762,7 @@ export function GrowthAgentDashboard() {
                         max={100}
                         value={config.maxDiscoveriesPerDay}
                         onChange={(e) =>
-                          setConfig({ ...config, maxDiscoveriesPerDay: parseInt(e.target.value) || 20 })
+                          updateConfig({ ...config, maxDiscoveriesPerDay: parseInt(e.target.value) || 20 })
                         }
                       />
                     </div>
@@ -716,7 +774,7 @@ export function GrowthAgentDashboard() {
                         max={50}
                         value={config.maxEmailsPerDay}
                         onChange={(e) =>
-                          setConfig({ ...config, maxEmailsPerDay: parseInt(e.target.value) || 10 })
+                          updateConfig({ ...config, maxEmailsPerDay: parseInt(e.target.value) || 10 })
                         }
                       />
                     </div>
@@ -728,7 +786,7 @@ export function GrowthAgentDashboard() {
                         max={50}
                         value={config.maxOutreachPerDay}
                         onChange={(e) =>
-                          setConfig({ ...config, maxOutreachPerDay: parseInt(e.target.value) || 10 })
+                          updateConfig({ ...config, maxOutreachPerDay: parseInt(e.target.value) || 10 })
                         }
                       />
                     </div>
@@ -745,7 +803,7 @@ export function GrowthAgentDashboard() {
                   </div>
                   <Switch
                     checked={config.isDryRun}
-                    onCheckedChange={(v) => setConfig({ ...config, isDryRun: v })}
+                    onCheckedChange={(v) => updateConfig({ ...config, isDryRun: v })}
                   />
                 </div>
 

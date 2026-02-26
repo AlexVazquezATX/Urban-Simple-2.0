@@ -39,6 +39,7 @@ import {
   AtSign,
   UserPlus,
   Bot,
+  X,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -148,6 +149,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       hotLeads: prospects.filter(p => p.priority === 'high' || p.priority === 'urgent').length,
       followUp: prospects.filter(p => p.status === 'contacted' || p.status === 'engaged').length,
       queued: prospects.filter(p => p.agentQueued).length,
+      withEmails: prospects.filter(p => p.contacts.some(c => c.email)).length,
     }
   }, [prospects])
 
@@ -197,6 +199,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         matchesTab = prospect.status === 'contacted' || prospect.status === 'engaged'
       } else if (activeTab === 'queued') {
         matchesTab = prospect.agentQueued === true
+      } else if (activeTab === 'with_emails') {
+        matchesTab = prospect.contacts.some((c) => c.email)
       }
 
       return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTab
@@ -1123,6 +1127,9 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <TabsTrigger value="contact_today" className="text-xs rounded-sm data-[state=active]:bg-white">Contact Today ({stats.contactToday})</TabsTrigger>
             <TabsTrigger value="hot_leads" className="text-xs rounded-sm data-[state=active]:bg-white">Hot ({stats.hotLeads})</TabsTrigger>
             <TabsTrigger value="follow_up" className="text-xs rounded-sm data-[state=active]:bg-white">Follow-Up ({stats.followUp})</TabsTrigger>
+            {stats.withEmails > 0 && (
+              <TabsTrigger value="with_emails" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-green-700">Has Email ({stats.withEmails})</TabsTrigger>
+            )}
             {stats.queued > 0 && (
               <TabsTrigger value="queued" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-purple-700">Queued ({stats.queued})</TabsTrigger>
             )}
@@ -1164,6 +1171,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               {selectedIds.size} lead{selectedIds.size > 1 ? 's' : ''} selected
             </span>
             <div className="flex items-center gap-2">
+              {/* Primary actions */}
               <Button
                 size="sm"
                 onClick={handleMoveToPipeline}
@@ -1171,7 +1179,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 className="rounded-sm"
               >
                 <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
-                Move to Pipeline
+                Pipeline
               </Button>
               <Button
                 size="sm"
@@ -1181,75 +1189,26 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 className="rounded-sm bg-white"
               >
                 {isEnrichingBulk ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                    Enriching...
-                  </>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <>
-                    <Sparkles className="mr-1.5 h-3.5 w-3.5" />
-                    AI Enrich
-                  </>
+                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
                 )}
+                Enrich
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={handleBulkDiscoverOwners}
                 disabled={isDiscoveringOwners}
-                className="rounded-sm bg-white border-plum-300 text-plum-700 hover:bg-plum-50"
-                title="Best for restaurants/hospitality - finds owner names from Yelp & Google, then finds their emails"
+                className="rounded-sm bg-white"
+                title="Find owner names from Yelp & Google, then find their emails"
               >
                 {isDiscoveringOwners ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                    Discovering...
-                  </>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <>
-                    <Target className="mr-1.5 h-3.5 w-3.5" />
-                    Discover Owners
-                  </>
+                  <Target className="mr-1.5 h-3.5 w-3.5" />
                 )}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleBulkFindContacts}
-                disabled={isFindingContacts}
-                className="rounded-sm bg-white"
-                title="Search for contacts at company domains (Apollo/Hunter)"
-              >
-                {isFindingContacts ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                    Finding...
-                  </>
-                ) : (
-                  <>
-                    <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-                    Find Contacts
-                  </>
-                )}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleBulkFindEmails}
-                disabled={isFindingEmails}
-                className="rounded-sm bg-white"
-              >
-                {isFindingEmails ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                    Finding...
-                  </>
-                ) : (
-                  <>
-                    <AtSign className="mr-1.5 h-3.5 w-3.5" />
-                    Find Emails
-                  </>
-                )}
+                Discover Owners
               </Button>
               <Button
                 size="sm"
@@ -1260,42 +1219,67 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 title="Add selected prospects to the Growth Agent processing queue"
               >
                 {isQueueing ? (
-                  <>
-                    <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                    Queuing...
-                  </>
+                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <>
-                    <Bot className="mr-1.5 h-3.5 w-3.5" />
-                    Queue for Agent
-                  </>
+                  <Bot className="mr-1.5 h-3.5 w-3.5" />
                 )}
+                Queue
               </Button>
+
+              {/* More actions dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" variant="outline" className="rounded-sm bg-white">
-                    <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-                    Status
+                    <MoreHorizontal className="mr-1.5 h-3.5 w-3.5" />
+                    More
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="rounded-sm">
+                <DropdownMenuContent align="end" className="rounded-sm w-48">
+                  <DropdownMenuItem
+                    onClick={handleBulkFindContacts}
+                    disabled={isFindingContacts}
+                  >
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Find Contacts
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleBulkFindEmails}
+                    disabled={isFindingEmails}
+                  >
+                    <AtSign className="mr-2 h-4 w-4" />
+                    Find Emails
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  {prospects.some((p) => selectedIds.has(p.id) && p.agentQueued) && (
+                    <DropdownMenuItem
+                      onClick={() => handleQueueForAgent('remove')}
+                      disabled={isQueueing}
+                      className="text-red-600"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Remove from Queue
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
                   {statusOptions.filter(s => s.value !== 'all').map((status) => (
                     <DropdownMenuItem
                       key={status.value}
                       onClick={() => handleBulkStatusUpdate(status.value)}
                     >
+                      <RefreshCw className="mr-2 h-4 w-4" />
                       {status.label}
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
               <Button
                 size="sm"
-                variant="outline"
+                variant="ghost"
                 onClick={() => setSelectedIds(new Set())}
-                className="rounded-sm bg-white"
+                className="rounded-sm text-gray-500 hover:text-gray-700"
               >
-                Clear
+                <X className="h-4 w-4" />
               </Button>
             </div>
           </CardContent>
