@@ -27,6 +27,9 @@ import {
   Filter,
   ListChecks,
   Globe,
+  ChevronDown,
+  ChevronRight,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -137,6 +140,8 @@ export function GrowthAgentDashboard() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null)
+  const [diagnosticsData, setDiagnosticsData] = useState<any>(null)
+  const [diagnosticsLoading, setDiagnosticsLoading] = useState(false)
 
   // Track unsaved config edits so auto-refresh doesn't overwrite them
   const configDirty = useRef(false)
@@ -284,6 +289,23 @@ export function GrowthAgentDashboard() {
       toast.error('Failed to trigger agent')
     } finally {
       setTriggerLoading(null)
+    }
+  }
+
+  const handleRunDiagnostics = async () => {
+    setDiagnosticsLoading(true)
+    try {
+      const res = await fetch('/api/growth/agent/diagnostics')
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to fetch diagnostics')
+        return
+      }
+      setDiagnosticsData(data)
+    } catch {
+      toast.error('Failed to fetch diagnostics')
+    } finally {
+      setDiagnosticsLoading(false)
     }
   }
 
@@ -821,7 +843,7 @@ export function GrowthAgentDashboard() {
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Activity Log</CardTitle>
-              <CardDescription>Recent agent runs</CardDescription>
+              <CardDescription>Recent agent runs &mdash; click find_emails rows for diagnostics</CardDescription>
             </div>
             <Button variant="ghost" size="sm" onClick={fetchData}>
               <RefreshCw className="h-4 w-4" />
@@ -833,25 +855,7 @@ export function GrowthAgentDashboard() {
                 <p className="text-sm text-gray-400 text-center py-8">No runs yet</p>
               ) : (
                 runs.map((run) => (
-                  <div
-                    key={run.id}
-                    className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 text-sm"
-                  >
-                    <div className="flex items-center gap-2">
-                      <StageBadge stage={run.stage} />
-                      <StatusBadge status={run.status} />
-                      {run.isDryRun && (
-                        <Badge variant="outline" className="text-xs">dry</Badge>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 text-gray-500 text-xs">
-                      <span>
-                        {run.itemsSucceeded}/{run.itemsProcessed}
-                      </span>
-                      {run.durationMs && <span>{(run.durationMs / 1000).toFixed(1)}s</span>}
-                      <span>{new Date(run.startedAt).toLocaleTimeString()}</span>
-                    </div>
-                  </div>
+                  <ActivityLogRow key={run.id} run={run} />
                 ))
               )}
             </div>
@@ -900,9 +904,129 @@ export function GrowthAgentDashboard() {
               )}
               Run Full Cycle
             </Button>
+            <Button
+              variant="outline"
+              onClick={handleRunDiagnostics}
+              disabled={diagnosticsLoading}
+              className="border-amber-300 text-amber-700 hover:bg-amber-50"
+            >
+              {diagnosticsLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 mr-2" />
+              )}
+              Email Diagnostics
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Diagnostics Report */}
+      {diagnosticsData && (
+        <Card className="border-amber-200 bg-amber-50/50">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-amber-900">Email Search Diagnostics</CardTitle>
+              <CardDescription>Why prospects failed to find emails</CardDescription>
+            </div>
+            <Button variant="ghost" size="sm" onClick={() => setDiagnosticsData(null)}>
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Hunter API Key check */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className={cn(
+                'w-3 h-3 rounded-full',
+                diagnosticsData.hunterApiKeyConfigured ? 'bg-green-500' : 'bg-red-500'
+              )} />
+              <span className="font-medium">Hunter API Key:</span>
+              <span>{diagnosticsData.hunterApiKeyConfigured ? 'Configured' : 'NOT SET — this is why 0 emails are found!'}</span>
+            </div>
+
+            {/* Summary grid */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { label: 'Total Enriched', value: diagnosticsData.summary.total },
+                { label: 'Email Searched', value: diagnosticsData.summary.searched },
+                { label: 'Found Emails', value: diagnosticsData.summary.withEmails, color: 'text-green-700' },
+                { label: 'No Emails', value: diagnosticsData.summary.withoutEmails, color: 'text-red-700' },
+                { label: 'Has Website', value: diagnosticsData.summary.hasWebsite },
+                { label: 'Missing Website', value: diagnosticsData.summary.missingWebsite, color: diagnosticsData.summary.missingWebsite > 0 ? 'text-red-700' : '' },
+                { label: 'Has City', value: diagnosticsData.summary.hasCity },
+                { label: 'Missing City', value: diagnosticsData.summary.missingCity, color: diagnosticsData.summary.missingCity > 0 ? 'text-red-700' : '' },
+              ].map((item) => (
+                <div key={item.label} className="bg-white rounded-lg p-2 text-center">
+                  <p className="text-xs text-gray-500">{item.label}</p>
+                  <p className={cn('text-lg font-bold', item.color)}>{item.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Failure reasons */}
+            {Object.keys(diagnosticsData.failReasons).length > 0 && (
+              <div>
+                <p className="text-sm font-medium mb-2">Failure Breakdown (searched but no email):</p>
+                <div className="flex flex-wrap gap-2">
+                  {Object.entries(diagnosticsData.failReasons as Record<string, number>).map(([reason, count]) => (
+                    <Badge
+                      key={reason}
+                      variant="outline"
+                      className={cn('text-sm', {
+                        'border-red-300 bg-red-50 text-red-700': reason === 'no_domain' || reason === 'not_found',
+                        'border-amber-300 bg-amber-50 text-amber-700': reason === 'no_owners_found',
+                        'border-orange-300 bg-orange-50 text-orange-700': reason === 'owners_found_but_no_emails',
+                      })}
+                    >
+                      {reason.replace(/_/g, ' ')}: {count}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Per-prospect list */}
+            <div>
+              <p className="text-sm font-medium mb-2">
+                Prospect Details ({diagnosticsData.prospects.length}):
+              </p>
+              <div className="max-h-[300px] overflow-y-auto bg-white rounded-lg divide-y divide-gray-100">
+                {(diagnosticsData.prospects as Array<any>).map((p: any, i: number) => (
+                  <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-xs">
+                    <span className={cn(
+                      'w-2 h-2 rounded-full shrink-0',
+                      p.emailFound ? 'bg-green-500' :
+                      !p.searched ? 'bg-gray-300' :
+                      'bg-red-500'
+                    )} />
+                    <span className="font-medium truncate w-40">{p.name}</span>
+                    <span className="text-gray-400 truncate w-32">
+                      {p.website || '(no website)'}
+                    </span>
+                    <span className="text-gray-400 w-20">
+                      {p.city || '(no city)'}
+                    </span>
+                    <span className="text-gray-400 w-16">
+                      {p.contacts} contacts
+                    </span>
+                    {p.emailDiagnostics?.failReason && (
+                      <span className="text-red-500 ml-auto">
+                        {p.emailDiagnostics.failReason.replace(/_/g, ' ')}
+                      </span>
+                    )}
+                    {p.emailFound && (
+                      <span className="text-green-600 ml-auto">has email</span>
+                    )}
+                    {!p.searched && (
+                      <span className="text-gray-400 ml-auto">not searched</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
@@ -968,5 +1092,128 @@ function StatusBadge({ status }: { status: string }) {
     <Badge variant="secondary" className={`text-xs ${colors[status] || ''}`}>
       {status}
     </Badge>
+  )
+}
+
+function ActivityLogRow({ run }: { run: AgentRun }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasDiagnostics = run.stage === 'find_emails' && run.details?.diagnostics
+  const isExpandable = hasDiagnostics || (run.details?.foundEmails?.length > 0)
+
+  // Compute diagnostic summary from details
+  const diagSummary = hasDiagnostics ? (() => {
+    const diags = run.details.diagnostics as Array<{
+      prospect: string
+      website: string | null
+      domainFound: string | null
+      ownersFound: number
+      emailsFound: number
+      failReason: string | null
+    }>
+    const reasons: Record<string, number> = {}
+    for (const d of diags) {
+      const r = d.failReason || 'success'
+      reasons[r] = (reasons[r] || 0) + 1
+    }
+    return { diags, reasons }
+  })() : null
+
+  return (
+    <div className="rounded-lg bg-gray-50 text-sm">
+      <div
+        className={cn(
+          'flex items-center justify-between py-2 px-3',
+          isExpandable && 'cursor-pointer hover:bg-gray-100 rounded-lg'
+        )}
+        onClick={() => isExpandable && setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2">
+          {isExpandable && (
+            expanded ? <ChevronDown className="h-3 w-3 text-gray-400" /> : <ChevronRight className="h-3 w-3 text-gray-400" />
+          )}
+          <StageBadge stage={run.stage} />
+          <StatusBadge status={run.status} />
+          {run.isDryRun && (
+            <Badge variant="outline" className="text-xs">dry</Badge>
+          )}
+          {run.stage === 'find_emails' && run.itemsSucceeded === 0 && run.itemsProcessed > 0 && (
+            <AlertTriangle className="h-3 w-3 text-amber-500" />
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-gray-500 text-xs">
+          <span>
+            {run.itemsSucceeded}/{run.itemsProcessed}
+          </span>
+          {run.durationMs && <span>{(run.durationMs / 1000).toFixed(1)}s</span>}
+          <span>{new Date(run.startedAt).toLocaleTimeString()}</span>
+        </div>
+      </div>
+
+      {expanded && diagSummary && (
+        <div className="px-3 pb-3 pt-1 border-t border-gray-200 space-y-2">
+          {/* Summary badges */}
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(diagSummary.reasons).map(([reason, count]) => (
+              <Badge
+                key={reason}
+                variant="outline"
+                className={cn('text-xs', {
+                  'border-green-300 text-green-700': reason === 'success',
+                  'border-red-300 text-red-700': reason === 'no_domain',
+                  'border-amber-300 text-amber-700': reason === 'no_owners_found',
+                  'border-orange-300 text-orange-700': reason === 'owners_found_but_no_emails',
+                  'border-gray-300 text-gray-600': reason === 'no_city_in_address',
+                })}
+              >
+                {reason.replace(/_/g, ' ')}: {count}
+              </Badge>
+            ))}
+          </div>
+
+          {/* Per-prospect breakdown */}
+          <div className="max-h-[200px] overflow-y-auto text-xs space-y-1">
+            {diagSummary.diags.map((d, i) => (
+              <div key={i} className="flex items-center gap-2 py-0.5">
+                <span className={cn(
+                  'w-2 h-2 rounded-full shrink-0',
+                  d.failReason === null ? 'bg-green-500' :
+                  d.failReason === 'no_domain' ? 'bg-red-500' :
+                  d.failReason === 'no_owners_found' ? 'bg-amber-500' :
+                  'bg-orange-500'
+                )} />
+                <span className="font-medium truncate max-w-[180px]">{d.prospect}</span>
+                <span className="text-gray-400">
+                  {d.website ? `→ ${d.domainFound || 'no domain'}` : '(no website)'}
+                </span>
+                <span className="text-gray-400">
+                  {d.ownersFound > 0 ? `${d.ownersFound} owners` : ''}
+                </span>
+                {d.failReason && (
+                  <span className="text-red-500 ml-auto shrink-0">{d.failReason.replace(/_/g, ' ')}</span>
+                )}
+                {!d.failReason && (
+                  <span className="text-green-600 ml-auto shrink-0">email found</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Show foundEmails list for older runs without full diagnostics */}
+      {expanded && !diagSummary && run.details?.foundEmails?.length > 0 && (
+        <div className="px-3 pb-3 pt-1 border-t border-gray-200">
+          <div className="max-h-[200px] overflow-y-auto text-xs space-y-1">
+            {(run.details.foundEmails as Array<{ prospect: string; email: string | null }>).map((fe, i) => (
+              <div key={i} className="flex items-center gap-2 py-0.5">
+                <span className={cn('w-2 h-2 rounded-full shrink-0', fe.email ? 'bg-green-500' : 'bg-red-500')} />
+                <span className="font-medium truncate max-w-[180px]">{fe.prospect}</span>
+                <span className="text-gray-500 ml-auto">{fe.email || 'no email found'}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

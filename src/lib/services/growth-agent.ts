@@ -875,6 +875,15 @@ async function processFindEmails(
   let succeeded = 0
   let failed = 0
   const foundEmails: Array<{ prospect: string; email: string | null }> = []
+  // Diagnostics: track WHY each prospect failed so we can debug 0/N results
+  const diagnostics: Array<{
+    prospect: string
+    website: string | null
+    domainFound: string | null
+    ownersFound: number
+    emailsFound: number
+    failReason: string | null
+  }> = []
 
   // Goal-driven loop: keep pulling candidates until we find enough emails
   // or run out of prospects to search. Safety cap: 5 rounds max.
@@ -909,6 +918,14 @@ async function processFindEmails(
         if (!city) {
           failed++
           totalProcessed++
+          diagnostics.push({
+            prospect: prospect.companyName,
+            website: prospect.website,
+            domainFound: null,
+            ownersFound: 0,
+            emailsFound: 0,
+            failReason: 'no_city_in_address',
+          })
           continue
         }
 
@@ -925,6 +942,16 @@ async function processFindEmails(
           state,
           website: prospect.website || undefined,
         })
+
+        // Build diagnostic info for this prospect
+        const diag = {
+          prospect: prospect.companyName,
+          website: prospect.website,
+          domainFound: result.domain,
+          ownersFound: result.owners.length,
+          emailsFound: result.meta.emailsFound.length,
+          failReason: null as string | null,
+        }
 
         // Upsert contacts for discovered owners (avoid duplicates on re-runs)
         let emailFound = false
@@ -972,6 +999,17 @@ async function processFindEmails(
           if (owner.email) emailFound = true
         }
 
+        // Determine failure reason for diagnostics
+        if (!emailFound) {
+          if (!result.domain) {
+            diag.failReason = 'no_domain'
+          } else if (result.owners.length === 0) {
+            diag.failReason = 'no_owners_found'
+          } else {
+            diag.failReason = 'owners_found_but_no_emails'
+          }
+        }
+
         // Mark that we've attempted email search (prevents re-processing on next run)
         await prisma.prospect.update({
           where: { id: prospect.id },
@@ -980,10 +1018,20 @@ async function processFindEmails(
               ...((prospect.discoveryData as any) || {}),
               emailSearchedAt: new Date().toISOString(),
               emailSearchResult: emailFound ? 'found' : 'not_found',
+              emailDiagnostics: {
+                domain: result.domain,
+                ownersFound: result.owners.length,
+                ownerNames: result.meta.ownerNamesFound,
+                yelpFound: result.meta.yelpFound,
+                googleFound: result.meta.googleFound,
+                hunterFound: result.meta.hunterFound,
+                failReason: diag.failReason,
+              },
             },
           },
         })
 
+        diagnostics.push(diag)
         totalProcessed++
         if (emailFound) {
           succeeded++
@@ -997,6 +1045,14 @@ async function processFindEmails(
         console.error(`[Growth Agent] Error finding emails for ${prospect.companyName}:`, error.message)
         failed++
         totalProcessed++
+        diagnostics.push({
+          prospect: prospect.companyName,
+          website: prospect.website,
+          domainFound: null,
+          ownersFound: 0,
+          emailsFound: 0,
+          failReason: `error: ${error.message}`,
+        })
       }
     }
 
@@ -1007,12 +1063,26 @@ async function processFindEmails(
     }
   }
 
+  // Log diagnostic summary for debugging
+  if (diagnostics.length > 0) {
+    const reasons: Record<string, number> = {}
+    for (const d of diagnostics) {
+      const r = d.failReason || 'success'
+      reasons[r] = (reasons[r] || 0) + 1
+    }
+    console.log(`[Growth Agent] Email search diagnostics:`, JSON.stringify(reasons))
+    const noDomain = diagnostics.filter((d) => d.failReason === 'no_domain').length
+    const noOwners = diagnostics.filter((d) => d.failReason === 'no_owners_found').length
+    const ownersNoEmail = diagnostics.filter((d) => d.failReason === 'owners_found_but_no_emails').length
+    console.log(`[Growth Agent] Breakdown: ${noDomain} no domain, ${noOwners} no owners, ${ownersNoEmail} owners but no email, ${succeeded} success`)
+  }
+
   return {
     processed: totalProcessed,
     succeeded,
     failed,
     skipped: 0,
-    details: { foundEmails, emailTarget, rounds: 'goal-driven' },
+    details: { foundEmails, emailTarget, rounds: 'goal-driven', diagnostics },
   }
 }
 
