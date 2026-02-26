@@ -100,6 +100,7 @@ const ALL_COLUMNS = [
   { id: 'priceLevel', label: 'Price Level', alwaysVisible: false },
   { id: 'priority', label: 'Interest Level', alwaysVisible: false },
   { id: 'address', label: 'City', alwaysVisible: false },
+  { id: 'website', label: 'Website', alwaysVisible: false },
   { id: 'email', label: 'Email', alwaysVisible: false },
   { id: 'phone', label: 'Phone', alwaysVisible: false },
   { id: 'estimatedValue', label: 'Value', alwaysVisible: false },
@@ -150,6 +151,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       followUp: prospects.filter(p => p.status === 'contacted' || p.status === 'engaged').length,
       queued: prospects.filter(p => p.agentQueued).length,
       withEmails: prospects.filter(p => p.contacts.some(c => c.email)).length,
+      withWebsite: prospects.filter(p => p.website && p.website.trim().length > 0).length,
+      noWebsite: prospects.filter(p => !p.website || p.website.trim().length === 0).length,
     }
   }, [prospects])
 
@@ -201,6 +204,10 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         matchesTab = prospect.agentQueued === true
       } else if (activeTab === 'with_emails') {
         matchesTab = prospect.contacts.some((c) => c.email)
+      } else if (activeTab === 'with_website') {
+        matchesTab = !!(prospect.website && prospect.website.trim().length > 0)
+      } else if (activeTab === 'no_website') {
+        matchesTab = !prospect.website || prospect.website.trim().length === 0
       }
 
       return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTab
@@ -1130,6 +1137,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             {stats.withEmails > 0 && (
               <TabsTrigger value="with_emails" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-green-700">Has Email ({stats.withEmails})</TabsTrigger>
             )}
+            <TabsTrigger value="with_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-blue-700">Has Website ({stats.withWebsite})</TabsTrigger>
+            <TabsTrigger value="no_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-red-700">No Website ({stats.noWebsite})</TabsTrigger>
             {stats.queued > 0 && (
               <TabsTrigger value="queued" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-purple-700">Queued ({stats.queued})</TabsTrigger>
             )}
@@ -1344,6 +1353,9 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('address') && (
                     <th className="p-3 text-left text-xs font-medium text-warm-700">City</th>
                   )}
+                  {visibleColumns.includes('website') && (
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Website</th>
+                  )}
                   {visibleColumns.includes('email') && (
                     <th className="p-3 text-left text-xs font-medium text-warm-700">Email</th>
                   )}
@@ -1466,6 +1478,24 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         {visibleColumns.includes('address') && (
                           <td className="p-3 text-xs text-warm-600">
                             {address?.city || <span className="text-warm-400">-</span>}
+                          </td>
+                        )}
+                        {visibleColumns.includes('website') && (
+                          <td className="p-3 text-xs text-warm-600">
+                            {prospect.website ? (
+                              <a
+                                href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline truncate max-w-[160px] block"
+                                title={prospect.website}
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {prospect.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
+                              </a>
+                            ) : (
+                              <span className="text-warm-400">-</span>
+                            )}
                           </td>
                         )}
                         {visibleColumns.includes('email') && (

@@ -142,6 +142,12 @@ export function GrowthAgentDashboard() {
   const [triggerLoading, setTriggerLoading] = useState<string | null>(null)
   const [diagnosticsData, setDiagnosticsData] = useState<any>(null)
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false)
+  const [cfCity, setCfCity] = useState('')
+  const [cfState, setCfState] = useState('')
+  const [cfTypes, setCfTypes] = useState<string[]>(['restaurant'])
+  const [cfTarget, setCfTarget] = useState(10)
+  const [cfLoading, setCfLoading] = useState(false)
+  const [cfResult, setCfResult] = useState<any>(null)
 
   // Track unsaved config edits so auto-refresh doesn't overwrite them
   const configDirty = useRef(false)
@@ -289,6 +295,43 @@ export function GrowthAgentDashboard() {
       toast.error('Failed to trigger agent')
     } finally {
       setTriggerLoading(null)
+    }
+  }
+
+  const handleContactFirst = async () => {
+    if (!cfCity || !cfState || cfTypes.length === 0) {
+      toast.error('City, state, and at least one business type are required')
+      return
+    }
+    setCfLoading(true)
+    setCfResult(null)
+    try {
+      const res = await fetch('/api/growth/agent/contact-first', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          city: cfCity,
+          state: cfState,
+          businessTypes: cfTypes,
+          targetCount: cfTarget,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Contact-first discovery failed')
+        return
+      }
+      setCfResult(data)
+      if (data.created > 0) {
+        toast.success(`Created ${data.created} prospects with verified emails`)
+      } else {
+        toast.warning(`Checked ${data.discovered} businesses but found no emails`)
+      }
+      fetchData() // Refresh activity log
+    } catch {
+      toast.error('Contact-first discovery failed')
+    } finally {
+      setCfLoading(false)
     }
   }
 
@@ -921,6 +964,153 @@ export function GrowthAgentDashboard() {
         </CardContent>
       </Card>
 
+      {/* Contact-First Discovery */}
+      <Card className="border-green-200 bg-green-50/30">
+        <CardHeader>
+          <CardTitle className="text-green-900">Contact-First Discovery</CardTitle>
+          <CardDescription>
+            Find businesses that already have verified email data. Only imports prospects with emails &mdash; no dead leads.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <Label className="text-xs text-gray-600">City</Label>
+              <Input
+                value={cfCity}
+                onChange={(e) => setCfCity(e.target.value)}
+                placeholder="Austin"
+                className="h-8 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">State</Label>
+              <Input
+                value={cfState}
+                onChange={(e) => setCfState(e.target.value)}
+                placeholder="TX"
+                maxLength={2}
+                className="h-8 text-sm"
+              />
+            </div>
+            <div>
+              <Label className="text-xs text-gray-600">Target Count</Label>
+              <div className="flex items-center gap-2">
+                <Slider
+                  value={[cfTarget]}
+                  onValueChange={([v]) => setCfTarget(v)}
+                  min={5}
+                  max={50}
+                  step={5}
+                  className="flex-1"
+                />
+                <span className="text-sm font-medium w-8 text-right">{cfTarget}</span>
+              </div>
+            </div>
+            <div className="flex items-end">
+              <Button
+                onClick={handleContactFirst}
+                disabled={cfLoading || !cfCity || !cfState}
+                className="bg-green-700 hover:bg-green-800 w-full h-8 text-sm"
+              >
+                {cfLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Search className="h-4 w-4 mr-2" />
+                )}
+                {cfLoading ? 'Searching...' : 'Find Prospects'}
+              </Button>
+            </div>
+          </div>
+
+          {/* Business type toggles */}
+          <div>
+            <Label className="text-xs text-gray-600 mb-1.5 block">Business Types</Label>
+            <div className="flex flex-wrap gap-2">
+              {BUSINESS_TYPES.map((type) => (
+                <label key={type} className="flex items-center gap-1.5 text-xs">
+                  <Checkbox
+                    checked={cfTypes.includes(type)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setCfTypes([...cfTypes, type])
+                      } else {
+                        setCfTypes(cfTypes.filter((t) => t !== type))
+                      }
+                    }}
+                  />
+                  <span className="capitalize">{type.replace('_', ' ')}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Results */}
+          {cfResult && (
+            <div className="bg-white rounded-lg p-4 border border-green-200 space-y-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+                <div>
+                  <p className="text-xs text-gray-500">Discovered</p>
+                  <p className="text-lg font-bold">{cfResult.discovered}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">No Website</p>
+                  <p className="text-lg font-bold text-gray-400">{cfResult.skippedNoWebsite}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Duplicate</p>
+                  <p className="text-lg font-bold text-gray-400">{cfResult.skippedDuplicate}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">No Email</p>
+                  <p className="text-lg font-bold text-red-600">{cfResult.skippedNoEmail}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Created</p>
+                  <p className="text-lg font-bold text-green-700">{cfResult.created}</p>
+                </div>
+              </div>
+
+              {cfResult.prospects?.length > 0 && (
+                <div className="max-h-[200px] overflow-y-auto divide-y divide-gray-100 text-xs">
+                  {(cfResult.prospects as Array<any>).map((p: any, i: number) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5">
+                      <span className={cn(
+                        'w-2 h-2 rounded-full shrink-0',
+                        p.email ? 'bg-green-500' : 'bg-red-400'
+                      )} />
+                      <span className="font-medium w-40 truncate">{p.name}</span>
+                      {p.email ? (
+                        <span className="text-green-700">{p.email}</span>
+                      ) : (
+                        <span className="text-gray-400">no email</span>
+                      )}
+                      {p.emailSource && (
+                        <span className="text-gray-400 ml-auto">via {p.emailSource.replace('_', ' ')}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {cfResult.warnings?.length > 0 && (
+                <div className="text-xs text-amber-600 space-y-0.5">
+                  {(cfResult.warnings as string[]).map((w: string, i: number) => (
+                    <p key={i}>{w}</p>
+                  ))}
+                </div>
+              )}
+
+              {cfResult.durationMs && (
+                <p className="text-xs text-gray-400 text-right">
+                  Completed in {(cfResult.durationMs / 1000).toFixed(1)}s
+                </p>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Diagnostics Report */}
       {diagnosticsData && (
         <Card className="border-amber-200 bg-amber-50/50">
@@ -1073,6 +1263,7 @@ function StageBadge({ stage }: { stage: string }) {
     find_emails: 'bg-green-100 text-green-700',
     score: 'bg-orange-100 text-orange-700',
     generate_outreach: 'bg-pink-100 text-pink-700',
+    contact_first: 'bg-emerald-100 text-emerald-700',
   }
   return (
     <Badge variant="secondary" className={`text-xs ${colors[stage] || ''}`}>

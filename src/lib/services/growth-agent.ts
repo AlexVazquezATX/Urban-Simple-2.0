@@ -1375,3 +1375,248 @@ async function getSystemUser(companyId: string): Promise<string | null> {
   })
   return user?.id || null
 }
+
+// ---------------------------------------------------------------------------
+// Contact-First Discovery
+// ---------------------------------------------------------------------------
+// Inverted pipeline: discover businesses → immediately check for emails →
+// only create prospects that have verified email data.
+
+export interface ContactFirstParams {
+  companyId: string
+  city: string
+  state: string
+  businessTypes: string[]
+  targetCount: number
+  sources?: string[]
+}
+
+export interface ContactFirstResult {
+  discovered: number
+  skippedNoWebsite: number
+  skippedDuplicate: number
+  skippedNoEmail: number
+  created: number
+  prospects: Array<{
+    name: string
+    website: string | null
+    email: string | null
+    emailSource: string | null
+    ownersFound: number
+  }>
+  warnings: string[]
+}
+
+export async function contactFirstDiscovery(
+  params: ContactFirstParams
+): Promise<ContactFirstResult> {
+  const {
+    companyId,
+    city,
+    state,
+    businessTypes,
+    targetCount,
+    sources = ['google_places', 'yelp'],
+  } = params
+
+  const result: ContactFirstResult = {
+    discovered: 0,
+    skippedNoWebsite: 0,
+    skippedDuplicate: 0,
+    skippedNoEmail: 0,
+    created: 0,
+    prospects: [],
+    warnings: [],
+  }
+
+  if (!city || !state || businessTypes.length === 0) {
+    result.warnings.push('City, state, and at least one business type are required')
+    return result
+  }
+
+  const location = `${city}, ${state}`
+
+  // Discover businesses from all requested types
+  const allBusinesses: Array<any> = []
+  for (const type of businessTypes) {
+    try {
+      const searchResult = await searchBusinesses({
+        location,
+        type,
+        sources,
+      })
+      for (const biz of searchResult.results) {
+        allBusinesses.push({ ...biz, businessType: type })
+      }
+      if (searchResult.warnings.length) {
+        result.warnings.push(...searchResult.warnings)
+      }
+    } catch (error: any) {
+      result.warnings.push(`Search failed for ${type}: ${error.message}`)
+    }
+  }
+
+  result.discovered = allBusinesses.length
+  console.log(`[Contact-First] Discovered ${allBusinesses.length} businesses in ${location}`)
+
+  if (allBusinesses.length === 0) {
+    result.warnings.push(`No businesses found for "${businessTypes.join(', ')}" in ${location}`)
+    return result
+  }
+
+  // Process each business — stop when we have enough
+  const PROCESSING_CAP = targetCount * 10 // Check up to 10x target to find enough
+  let processed = 0
+
+  for (const biz of allBusinesses) {
+    if (result.created >= targetCount) break
+    if (processed >= PROCESSING_CAP) break
+    processed++
+
+    // Must have a website for domain-based email search
+    if (!biz.website) {
+      result.skippedNoWebsite++
+      continue
+    }
+
+    // Check for duplicate in database
+    const existing = await prisma.prospect.findFirst({
+      where: {
+        companyId,
+        companyName: { equals: biz.name, mode: 'insensitive' },
+      },
+      select: { id: true },
+    })
+
+    if (existing) {
+      result.skippedDuplicate++
+      continue
+    }
+
+    // The key: try to find emails BEFORE creating the prospect
+    console.log(`[Contact-First] Checking ${biz.name} (${biz.website})...`)
+
+    try {
+      const discovery = await discoverOwners({
+        businessName: biz.name,
+        city: biz.address?.city || city,
+        state: biz.address?.state || state,
+        website: biz.website,
+      })
+
+      // Check if we found any email — from owners or hospitality patterns
+      const ownersWithEmail = discovery.owners.filter((o) => o.email)
+      const verifiedHospitality = discovery.hospitalityEmails.filter((e) => e.confidence >= 80)
+      const hasEmail = ownersWithEmail.length > 0 || verifiedHospitality.length > 0
+
+      if (!hasEmail) {
+        result.skippedNoEmail++
+        result.prospects.push({
+          name: biz.name,
+          website: biz.website,
+          email: null,
+          emailSource: null,
+          ownersFound: discovery.owners.length,
+        })
+        console.log(`[Contact-First] Skipped ${biz.name} — no email found`)
+        continue
+      }
+
+      // Email found! Create the prospect
+      const prospect = await prisma.prospect.create({
+        data: {
+          companyId,
+          companyName: biz.name,
+          businessType: biz.businessType,
+          address: biz.address || { city, state },
+          website: biz.website,
+          phone: discovery.businessInfo.phone || biz.phone || null,
+          priceLevel: discovery.businessInfo.priceLevel || biz.price || null,
+          status: 'new',
+          source: 'ai_discovery',
+          sourceDetail: 'Contact-First Discovery',
+          aiEnriched: true,
+          enrichmentDate: new Date(),
+          discoveryData: {
+            source: biz.source,
+            rating: discovery.businessInfo.rating || biz.rating,
+            reviewCount: discovery.businessInfo.reviewCount || biz.reviewCount,
+            categories: biz.categories || biz.types || [],
+            placeId: biz.placeId,
+            yelpId: biz.yelpId,
+            discoveredAt: new Date().toISOString(),
+            emailSearchedAt: new Date().toISOString(),
+            emailSearchResult: 'found',
+            contactFirstDiscovery: true,
+          },
+        },
+      })
+
+      // Create contacts for owners with emails
+      let bestEmail: string | null = null
+      let bestSource: string | null = null
+
+      for (const owner of discovery.owners) {
+        if (!owner.firstName && !owner.lastName && !owner.email) continue
+
+        await prisma.prospectContact.create({
+          data: {
+            prospectId: prospect.id,
+            firstName: owner.firstName || '',
+            lastName: owner.lastName || '',
+            email: owner.email,
+            phone: owner.phone,
+            title: owner.title,
+            role: 'primary',
+            isDecisionMaker: true,
+            emailConfidence: owner.emailConfidence,
+            emailSource: owner.emailSource || undefined,
+          },
+        })
+
+        if (owner.email && !bestEmail) {
+          bestEmail = owner.email
+          bestSource = owner.emailSource
+        }
+      }
+
+      // If no owner had email, save the best hospitality email
+      if (!bestEmail && verifiedHospitality.length > 0) {
+        const best = verifiedHospitality[0]
+        await prisma.prospectContact.create({
+          data: {
+            prospectId: prospect.id,
+            firstName: '',
+            lastName: '',
+            email: best.email,
+            title: best.role || 'General Contact',
+            role: 'general',
+            isDecisionMaker: false,
+            emailConfidence: best.confidence,
+            emailSource: 'hospitality_pattern',
+          },
+        })
+        bestEmail = best.email
+        bestSource = 'hospitality_pattern'
+      }
+
+      result.created++
+      result.prospects.push({
+        name: biz.name,
+        website: biz.website,
+        email: bestEmail,
+        emailSource: bestSource,
+        ownersFound: discovery.owners.length,
+      })
+
+      console.log(`[Contact-First] Created ${biz.name} with email: ${bestEmail}`)
+    } catch (error: any) {
+      console.error(`[Contact-First] Error processing ${biz.name}:`, error.message)
+      result.warnings.push(`Error processing ${biz.name}: ${error.message}`)
+    }
+  }
+
+  console.log(`[Contact-First] Done. ${result.created}/${result.discovered} businesses had emails and were imported`)
+
+  return result
+}
