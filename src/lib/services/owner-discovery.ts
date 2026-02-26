@@ -4,11 +4,36 @@
 
 import { findBusinessOwner as findYelpOwner, type YelpBusinessInfo } from './yelp-scraper'
 import { findGoogleBusinessOwner, type GoogleBusinessInfo } from './google-business-scraper'
-import { searchDomain as hunterSearchDomain, findEmail as hunterFindEmail, getEmailPattern, generateFromPattern } from './hunter-service'
+import { searchDomain as hunterSearchDomain, findEmail as hunterFindEmail, getEmailPattern, generateFromPattern, verifyEmail as hunterVerifyEmail } from './hunter-service'
 // Apollo removed — using Hunter exclusively for email discovery
 import { generateHospitalityEmails } from './email-pattern-generator'
 import { scrapeOwnerNames, type ScrapedOwner } from './website-scraper'
-import { verifyEmail } from './email-verification'
+import { verifyEmail as abstractVerifyEmail } from './email-verification'
+
+// Use Abstract API for verification if available, fall back to Hunter
+async function verifyEmail(email: string): Promise<{ is_valid: boolean; is_smtp_valid: boolean } | null> {
+  // Try Abstract API first
+  try {
+    const result = await abstractVerifyEmail(email)
+    return { is_valid: result.is_valid, is_smtp_valid: result.is_smtp_valid }
+  } catch {
+    // Abstract not configured or failed — fall back to Hunter
+  }
+
+  try {
+    const hunterResult = await hunterVerifyEmail(email)
+    if (hunterResult) {
+      return {
+        is_valid: hunterResult.result === 'deliverable' || hunterResult.result === 'risky',
+        is_smtp_valid: hunterResult.smtp_check,
+      }
+    }
+  } catch {
+    // Hunter verification also failed
+  }
+
+  return null
+}
 import { ProspectSearchResult } from '@/lib/types/email-prospecting'
 
 
@@ -22,7 +47,7 @@ export interface OwnerDiscoveryResult {
     title: string | null
     email: string | null
     emailConfidence: number
-    emailSource: 'hunter_finder' | 'hunter_pattern' | 'hunter_domain' | null
+    emailSource: 'hunter_finder' | 'hunter_pattern' | 'hunter_domain' | 'website_scrape' | null
     phone: string | null
     source: 'yelp' | 'google' | 'hunter'
   }>
@@ -261,27 +286,38 @@ export async function discoverOwners(
   }
 
   // ============ PROCESS WEBSITE SCRAPE RESULTS ============
-  if (websiteResult?.owners?.length) {
-    console.log(`[Owner Discovery] Website: Found ${websiteResult.owners.length} potential owners`)
+  // Track scraped emails from websites — these are actual emails found on pages
+  const websiteScrapedEmails: Array<{ email: string; foundOn: string; isGeneric: boolean }> = []
 
-    for (const scraped of websiteResult.owners) {
-      const { firstName, lastName } = splitName(scraped.name)
-      const key = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
-      if (!foundOwners.has(key) && firstName && lastName) {
-        result.meta.ownerNamesFound.push(scraped.name)
-        foundOwners.set(key, {
-          name: scraped.name,
-          firstName,
-          lastName,
-          title: scraped.title || 'Owner',
-          email: null,
-          emailConfidence: 0,
-          emailSource: null,
-          phone: null,
-          source: 'google', // Mark as "google" since it came from website
-        })
-        console.log(`[Owner Discovery] Website: Added "${scraped.name}" (${scraped.title})`)
+  if (websiteResult) {
+    if (websiteResult.owners?.length) {
+      console.log(`[Owner Discovery] Website: Found ${websiteResult.owners.length} potential owners`)
+
+      for (const scraped of websiteResult.owners) {
+        const { firstName, lastName } = splitName(scraped.name)
+        const key = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
+        if (!foundOwners.has(key) && firstName && lastName) {
+          result.meta.ownerNamesFound.push(scraped.name)
+          foundOwners.set(key, {
+            name: scraped.name,
+            firstName,
+            lastName,
+            title: scraped.title || 'Owner',
+            email: null,
+            emailConfidence: 0,
+            emailSource: null,
+            phone: null,
+            source: 'google', // Mark as "google" since it came from website
+          })
+          console.log(`[Owner Discovery] Website: Added "${scraped.name}" (${scraped.title})`)
+        }
       }
+    }
+
+    // Capture scraped emails — these were being thrown away before
+    if (websiteResult.emails?.length) {
+      console.log(`[Owner Discovery] Website: Found ${websiteResult.emails.length} emails on pages`)
+      websiteScrapedEmails.push(...websiteResult.emails)
     }
   }
 
@@ -310,6 +346,11 @@ export async function discoverOwners(
             })
           }
         }
+      }
+      // Capture scraped emails from second pass too
+      if (secondWebsite?.emails?.length) {
+        console.log(`[Owner Discovery] Website (2nd pass): Found ${secondWebsite.emails.length} emails on pages`)
+        websiteScrapedEmails.push(...secondWebsite.emails)
       }
     } catch {
       // Website scrape failed, continue
@@ -432,11 +473,82 @@ export async function discoverOwners(
     }
   }
 
-  // ============ STEP 5: PROGRESSIVE PATTERN VERIFICATION (if still no emails) ============
-  if (foundOwners.size === 0 && result.domain) {
-    console.log('[Owner Discovery] No people found, trying progressive pattern verification...')
+  // ============ STEP 4B: USE WEBSITE-SCRAPED EMAILS ============
+  // The website scraper finds actual emails on contact/about pages.
+  // Try to match them to known owners, or add as new contacts.
+  if (websiteScrapedEmails.length > 0) {
+    const anyOwnerHasEmailYet = Array.from(foundOwners.values()).some((o) => o.email)
 
-    const patternsToTry = ['owner', 'gm', 'chef', 'info', 'contact']
+    for (const scraped of websiteScrapedEmails) {
+      // Try to match email to an existing owner (e.g., john@domain matches "John Smith")
+      const emailLocal = scraped.email.split('@')[0].toLowerCase()
+      let matched = false
+
+      if (!scraped.isGeneric) {
+        for (const [key, owner] of foundOwners) {
+          if (owner.email) continue // Already has email
+          const firstMatch = emailLocal.includes(owner.firstName.toLowerCase())
+          const lastMatch = emailLocal.includes(owner.lastName.toLowerCase())
+          if (firstMatch || lastMatch) {
+            owner.email = scraped.email
+            owner.emailConfidence = 80
+            owner.emailSource = 'website_scrape'
+            result.meta.emailsFound.push(scraped.email)
+            console.log(`[Owner Discovery] Website email matched to owner: ${owner.name} → ${scraped.email}`)
+            matched = true
+            break
+          }
+        }
+      }
+
+      // If not matched to an owner and no one has email yet, add as a contact
+      if (!matched && !anyOwnerHasEmailYet) {
+        if (!scraped.isGeneric) {
+          // Personal email — add as a new owner
+          const localPart = scraped.email.split('@')[0]
+          // Try to extract a name from the email (e.g., john.smith → John Smith)
+          const parts = localPart.split(/[._-]/).filter(Boolean)
+          if (parts.length >= 2) {
+            const firstName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1)
+            const lastName = parts[parts.length - 1].charAt(0).toUpperCase() + parts[parts.length - 1].slice(1)
+            const nameKey = `${firstName.toLowerCase()}-${lastName.toLowerCase()}`
+            if (!foundOwners.has(nameKey)) {
+              foundOwners.set(nameKey, {
+                name: `${firstName} ${lastName}`,
+                firstName,
+                lastName,
+                title: 'Contact',
+                email: scraped.email,
+                emailConfidence: 75,
+                emailSource: 'website_scrape',
+                phone: null,
+                source: 'google',
+              })
+              result.meta.ownerNamesFound.push(`${firstName} ${lastName}`)
+              result.meta.emailsFound.push(scraped.email)
+              console.log(`[Owner Discovery] Website email added as contact: ${firstName} ${lastName} → ${scraped.email}`)
+            }
+          }
+        } else {
+          // Generic email (info@, events@, etc.) — add to hospitality emails
+          result.hospitalityEmails.push({
+            email: scraped.email,
+            role: emailLocal,
+            confidence: 85, // High confidence — actually found on website
+          })
+          console.log(`[Owner Discovery] Website generic email found: ${scraped.email}`)
+        }
+      }
+    }
+  }
+
+  // ============ STEP 5: PROGRESSIVE PATTERN VERIFICATION (if still no emails) ============
+  // Run when no emails found yet (regardless of whether owner names were found)
+  const anyEmailFoundSoFar = Array.from(foundOwners.values()).some((o) => o.email)
+  if (!anyEmailFoundSoFar && result.domain) {
+    console.log('[Owner Discovery] No emails found yet, trying progressive pattern verification...')
+
+    const patternsToTry = ['owner', 'gm', 'chef', 'info', 'contact', 'events', 'catering']
 
     for (const pattern of patternsToTry) {
       const testEmail = `${pattern}@${result.domain}`
@@ -445,13 +557,12 @@ export async function discoverOwners(
 
         if (verification?.is_valid && verification?.is_smtp_valid) {
           console.log(`[Owner Discovery] Verified email: ${testEmail}`)
-          // Don't add to owners (no real person name), but add to hospitality emails
           result.hospitalityEmails.push({
             email: testEmail,
             role: pattern,
             confidence: 90, // High confidence since verified
           })
-          break // Stop after finding one verified
+          // Don't break — find multiple verified patterns
         }
       } catch {
         // Continue to next pattern

@@ -950,6 +950,7 @@ async function processFindEmails(
           domainFound: result.domain,
           ownersFound: result.owners.length,
           emailsFound: result.meta.emailsFound.length,
+          hospitalityEmails: result.hospitalityEmails?.length || 0,
           failReason: null as string | null,
         }
 
@@ -999,12 +1000,47 @@ async function processFindEmails(
           if (owner.email) emailFound = true
         }
 
+        // If no owner had an email, check hospitality emails (verified patterns
+        // like info@domain.com, gm@domain.com, or emails scraped from the website)
+        if (!emailFound && result.hospitalityEmails?.length > 0) {
+          // Use the highest-confidence verified hospitality email
+          const bestHospitality = result.hospitalityEmails
+            .sort((a, b) => b.confidence - a.confidence)[0]
+
+          if (bestHospitality) {
+            const existing = await prisma.prospectContact.findFirst({
+              where: {
+                prospectId: prospect.id,
+                email: bestHospitality.email,
+              },
+            })
+
+            if (!existing) {
+              await prisma.prospectContact.create({
+                data: {
+                  prospectId: prospect.id,
+                  firstName: '',
+                  lastName: '',
+                  email: bestHospitality.email,
+                  title: bestHospitality.role || 'General Contact',
+                  role: 'general',
+                  isDecisionMaker: false,
+                  emailConfidence: bestHospitality.confidence,
+                  emailSource: 'hospitality_pattern',
+                },
+              })
+              emailFound = true
+              console.log(`[Growth Agent] Saved hospitality email for ${prospect.companyName}: ${bestHospitality.email}`)
+            }
+          }
+        }
+
         // Determine failure reason for diagnostics
         if (!emailFound) {
           if (!result.domain) {
             diag.failReason = 'no_domain'
-          } else if (result.owners.length === 0) {
-            diag.failReason = 'no_owners_found'
+          } else if (result.owners.length === 0 && result.hospitalityEmails.length === 0) {
+            diag.failReason = 'no_owners_no_patterns'
           } else {
             diag.failReason = 'owners_found_but_no_emails'
           }
@@ -1022,6 +1058,8 @@ async function processFindEmails(
                 domain: result.domain,
                 ownersFound: result.owners.length,
                 ownerNames: result.meta.ownerNamesFound,
+                hospitalityEmails: result.hospitalityEmails?.map((e) => e.email) || [],
+                websiteEmailsFound: result.meta.emailsFound.length,
                 yelpFound: result.meta.yelpFound,
                 googleFound: result.meta.googleFound,
                 hunterFound: result.meta.hunterFound,
