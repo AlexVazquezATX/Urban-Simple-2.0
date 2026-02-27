@@ -11,6 +11,7 @@ import {
   ImageIcon,
   Camera,
   Sparkles,
+  Wand2,
   Filter,
   Maximize2,
   X,
@@ -48,7 +49,7 @@ function imageUrl(id: string) {
   return `/api/creative-studio/content/image?id=${id}`
 }
 
-type FilterMode = 'all' | 'content_studio' | 'food_photo' | 'branded_post'
+type FilterMode = 'all' | 'food_photo' | 'branded_post'
 
 export default function StudioGalleryPage() {
   return (
@@ -173,27 +174,20 @@ function StudioGalleryContent() {
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-warm-500" />
           <div className="flex gap-2">
-            {(['all', 'content_studio', 'food_photo', 'branded_post'] as FilterMode[]).map((mode) => {
-              const label =
-                mode === 'all' ? 'All' :
-                mode === 'content_studio' ? 'Content Studio' :
-                mode === 'food_photo' ? 'Food Photos' :
-                'Branded Posts'
-              return (
-                <button
-                  key={mode}
-                  onClick={() => setFilterMode(mode)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-sm text-sm font-medium transition-colors',
-                    filterMode === mode
-                      ? 'bg-warm-900 text-white'
-                      : 'bg-white border border-warm-200 text-warm-700 hover:border-warm-300'
-                  )}
-                >
-                  {label}
-                </button>
-              )
-            })}
+            {(['all', 'food_photo', 'branded_post'] as FilterMode[]).map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setFilterMode(mode)}
+                className={cn(
+                  'px-3 py-1.5 rounded-sm text-sm font-medium transition-colors',
+                  filterMode === mode
+                    ? 'bg-warm-900 text-white'
+                    : 'bg-white border border-warm-200 text-warm-700 hover:border-warm-300'
+                )}
+              >
+                {mode === 'all' ? 'All' : mode === 'food_photo' ? 'Food Photos' : 'Branded Posts'}
+              </button>
+            ))}
           </div>
         </div>
       </div>
@@ -230,8 +224,6 @@ function StudioGalleryContent() {
                       className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-sm ${
                         item.mode === 'food_photo'
                           ? 'bg-amber-100 text-amber-700 border-amber-200'
-                          : item.mode === 'content_studio'
-                          ? 'bg-lime-100 text-lime-700 border-lime-200'
                           : 'bg-purple-100 text-purple-700 border-purple-200'
                       }`}
                     >
@@ -240,11 +232,23 @@ function StudioGalleryContent() {
                       ) : (
                         <Sparkles className="w-3 h-3 mr-1" />
                       )}
-                      {item.mode === 'food_photo' ? 'Food' : item.mode === 'content_studio' ? 'Studio' : 'Branded'}
+                      {item.mode === 'food_photo' ? 'Food' : 'Branded'}
                     </Badge>
 
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                       <span className="text-white text-sm font-medium">View</span>
+                      {item.hasImage && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            router.push(`/studio/generate?mode=branded_post&sourceImageId=${item.id}`)
+                          }}
+                          className="flex items-center gap-1 px-2.5 py-1 bg-white/90 hover:bg-white rounded-sm text-xs font-medium text-plum-700 transition-colors"
+                        >
+                          <Wand2 className="w-3 h-3" />
+                          Use in Branded Post
+                        </button>
+                      )}
                     </div>
                   </div>
 
@@ -293,8 +297,6 @@ function StudioGalleryContent() {
             <DialogTitle className="flex items-center gap-2">
               {selectedItem?.mode === 'food_photo' ? (
                 <Camera className="w-4 h-4 text-amber-600" />
-              ) : selectedItem?.mode === 'content_studio' ? (
-                <Sparkles className="w-4 h-4 text-lime-600" />
               ) : (
                 <Sparkles className="w-4 h-4 text-purple-600" />
               )}
@@ -332,9 +334,7 @@ function StudioGalleryContent() {
                 <div>
                   <p className="text-warm-500">Type</p>
                   <p className="font-medium text-warm-900">
-                    {selectedItem.mode === 'food_photo' ? 'Food Photography' :
-                     selectedItem.mode === 'content_studio' ? 'Content Studio' :
-                     'Branded Post'}
+                    {selectedItem.mode === 'food_photo' ? 'Food Photography' : 'Branded Post'}
                   </p>
                 </div>
                 {selectedItem.outputFormat && (
@@ -385,6 +385,19 @@ function StudioGalleryContent() {
                   </Button>
                 </div>
 
+                {selectedItem.hasImage && (
+                  <Button
+                    variant="outline"
+                    className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
+                    onClick={() => {
+                      setSelectedItem(null)
+                      router.push(`/studio/generate?mode=branded_post&sourceImageId=${selectedItem.id}`)
+                    }}
+                  >
+                    <Wand2 className="w-4 h-4 mr-1.5" />
+                    Use in Branded Post
+                  </Button>
+                )}
               </div>
             </div>
           )}
