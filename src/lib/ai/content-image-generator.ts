@@ -98,26 +98,39 @@ export async function generateImage(
     promptLength: assembledPrompt.length,
   })
 
-  // Build multimodal content parts: text first, then reference images, then brand assets
-  const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
-    { text: assembledPrompt },
-  ]
+  // Build multimodal content: images FIRST so the model sees them before reading instructions
+  type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
+  const parts: Part[] = []
 
-  // Add reference images (mood/style)
+  // 1. Reference images first — model needs to see these before the text instructions
+  let refCount = 0
   for (const refBase64 of referenceImageBase64s) {
     const parsed = parseBase64Image(refBase64)
     if (parsed) {
       parts.push({ inlineData: parsed })
+      refCount++
     }
   }
 
-  // Add brand assets (fetched server-side from URLs)
+  // 2. Brand assets
+  let assetCount = 0
   for (const assetUrl of brandAssetUrls) {
     const fetched = await fetchImageAsBase64(assetUrl)
     if (fetched) {
       parts.push({ inlineData: fetched })
+      assetCount++
     }
   }
+
+  // 3. Text prompt AFTER images — references what the model has already seen
+  parts.push({ text: assembledPrompt })
+
+  console.log('[Content Studio] Multimodal parts:', {
+    referenceImages: refCount,
+    brandAssets: assetCount,
+    textLength: assembledPrompt.length,
+    totalParts: parts.length,
+  })
 
   // Shared config — native aspect ratio + resolution via imageConfig
   const sharedConfig = {
@@ -140,7 +153,7 @@ export async function generateImage(
 
       const response = await ai.models.generateContent({
         model: model.id,
-        contents: { parts },
+        contents: [{ role: 'user', parts }],
         config: sharedConfig,
       })
 

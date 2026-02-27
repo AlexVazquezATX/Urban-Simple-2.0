@@ -233,12 +233,12 @@ export function buildPrompt(params: PromptAssemblyParams): string {
           .filter(Boolean)
 
         instructions.push(
-          `${refLabel}: Reference image(s).\n${modeInstructions.join('\n')}`
+          `I have attached ${referenceImageCount} reference image(s) (${refLabel}). You MUST study these images carefully and apply the following to your generated image:\n${modeInstructions.join('\n')}\nThe generated image MUST clearly reflect these reference images.`
         )
       } else {
         // No modes selected — general inspiration (default behavior)
         instructions.push(
-          `${refLabel}: Reference image(s) — use these for general composition, lighting, mood, and aesthetic inspiration.`
+          `I have attached ${referenceImageCount} reference image(s) (${refLabel}). Study the composition, lighting, mood, color palette, and overall aesthetic of these images. The image you generate MUST be visually inspired by and consistent with these references.`
         )
       }
     }
@@ -251,7 +251,7 @@ export function buildPrompt(params: PromptAssemblyParams): string {
     }
 
     parts.push(
-      `REFERENCE IMAGE INSTRUCTIONS:\n${instructions.join('\n')}`
+      `IMPORTANT — ATTACHED IMAGE INSTRUCTIONS:\n${instructions.join('\n')}`
     )
   }
 
