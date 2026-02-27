@@ -237,6 +237,7 @@ IMPORTANT GUIDELINES:
 - Sound human, not robotic
 - Don't use generic phrases like "I hope this email finds you well"
 - Show you've done research about their business
+- Do NOT include a closing signature, sign-off, or valediction (no "Best," "Thanks," "Cheers," "Best regards," "The Urban Simple Team," etc.) — the user's email signature is appended automatically
 
 CRITICAL: Generate ONE complete, ready-to-send message. Do NOT:
 - Provide multiple options or alternatives to choose from
@@ -373,6 +374,7 @@ IMPORTANT GUIDELINES:
 - Each step should have a unique angle - don't repeat the same pitch
 - Reference previous messages naturally (for steps 2+)
 - Include a clear but non-pushy call-to-action
+- Do NOT include a closing signature, sign-off, or valediction (no "Best," "Thanks," "Cheers," "Best regards," "The Urban Simple Team," etc.) — the user's email signature is appended automatically
 
 CRITICAL: Generate ONE complete, ready-to-use template. Do NOT:
 - Provide multiple options or alternatives
