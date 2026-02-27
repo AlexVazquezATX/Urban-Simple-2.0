@@ -79,6 +79,24 @@ export interface CreateImageInput {
   photoCredit?: string
 }
 
+export interface UpdateImageInput {
+  name?: string
+  description?: string | null
+  campaign?: string | null
+  tags?: string[]
+  category?: string | null
+  photoCredit?: string | null
+  status?: string
+  queueStatus?: string
+  priorityRank?: number | null
+  captionInstagram?: string | null
+  captionFacebook?: string | null
+  captionTwitter?: string | null
+  hashtags?: string[]
+  imageType?: string
+  aspectRatio?: string
+}
+
 // ============================================
 // PROJECTS
 // ============================================
@@ -297,7 +315,7 @@ export async function getImagesByProject(projectId: string) {
 
 export async function updateImage(
   id: string,
-  data: Partial<Omit<CreateImageInput, 'companyId'>>
+  data: UpdateImageInput
 ) {
   return prisma.creativeImage.update({
     where: { id },

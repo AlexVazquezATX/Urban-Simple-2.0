@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Sparkles, Loader2, ImageIcon, X } from 'lucide-react'
+import { ArrowLeft, Sparkles, Loader2, ImageIcon, X, LayoutGrid, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   PromptInput,
@@ -32,6 +32,7 @@ export default function CreativeHubGeneratePage() {
 
 function GenerateContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Core state
   const [prompt, setPrompt] = useState('')
@@ -43,6 +44,24 @@ function GenerateContent() {
   // Brand assets
   const [selectedAssets, setSelectedAssets] = useState<SelectedAsset[]>([])
   const [assetSelectorOpen, setAssetSelectorOpen] = useState(false)
+
+  // Load prompt from URL query param (for prompt reuse)
+  useEffect(() => {
+    const reusedPrompt = searchParams.get('prompt')
+    if (reusedPrompt) {
+      setPrompt(reusedPrompt)
+    }
+  }, [searchParams])
+
+  function clearAll() {
+    setPrompt('')
+    setStylePreset(null)
+    setAspectRatio('1:1')
+    setReferenceImages([])
+    setReferenceModes([])
+    setSelectedAssets([])
+    setGeneratedImage(null)
+  }
 
   const selectedAssetIds = selectedAssets.map((a) => a.id)
 
@@ -158,18 +177,38 @@ function GenerateContent() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/creative-hub"
-            className="text-warm-400 hover:text-warm-600 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </Link>
-          <div>
-            <h1 className="text-lg font-semibold text-warm-900">Generate</h1>
-            <p className="text-xs text-warm-500">
-              Create any type of visual — photorealistic, illustrated, animated, anything
-            </p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/creative-hub"
+              className="text-warm-400 hover:text-warm-600 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Link>
+            <div>
+              <h1 className="text-lg font-semibold text-warm-900">Generate</h1>
+              <p className="text-xs text-warm-500">
+                Create any type of visual — photorealistic, illustrated, animated, anything
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-warm-500 hover:text-warm-700"
+              onClick={clearAll}
+              disabled={isGenerating}
+            >
+              <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+              Clear All
+            </Button>
+            <Link href="/creative-hub/images">
+              <Button variant="outline" size="sm" className="rounded-sm">
+                <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
+                Gallery
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

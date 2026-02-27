@@ -1702,8 +1702,20 @@ model CreativeImage {
   tags     String[] @default([])
   category String? // transformation, quote_card, stat_graphic, team, service
 
-  // Status
-  status String @default("active") // active, archived
+  // Extended metadata
+  description String? @db.Text
+  campaign    String?
+
+  // Social media captions
+  captionInstagram String? @map("caption_instagram") @db.Text
+  captionFacebook  String? @map("caption_facebook") @db.Text
+  captionTwitter   String? @map("caption_twitter") @db.Text
+  hashtags         String[] @default([])
+
+  // Status & queue
+  status       String @default("draft") // draft, approved, archived
+  queueStatus  String @default("pending") @map("queue_status") // pending, passed, posted
+  priorityRank Int?   @map("priority_rank")
 
   createdAt DateTime @default(now()) @map("created_at")
 

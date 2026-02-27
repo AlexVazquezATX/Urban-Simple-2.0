@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ArrowLeft,
   Sparkles,
@@ -33,6 +34,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { ImageLightbox } from '@/components/content-studio'
+import type { LightboxImage } from '@/components/content-studio/image-lightbox'
 
 interface CreativeImage {
   id: string
@@ -62,10 +65,26 @@ const IMAGE_TYPES = [
 
 
 export default function ImageLibraryPage() {
+  const router = useRouter()
   const [images, setImages] = useState<CreativeImage[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filter, setFilter] = useState({ imageType: '', category: '' })
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+
+  const lightboxImages: LightboxImage[] = images.map((img) => ({
+    id: img.id,
+    src: getImageSrc(img),
+    name: img.name,
+  }))
+
+  function openLightbox(index: number) {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+  }
 
   // Upload state
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -353,8 +372,12 @@ export default function ImageLibraryPage() {
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {images.map((image) => (
-            <Card key={image.id} className="group overflow-hidden">
+          {images.map((image, index) => (
+            <Card
+              key={image.id}
+              className="group overflow-hidden cursor-pointer"
+              onClick={() => openLightbox(index)}
+            >
               <div className="aspect-square relative">
                 <img
                   src={getImageSrc(image)}
@@ -371,7 +394,8 @@ export default function ImageLibraryPage() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation()
                       const link = document.createElement('a')
                       link.href = getImageSrc(image)
                       link.download = image.name
@@ -383,7 +407,10 @@ export default function ImageLibraryPage() {
                   <Button
                     size="sm"
                     variant="destructive"
-                    onClick={() => handleDelete(image.id)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDelete(image.id)
+                    }}
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
@@ -464,6 +491,19 @@ export default function ImageLibraryPage() {
           ))}
         </div>
       )}
+
+      {/* Lightbox */}
+      <ImageLightbox
+        images={lightboxImages}
+        currentIndex={lightboxIndex}
+        open={lightboxOpen}
+        onClose={() => setLightboxOpen(false)}
+        onNavigate={setLightboxIndex}
+        onViewDetails={(id) => {
+          setLightboxOpen(false)
+          router.push(`/creative-hub/images/${id}`)
+        }}
+      />
     </div>
   )
 }
