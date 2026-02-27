@@ -165,8 +165,8 @@ export interface PromptAssemblyParams {
   } | null
   applyBrandContext?: boolean
   brandAssetCount?: number
-  referenceImageCount?: number
-  referenceModes?: ReferenceMode[]
+  /** Pre-analyzed description of reference images (from Step 1 vision analysis) */
+  referenceAnalysis?: string | null
 }
 
 /**
@@ -174,6 +174,10 @@ export interface PromptAssemblyParams {
  *
  * Philosophy: the user's prompt is sacred. We only append optional
  * context — never wrap it in prescriptive instructions.
+ *
+ * Reference images are handled via a two-step approach:
+ * - Step 1 (before this): Gemini analyzes reference images → text description
+ * - Step 2 (here): That text description is injected as concrete style instructions
  */
 export function buildPrompt(params: PromptAssemblyParams): string {
   const {
@@ -182,14 +186,23 @@ export function buildPrompt(params: PromptAssemblyParams): string {
     brandContext,
     applyBrandContext = true,
     brandAssetCount = 0,
-    referenceImageCount = 0,
-    referenceModes = [],
+    referenceAnalysis,
   } = params
 
   const parts: string[] = [prompt.trim()]
 
+  // Reference image analysis — concrete style/mood/palette descriptions
+  // This is the key: instead of passing images and hoping, we pass
+  // a detailed text description that the generation model WILL follow.
+  if (referenceAnalysis) {
+    parts.push(
+      `MANDATORY STYLE INSTRUCTIONS (extracted from reference images — you MUST follow these precisely):\n${referenceAnalysis}\nThe generated image MUST match these visual qualities exactly. Do NOT default to photorealistic if the style analysis describes a different rendering technique.`
+    )
+  }
+
   // Style preset modifier (skip for 'custom' or when not set)
-  if (stylePreset && stylePreset !== 'custom') {
+  // Skip if reference analysis already provides style direction
+  if (stylePreset && stylePreset !== 'custom' && !referenceAnalysis) {
     const preset = STYLE_PRESETS[stylePreset]
     if (preset?.promptModifier) {
       parts.push(preset.promptModifier)
@@ -213,45 +226,11 @@ export function buildPrompt(params: PromptAssemblyParams): string {
     }
   }
 
-  // Image reference instructions (only if images are being sent)
-  const hasImages = brandAssetCount > 0 || referenceImageCount > 0
-  if (hasImages) {
-    const instructions: string[] = []
-    let imageIndex = 1
-
-    if (referenceImageCount > 0) {
-      const refs = Array.from({ length: referenceImageCount }, () => `Image ${imageIndex++}`)
-      const refLabel = refs.join(', ')
-
-      if (referenceModes.length > 0) {
-        // Specific modes selected — build targeted instructions
-        const modeInstructions = referenceModes
-          .map((modeId) => {
-            const mode = REFERENCE_MODES.find((m) => m.id === modeId)
-            return mode?.promptInstruction
-          })
-          .filter(Boolean)
-
-        instructions.push(
-          `I have attached ${referenceImageCount} reference image(s) (${refLabel}). You MUST study these images carefully and apply the following to your generated image:\n${modeInstructions.join('\n')}\nThe generated image MUST clearly reflect these reference images.`
-        )
-      } else {
-        // No modes selected — general inspiration (default behavior)
-        instructions.push(
-          `I have attached ${referenceImageCount} reference image(s) (${refLabel}). Study the composition, lighting, mood, color palette, and overall aesthetic of these images. The image you generate MUST be visually inspired by and consistent with these references.`
-        )
-      }
-    }
-
-    if (brandAssetCount > 0) {
-      const assets = Array.from({ length: brandAssetCount }, () => `Image ${imageIndex++}`)
-      instructions.push(
-        `${assets.join(', ')}: Brand asset(s) — incorporate the EXACT object, product, or item from these images into the generated image. The item should be prominently featured and match the reference precisely.`
-      )
-    }
-
+  // Brand asset instructions (these are still sent as inline images)
+  if (brandAssetCount > 0) {
+    const assets = Array.from({ length: brandAssetCount }, (_, i) => `Image ${i + 1}`)
     parts.push(
-      `IMPORTANT — ATTACHED IMAGE INSTRUCTIONS:\n${instructions.join('\n')}`
+      `BRAND ASSET INSTRUCTIONS:\n${assets.join(', ')}: Brand asset(s) — incorporate the EXACT object, product, or item from these images into the generated image. The item should be prominently featured and match the reference precisely.`
     )
   }
 

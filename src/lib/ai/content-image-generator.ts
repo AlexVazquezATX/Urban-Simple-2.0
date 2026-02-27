@@ -2,19 +2,33 @@
  * Content Studio - Unified AI Image Generator
  *
  * Single generation pipeline for all content types.
- * Supports freeform prompts, brand assets, and reference images
- * via multimodal Gemini input.
+ * Supports freeform prompts, brand assets, and reference images.
+ *
+ * Reference images use a two-step approach:
+ * 1. Analyze reference images with Gemini (text-only) to extract style descriptions
+ * 2. Inject those descriptions into the generation prompt as concrete text
+ *
+ * This is necessary because Gemini's image generation mode does not reliably
+ * use input images as style/composition references.
  */
 
 import { GoogleGenAI } from '@google/genai'
-import { buildPrompt, type StylePreset, type AspectRatio, type ReferenceMode } from '@/lib/config/content-studio'
+import {
+  buildPrompt,
+  REFERENCE_MODES,
+  type StylePreset,
+  type AspectRatio,
+  type ReferenceMode,
+} from '@/lib/config/content-studio'
 
 // Model hierarchy: 3.1 Flash (fast + refined) → 3.0 Pro (fallback)
-// Both are multimodal — reference images and brand assets always work.
 const IMAGE_MODELS = {
   GEMINI_31_FLASH: 'gemini-3.1-flash-image-preview',
   GEMINI_3_PRO: 'gemini-3-pro-image-preview',
 } as const
+
+// Text model for analyzing reference images
+const ANALYSIS_MODEL = 'gemini-2.5-flash'
 
 function getGenAI(): GoogleGenAI {
   const apiKey =
@@ -57,7 +71,96 @@ export interface GeneratedImage {
 }
 
 // ============================================
-// UNIFIED IMAGE GENERATION
+// REFERENCE IMAGE ANALYSIS (Step 1)
+// ============================================
+
+/**
+ * Analyze reference images and extract a detailed text description
+ * of their visual properties, based on selected modes.
+ *
+ * This converts visual references → concrete text that the image
+ * generation model can actually follow.
+ */
+async function analyzeReferenceImages(
+  ai: GoogleGenAI,
+  referenceImageBase64s: string[],
+  referenceModes: ReferenceMode[]
+): Promise<string | null> {
+  if (referenceImageBase64s.length === 0) return null
+
+  // Build analysis prompt based on selected modes (or all if none selected)
+  const activeModes =
+    referenceModes.length > 0
+      ? referenceModes
+      : (['style', 'mood', 'palette'] as ReferenceMode[])
+
+  const analysisQuestions = activeModes
+    .map((modeId) => {
+      const mode = REFERENCE_MODES.find((m) => m.id === modeId)
+      if (!mode) return null
+      switch (modeId) {
+        case 'style':
+          return 'VISUAL STYLE: What is the rendering technique? (e.g. watercolor, ink illustration, anime, CGI, oil painting, vector art, pencil sketch, photorealistic, collage, etc.) Describe the line work, texture quality, shading approach, and level of detail. Be extremely specific.'
+        case 'layout':
+          return 'COMPOSITION & LAYOUT: Describe the camera angle, perspective, spatial arrangement, foreground/background relationship, and overall scene structure.'
+        case 'palette':
+          return 'COLOR PALETTE: List the exact dominant colors, accent colors, color temperature (warm/cool), saturation levels. Example: "muted earth tones — burnt sienna, dusty olive, warm cream — with pops of deep teal".'
+        case 'mood':
+          return 'MOOD & ATMOSPHERE: Describe the lighting direction/quality/intensity, emotional tone, and atmospheric feeling (hazy, crisp, dreamy, gritty, etc.).'
+        default:
+          return null
+      }
+    })
+    .filter(Boolean)
+
+  const analysisPrompt = `You are an expert visual analyst. Study the attached reference image(s) carefully and provide a detailed description that could be used to recreate the same visual qualities in a new image.
+
+Analyze the following aspects:
+${analysisQuestions.join('\n')}
+
+IMPORTANT: Be extremely specific and concrete. Use precise technical terms. Do NOT be vague. The output will be used as instructions for an image generation model.
+
+Respond in a single paragraph per aspect, labeled clearly. Keep each paragraph to 2-3 sentences of dense, specific description.`
+
+  type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
+  const parts: Part[] = []
+
+  // Add images first
+  for (const refBase64 of referenceImageBase64s) {
+    const parsed = parseBase64Image(refBase64)
+    if (parsed) {
+      parts.push({ inlineData: parsed })
+    }
+  }
+
+  parts.push({ text: analysisPrompt })
+
+  try {
+    console.log('[Content Studio] Analyzing reference images...')
+
+    const response = await ai.models.generateContent({
+      model: ANALYSIS_MODEL,
+      contents: [{ role: 'user', parts }],
+    })
+
+    const text = response.candidates?.[0]?.content?.parts?.[0]
+    const textContent = text && 'text' in text ? (text as { text: string }).text : null
+
+    if (textContent) {
+      console.log('[Content Studio] Reference analysis:', textContent.slice(0, 200) + '...')
+      return textContent
+    }
+
+    console.warn('[Content Studio] No text response from reference analysis')
+    return null
+  } catch (error) {
+    console.error('[Content Studio] Reference analysis failed:', error)
+    return null
+  }
+}
+
+// ============================================
+// UNIFIED IMAGE GENERATION (Step 2)
 // ============================================
 
 /**
@@ -79,15 +182,20 @@ export async function generateImage(
     applyBrandContext = true,
   } = params
 
-  // Assemble the final prompt (aspect ratio handled natively via imageConfig)
+  // Step 1: Analyze reference images (if any) to get concrete style descriptions
+  let referenceAnalysis: string | null = null
+  if (referenceImageBase64s.length > 0) {
+    referenceAnalysis = await analyzeReferenceImages(ai, referenceImageBase64s, referenceModes)
+  }
+
+  // Step 2: Assemble the final prompt with the reference analysis baked in
   const assembledPrompt = buildPrompt({
     prompt: userPrompt,
     stylePreset,
     brandContext,
     applyBrandContext,
     brandAssetCount: brandAssetUrls.length,
-    referenceImageCount: referenceImageBase64s.length,
-    referenceModes,
+    referenceAnalysis,
   })
 
   console.log('[Content Studio] Generating image...', {
@@ -95,24 +203,15 @@ export async function generateImage(
     aspectRatio,
     brandAssets: brandAssetUrls.length,
     referenceImages: referenceImageBase64s.length,
+    hasReferenceAnalysis: !!referenceAnalysis,
     promptLength: assembledPrompt.length,
   })
 
-  // Build multimodal content: images FIRST so the model sees them before reading instructions
+  // Build content parts — only brand assets as inline images (reference style is now text)
   type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
   const parts: Part[] = []
 
-  // 1. Reference images first — model needs to see these before the text instructions
-  let refCount = 0
-  for (const refBase64 of referenceImageBase64s) {
-    const parsed = parseBase64Image(refBase64)
-    if (parsed) {
-      parts.push({ inlineData: parsed })
-      refCount++
-    }
-  }
-
-  // 2. Brand assets
+  // Brand assets as inline images (these need visual matching)
   let assetCount = 0
   for (const assetUrl of brandAssetUrls) {
     const fetched = await fetchImageAsBase64(assetUrl)
@@ -122,11 +221,10 @@ export async function generateImage(
     }
   }
 
-  // 3. Text prompt AFTER images — references what the model has already seen
+  // Text prompt (includes the reference analysis as concrete text)
   parts.push({ text: assembledPrompt })
 
-  console.log('[Content Studio] Multimodal parts:', {
-    referenceImages: refCount,
+  console.log('[Content Studio] Generation parts:', {
     brandAssets: assetCount,
     textLength: assembledPrompt.length,
     totalParts: parts.length,
@@ -141,7 +239,7 @@ export async function generateImage(
     },
   }
 
-  // Models to try in order — both are multimodal, so reference images always work
+  // Models to try in order
   const models = [
     { id: IMAGE_MODELS.GEMINI_31_FLASH, label: 'Gemini 3.1 Flash' },
     { id: IMAGE_MODELS.GEMINI_3_PRO, label: 'Gemini 3.0 Pro' },
