@@ -9,11 +9,11 @@
 import { GoogleGenAI } from '@google/genai'
 import { buildPrompt, type StylePreset, type AspectRatio } from '@/lib/config/content-studio'
 
-// Model hierarchy (best to fallback)
+// Model hierarchy: 3.1 Flash (fast + refined) → 3.0 Pro (fallback)
+// Both are multimodal — reference images and brand assets always work.
 const IMAGE_MODELS = {
+  GEMINI_31_FLASH: 'gemini-3.1-flash-image-preview',
   GEMINI_3_PRO: 'gemini-3-pro-image-preview',
-  IMAGEN_4: 'imagen-4.0-generate-001',
-  IMAGEN_3: 'imagen-3.0-generate-002',
 } as const
 
 function getGenAI(): GoogleGenAI {
@@ -77,11 +77,10 @@ export async function generateImage(
     applyBrandContext = true,
   } = params
 
-  // Assemble the final prompt
+  // Assemble the final prompt (aspect ratio handled natively via imageConfig)
   const assembledPrompt = buildPrompt({
     prompt: userPrompt,
     stylePreset,
-    aspectRatio,
     brandContext,
     applyBrandContext,
     brandAssetCount: brandAssetUrls.length,
@@ -117,95 +116,47 @@ export async function generateImage(
     }
   }
 
-  const hasMultimodalInput = parts.length > 1
+  // Shared config — native aspect ratio + resolution via imageConfig
+  const sharedConfig = {
+    responseModalities: ['IMAGE', 'TEXT'] as const,
+    imageConfig: {
+      aspectRatio,
+      imageSize: '1K' as const,
+    },
+  }
 
-  // Try Gemini 3 Pro (supports multimodal)
-  try {
-    console.log(`[Content Studio] Trying ${IMAGE_MODELS.GEMINI_3_PRO}...`)
+  // Models to try in order — both are multimodal, so reference images always work
+  const models = [
+    { id: IMAGE_MODELS.GEMINI_31_FLASH, label: 'Gemini 3.1 Flash' },
+    { id: IMAGE_MODELS.GEMINI_3_PRO, label: 'Gemini 3.0 Pro' },
+  ]
 
-    const response = await ai.models.generateContent({
-      model: IMAGE_MODELS.GEMINI_3_PRO,
-      contents: { parts },
-      config: {
-        responseModalities: ['image', 'text'],
-      },
-    })
+  for (const model of models) {
+    try {
+      console.log(`[Content Studio] Trying ${model.label} (${model.id})...`)
 
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      const anyPart = part as { inlineData?: { data: string; mimeType: string } }
-      if (anyPart.inlineData?.data) {
-        console.log('[Content Studio] Success with Gemini 3 Pro')
-        return {
-          imageBase64: anyPart.inlineData.data,
-          prompt: assembledPrompt,
-          model: IMAGE_MODELS.GEMINI_3_PRO,
-          aspectRatio,
+      const response = await ai.models.generateContent({
+        model: model.id,
+        contents: { parts },
+        config: sharedConfig,
+      })
+
+      for (const part of response.candidates?.[0]?.content?.parts || []) {
+        const anyPart = part as { inlineData?: { data: string; mimeType: string } }
+        if (anyPart.inlineData?.data) {
+          console.log(`[Content Studio] Success with ${model.label}`)
+          return {
+            imageBase64: anyPart.inlineData.data,
+            prompt: assembledPrompt,
+            model: model.id,
+            aspectRatio,
+          }
         }
       }
+      throw new Error('No image in response')
+    } catch (error) {
+      console.error(`[Content Studio] ${model.label} failed:`, error)
     }
-    throw new Error('No image in response')
-  } catch (error) {
-    console.error('[Content Studio] Gemini 3 Pro failed:', error)
-  }
-
-  // Fallback to Imagen 4 (text-only — no multimodal support)
-  if (hasMultimodalInput) {
-    console.log('[Content Studio] Falling back to text-only models (brand assets/references will not be used)')
-  }
-
-  try {
-    console.log(`[Content Studio] Trying ${IMAGE_MODELS.IMAGEN_4}...`)
-
-    const response = await ai.models.generateImages({
-      model: IMAGE_MODELS.IMAGEN_4,
-      prompt: assembledPrompt,
-      config: {
-        numberOfImages: 1,
-        aspectRatio,
-      },
-    })
-
-    const generatedImage = response.generatedImages?.[0]
-    if (generatedImage?.image?.imageBytes) {
-      console.log('[Content Studio] Success with Imagen 4')
-      return {
-        imageBase64: generatedImage.image.imageBytes,
-        prompt: assembledPrompt,
-        model: IMAGE_MODELS.IMAGEN_4,
-        aspectRatio,
-      }
-    }
-    throw new Error('No image in Imagen 4 response')
-  } catch (error) {
-    console.error('[Content Studio] Imagen 4 failed:', error)
-  }
-
-  // Final fallback to Imagen 3
-  try {
-    console.log(`[Content Studio] Trying ${IMAGE_MODELS.IMAGEN_3}...`)
-
-    const response = await ai.models.generateImages({
-      model: IMAGE_MODELS.IMAGEN_3,
-      prompt: assembledPrompt,
-      config: {
-        numberOfImages: 1,
-        aspectRatio,
-      },
-    })
-
-    const generatedImage = response.generatedImages?.[0]
-    if (generatedImage?.image?.imageBytes) {
-      console.log('[Content Studio] Success with Imagen 3')
-      return {
-        imageBase64: generatedImage.image.imageBytes,
-        prompt: assembledPrompt,
-        model: IMAGE_MODELS.IMAGEN_3,
-        aspectRatio,
-      }
-    }
-    throw new Error('No image in Imagen 3 response')
-  } catch (error) {
-    console.error('[Content Studio] Imagen 3 failed:', error)
   }
 
   console.error('[Content Studio] All models failed')

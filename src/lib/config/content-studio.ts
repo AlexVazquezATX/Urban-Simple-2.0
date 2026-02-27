@@ -67,7 +67,7 @@ export const STYLE_PRESET_LIST = Object.values(STYLE_PRESETS)
 // ASPECT RATIOS
 // ============================================
 
-export type AspectRatio = '1:1' | '4:5' | '9:16' | '16:9' | '3:4'
+export type AspectRatio = '1:1' | '4:5' | '5:4' | '9:16' | '16:9' | '3:4' | '4:3' | '2:3' | '3:2' | '21:9'
 
 export interface AspectRatioConfig {
   value: AspectRatio
@@ -81,6 +81,9 @@ export const ASPECT_RATIOS: AspectRatioConfig[] = [
   { value: '9:16', label: '9:16', hint: 'Stories, Reels, TikTok' },
   { value: '16:9', label: '16:9', hint: 'YouTube, headers' },
   { value: '3:4', label: '3:4', hint: 'Pinterest, portraits' },
+  { value: '3:2', label: '3:2', hint: 'Classic photo, landscape' },
+  { value: '2:3', label: '2:3', hint: 'Tall portrait, posters' },
+  { value: '21:9', label: '21:9', hint: 'Ultrawide, cinematic' },
 ]
 
 // ============================================
@@ -111,7 +114,6 @@ export const BRAND_ASSET_CATEGORIES: BrandAssetCategoryConfig[] = [
 export interface PromptAssemblyParams {
   prompt: string
   stylePreset?: StylePreset | null
-  aspectRatio?: AspectRatio
   brandContext?: {
     restaurantName?: string
     primaryColor?: string
@@ -132,7 +134,6 @@ export function buildPrompt(params: PromptAssemblyParams): string {
   const {
     prompt,
     stylePreset,
-    aspectRatio,
     brandContext,
     applyBrandContext = true,
     brandAssetCount = 0,
@@ -140,20 +141,6 @@ export function buildPrompt(params: PromptAssemblyParams): string {
   } = params
 
   const parts: string[] = [prompt.trim()]
-
-  // Aspect ratio instruction (critical for Gemini 3 Pro which has no config param)
-  if (aspectRatio && aspectRatio !== '1:1') {
-    const ASPECT_INSTRUCTIONS: Record<string, string> = {
-      '4:5': 'Generate a PORTRAIT image with 4:5 aspect ratio (taller than wide).',
-      '9:16': 'Generate a tall VERTICAL image with 9:16 aspect ratio (phone screen / story format).',
-      '16:9': 'Generate a LANDSCAPE image with 16:9 aspect ratio (wide, cinematic).',
-      '3:4': 'Generate a PORTRAIT image with 3:4 aspect ratio (slightly taller than wide).',
-    }
-    const instruction = ASPECT_INSTRUCTIONS[aspectRatio]
-    if (instruction) {
-      parts.push(instruction)
-    }
-  }
 
   // Style preset modifier (skip for 'custom' or when not set)
   if (stylePreset && stylePreset !== 'custom') {
