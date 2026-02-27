@@ -111,7 +111,7 @@ export async function POST(request: Request) {
 
     // Save an already-generated image to the library
     if (action === 'save') {
-      const { imageBase64, imageUrl } = body
+      const { imageBase64, imageUrl, aiPrompt, aiModel } = body
 
       if (!imageBase64 && !imageUrl) {
         return NextResponse.json(
@@ -135,7 +135,9 @@ export async function POST(request: Request) {
         aspectRatio: (aspectRatio || '1:1') as AspectRatio,
         width: dimensions.width,
         height: dimensions.height,
-        isAiGenerated: !!imageBase64, // Base64 usually means AI-generated
+        isAiGenerated: !!imageBase64,
+        aiPrompt: aiPrompt || undefined,
+        aiModel: aiModel || undefined,
         category: imageType || 'content',
       })
 

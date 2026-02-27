@@ -251,75 +251,165 @@ export default function CreativeDetailPage({
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2 text-sm text-warm-500">
-          <Link href="/creative-hub/images" className="hover:text-warm-700 transition-colors">
-            Images
-          </Link>
-          <span>/</span>
-          <span className="text-warm-900 font-medium truncate max-w-[300px]">{name}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={handleDelete}>
-            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
-            Delete
-          </Button>
-          <Button
-            size="sm"
-            className="bg-warm-900 hover:bg-warm-800 text-white"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? (
-              <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-            ) : null}
-            Save Changes
-          </Button>
+      <div className="mb-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-xs text-warm-400 mb-1">
+              <Link href="/creative-hub" className="hover:text-warm-600 transition-colors">
+                Content
+              </Link>
+              <span>/</span>
+              <Link href="/creative-hub/images" className="hover:text-warm-600 transition-colors">
+                Creatives
+              </Link>
+              <span>/</span>
+              <span className="text-warm-500 truncate max-w-50">{name}</span>
+            </div>
+            <h1 className="text-xl font-semibold text-warm-900">Edit Creative</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleDelete}>
+              <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+              Delete
+            </Button>
+            <Button
+              size="sm"
+              className="bg-warm-900 hover:bg-warm-800 text-white"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+              ) : null}
+              Save Changes
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Two-Column Layout */}
-      <div className="grid lg:grid-cols-[1fr,1.2fr] gap-6">
-        {/* Left: Image */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {/* Left: Image Card */}
         <div>
-          <div
-            className="relative bg-warm-50 rounded-sm border border-warm-200 overflow-hidden cursor-pointer group"
-            onClick={() => setLightboxOpen(true)}
-          >
-            {imageSrc && (
-              <img
-                src={imageSrc}
-                alt={name}
-                className="w-full h-auto"
-              />
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-              <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-70 transition-opacity" />
+          <div className="bg-white rounded-lg border border-warm-200 overflow-hidden">
+            <div
+              className="relative cursor-pointer group"
+              onClick={() => setLightboxOpen(true)}
+            >
+              {imageSrc && (
+                <img
+                  src={imageSrc}
+                  alt={name}
+                  className="w-full h-auto max-h-125 object-contain bg-warm-50"
+                />
+              )}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-70 transition-opacity" />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-3 border-t border-warm-100">
+              <div className="flex items-center gap-2">
+                {image.isAiGenerated && (
+                  <Badge className="bg-ocean-500 text-white text-[10px]">AI Generated</Badge>
+                )}
+                <span className="text-xs text-warm-500 capitalize">
+                  {image.imageType.replace('_', ' ')} &middot; {image.aspectRatio}
+                </span>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Download className="w-3.5 h-3.5 mr-1.5" />
+                Download
+              </Button>
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center gap-2">
-              {image.isAiGenerated && (
-                <Badge className="bg-ocean-500 text-white">AI Generated</Badge>
-              )}
-              <span className="text-xs text-warm-500 capitalize">
-                {image.imageType.replace('_', ' ')} &middot; {image.aspectRatio}
-              </span>
+          {/* Status & Queue — moved below image on left side */}
+          <div className="bg-white rounded-lg border border-warm-200 p-5 mt-4">
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-warm-600 mb-2 block">Status</label>
+                <div className="flex gap-1">
+                  {['draft', 'approved', 'archived'].map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => setStatus(s)}
+                      className={`flex-1 px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors capitalize ${
+                        status === s
+                          ? s === 'draft'
+                            ? 'bg-amber-50 border-amber-300 text-amber-700'
+                            : s === 'approved'
+                              ? 'bg-green-50 border-green-300 text-green-700'
+                              : 'bg-warm-100 border-warm-300 text-warm-600'
+                          : 'bg-white border-warm-200 text-warm-400 hover:border-warm-300'
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-warm-600 mb-2 block">Queue Status</label>
+                <p className="text-[10px] text-warm-400 mb-1.5">
+                  Pending = ready to post, Passed = skip, Posted = done
+                </p>
+                <div className="flex gap-1">
+                  {['pending', 'passed', 'posted'].map((q) => (
+                    <button
+                      key={q}
+                      onClick={() => setQueueStatus(q)}
+                      className={`flex-1 px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors capitalize ${
+                        queueStatus === q
+                          ? q === 'pending'
+                            ? 'bg-blue-50 border-blue-300 text-blue-700'
+                            : q === 'passed'
+                              ? 'bg-warm-100 border-warm-300 text-warm-600'
+                              : 'bg-green-50 border-green-300 text-green-700'
+                          : 'bg-white border-warm-200 text-warm-400 hover:border-warm-300'
+                      }`}
+                    >
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-warm-600 mb-1 block">Priority Rank</label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min={1}
+                    value={priorityRank}
+                    onChange={(e) => setPriorityRank(e.target.value)}
+                    placeholder="—"
+                    className="w-20 text-sm h-8"
+                  />
+                  {priorityRank && (
+                    <button
+                      onClick={() => setPriorityRank('')}
+                      className="text-xs text-warm-400 hover:text-warm-600"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-warm-400 mt-1">
+                  Lower numbers = higher priority (1 is first)
+                </p>
+              </div>
             </div>
-            <Button variant="outline" size="sm" onClick={handleDownload}>
-              <Download className="w-3.5 h-3.5 mr-1.5" />
-              Download
-            </Button>
           </div>
         </div>
 
         {/* Right: Form */}
         <div className="space-y-5">
           {/* Social Media Copy */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-warm-900">Social Media Copy</h2>
+          <div className="bg-white rounded-lg border border-warm-200 p-5">
+            <div className="flex items-center justify-between mb-1">
+              <h2 className="text-base font-semibold text-warm-900">Social Media Copy</h2>
               <Button
                 variant="outline"
                 size="sm"
@@ -334,6 +424,9 @@ export default function CreativeDetailPage({
                 Generate with AI
               </Button>
             </div>
+            <p className="text-xs text-warm-400 mb-4">
+              Add captions and messaging for each platform. Use the copy buttons to easily paste into scheduling tools.
+            </p>
 
             {/* Platform tabs */}
             <div className="flex gap-1 mb-3 border-b border-warm-100">
@@ -415,89 +508,20 @@ export default function CreativeDetailPage({
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Status & Queue */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
-            <div className="space-y-4">
-              <div>
-                <label className="text-xs font-medium text-warm-600 mb-2 block">Status</label>
-                <div className="flex gap-1">
-                  {['draft', 'approved', 'archived'].map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setStatus(s)}
-                      className={`flex-1 px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors capitalize ${
-                        status === s
-                          ? s === 'draft'
-                            ? 'bg-amber-50 border-amber-300 text-amber-700'
-                            : s === 'approved'
-                              ? 'bg-green-50 border-green-300 text-green-700'
-                              : 'bg-warm-100 border-warm-300 text-warm-600'
-                          : 'bg-white border-warm-200 text-warm-400 hover:border-warm-300'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-warm-600 mb-2 block">Queue Status</label>
-                <p className="text-[10px] text-warm-400 mb-1.5">
-                  Pending = ready to post, Passed = skip, Posted = done
-                </p>
-                <div className="flex gap-1">
-                  {['pending', 'passed', 'posted'].map((q) => (
-                    <button
-                      key={q}
-                      onClick={() => setQueueStatus(q)}
-                      className={`flex-1 px-3 py-1.5 rounded-sm text-sm font-medium border transition-colors capitalize ${
-                        queueStatus === q
-                          ? q === 'pending'
-                            ? 'bg-blue-50 border-blue-300 text-blue-700'
-                            : q === 'passed'
-                              ? 'bg-warm-100 border-warm-300 text-warm-600'
-                              : 'bg-green-50 border-green-300 text-green-700'
-                          : 'bg-white border-warm-200 text-warm-400 hover:border-warm-300'
-                      }`}
-                    >
-                      {q}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-warm-600 mb-1 block">Priority Rank</label>
-                <div className="flex items-center gap-2">
-                  <Input
-                    type="number"
-                    min={1}
-                    value={priorityRank}
-                    onChange={(e) => setPriorityRank(e.target.value)}
-                    placeholder="—"
-                    className="w-20 text-sm h-8"
-                  />
-                  {priorityRank && (
-                    <button
-                      onClick={() => setPriorityRank('')}
-                      className="text-xs text-warm-400 hover:text-warm-600"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-                <p className="text-[10px] text-warm-400 mt-1">
-                  Lower numbers = higher priority (1 is first)
-                </p>
-              </div>
+            {/* Tips */}
+            <div className="mt-4 bg-warm-50 rounded-sm border border-warm-100 p-3">
+              <p className="text-xs font-medium text-warm-600 mb-1.5">Tips for great social copy</p>
+              <ul className="text-[11px] text-warm-500 space-y-0.5">
+                <li>&bull; Instagram: Use 3-5 relevant hashtags for discoverability</li>
+                <li>&bull; Facebook: Keep it conversational and include a call-to-action</li>
+                <li>&bull; X/Twitter: Short and punchy works best &mdash; use threads for longer content</li>
+              </ul>
             </div>
           </div>
 
           {/* Metadata */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5 space-y-3">
+          <div className="bg-white rounded-lg border border-warm-200 p-5 space-y-3">
             <div>
               <label className="text-xs font-medium text-warm-600 mb-1 block">Title</label>
               <Input
@@ -538,7 +562,7 @@ export default function CreativeDetailPage({
 
           {/* Generation Prompt */}
           {image.aiPrompt && (
-            <div className="bg-white rounded-sm border border-warm-200 p-5">
+            <div className="bg-white rounded-lg border border-warm-200 p-5">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-warm-600">Generation Prompt</h3>
                 <Link

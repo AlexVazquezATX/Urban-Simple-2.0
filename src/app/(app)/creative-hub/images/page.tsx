@@ -17,7 +17,7 @@ import {
   List,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
@@ -373,9 +373,9 @@ export default function ImageLibraryPage() {
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map((image, index) => (
-            <Card
+            <div
               key={image.id}
-              className="group overflow-hidden cursor-pointer"
+              className="group overflow-hidden cursor-pointer rounded-lg border bg-white shadow-sm hover:shadow-md transition-shadow"
               onClick={() => openLightbox(index)}
             >
               <div className="aspect-square relative">
@@ -385,15 +385,16 @@ export default function ImageLibraryPage() {
                   className="w-full h-full object-cover"
                 />
                 {image.isAiGenerated && (
-                  <Badge className="absolute top-2 left-2 bg-ocean-500">
+                  <Badge className="absolute top-2 right-2 bg-ocean-500">
                     <Sparkles className="w-3 h-3 mr-1" />
                     AI
                   </Badge>
                 )}
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="secondary"
+                    className="h-8 w-8"
                     onClick={(e) => {
                       e.stopPropagation()
                       const link = document.createElement('a')
@@ -405,8 +406,9 @@ export default function ImageLibraryPage() {
                     <Download className="w-4 h-4" />
                   </Button>
                   <Button
-                    size="sm"
+                    size="icon"
                     variant="destructive"
+                    className="h-8 w-8"
                     onClick={(e) => {
                       e.stopPropagation()
                       handleDelete(image.id)
@@ -416,18 +418,18 @@ export default function ImageLibraryPage() {
                   </Button>
                 </div>
               </div>
-              <CardContent className="p-3">
-                <p className="text-sm font-medium truncate">{image.name}</p>
-                <p className="text-xs text-charcoal-500 capitalize">
+              <div className="px-3 py-2.5">
+                <p className="text-sm font-medium text-warm-900 truncate">{image.name}</p>
+                <p className="text-xs text-warm-500 capitalize">
                   {image.imageType.replace('_', ' ')} • {image.aspectRatio}
                 </p>
                 {image.photoCredit && (
-                  <p className="text-xs text-charcoal-400 italic mt-1 truncate">
+                  <p className="text-xs text-warm-400 italic mt-1 truncate">
                     {image.photoCredit}
                   </p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       ) : (

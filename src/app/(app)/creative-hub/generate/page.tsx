@@ -61,6 +61,8 @@ function GenerateContent() {
     setReferenceModes([])
     setSelectedAssets([])
     setGeneratedImage(null)
+    setGeneratedPrompt('')
+    setGeneratedModel('')
   }
 
   const selectedAssetIds = selectedAssets.map((a) => a.id)
@@ -93,6 +95,8 @@ function GenerateContent() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [generatedAspectRatio, setGeneratedAspectRatio] = useState<string>('1:1')
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>('')
+  const [generatedModel, setGeneratedModel] = useState<string>('')
 
   // Save state
   const [isSaving, setIsSaving] = useState(false)
@@ -128,6 +132,8 @@ function GenerateContent() {
       if (data.image?.imageBase64) {
         setGeneratedImage(data.image.imageBase64)
         setGeneratedAspectRatio(data.image.aspectRatio || aspectRatio)
+        setGeneratedPrompt(data.prompt || prompt.trim())
+        setGeneratedModel(data.image.model || '')
         toast.success('Image generated!')
       } else {
         throw new Error('No image returned')
@@ -157,6 +163,8 @@ function GenerateContent() {
           name: `AI Generated - ${prompt.slice(0, 60)}`,
           imageType: 'branded_graphic',
           aspectRatio: generatedAspectRatio,
+          aiPrompt: generatedPrompt || prompt.trim(),
+          aiModel: generatedModel,
         }),
       })
 
