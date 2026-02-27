@@ -7,7 +7,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai'
-import { buildPrompt, type StylePreset, type AspectRatio } from '@/lib/config/content-studio'
+import { buildPrompt, type StylePreset, type AspectRatio, type ReferenceMode } from '@/lib/config/content-studio'
 
 // Model hierarchy: 3.1 Flash (fast + refined) → 3.0 Pro (fallback)
 // Both are multimodal — reference images and brand assets always work.
@@ -40,6 +40,7 @@ export interface GenerateImageParams {
   aspectRatio: AspectRatio
   brandAssetUrls?: string[] // Up to 3 Supabase Storage URLs
   referenceImageBase64s?: string[] // Up to 3 reference images as data URLs
+  referenceModes?: ReferenceMode[] // What to extract from reference images
   brandContext?: {
     restaurantName?: string
     primaryColor?: string
@@ -73,6 +74,7 @@ export async function generateImage(
     aspectRatio,
     brandAssetUrls = [],
     referenceImageBase64s = [],
+    referenceModes = [],
     brandContext,
     applyBrandContext = true,
   } = params
@@ -85,6 +87,7 @@ export async function generateImage(
     applyBrandContext,
     brandAssetCount: brandAssetUrls.length,
     referenceImageCount: referenceImageBase64s.length,
+    referenceModes,
   })
 
   console.log('[Content Studio] Generating image...', {

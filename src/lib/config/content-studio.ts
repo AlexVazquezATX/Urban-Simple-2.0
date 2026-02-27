@@ -108,6 +108,50 @@ export const BRAND_ASSET_CATEGORIES: BrandAssetCategoryConfig[] = [
 ]
 
 // ============================================
+// REFERENCE IMAGE MODES
+// ============================================
+
+export type ReferenceMode = 'style' | 'layout' | 'palette' | 'mood'
+
+export interface ReferenceModeConfig {
+  id: ReferenceMode
+  label: string
+  description: string
+  promptInstruction: string
+}
+
+export const REFERENCE_MODES: ReferenceModeConfig[] = [
+  {
+    id: 'style',
+    label: 'Style',
+    description: 'Match the visual style (watercolor, anime, CGI, photo, etc.)',
+    promptInstruction:
+      'Analyze the VISUAL STYLE of the reference image(s) — identify the rendering technique (e.g. watercolor, anime, photorealistic, CGI, oil painting, vector illustration, pencil sketch) and apply that exact same style to the generated image. Match the line work, texture quality, shading approach, and level of detail.',
+  },
+  {
+    id: 'layout',
+    label: 'Layout',
+    description: 'Match the scene composition, setting, and camera angle',
+    promptInstruction:
+      'Replicate the LAYOUT and COMPOSITION of the reference image(s) — match the camera angle, perspective, spatial arrangement of elements, foreground/background relationship, and overall scene structure. The setting and environment should closely mirror the reference.',
+  },
+  {
+    id: 'palette',
+    label: 'Color Palette',
+    description: 'Extract and apply the color scheme',
+    promptInstruction:
+      'Extract the COLOR PALETTE from the reference image(s) and apply it to the generated image. Match the dominant colors, accent colors, color temperature (warm/cool), saturation levels, and overall tonal range. The final image should feel like it belongs to the same color world.',
+  },
+  {
+    id: 'mood',
+    label: 'Mood',
+    description: 'Match the lighting, atmosphere, and emotional tone',
+    promptInstruction:
+      'Capture the MOOD and ATMOSPHERE of the reference image(s) — match the lighting direction, intensity, and quality (soft/harsh/dramatic), the emotional tone (energetic, calm, moody, luxurious), and the overall atmospheric feeling (hazy, crisp, dreamy, gritty).',
+  },
+]
+
+// ============================================
 // PROMPT ASSEMBLY
 // ============================================
 
@@ -122,6 +166,7 @@ export interface PromptAssemblyParams {
   applyBrandContext?: boolean
   brandAssetCount?: number
   referenceImageCount?: number
+  referenceModes?: ReferenceMode[]
 }
 
 /**
@@ -138,6 +183,7 @@ export function buildPrompt(params: PromptAssemblyParams): string {
     applyBrandContext = true,
     brandAssetCount = 0,
     referenceImageCount = 0,
+    referenceModes = [],
   } = params
 
   const parts: string[] = [prompt.trim()]
@@ -175,9 +221,26 @@ export function buildPrompt(params: PromptAssemblyParams): string {
 
     if (referenceImageCount > 0) {
       const refs = Array.from({ length: referenceImageCount }, () => `Image ${imageIndex++}`)
-      instructions.push(
-        `${refs.join(', ')}: Style/scene reference(s) — use these for composition, lighting, mood, and aesthetic inspiration.`
-      )
+      const refLabel = refs.join(', ')
+
+      if (referenceModes.length > 0) {
+        // Specific modes selected — build targeted instructions
+        const modeInstructions = referenceModes
+          .map((modeId) => {
+            const mode = REFERENCE_MODES.find((m) => m.id === modeId)
+            return mode?.promptInstruction
+          })
+          .filter(Boolean)
+
+        instructions.push(
+          `${refLabel}: Reference image(s).\n${modeInstructions.join('\n')}`
+        )
+      } else {
+        // No modes selected — general inspiration (default behavior)
+        instructions.push(
+          `${refLabel}: Reference image(s) — use these for general composition, lighting, mood, and aesthetic inspiration.`
+        )
+      }
     }
 
     if (brandAssetCount > 0) {
@@ -188,7 +251,7 @@ export function buildPrompt(params: PromptAssemblyParams): string {
     }
 
     parts.push(
-      `REFERENCE IMAGE INSTRUCTIONS:\n${instructions.join('\n')}\n\nCombine the style/mood from any scene references with the exact appearance from the brand assets to create a cohesive image.`
+      `REFERENCE IMAGE INSTRUCTIONS:\n${instructions.join('\n')}`
     )
   }
 

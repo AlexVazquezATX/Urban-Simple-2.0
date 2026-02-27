@@ -1,12 +1,15 @@
 'use client'
 
 import { useRef } from 'react'
-import { Plus, X, ImageIcon } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { REFERENCE_MODES, type ReferenceMode } from '@/lib/config/content-studio'
 
 interface ReferenceImageUploadProps {
   images: string[] // base64 data URLs
   onChange: (images: string[]) => void
+  referenceModes: ReferenceMode[]
+  onReferenceModesChange: (modes: ReferenceMode[]) => void
   maxImages?: number
   disabled?: boolean
 }
@@ -48,6 +51,8 @@ async function compressImage(file: File, maxSize = 1024): Promise<string> {
 export function ReferenceImageUpload({
   images,
   onChange,
+  referenceModes,
+  onReferenceModesChange,
   maxImages = 3,
   disabled,
 }: ReferenceImageUploadProps) {
@@ -73,7 +78,20 @@ export function ReferenceImageUpload({
   }
 
   const removeImage = (index: number) => {
-    onChange(images.filter((_, i) => i !== index))
+    const updated = images.filter((_, i) => i !== index)
+    onChange(updated)
+    // Clear modes if no images left
+    if (updated.length === 0 && referenceModes.length > 0) {
+      onReferenceModesChange([])
+    }
+  }
+
+  const toggleMode = (modeId: ReferenceMode) => {
+    if (referenceModes.includes(modeId)) {
+      onReferenceModesChange(referenceModes.filter((m) => m !== modeId))
+    } else {
+      onReferenceModesChange([...referenceModes, modeId])
+    }
   }
 
   return (
@@ -82,7 +100,7 @@ export function ReferenceImageUpload({
         <div>
           <label className="text-sm font-medium text-warm-900">Reference Images</label>
           <p className="text-xs text-warm-400 mt-0.5">
-            Upload images for composition/mood inspiration
+            Upload images to guide the generation
           </p>
         </div>
         <span className="text-xs text-warm-400">Optional</span>
@@ -126,6 +144,43 @@ export function ReferenceImageUpload({
           </label>
         )}
       </div>
+
+      {/* Reference mode pills — only visible when images are uploaded */}
+      {images.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-warm-100">
+          <p className="text-xs text-warm-500 mb-2">
+            What should I extract from {images.length === 1 ? 'this image' : 'these images'}?
+          </p>
+          <div className="flex gap-1.5 flex-wrap">
+            {REFERENCE_MODES.map((mode) => {
+              const isActive = referenceModes.includes(mode.id)
+              return (
+                <button
+                  key={mode.id}
+                  type="button"
+                  onClick={() => toggleMode(mode.id)}
+                  disabled={disabled}
+                  title={mode.description}
+                  className={cn(
+                    'px-2.5 py-1 rounded-full text-xs font-medium transition-all border',
+                    isActive
+                      ? 'bg-ocean-50 text-ocean-700 border-ocean-300'
+                      : 'bg-warm-50 text-warm-500 border-warm-200 hover:border-warm-300 hover:text-warm-600',
+                    disabled && 'opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  {mode.label}
+                </button>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-warm-400 mt-1.5">
+            {referenceModes.length === 0
+              ? 'None selected — general inspiration will be used'
+              : `${referenceModes.length} mode${referenceModes.length > 1 ? 's' : ''} active`}
+          </p>
+        </div>
+      )}
     </div>
   )
 }

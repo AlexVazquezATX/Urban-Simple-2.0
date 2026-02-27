@@ -14,7 +14,7 @@ import {
 } from '@/components/content-studio'
 import { ContentPreviewPanel } from '@/components/content-studio/preview-panel'
 import { toast } from 'sonner'
-import type { StylePreset, AspectRatio } from '@/lib/config/content-studio'
+import type { StylePreset, AspectRatio, ReferenceMode } from '@/lib/config/content-studio'
 
 interface SelectedAsset {
   id: string
@@ -38,6 +38,7 @@ function GenerateContent() {
   const [stylePreset, setStylePreset] = useState<StylePreset | null>(null)
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1')
   const [referenceImages, setReferenceImages] = useState<string[]>([])
+  const [referenceModes, setReferenceModes] = useState<ReferenceMode[]>([])
 
   // Brand assets
   const [selectedAssets, setSelectedAssets] = useState<SelectedAsset[]>([])
@@ -95,6 +96,7 @@ function GenerateContent() {
           aspectRatio,
           brandAssetIds: selectedAssetIds,
           referenceImages,
+          referenceModes: referenceModes.length > 0 ? referenceModes : undefined,
         }),
       })
 
@@ -197,6 +199,8 @@ function GenerateContent() {
           <ReferenceImageUpload
             images={referenceImages}
             onChange={setReferenceImages}
+            referenceModes={referenceModes}
+            onReferenceModesChange={setReferenceModes}
             disabled={isGenerating}
           />
 

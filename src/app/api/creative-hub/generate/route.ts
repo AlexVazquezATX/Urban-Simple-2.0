@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { generateImage } from '@/lib/ai/content-image-generator'
 import { getBrandAssetsByIds, incrementAssetUsage } from '@/lib/services/brand-asset-service'
-import type { StylePreset, AspectRatio } from '@/lib/config/content-studio'
+import type { StylePreset, AspectRatio, ReferenceMode } from '@/lib/config/content-studio'
 
 export async function POST(request: Request) {
   try {
@@ -18,6 +18,7 @@ export async function POST(request: Request) {
       aspectRatio = '1:1',
       brandAssetIds = [],
       referenceImages = [],
+      referenceModes = [],
     } = body
 
     if (!prompt?.trim()) {
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
       aspectRatio: aspectRatio as AspectRatio,
       brandAssetUrls,
       referenceImageBase64s: referenceImages,
+      referenceModes: referenceModes as ReferenceMode[],
     })
 
     if (!result) {
