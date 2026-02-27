@@ -25,6 +25,12 @@ export interface PlanFeatures {
   smartPrompts: boolean
   /** Display name for the plan */
   displayName: string
+  /** Max brand assets (-1 = unlimited) */
+  maxBrandAssets: number
+  /** Can upload reference images for generation */
+  referenceImages: boolean
+  /** Can access all style presets in Content Studio */
+  allStylePresets: boolean
 }
 
 export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
@@ -35,6 +41,9 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     customPosts: false,
     smartPrompts: true,
     displayName: 'Free',
+    maxBrandAssets: 5,
+    referenceImages: false,
+    allStylePresets: false,
   },
   STARTER: {
     maxBrandKits: 1,
@@ -43,6 +52,9 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     customPosts: false,
     smartPrompts: true,
     displayName: 'Starter',
+    maxBrandAssets: 20,
+    referenceImages: true,
+    allStylePresets: true,
   },
   PROFESSIONAL: {
     maxBrandKits: 3,
@@ -51,6 +63,9 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     customPosts: true,
     smartPrompts: true,
     displayName: 'Pro',
+    maxBrandAssets: 50,
+    referenceImages: true,
+    allStylePresets: true,
   },
   ENTERPRISE: {
     maxBrandKits: -1, // unlimited
@@ -59,6 +74,9 @@ export const PLAN_FEATURES: Record<StudioPlanTier, PlanFeatures> = {
     customPosts: true,
     smartPrompts: true,
     displayName: 'Max',
+    maxBrandAssets: -1, // unlimited
+    referenceImages: true,
+    allStylePresets: true,
   },
 }
 
@@ -122,10 +140,10 @@ export const PLAN_PRICING: PlanPricing[] = [
     description: 'Experience the full Creative Studio',
     features: [
       '10 generations total',
-      'All photography styles',
-      'Branded post generator',
+      'Freeform prompt — any style',
+      'Product + Custom presets',
+      '5 brand assets',
       '1 brand kit',
-      'Smart prompts',
     ],
     cta: 'Get Started Free',
   },
@@ -136,10 +154,10 @@ export const PLAN_PRICING: PlanPricing[] = [
     description: 'For restaurants getting started with AI content',
     features: [
       '100 generations per month',
-      'All photography styles',
-      'Branded post generator',
+      'All style presets',
+      'Reference images',
+      '20 brand assets',
       '1 brand kit',
-      'Smart prompts',
     ],
     cta: 'Start Starter Plan',
   },
@@ -150,11 +168,10 @@ export const PLAN_PRICING: PlanPricing[] = [
     description: 'For busy restaurants and small chains',
     features: [
       '300 generations per month',
-      'All photography styles',
-      'Branded post generator',
+      'All style presets',
+      'Reference images',
+      '50 brand assets',
       '3 brand kits',
-      'Custom freeform posts',
-      'Smart prompts',
     ],
     cta: 'Start Pro Plan',
     highlighted: true,
@@ -166,11 +183,10 @@ export const PLAN_PRICING: PlanPricing[] = [
     description: 'For busy restaurants and small chains',
     features: [
       '1,000 generations per month',
-      'All photography styles',
-      'Branded post generator',
+      'All style presets',
+      'Reference images',
+      'Unlimited brand assets',
       'Unlimited brand kits',
-      'Custom freeform posts',
-      'Smart prompts',
       'Priority support',
     ],
     cta: 'Start Max Plan',

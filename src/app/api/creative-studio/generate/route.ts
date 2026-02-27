@@ -1,18 +1,23 @@
 /**
- * Restaurant Creative Studio - Generate API
+ * Content Studio - Generate API
  *
- * Handles AI image generation for:
- * - Food photo enhancement (multimodal with dish reference)
- * - Branded promotional posts
+ * Unified endpoint for AI image generation.
+ * Supports freeform prompts, brand assets, reference images, and style presets.
+ *
+ * Also maintains backward compatibility with legacy food_photo/branded_post modes.
  */
 
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import {
+  generateImage,
+  base64ToDataUrl,
+} from '@/lib/ai/content-image-generator'
+import {
   generateFoodPhoto,
   generateBrandedPost,
-  base64ToDataUrl,
+  base64ToDataUrl as legacyBase64ToDataUrl,
 } from '@/lib/ai/restaurant-image-generator'
 import {
   createStudioContent,
@@ -27,7 +32,10 @@ import {
   isStyleAllowed,
   isOutputFormatAllowed,
 } from '@/lib/config/studio-plans'
+import type { AspectRatio, StylePreset } from '@/lib/config/content-studio'
 import type { OutputFormatId, BrandedPostType } from '@/lib/config/restaurant-studio'
+
+const VALID_ASPECT_RATIOS: AspectRatio[] = ['1:1', '4:5', '9:16', '16:9', '3:4']
 
 export async function POST(request: Request) {
   try {
@@ -55,15 +63,109 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { mode, saveToLibrary = false } = body
+    const { mode } = body
     const startTime = Date.now()
     const planTier = usageCheck.planTier!
-    const features = getFeatureAccess(planTier)
 
     // ============================================
-    // FOOD PHOTO MODE
+    // NEW: CONTENT STUDIO MODE (unified freeform)
+    // ============================================
+    if (mode === 'content_studio' || !mode) {
+      const {
+        prompt,
+        stylePreset,
+        aspectRatio = '1:1',
+        brandAssetUrls,
+        referenceImages,
+        brandKitId,
+        applyBrandContext = true,
+      } = body
+
+      if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
+        return NextResponse.json(
+          { error: 'A prompt is required' },
+          { status: 400 }
+        )
+      }
+
+      if (!VALID_ASPECT_RATIOS.includes(aspectRatio)) {
+        return NextResponse.json(
+          { error: 'Invalid aspect ratio' },
+          { status: 400 }
+        )
+      }
+
+      // Get brand kit for context if specified
+      let brandContext = null
+      if (brandKitId && applyBrandContext) {
+        const brandKit = await getBrandKitById(brandKitId)
+        if (brandKit) {
+          brandContext = {
+            restaurantName: brandKit.restaurantName,
+            primaryColor: brandKit.primaryColor,
+            secondaryColor: brandKit.secondaryColor || undefined,
+          }
+        }
+      }
+
+      console.log('[Content Studio API] Generating...', {
+        promptLength: prompt.length,
+        stylePreset: stylePreset || 'none',
+        aspectRatio,
+        brandAssets: brandAssetUrls?.length || 0,
+        referenceImages: referenceImages?.length || 0,
+        hasBrandContext: !!brandContext,
+      })
+
+      const result = await generateImage({
+        prompt: prompt.trim(),
+        stylePreset: (stylePreset as StylePreset) || null,
+        aspectRatio: aspectRatio as AspectRatio,
+        brandAssetUrls: brandAssetUrls || [],
+        referenceImageBase64s: referenceImages || [],
+        brandContext,
+        applyBrandContext,
+      })
+
+      if (!result) {
+        await logGeneration({
+          companyId: user.companyId,
+          mode: 'content_studio',
+          success: false,
+          errorMessage: 'All models failed to generate image',
+          generationTime: Date.now() - startTime,
+        })
+        return NextResponse.json(
+          { error: 'Failed to generate image. Please try again.' },
+          { status: 500 }
+        )
+      }
+
+      // Log success
+      await logGeneration({
+        companyId: user.companyId,
+        mode: 'content_studio',
+        aiModel: result.model,
+        success: true,
+        generationTime: Date.now() - startTime,
+      })
+
+      return NextResponse.json({
+        image: {
+          imageBase64: result.imageBase64,
+          aspectRatio: result.aspectRatio,
+          model: result.model,
+        },
+        prompt: result.prompt,
+      })
+    }
+
+    // ============================================
+    // LEGACY: FOOD PHOTO MODE
     // ============================================
     if (mode === 'food_photo') {
+      const features = getFeatureAccess(planTier)
+      const { saveToLibrary = false } = body
       const {
         dishPhotoBase64,
         dishDescription,
@@ -75,41 +177,23 @@ export async function POST(request: Request) {
       } = body
 
       if (!dishPhotoBase64) {
-        return NextResponse.json(
-          { error: 'Dish photo is required' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Dish photo is required' }, { status: 400 })
       }
-
       if (!outputFormat) {
-        return NextResponse.json(
-          { error: 'Output format is required' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Output format is required' }, { status: 400 })
       }
-
-      // Feature gate: check output format access
       if (!isOutputFormatAllowed(planTier, outputFormat)) {
         return NextResponse.json(
-          { error: 'This output format requires a paid plan. Upgrade to unlock all formats.' },
+          { error: 'This output format requires a paid plan.' },
           { status: 403 }
         )
       }
-
-      // Feature gate: check style access
       if (style && !isStyleAllowed(planTier, style)) {
         return NextResponse.json(
-          { error: 'This style requires a paid plan. Upgrade to unlock all styles.' },
+          { error: 'This style requires a paid plan.' },
           { status: 403 }
         )
       }
-
-      console.log('[Creative Studio API] Generating food photo...', {
-        outputFormat,
-        cuisineType,
-        hasDescription: !!dishDescription,
-        hasStyleReference: !!styleReferenceBase64,
-      })
 
       const result = await generateFoodPhoto({
         dishPhotoBase64,
@@ -122,7 +206,6 @@ export async function POST(request: Request) {
       })
 
       if (!result) {
-        // Log failed generation
         await logGeneration({
           companyId: user.companyId,
           mode: 'food_photo',
@@ -137,7 +220,6 @@ export async function POST(request: Request) {
         )
       }
 
-      // Log successful generation
       await logGeneration({
         companyId: user.companyId,
         mode: 'food_photo',
@@ -147,14 +229,13 @@ export async function POST(request: Request) {
         generationTime: Date.now() - startTime,
       })
 
-      // Optionally save to library
       let savedContent = null
       if (saveToLibrary) {
         savedContent = await createStudioContent({
           companyId: user.companyId,
           mode: 'food_photo',
           outputFormat: outputFormat as OutputFormatId,
-          generatedImageUrl: base64ToDataUrl(result.imageBase64),
+          generatedImageUrl: legacyBase64ToDataUrl(result.imageBase64),
           aiPrompt: result.prompt,
           aiModel: result.model,
           status: 'saved',
@@ -172,13 +253,15 @@ export async function POST(request: Request) {
     }
 
     // ============================================
-    // BRANDED POST MODE
+    // LEGACY: BRANDED POST MODE
     // ============================================
     if (mode === 'branded_post') {
-      // Feature gate: branded posts require paid plan
+      const features = getFeatureAccess(planTier)
+      const { saveToLibrary = false } = body
+
       if (!features.brandedPosts) {
         return NextResponse.json(
-          { error: 'Branded posts require a paid plan. Upgrade to create branded content.' },
+          { error: 'Branded posts require a paid plan.' },
           { status: 403 }
         )
       }
@@ -198,34 +281,20 @@ export async function POST(request: Request) {
         additionalInstructions,
       } = body
 
-      // Feature gate: custom post type requires Pro or Max
       if (postType === 'custom' && !features.customPosts) {
         return NextResponse.json(
-          { error: 'Custom posts require a Pro or Max plan. Upgrade to unlock freeform creation.' },
+          { error: 'Custom posts require a Pro or Max plan.' },
           { status: 403 }
         )
       }
-
       if (!postType) {
-        return NextResponse.json(
-          { error: 'Post type is required' },
-          { status: 400 }
-        )
+        return NextResponse.json({ error: 'Post type is required' }, { status: 400 })
       }
 
-      // Get brand kit if specified
       let brandKit = null
       if (brandKitId) {
         brandKit = await getBrandKitById(brandKitId)
       }
-
-      console.log('[Creative Studio API] Generating branded post...', {
-        postType,
-        hasHeadline: !!headline,
-        hasBrandKit: !!brandKit,
-        hasSourceImage: !!sourceImageBase64,
-        hasLogo: !!logoBase64,
-      })
 
       const result = await generateBrandedPost({
         postType: postType as BrandedPostType,
@@ -245,7 +314,6 @@ export async function POST(request: Request) {
       })
 
       if (!result) {
-        // Log failed generation
         await logGeneration({
           companyId: user.companyId,
           mode: 'branded_post',
@@ -259,7 +327,6 @@ export async function POST(request: Request) {
         )
       }
 
-      // Log successful generation
       await logGeneration({
         companyId: user.companyId,
         mode: 'branded_post',
@@ -268,14 +335,13 @@ export async function POST(request: Request) {
         generationTime: Date.now() - startTime,
       })
 
-      // Optionally save to library
       let savedContent = null
       if (saveToLibrary) {
         savedContent = await createStudioContent({
           companyId: user.companyId,
           brandKitId: brandKitId || undefined,
           mode: 'branded_post',
-          generatedImageUrl: base64ToDataUrl(result.imageBase64),
+          generatedImageUrl: legacyBase64ToDataUrl(result.imageBase64),
           headline,
           aiPrompt: result.prompt,
           aiModel: result.model,
@@ -294,17 +360,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(
-      { error: 'Invalid mode. Use "food_photo" or "branded_post"' },
+      { error: 'Invalid mode. Use "content_studio", "food_photo", or "branded_post"' },
       { status: 400 }
     )
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    const errorStack = error instanceof Error ? error.stack : ''
-    console.error('[Creative Studio API] Generation error:', {
-      message: errorMessage,
-      stack: errorStack,
-      error,
-    })
+    console.error('[Content Studio API] Generation error:', errorMessage)
     return NextResponse.json(
       { error: 'Something went wrong generating your image. Please try again.' },
       { status: 500 }

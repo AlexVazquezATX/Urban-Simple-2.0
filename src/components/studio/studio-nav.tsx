@@ -12,6 +12,7 @@ import {
   Camera,
   Layers,
   Palette,
+  ImageIcon,
   User,
   LogOut,
   CreditCard,
@@ -40,7 +41,8 @@ interface UsageData {
 
 const NAV_LINKS = [
   { href: '/studio', label: 'Home', icon: Home, exact: true },
-  { href: '/studio/generate', label: 'Generate', icon: Camera },
+  { href: '/studio/generate', label: 'Create', icon: Camera },
+  { href: '/studio/assets', label: 'Assets', icon: ImageIcon },
   { href: '/studio/gallery', label: 'Gallery', icon: Layers },
   { href: '/studio/brand-kit', label: 'Brand Kit', icon: Palette },
 ]

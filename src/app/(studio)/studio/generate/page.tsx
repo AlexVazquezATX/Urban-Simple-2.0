@@ -1,45 +1,29 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp, Layers } from 'lucide-react'
+import { ArrowLeft, Sparkles, Loader2, ImageIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import {
-  DishPhotoUpload,
-  ModeSelector,
-  OutputFormatSelector,
-  PreviewPanel,
-  BrandedPostForm,
-  ImageSourcePicker,
-  GalleryPickerDialog,
-  UsageBar,
-} from '@/components/creative-studio'
-import {
-  CUISINE_TYPES,
-  STYLE_PREFERENCES,
-  type GenerationMode,
-  type OutputFormatId,
-  type BrandedPostType,
-  OUTPUT_FORMATS,
-} from '@/lib/config/restaurant-studio'
+  PromptInput,
+  StylePresetSelector,
+  AspectRatioPicker,
+  ReferenceImageUpload,
+  BrandContextToggle,
+  ContentPreviewPanel,
+  BrandAssetSelector,
+} from '@/components/content-studio'
+import { UsageBar } from '@/components/creative-studio'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import { ensureWebCompatible } from '@/lib/image-utils'
+import type { StylePreset, AspectRatio } from '@/lib/config/content-studio'
 
 interface BrandKit {
   id: string
   restaurantName: string
   primaryColor: string
   secondaryColor?: string | null
-  preferredStyle?: string | null
-  logoUrl?: string | null
-  iconUrl?: string | null
 }
-
-type LogoChoice = 'none' | 'logo' | 'icon'
 
 export default function StudioGeneratePage() {
   return (
@@ -51,168 +35,102 @@ export default function StudioGeneratePage() {
 
 function StudioGenerateContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
 
-  const initialUrlMode = searchParams.get('mode')
-  const initialSourceImageId = searchParams.get('sourceImageId')
+  // Core state
+  const [prompt, setPrompt] = useState('')
+  const [stylePreset, setStylePreset] = useState<StylePreset | null>(null)
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1')
+  const [referenceImages, setReferenceImages] = useState<string[]>([])
 
-  const [mode, setMode] = useState<GenerationMode>(
-    initialUrlMode === 'branded_post' ? 'branded_post' : 'food_photo'
-  )
+  // Brand assets
+  const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([])
+  const [selectedAssetUrls, setSelectedAssetUrls] = useState<string[]>([])
+  const [assetSelectorOpen, setAssetSelectorOpen] = useState(false)
 
-  // Food Photo Mode state
-  const [dishPhoto, setDishPhoto] = useState<string | null>(null)
-  const [dishDescription, setDishDescription] = useState('')
-  const [outputFormat, setOutputFormat] = useState<OutputFormatId>('menu')
-  const [cuisineType, setCuisineType] = useState('')
-  const [foodStyle, setFoodStyle] = useState('')
-
-  // Style Reference
-  const [styleReference, setStyleReference] = useState<string | null>(null)
-  const [showStyleReference, setShowStyleReference] = useState(false)
-  const [styleGalleryOpen, setStyleGalleryOpen] = useState(false)
-
-  // Branded Post Mode state
-  const [postType, setPostType] = useState<BrandedPostType>('announcement')
-  const [headline, setHeadline] = useState('')
-  const [brandedStyle, setBrandedStyle] = useState('minimal')
-  const [aspectRatio, setAspectRatio] = useState<'1:1' | '4:5' | '9:16' | '16:9'>('1:1')
-  const [logoChoice, setLogoChoice] = useState<LogoChoice>('none')
-  const [logoPlacement, setLogoPlacement] = useState('bottom-right')
-  const [logoSize, setLogoSize] = useState('medium')
-  const [logoOpacity, setLogoOpacity] = useState(100)
-  const [applyBrandColors, setApplyBrandColors] = useState(true)
-
-  const [additionalInstructions, setAdditionalInstructions] = useState('')
-
-  const [sourceImage, setSourceImage] = useState<string | null>(null)
-  const [sourceImageType, setSourceImageType] = useState<'upload' | 'gallery' | 'none'>(
-    initialSourceImageId ? 'gallery' : 'none'
-  )
-
+  // Brand context
   const [brandKit, setBrandKit] = useState<BrandKit | null>(null)
   const [loadingBrandKit, setLoadingBrandKit] = useState(true)
+  const [applyBrandContext, setApplyBrandContext] = useState(true)
 
+  // Generation state
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [generatedAspectRatio, setGeneratedAspectRatio] = useState<string>('1:1')
 
+  // Save state
   const [isSaving, setIsSaving] = useState(false)
 
-  // Fetch source image data on mount if sourceImageId is in URL
+  // Load default brand kit
   useEffect(() => {
-    if (initialSourceImageId) {
-      fetch(`/api/creative-studio/content?id=${initialSourceImageId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const item = data.content?.[0]
-          if (item?.generatedImageUrl) {
-            setSourceImage(item.generatedImageUrl)
-          }
-        })
-        .catch(console.error)
-    }
-  }, [initialSourceImageId])
-
-  useEffect(() => {
-    loadBrandKit()
+    fetch('/api/creative-studio/brand-kit/default')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) setBrandKit(data)
+      })
+      .catch(console.error)
+      .finally(() => setLoadingBrandKit(false))
   }, [])
 
-  async function loadBrandKit() {
+  // When asset selection changes, fetch the URLs
+  async function handleAssetSelect(ids: string[]) {
+    setSelectedAssetIds(ids)
+    if (ids.length === 0) {
+      setSelectedAssetUrls([])
+      return
+    }
     try {
-      const response = await fetch('/api/creative-studio/brand-kit?default=true')
-      const data = await response.json()
-      if (data.brandKit) {
-        setBrandKit(data.brandKit)
-      }
-    } catch (error) {
-      console.error('Failed to load brand kit:', error)
-    } finally {
-      setLoadingBrandKit(false)
+      const res = await fetch('/api/creative-studio/assets')
+      const data = await res.json()
+      const assets = data.assets || []
+      const urls = ids
+        .map((id: string) => assets.find((a: { id: string; imageUrl: string }) => a.id === id)?.imageUrl)
+        .filter(Boolean) as string[]
+      setSelectedAssetUrls(urls)
+    } catch {
+      console.error('Failed to fetch asset URLs')
     }
   }
 
-  useEffect(() => {
-    setGeneratedImage(null)
-    setAdditionalInstructions('')
-    setLogoChoice('none')
-    setApplyBrandColors(true)
-    if (mode === 'food_photo') {
-      setSourceImage(null)
-      setSourceImageType('none')
-    }
-  }, [mode])
-
-  const canGenerate =
-    mode === 'food_photo'
-      ? !!dishPhoto
-      : postType === 'custom'
-        ? !!additionalInstructions.trim()
-        : !!headline.trim()
+  const canGenerate = prompt.trim().length > 0 && !isGenerating
 
   async function handleGenerate() {
     if (!canGenerate) return
 
-    setIsGenerating(true)
-    setGeneratedImage(null)
-
     try {
-      const body =
-        mode === 'food_photo'
-          ? {
-              mode: 'food_photo',
-              dishPhotoBase64: dishPhoto,
-              dishDescription,
-              outputFormat,
-              cuisineType: cuisineType || undefined,
-              style: foodStyle || undefined,
-              styleReferenceBase64: styleReference || undefined,
-              additionalInstructions: additionalInstructions.trim() || undefined,
-            }
-          : {
-              mode: 'branded_post',
-              postType,
-              headline,
-              brandKitId: brandKit?.id,
-              style: brandedStyle,
-              aspectRatio,
-              applyBrandColors,
-              logoBase64:
-                logoChoice === 'logo' ? brandKit?.logoUrl || undefined :
-                logoChoice === 'icon' ? brandKit?.iconUrl || undefined :
-                undefined,
-              logoPlacement: logoChoice !== 'none' ? logoPlacement : undefined,
-              logoSize: logoChoice !== 'none' ? logoSize : undefined,
-              logoOpacity: logoChoice !== 'none' ? logoOpacity : undefined,
-              sourceImageBase64: sourceImage || undefined,
-              additionalInstructions: additionalInstructions.trim() || undefined,
-            }
+      setIsGenerating(true)
+      setGeneratedImage(null)
 
-      const response = await fetch('/api/creative-studio/generate', {
+      const res = await fetch('/api/creative-studio/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          mode: 'content_studio',
+          prompt: prompt.trim(),
+          stylePreset,
+          aspectRatio,
+          referenceImages,
+          brandAssetUrls: selectedAssetUrls,
+          brandKitId: applyBrandContext ? brandKit?.id : undefined,
+          applyBrandContext,
+        }),
       })
 
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Generation failed')
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error || 'Failed to generate image')
       }
 
-      const data = await response.json()
-
-      setGeneratedImage(data.image.imageBase64)
-      setGeneratedAspectRatio(
-        mode === 'food_photo'
-          ? OUTPUT_FORMATS[outputFormat].aspectRatio
-          : aspectRatio
-      )
-
-      toast.success('Image generated successfully!')
-    } catch (error: unknown) {
+      const data = await res.json()
+      if (data.image?.imageBase64) {
+        setGeneratedImage(data.image.imageBase64)
+        setGeneratedAspectRatio(data.image.aspectRatio || aspectRatio)
+        toast.success('Image generated!')
+      } else {
+        throw new Error('No image returned')
+      }
+    } catch (error) {
       const message = error instanceof Error ? error.message : 'Generation failed'
       toast.error(message)
-      console.error('Generation error:', error)
     } finally {
       setIsGenerating(false)
     }
@@ -221,528 +139,172 @@ function StudioGenerateContent() {
   async function handleSave() {
     if (!generatedImage) return
 
-    setIsSaving(true)
-
     try {
-      const body = {
-        mode,
-        outputFormat: mode === 'food_photo' ? outputFormat : undefined,
-        generatedImageUrl: `data:image/png;base64,${generatedImage}`,
-        headline: mode === 'branded_post' ? headline : dishDescription,
-        brandKitId: brandKit?.id,
-        status: 'saved',
-      }
+      setIsSaving(true)
 
-      const response = await fetch('/api/creative-studio/content', {
+      const imageDataUrl = generatedImage.startsWith('data:')
+        ? generatedImage
+        : `data:image/png;base64,${generatedImage}`
+
+      const res = await fetch('/api/creative-studio/content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          mode: 'content_studio',
+          generatedImageUrl: imageDataUrl,
+          aiPrompt: prompt,
+          aiModel: 'gemini', // Will be replaced with actual model from generation
+          headline: prompt.slice(0, 100) + (prompt.length > 100 ? '...' : ''),
+          status: 'saved',
+          brandKitId: applyBrandContext ? brandKit?.id : undefined,
+        }),
       })
 
-      if (!response.ok) {
+      if (!res.ok) {
         throw new Error('Failed to save')
       }
 
+      const data = await res.json()
       toast.success('Saved to gallery!')
-      router.push('/studio/gallery')
+      router.push(`/studio/gallery?view=${data.id}`)
     } catch (error) {
-      toast.error('Failed to save image')
-      console.error('Save error:', error)
+      toast.error('Failed to save to gallery')
     } finally {
       setIsSaving(false)
     }
   }
 
-  function handleSendToBrandedPosts() {
-    if (!generatedImage) return
-
-    const imageData = generatedImage.startsWith('data:')
-      ? generatedImage
-      : `data:image/png;base64,${generatedImage}`
-
-    setGeneratedImage(null)
-    setSourceImageType('gallery')
-    setSourceImage(imageData)
-    setMode('branded_post')
-  }
-
   return (
     <div className="min-h-screen bg-warm-50">
+      <UsageBar />
+
       {/* Header */}
       <div className="border-b border-warm-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Link
               href="/studio"
-              className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+              className="text-warm-400 hover:text-warm-600 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-warm-600" />
+              <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-lg font-display font-medium text-warm-900">
-                Create Content
-              </h1>
-              <p className="text-sm text-warm-500">
-                {mode === 'food_photo'
-                  ? 'Transform your dish photos'
-                  : 'Generate branded graphics'}
+              <h1 className="text-lg font-semibold text-warm-900">Create</h1>
+              <p className="text-xs text-warm-500">
+                Generate any type of content — photorealistic, illustrated, animated, anything
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Usage Bar */}
-      <UsageBar />
-
-      {/* Main Content - Two Column Layout */}
+      {/* Two-Column Layout */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
         <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left Column - Form */}
-          <div className="space-y-5">
-            {/* Mode Selector */}
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <Label className="text-warm-700 mb-3 block">Generation Mode</Label>
-              <ModeSelector
-                value={mode}
-                onChange={setMode}
-                disabled={isGenerating}
-              />
-            </div>
+          {/* Left: Form */}
+          <div className="space-y-4">
+            <PromptInput
+              value={prompt}
+              onChange={setPrompt}
+              disabled={isGenerating}
+            />
 
-            {/* Food Photo Mode Form */}
-            {mode === 'food_photo' && (
-              <>
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
-                  <Label className="text-warm-700 mb-3 block">Dish Photo</Label>
-                  <DishPhotoUpload
-                    value={dishPhoto}
-                    onImageSelect={setDishPhoto}
-                    disabled={isGenerating}
-                    className="aspect-[4/3]"
-                  />
+            <StylePresetSelector
+              value={stylePreset}
+              onChange={setStylePreset}
+              disabled={isGenerating}
+            />
+
+            <AspectRatioPicker
+              value={aspectRatio}
+              onChange={setAspectRatio}
+              disabled={isGenerating}
+            />
+
+            <ReferenceImageUpload
+              images={referenceImages}
+              onChange={setReferenceImages}
+              disabled={isGenerating}
+            />
+
+            {/* Brand Assets */}
+            <div className="bg-white rounded-sm border border-warm-200 p-5">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <label className="text-sm font-medium text-warm-900">Brand Assets</label>
+                  <p className="text-xs text-warm-400 mt-0.5">
+                    Drop in logos, products, or objects to include in the image
+                  </p>
                 </div>
-
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
-                  <Label className="text-warm-700 mb-3 block">Output Format</Label>
-                  <OutputFormatSelector
-                    value={outputFormat}
-                    onChange={setOutputFormat}
-                    disabled={isGenerating}
-                  />
-                </div>
-
-                <div className="bg-white rounded-sm border border-warm-200 p-4 space-y-4">
-                  <div>
-                    <Label htmlFor="description" className="text-warm-700 mb-2 block">
-                      Dish Description (optional)
-                    </Label>
-                    <Input
-                      id="description"
-                      value={dishDescription}
-                      onChange={(e) => setDishDescription(e.target.value)}
-                      placeholder="e.g., Grilled salmon with lemon butter sauce"
-                      disabled={isGenerating}
-                      className="rounded-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cuisine" className="text-warm-700 mb-2 block">
-                      Cuisine Type (optional)
-                    </Label>
-                    <select
-                      id="cuisine"
-                      value={cuisineType}
-                      onChange={(e) => setCuisineType(e.target.value)}
-                      disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
-                    >
-                      <option value="">Select cuisine...</option>
-                      {CUISINE_TYPES.map((c) => (
-                        <option key={c.value} value={c.value}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="style" className="text-warm-700 mb-2 block">
-                      Style (optional)
-                    </Label>
-                    <select
-                      id="style"
-                      value={foodStyle}
-                      onChange={(e) => setFoodStyle(e.target.value)}
-                      disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
-                    >
-                      <option value="">Select style...</option>
-                      {STYLE_PREFERENCES.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Style Reference */}
-                <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
-                  <button
-                    type="button"
-                    onClick={() => setShowStyleReference(!showStyleReference)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-warm-50 transition-colors"
-                    disabled={isGenerating}
-                  >
-                    <div>
-                      <span className="text-sm font-medium text-warm-700">Style Reference</span>
-                      <p className="text-xs text-warm-500 mt-0.5">
-                        Match the look of another dish photo (optional)
-                      </p>
-                    </div>
-                    {showStyleReference ? (
-                      <ChevronDown className="w-4 h-4 text-warm-500" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-warm-500" />
-                    )}
-                  </button>
-
-                  {showStyleReference && (
-                    <div className="px-4 pb-4 border-t border-warm-100">
-                      <p className="text-xs text-warm-500 mt-3 mb-3">
-                        Select a previously generated image to match its plates, background, and styling.
-                      </p>
-
-                      {styleReference ? (
-                        <div className="relative aspect-video rounded-sm overflow-hidden bg-warm-100">
-                          <img
-                            src={styleReference}
-                            alt="Style reference"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            onClick={() => setStyleReference(null)}
-                            className="absolute top-2 right-2 p-1.5 bg-warm-900/80 hover:bg-warm-900 rounded-sm text-white transition-colors"
-                            title="Remove reference"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setStyleGalleryOpen(true)}
-                            disabled={isGenerating}
-                            className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors"
-                          >
-                            <Layers className="w-7 h-7 text-warm-400 mb-1.5" />
-                            <span className="text-sm text-warm-600">From Gallery</span>
-                          </button>
-                          <label className="block cursor-pointer">
-                            <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
-                              <ImageIcon className="w-7 h-7 text-warm-400 mb-1.5" />
-                              <span className="text-sm text-warm-600">Upload Image</span>
-                            </div>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              className="hidden"
-                              disabled={isGenerating}
-                              onChange={async (e) => {
-                                const file = e.target.files?.[0]
-                                if (file) {
-                                  const compatible = await ensureWebCompatible(file)
-                                  const reader = new FileReader()
-                                  reader.onload = (ev) => {
-                                    setStyleReference(ev.target?.result as string)
-                                  }
-                                  reader.readAsDataURL(compatible)
-                                }
-                              }}
-                            />
-                          </label>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <GalleryPickerDialog
-                    open={styleGalleryOpen}
-                    onOpenChange={setStyleGalleryOpen}
-                    onSelect={(imageDataUrl) => setStyleReference(imageDataUrl)}
-                  />
-                </div>
-              </>
-            )}
-
-            {/* Branded Post Mode Form */}
-            {mode === 'branded_post' && (
-              <>
-              <div className="bg-white rounded-sm border border-warm-200 p-4">
-                <Label className="text-warm-700 mb-3 block">Source Image</Label>
-                <ImageSourcePicker
-                  value={sourceImage}
-                  onChange={setSourceImage}
-                  sourceType={sourceImageType}
-                  onSourceTypeChange={setSourceImageType}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-sm"
+                  onClick={() => setAssetSelectorOpen(true)}
                   disabled={isGenerating}
-                />
+                >
+                  <ImageIcon className="w-3.5 h-3.5 mr-1.5" />
+                  {selectedAssetIds.length > 0
+                    ? `${selectedAssetIds.length} selected`
+                    : 'Select Assets'}
+                </Button>
               </div>
-
-              <div className="bg-white rounded-sm border border-warm-200 p-4">
-                <BrandedPostForm
-                  postType={postType}
-                  onPostTypeChange={setPostType}
-                  headline={headline}
-                  onHeadlineChange={setHeadline}
-                  style={brandedStyle}
-                  onStyleChange={setBrandedStyle}
-                  aspectRatio={aspectRatio}
-                  onAspectRatioChange={setAspectRatio}
-                  brandKit={brandKit}
-                  applyBrandColors={applyBrandColors}
-                  onApplyBrandColorsChange={setApplyBrandColors}
-                  disabled={isGenerating}
-                />
-              </div>
-
-              {/* Logo Picker */}
-              {brandKit && (brandKit.logoUrl || brandKit.iconUrl) && (
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Stamp className="w-4 h-4 text-warm-500" />
-                    <Label className="text-warm-700">Include Logo</Label>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setLogoChoice('none')}
-                      disabled={isGenerating}
-                      className={cn(
-                        'flex-1 p-2.5 rounded-sm border text-center transition-all',
-                        logoChoice === 'none'
-                          ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                          : 'border-warm-200 hover:border-warm-300 bg-white',
-                        isGenerating && 'opacity-50 cursor-not-allowed'
-                      )}
-                    >
-                      <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-1.5">
-                        <X className="w-4 h-4 text-warm-400" />
-                      </div>
-                      <p className={cn(
-                        'text-xs font-medium',
-                        logoChoice === 'none' ? 'text-plum-700' : 'text-warm-600'
-                      )}>
-                        No Logo
-                      </p>
-                    </button>
-
-                    {brandKit.logoUrl && (
-                      <button
-                        onClick={() => setLogoChoice('logo')}
-                        disabled={isGenerating}
-                        className={cn(
-                          'flex-1 p-2.5 rounded-sm border text-center transition-all',
-                          logoChoice === 'logo'
-                            ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                            : 'border-warm-200 hover:border-warm-300 bg-white',
-                          isGenerating && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
-                          <img src={brandKit.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5" />
-                        </div>
-                        <p className={cn(
-                          'text-xs font-medium',
-                          logoChoice === 'logo' ? 'text-plum-700' : 'text-warm-600'
-                        )}>
-                          Full Logo
-                        </p>
-                      </button>
-                    )}
-
-                    {brandKit.iconUrl && (
-                      <button
-                        onClick={() => setLogoChoice('icon')}
-                        disabled={isGenerating}
-                        className={cn(
-                          'flex-1 p-2.5 rounded-sm border text-center transition-all',
-                          logoChoice === 'icon'
-                            ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                            : 'border-warm-200 hover:border-warm-300 bg-white',
-                          isGenerating && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
-                          <img src={brandKit.iconUrl} alt="Icon" className="w-full h-full object-contain p-0.5" />
-                        </div>
-                        <p className={cn(
-                          'text-xs font-medium',
-                          logoChoice === 'icon' ? 'text-plum-700' : 'text-warm-600'
-                        )}>
-                          Icon
-                        </p>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Logo Options — shown when a logo is selected */}
-                  {logoChoice !== 'none' && (
-                    <div className="mt-4 pt-4 border-t border-warm-100 space-y-4">
-                      {/* Placement */}
-                      <div>
-                        <Label className="text-warm-600 text-xs mb-2 block">Placement</Label>
-                        <div className="grid grid-cols-5 gap-1.5">
-                          {([
-                            { value: 'top-left', label: 'TL' },
-                            { value: 'top-right', label: 'TR' },
-                            { value: 'center', label: 'C' },
-                            { value: 'bottom-left', label: 'BL' },
-                            { value: 'bottom-right', label: 'BR' },
-                          ] as const).map(({ value, label }) => (
-                            <button
-                              key={value}
-                              type="button"
-                              onClick={() => setLogoPlacement(value)}
-                              disabled={isGenerating}
-                              className={cn(
-                                'px-2 py-1.5 rounded-sm border text-xs font-medium transition-all',
-                                logoPlacement === value
-                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
-                                  : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
-                                isGenerating && 'opacity-50 cursor-not-allowed'
-                              )}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Size */}
-                      <div>
-                        <Label className="text-warm-600 text-xs mb-2 block">Size</Label>
-                        <div className="grid grid-cols-3 gap-1.5">
-                          {(['small', 'medium', 'large'] as const).map((size) => (
-                            <button
-                              key={size}
-                              type="button"
-                              onClick={() => setLogoSize(size)}
-                              disabled={isGenerating}
-                              className={cn(
-                                'px-2 py-1.5 rounded-sm border text-xs font-medium capitalize transition-all',
-                                logoSize === size
-                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
-                                  : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
-                                isGenerating && 'opacity-50 cursor-not-allowed'
-                              )}
-                            >
-                              {size}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Opacity */}
-                      <div>
-                        <Label className="text-warm-600 text-xs mb-2 block">Opacity</Label>
-                        <div className="grid grid-cols-4 gap-1.5">
-                          {([25, 50, 75, 100] as const).map((opacity) => (
-                            <button
-                              key={opacity}
-                              type="button"
-                              onClick={() => setLogoOpacity(opacity)}
-                              disabled={isGenerating}
-                              className={cn(
-                                'px-2 py-1.5 rounded-sm border text-xs font-medium transition-all',
-                                logoOpacity === opacity
-                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
-                                  : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
-                                isGenerating && 'opacity-50 cursor-not-allowed'
-                              )}
-                            >
-                              {opacity}%
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              {selectedAssetIds.length === 0 && (
+                <p className="text-xs text-warm-400 italic">
+                  No assets selected.{' '}
+                  <a href="/studio/assets" className="text-lime-600 hover:text-lime-700 underline">
+                    Upload assets
+                  </a>{' '}
+                  to your library first.
+                </p>
               )}
-              </>
-            )}
-
-            {/* Additional Instructions */}
-            <div className={cn(
-              'bg-white rounded-sm border p-4',
-              postType === 'custom' && mode === 'branded_post'
-                ? 'border-plum-300 ring-1 ring-plum-200'
-                : 'border-warm-200'
-            )}>
-              <Label htmlFor="instructions" className="text-warm-700 mb-2 block">
-                {postType === 'custom' && mode === 'branded_post'
-                  ? 'Creative Direction'
-                  : 'Additional Directions (optional)'}
-              </Label>
-              <textarea
-                id="instructions"
-                value={additionalInstructions}
-                onChange={(e) => setAdditionalInstructions(e.target.value)}
-                placeholder={
-                  mode === 'food_photo'
-                    ? 'e.g., Add a bottle of sake and shot glasses next to the dish, warm candlelight ambiance'
-                    : postType === 'custom'
-                      ? 'e.g., A moody, dark-themed post with our dish as hero, subtle smoke effect, no text — just atmosphere and appetite appeal'
-                      : 'e.g., Use bold red text, add confetti elements, make it feel festive and celebratory'
-                }
-                disabled={isGenerating}
-                rows={postType === 'custom' && mode === 'branded_post' ? 5 : 3}
-                className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 resize-none disabled:opacity-50"
-              />
-              <p className="text-xs text-warm-500 mt-1.5">
-                {postType === 'custom' && mode === 'branded_post'
-                  ? 'Describe exactly what you want — layout, mood, style, colors, elements'
-                  : 'Guide the AI with specific details about what you want in the final image'}
-              </p>
             </div>
+
+            <BrandAssetSelector
+              isOpen={assetSelectorOpen}
+              onClose={() => setAssetSelectorOpen(false)}
+              selectedAssetIds={selectedAssetIds}
+              onSelect={handleAssetSelect}
+            />
+
+            <BrandContextToggle
+              brandKit={brandKit}
+              enabled={applyBrandContext}
+              onToggle={setApplyBrandContext}
+              loading={loadingBrandKit}
+            />
 
             {/* Generate Button */}
             <Button
               variant="lime"
-              size="lg"
-              className="w-full rounded-sm"
+              className="w-full rounded-sm h-12 text-base"
               onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating}
+              disabled={!canGenerate}
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Image
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Generate
                 </>
               )}
             </Button>
           </div>
 
-          {/* Right Column - Preview */}
-          <div className="lg:sticky lg:top-20 lg:self-start">
-            <PreviewPanel
+          {/* Right: Preview */}
+          <div>
+            <ContentPreviewPanel
               imageBase64={generatedImage}
               aspectRatio={generatedAspectRatio}
               isGenerating={isGenerating}
               onRegenerate={handleGenerate}
               onSave={handleSave}
-              onSendToBrandedPosts={handleSendToBrandedPosts}
               isSaving={isSaving}
               disabled={isGenerating}
-              mode={mode}
             />
           </div>
         </div>
