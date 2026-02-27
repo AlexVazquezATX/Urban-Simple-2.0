@@ -19,6 +19,8 @@ import {
   TrendingUp,
   Eye,
   Edit2,
+  Camera,
+  Package,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -115,8 +117,21 @@ export default function CreativeHubPage() {
         </div>
       </div>
 
-      {/* Action Cards - Single row of 4 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      {/* Action Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+        {/* Generate Images (NEW - hero card) */}
+        <Link href="/creative-hub/generate" className="group">
+          <div className="h-20 rounded-sm bg-gradient-to-br from-ocean-500 to-ocean-600 p-3 hover:from-ocean-600 hover:to-ocean-700 transition-colors flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-white/20 flex items-center justify-center shrink-0">
+              <Camera className="w-4 h-4 text-white" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-medium text-white">Generate</h2>
+              <p className="text-xs text-ocean-100 truncate">AI image creation</p>
+            </div>
+          </div>
+        </Link>
+
         {/* Create Content */}
         <Link href="/creative-hub/create" className="group">
           <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
@@ -139,6 +154,19 @@ export default function CreativeHubPage() {
             <div className="min-w-0">
               <h2 className="text-sm font-medium text-warm-900">Inspiration</h2>
               <p className="text-xs text-warm-500 truncate">Trending ideas</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Brand Assets (NEW) */}
+        <Link href="/creative-hub/assets" className="group">
+          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
+              <Package className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-medium text-warm-900">Brand Assets</h2>
+              <p className="text-xs text-warm-500 truncate">Logos & objects</p>
             </div>
           </div>
         </Link>

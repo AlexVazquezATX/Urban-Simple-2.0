@@ -2078,6 +2078,31 @@ model RestaurantStudioContent {
 }
 
 // ============================================
+// BRAND ASSETS (shared by Creative Hub & Studio)
+// ============================================
+
+model BrandAsset {
+  id          String    @id @default(cuid())
+  companyId   String    @map("company_id")
+  name        String
+  description String?   @db.Text
+  imageUrl    String    @map("image_url")
+  storagePath String    @map("storage_path")
+  category    String    @default("general")
+  tags        String[]  @default([])
+  usageCount  Int       @default(0) @map("usage_count")
+  lastUsedAt  DateTime? @map("last_used_at")
+  fileSize    Int?      @map("file_size")
+  mimeType    String?   @map("mime_type")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@index([companyId, category])
+  @@index([companyId, usageCount(sort: Desc)])
+  @@map("brand_assets")
+}
+
+// ============================================
 // STUDIO SUBSCRIPTION & USAGE (SaaS Admin)
 // For managing client subscriptions and tracking usage
 // ============================================

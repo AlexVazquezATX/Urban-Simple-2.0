@@ -32,7 +32,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 
 interface CreativeImage {
@@ -61,30 +60,12 @@ const IMAGE_TYPES = [
   { value: 'stat_graphic', label: 'Stat Graphic' },
 ]
 
-const ASPECT_RATIOS = [
-  { value: '1:1', label: 'Square (1:1)' },
-  { value: '4:3', label: 'Landscape (4:3)' },
-  { value: '16:9', label: 'Wide (16:9)' },
-  { value: '9:16', label: 'Portrait (9:16)' },
-  { value: '3:4', label: 'Tall (3:4)' },
-]
 
 export default function ImageLibraryPage() {
   const [images, setImages] = useState<CreativeImage[]>([])
   const [loading, setLoading] = useState(true)
-  const [generating, setGenerating] = useState(false)
-  const [showGenerator, setShowGenerator] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filter, setFilter] = useState({ imageType: '', category: '' })
-
-  // Generator state
-  const [genParams, setGenParams] = useState({
-    imageType: 'promotional',
-    aspectRatio: '1:1',
-    customPrompt: '',
-    serviceContext: 'general',
-    style: 'photorealistic',
-  })
 
   // Upload state
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -111,35 +92,6 @@ export default function ImageLibraryPage() {
       console.error('Failed to load images:', error)
     } finally {
       setLoading(false)
-    }
-  }
-
-  async function handleGenerate() {
-    setGenerating(true)
-    try {
-      const response = await fetch('/api/creative-hub/images/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'generate',
-          ...genParams,
-          saveToLibrary: true,
-          name: `AI Generated - ${genParams.imageType}`,
-        }),
-      })
-
-      const data = await response.json()
-      if (data.savedImage) {
-        setImages([data.savedImage, ...images])
-        setShowGenerator(false)
-      } else if (data.image?.isFallback) {
-        alert('AI generation failed. A stock image was provided instead.')
-      }
-    } catch (error) {
-      console.error('Failed to generate image:', error)
-      alert('Failed to generate image. Please try again.')
-    } finally {
-      setGenerating(false)
     }
   }
 
@@ -282,92 +234,12 @@ export default function ImageLibraryPage() {
           </Button>
 
           {/* Generate */}
-          <Dialog open={showGenerator} onOpenChange={setShowGenerator}>
-            <DialogTrigger asChild>
-              <Button className="bg-gradient-to-br from-ocean-500 to-ocean-600">
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate with AI
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Generate AI Image</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label>Image Type</Label>
-                  <Select
-                    value={genParams.imageType}
-                    onValueChange={(value) =>
-                      setGenParams({ ...genParams, imageType: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {IMAGE_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Aspect Ratio</Label>
-                  <Select
-                    value={genParams.aspectRatio}
-                    onValueChange={(value) =>
-                      setGenParams({ ...genParams, aspectRatio: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-2">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ASPECT_RATIOS.map((ratio) => (
-                        <SelectItem key={ratio.value} value={ratio.value}>
-                          {ratio.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Custom Prompt (Optional)</Label>
-                  <Input
-                    value={genParams.customPrompt}
-                    onChange={(e) =>
-                      setGenParams({ ...genParams, customPrompt: e.target.value })
-                    }
-                    placeholder="Add specific details..."
-                    className="mt-2"
-                  />
-                </div>
-
-                <Button
-                  onClick={handleGenerate}
-                  disabled={generating}
-                  className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Image
-                    </>
-                  )}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Link href="/creative-hub/generate">
+            <Button className="bg-gradient-to-br from-ocean-500 to-ocean-600">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Generate with AI
+            </Button>
+          </Link>
 
           {/* Upload Dialog with Photo Credit */}
           <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
@@ -471,10 +343,12 @@ export default function ImageLibraryPage() {
             <p className="text-charcoal-600 mb-4">
               Generate AI images or upload your own
             </p>
-            <Button onClick={() => setShowGenerator(true)}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate Your First Image
-            </Button>
+            <Link href="/creative-hub/generate">
+              <Button>
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Your First Image
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       ) : viewMode === 'grid' ? (
