@@ -4,7 +4,6 @@ import { useState, useEffect, use } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft,
   Download,
   Trash2,
   Sparkles,
@@ -56,9 +55,11 @@ export default function CreativeDetailPage({
   const router = useRouter()
 
   const [image, setImage] = useState<CreativeImage | null>(null)
+  const [allImages, setAllImages] = useState<CreativeImage[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   // Editable fields
   const [name, setName] = useState('')
@@ -81,6 +82,7 @@ export default function CreativeDetailPage({
 
   useEffect(() => {
     loadImage()
+    loadAllImages()
   }, [id])
 
   async function loadImage() {
@@ -109,6 +111,26 @@ export default function CreativeDetailPage({
     } finally {
       setLoading(false)
     }
+  }
+
+  async function loadAllImages() {
+    try {
+      const res = await fetch('/api/creative-hub/images')
+      const data = await res.json()
+      const imgs = data.images || []
+      setAllImages(imgs)
+      // Find current image index in gallery
+      const idx = imgs.findIndex((img: CreativeImage) => img.id === id)
+      if (idx >= 0) setLightboxIndex(idx)
+    } catch {
+      // Silently fail — lightbox will just show current image
+    }
+  }
+
+  function getGalleryImageSrc(img: CreativeImage): string {
+    if (img.imageUrl) return img.imageUrl
+    if (img.imageBase64) return `data:image/png;base64,${img.imageBase64}`
+    return ''
   }
 
   function getImageSrc(): string {
@@ -287,20 +309,20 @@ export default function CreativeDetailPage({
         </div>
       </div>
 
-      {/* Two-Column Layout */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* Two-Column Layout — 1/3 image, 2/3 form */}
+      <div className="grid md:grid-cols-[1fr,2fr] gap-6">
         {/* Left: Image Card */}
         <div>
           <div className="bg-white rounded-lg border border-warm-200 overflow-hidden">
             <div
-              className="relative cursor-pointer group"
+              className="relative aspect-square cursor-pointer group"
               onClick={() => setLightboxOpen(true)}
             >
               {imageSrc && (
                 <img
                   src={imageSrc}
                   alt={name}
-                  className="w-full h-auto max-h-125 object-contain bg-warm-50"
+                  className="w-full h-full object-cover"
                 />
               )}
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
@@ -308,7 +330,7 @@ export default function CreativeDetailPage({
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-4 py-3 border-t border-warm-100">
+            <div className="flex items-center justify-between px-3 py-2.5 border-t border-warm-100">
               <div className="flex items-center gap-2">
                 {image.isAiGenerated && (
                   <Badge className="bg-ocean-500 text-white text-[10px]">AI Generated</Badge>
@@ -317,8 +339,8 @@ export default function CreativeDetailPage({
                   {image.imageType.replace('_', ' ')} &middot; {image.aspectRatio}
                 </span>
               </div>
-              <Button variant="outline" size="sm" onClick={handleDownload}>
-                <Download className="w-3.5 h-3.5 mr-1.5" />
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleDownload}>
+                <Download className="w-3 h-3 mr-1" />
                 Download
               </Button>
             </div>
@@ -587,13 +609,29 @@ export default function CreativeDetailPage({
         </div>
       </div>
 
-      {/* Lightbox for image maximize */}
+      {/* Lightbox — shows all gallery images with navigation */}
       <ImageLightbox
-        images={imageSrc ? [{ id: image.id, src: imageSrc, name }] : []}
-        currentIndex={0}
+        images={
+          allImages.length > 0
+            ? allImages.map((img) => ({
+                id: img.id,
+                src: getGalleryImageSrc(img),
+                name: img.name,
+              }))
+            : imageSrc
+              ? [{ id: image.id, src: imageSrc, name }]
+              : []
+        }
+        currentIndex={lightboxIndex}
         open={lightboxOpen}
         onClose={() => setLightboxOpen(false)}
-        onNavigate={() => {}}
+        onNavigate={setLightboxIndex}
+        onViewDetails={(detailId) => {
+          setLightboxOpen(false)
+          if (detailId !== id) {
+            router.push(`/creative-hub/images/${detailId}`)
+          }
+        }}
       />
     </div>
   )
