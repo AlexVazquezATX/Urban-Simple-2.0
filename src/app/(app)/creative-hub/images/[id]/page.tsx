@@ -310,9 +310,9 @@ export default function CreativeDetailPage({
       </div>
 
       {/* Two-Column Layout — 1/3 image, 2/3 form */}
-      <div className="grid md:grid-cols-[1fr,2fr] gap-6">
+      <div className="grid md:grid-cols-3 gap-6">
         {/* Left: Image Card */}
-        <div>
+        <div className="md:col-span-1">
           <div className="bg-white rounded-lg border border-warm-200 overflow-hidden">
             <div
               className="relative aspect-square cursor-pointer group"
@@ -427,7 +427,7 @@ export default function CreativeDetailPage({
         </div>
 
         {/* Right: Form */}
-        <div className="space-y-5">
+        <div className="md:col-span-2 space-y-5">
           {/* Social Media Copy */}
           <div className="bg-white rounded-lg border border-warm-200 p-5">
             <div className="flex items-center justify-between mb-1">
