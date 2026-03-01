@@ -30,7 +30,7 @@ import { BlogFilmstripSection } from '@/components/landing/blog-filmstrip-sectio
 import { FAQSection } from '@/components/landing/faq-section'
 import { InlineContactForm } from '@/components/landing/inline-contact-form'
 import { FooterSection } from '@/components/landing/footer-section'
-import { WalkthroughProvider, useWalkthrough } from '@/components/landing/walkthrough-context'
+import { useWalkthrough } from '@/components/landing/walkthrough-context'
 import { cn } from '@/lib/utils'
 import { testimonials, stats, CONTACT } from '@/components/landing/landing-data'
 import { fadeInUp, staggerContainer } from '@/components/landing/landing-animations'
@@ -148,7 +148,6 @@ function QuoteButton({ children, className }: { children: React.ReactNode; class
 
 export default function LandingPage() {
   return (
-    <WalkthroughProvider>
     <div className="min-h-screen bg-cream-50">
       <PublicNav />
 
@@ -715,6 +714,5 @@ export default function LandingPage() {
 
       <FloatingQuoteCTA />
     </div>
-    </WalkthroughProvider>
   )
 }
