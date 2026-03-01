@@ -6,9 +6,11 @@ import { motion } from 'framer-motion'
 import { ArrowRight, Menu, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CONTACT } from './landing-data'
+import { useWalkthrough } from './walkthrough-context'
 
 export function PublicNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { open: openWalkthrough } = useWalkthrough()
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-cream-50/80 backdrop-blur-xl border-b border-cream-200/50">
@@ -63,15 +65,14 @@ export function PublicNav() {
                 Client Login
               </Button>
             </Link>
-            <Link href="/#contact">
-              <Button
-                size="default"
-                className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-md hover:shadow-lg"
-              >
-                Get a Quote
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
+            <Button
+              onClick={openWalkthrough}
+              size="default"
+              className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-md hover:shadow-lg"
+            >
+              Get a Quote
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -127,9 +128,15 @@ export function PublicNav() {
               <Link href="/login" className="block">
                 <Button variant="secondary" className="w-full">Client Login</Button>
               </Link>
-              <Link href="/#contact" className="block">
-                <Button className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700">Get a Quote</Button>
-              </Link>
+              <Button
+                onClick={() => {
+                  setMobileMenuOpen(false)
+                  openWalkthrough()
+                }}
+                className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700"
+              >
+                Get a Quote
+              </Button>
             </div>
           </div>
         </motion.div>

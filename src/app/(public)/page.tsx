@@ -30,6 +30,7 @@ import { BlogFilmstripSection } from '@/components/landing/blog-filmstrip-sectio
 import { FAQSection } from '@/components/landing/faq-section'
 import { InlineContactForm } from '@/components/landing/inline-contact-form'
 import { FooterSection } from '@/components/landing/footer-section'
+import { WalkthroughProvider, useWalkthrough } from '@/components/landing/walkthrough-context'
 import { cn } from '@/lib/utils'
 import { testimonials, stats, CONTACT } from '@/components/landing/landing-data'
 import { fadeInUp, staggerContainer } from '@/components/landing/landing-animations'
@@ -129,11 +130,25 @@ function CountUp({ value, suffix = '' }: { value: string; suffix?: string }) {
 }
 
 // ============================================
+// QUOTE BUTTON (uses walkthrough context)
+// ============================================
+
+function QuoteButton({ children, className }: { children: React.ReactNode; className?: string }) {
+  const { open } = useWalkthrough()
+  return (
+    <Button onClick={open} size="lg" className={className}>
+      {children}
+    </Button>
+  )
+}
+
+// ============================================
 // MAIN COMPONENT
 // ============================================
 
 export default function LandingPage() {
   return (
+    <WalkthroughProvider>
     <div className="min-h-screen bg-cream-50">
       <PublicNav />
 
@@ -191,15 +206,10 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 className="flex flex-col sm:flex-row items-start gap-4"
               >
-                <a href="#contact">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-lg hover:shadow-xl transition-all"
-                  >
-                    Get a Free Quote
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </a>
+                <QuoteButton className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-lg hover:shadow-xl transition-all">
+                  Get a Free Quote
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </QuoteButton>
                 <a href="#services">
                   <Button variant="outline" size="lg" className="bg-white/10 border-cream-200/40 text-cream-100 hover:bg-white/20 hover:border-cream-200/60 backdrop-blur-sm">
                     View Services
@@ -705,5 +715,6 @@ export default function LandingPage() {
 
       <FloatingQuoteCTA />
     </div>
+    </WalkthroughProvider>
   )
 }

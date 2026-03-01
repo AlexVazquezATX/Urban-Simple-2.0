@@ -45,8 +45,8 @@ export const testimonials = [
   },
   {
     quote: 'Since Urban Simple took over our cleaning, we achieved a 99 health inspection score. Their team is thorough, professional, and understands what food service facilities need.',
-    author: 'Facilities Manager',
-    role: 'Facilities Management',
+    author: 'Matt Luther',
+    role: 'Facilities Manager',
     company: 'Facebook (Meta)',
     rating: 5,
   },

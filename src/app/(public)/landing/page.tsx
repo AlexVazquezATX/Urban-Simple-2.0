@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ROICalculator } from '@/components/landing/roi-calculator'
 import { FloatingQuoteCTA } from '@/components/landing/floating-quote-cta'
+import { WalkthroughProvider } from '@/components/landing/walkthrough-context'
 import { cn } from '@/lib/utils'
 
 // ============================================
@@ -178,6 +179,7 @@ function CountUp({ value, suffix = '' }: { value: string; suffix?: string }) {
 
 export default function LandingPage() {
   return (
+    <WalkthroughProvider>
     <div className="min-h-screen bg-cream-50">
       <PublicNav />
 
@@ -926,5 +928,6 @@ export default function LandingPage() {
 
       <FloatingQuoteCTA />
     </div>
+    </WalkthroughProvider>
   )
 }

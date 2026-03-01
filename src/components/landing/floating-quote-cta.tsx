@@ -6,21 +6,20 @@ import { Sparkles, Calendar } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EstimateWizard } from './estimate-wizard'
 import { WalkthroughForm } from './walkthrough-form'
+import { useWalkthrough } from './walkthrough-context'
 
 export function FloatingQuoteCTA() {
   const [isVisible, setIsVisible] = useState(false)
   const [isWizardOpen, setIsWizardOpen] = useState(false)
-  const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false)
+  const { isOpen: isWalkthroughOpen, open: openWalkthrough, close: closeWalkthrough } = useWalkthrough()
 
   useEffect(() => {
     const handleScroll = () => {
-      // Show after scrolling past hero section (approximately 400px)
-      const scrollY = window.scrollY
-      setIsVisible(scrollY > 200) // Lowered threshold for easier access
+      setIsVisible(window.scrollY > 200)
     }
 
     window.addEventListener('scroll', handleScroll)
-    handleScroll() // Check initial position
+    handleScroll()
 
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -58,7 +57,7 @@ export function FloatingQuoteCTA() {
                 <Sparkles className="w-5 h-5 mr-2" />
                 Get Instant Estimate
               </Button>
-              
+
               {/* Pulse effect */}
               <motion.div
                 className="absolute inset-0 rounded-full bg-bronze-500 opacity-20 pointer-events-none"
@@ -75,7 +74,7 @@ export function FloatingQuoteCTA() {
             </motion.div>
 
             <Button
-              onClick={() => setIsWalkthroughOpen(true)}
+              onClick={openWalkthrough}
               size="lg"
               variant="outline"
               className="bg-white border-bronze-200 text-bronze-700 hover:bg-bronze-50 hover:border-bronze-300 shadow-lg h-14 px-6 text-base font-semibold rounded-full w-full"
@@ -94,9 +93,8 @@ export function FloatingQuoteCTA() {
 
       <WalkthroughForm
         isOpen={isWalkthroughOpen}
-        onClose={() => setIsWalkthroughOpen(false)}
+        onClose={closeWalkthrough}
       />
     </>
   )
 }
-
