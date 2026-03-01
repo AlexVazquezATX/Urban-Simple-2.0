@@ -24,10 +24,10 @@ export function CertificationsSection() {
           <Badge variant="secondary" className="mb-4 bg-honey-100 text-honey-700 border-honey-200">
             Recognition
           </Badge>
-          <h2 className="font-display text-2xl sm:text-3xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
+          <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
             Awards & Certifications
           </h2>
-          <p className="text-base text-charcoal-600 max-w-xl mx-auto">
+          <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
             Recognized for excellence, growth, and commitment to our community.
           </p>
         </motion.div>

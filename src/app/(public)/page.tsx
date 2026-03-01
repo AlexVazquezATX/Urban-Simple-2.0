@@ -243,64 +243,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
-          SERVICES SECTION
-          ============================================ */}
-      <section id="services" className="py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={staggerContainer}
-            className="text-center mb-12"
-          >
-            <motion.div variants={fadeInUp}>
-              <Badge variant="secondary" className="mb-4 bg-ocean-100 text-ocean-700 border-ocean-200">
-                Our Services
-              </Badge>
-              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
-                Comprehensive hospitality cleaning
-              </h2>
-              <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
-                Commercial kitchen cleaning is our specialty. We also service dining rooms, bathrooms, lobbies, common areas, and provide pressure washing and ballroom carpet cleaning.
-              </p>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
-          >
-            {features.map((feature, index) => (
-              <motion.div key={index} variants={fadeInUp}>
-                <div className="h-full p-8 rounded-2xl border border-cream-200 bg-gradient-to-b from-cream-50 to-white hover:shadow-card transition-all duration-300 hover:border-ocean-200">
-                  <div className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center mb-6',
-                    feature.color === 'ocean' && 'bg-ocean-100 text-ocean-600',
-                    feature.color === 'bronze' && 'bg-bronze-100 text-bronze-600',
-                    feature.color === 'terracotta' && 'bg-terracotta-100 text-terracotta-600',
-                    feature.color === 'sage' && 'bg-sage-100 text-sage-600'
-                  )}>
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-xl font-semibold text-charcoal-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-charcoal-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ============================================
-          WHY US SECTION (NEW)
+          WHY US SECTION
           ============================================ */}
       <WhyUsSection />
 
@@ -372,6 +315,63 @@ export default function LandingPage() {
                     </div>
                     <p className="text-white/90 leading-relaxed min-h-[3rem]">{industry.desc}</p>
                   </div>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ============================================
+          SERVICES SECTION
+          ============================================ */}
+      <section id="services" className="py-16 lg:py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-100px' }}
+            variants={staggerContainer}
+            className="text-center mb-12"
+          >
+            <motion.div variants={fadeInUp}>
+              <Badge variant="secondary" className="mb-4 bg-ocean-100 text-ocean-700 border-ocean-200">
+                Our Services
+              </Badge>
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
+                Comprehensive hospitality cleaning
+              </h2>
+              <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
+                Commercial kitchen cleaning is our specialty. We also service dining rooms, bathrooms, lobbies, common areas, and provide pressure washing and ballroom carpet cleaning.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
+          >
+            {features.map((feature, index) => (
+              <motion.div key={index} variants={fadeInUp}>
+                <div className="h-full p-8 rounded-2xl border border-cream-200 bg-gradient-to-b from-cream-50 to-white hover:shadow-card transition-all duration-300 hover:border-ocean-200">
+                  <div className={cn(
+                    'w-12 h-12 rounded-xl flex items-center justify-center mb-6',
+                    feature.color === 'ocean' && 'bg-ocean-100 text-ocean-600',
+                    feature.color === 'bronze' && 'bg-bronze-100 text-bronze-600',
+                    feature.color === 'terracotta' && 'bg-terracotta-100 text-terracotta-600',
+                    feature.color === 'sage' && 'bg-sage-100 text-sage-600'
+                  )}>
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-semibold text-charcoal-900 mb-3">
+                    {feature.title}
+                  </h3>
+                  <p className="text-charcoal-600 leading-relaxed">
+                    {feature.description}
+                  </p>
                 </div>
               </motion.div>
             ))}
@@ -457,10 +457,10 @@ export default function LandingPage() {
               <Badge variant="secondary" className="mb-4 bg-cream-200 text-charcoal-700 border-cream-300">
                 Trusted By
               </Badge>
-              <h2 className="font-display text-2xl sm:text-3xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
+              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
                 Notable Hospitality Brands
               </h2>
-              <p className="text-base text-charcoal-600 max-w-xl mx-auto">
+              <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
                 We&rsquo;re proud to serve some of the most recognized names in hospitality.
               </p>
             </motion.div>

@@ -38,7 +38,7 @@ export function FloatingQuoteCTA() {
               animate={{
                 boxShadow: [
                   '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-                  '0 20px 40px -5px rgba(166, 124, 82, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                  '0 20px 40px -5px rgba(75, 106, 138, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                   '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                 ],
               }}
@@ -47,20 +47,20 @@ export function FloatingQuoteCTA() {
                 repeat: Infinity,
                 ease: 'easeInOut',
               }}
-              className="relative"
+              className="relative overflow-hidden rounded-full"
             >
               <Button
-                onClick={() => setIsWizardOpen(true)}
+                onClick={openWalkthrough}
                 size="lg"
-                className="bg-gradient-to-br from-bronze-500 to-bronze-600 text-white hover:from-bronze-600 hover:to-bronze-700 shadow-xl hover:shadow-2xl h-14 px-6 text-base font-semibold rounded-full w-full"
+                className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-xl hover:shadow-2xl h-14 px-6 text-base font-semibold rounded-full w-full"
               >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Get Instant Estimate
+                <Calendar className="w-5 h-5 mr-2" />
+                Schedule Walkthrough
               </Button>
 
               {/* Pulse effect */}
               <motion.div
-                className="absolute inset-0 rounded-full bg-bronze-500 opacity-20 pointer-events-none"
+                className="absolute inset-0 rounded-full bg-ocean-500 opacity-20 pointer-events-none"
                 animate={{
                   scale: [1, 1.2, 1],
                   opacity: [0.2, 0, 0.2],
@@ -74,13 +74,13 @@ export function FloatingQuoteCTA() {
             </motion.div>
 
             <Button
-              onClick={openWalkthrough}
+              onClick={() => setIsWizardOpen(true)}
               size="lg"
               variant="outline"
-              className="bg-white border-bronze-200 text-bronze-700 hover:bg-bronze-50 hover:border-bronze-300 shadow-lg h-14 px-6 text-base font-semibold rounded-full w-full"
+              className="bg-white border-cream-200 text-charcoal-700 hover:bg-cream-50 hover:border-cream-300 shadow-lg h-14 px-6 text-base font-semibold rounded-full w-full"
             >
-              <Calendar className="w-5 h-5 mr-2" />
-              Schedule Walkthrough
+              <Sparkles className="w-5 h-5 mr-2" />
+              Get Instant Estimate
             </Button>
           </motion.div>
         )}

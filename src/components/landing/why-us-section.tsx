@@ -58,8 +58,8 @@ export function WhyUsSection() {
             <div className="relative rounded-3xl overflow-hidden shadow-lifted">
               <div className="aspect-[3/4] relative">
                 <Image
-                  src="/images/Headers-1767818867/Urban-Simple-Team-in-Front-of-HQ-Viviana-Replacement-zoomed-in.jpg"
-                  alt="Urban Simple cleaning crew"
+                  src="/images/Headers-1767818867/Urban-Simple-Team-Conference.jpg"
+                  alt="Urban Simple team meeting"
                   fill
                   className="object-cover"
                 />
