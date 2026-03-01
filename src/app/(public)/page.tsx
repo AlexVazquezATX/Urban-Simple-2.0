@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import Image from 'next/image'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { PublicNav } from '@/components/landing/public-nav'
@@ -32,6 +32,7 @@ import { FooterSection } from '@/components/landing/footer-section'
 import { BeforeAfterSection } from '@/components/landing/before-after-section'
 import { Spotlight } from '@/components/landing/spotlight'
 import { SlidingNumber } from '@/components/landing/sliding-number'
+import { IndustryDetailModal, INDUSTRY_DETAILS } from '@/components/landing/industry-detail-modal'
 import { useWalkthrough } from '@/components/landing/walkthrough-context'
 import { cn } from '@/lib/utils'
 import { testimonials, stats, CONTACT } from '@/components/landing/landing-data'
@@ -104,6 +105,7 @@ export default function LandingPage() {
   const heroRef = useRef<HTMLElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroImageY = useTransform(scrollYProgress, [0, 1], [0, -150])
+  const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null)
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -256,7 +258,12 @@ export default function LandingPage() {
               { icon: <Droplets className="w-6 h-6 text-white" />, title: 'Spas & Wellness', desc: 'Kitchen facilities, treatment rooms, relaxation areas, and wellness facilities kept pristine.', img: '/images/Services-1767818882/service_Hotels-Hospitality-01.jpg', color: 'sage' },
               { icon: <Home className="w-6 h-6 text-white" />, title: 'Boutique Hotels', desc: 'Kitchen facilities, dining rooms, bathrooms, and common areas for intimate properties.', img: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?w=800&h=600&fit=crop&q=80', color: 'honey' },
             ].map((industry, index) => (
-              <motion.div key={index} variants={fadeInUp} className="group">
+              <motion.div
+                key={index}
+                variants={fadeInUp}
+                className="group cursor-pointer"
+                onClick={() => setSelectedIndustry(INDUSTRY_DETAILS[index].slug)}
+              >
                 <div className="relative rounded-2xl overflow-hidden shadow-card hover:shadow-elevated transition-all duration-300">
                   <div className="aspect-[4/3] relative">
                     <Image
@@ -282,7 +289,11 @@ export default function LandingPage() {
                       </div>
                       <h3 className="text-2xl font-semibold text-white">{industry.title}</h3>
                     </div>
-                    <p className="text-white/90 leading-relaxed min-h-[3rem]">{industry.desc}</p>
+                    <p className="text-white/90 leading-relaxed">{industry.desc}</p>
+                    <div className="flex items-center gap-1 mt-3 text-sm font-medium text-white/60 group-hover:text-white transition-colors">
+                      <span>Learn more</span>
+                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                    </div>
                   </div>
                 </div>
               </motion.div>
@@ -681,6 +692,11 @@ export default function LandingPage() {
           FOOTER
           ============================================ */}
       <FooterSection />
+
+      <IndustryDetailModal
+        industry={selectedIndustry ? INDUSTRY_DETAILS.find(i => i.slug === selectedIndustry) ?? null : null}
+        onClose={() => setSelectedIndustry(null)}
+      />
 
       <FloatingQuoteCTA />
     </div>
