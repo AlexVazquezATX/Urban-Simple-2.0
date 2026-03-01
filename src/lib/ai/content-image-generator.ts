@@ -13,7 +13,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai'
-import * as sharp from 'sharp'
+import sharp from 'sharp'
 import {
   buildPrompt,
   REFERENCE_MODES,
