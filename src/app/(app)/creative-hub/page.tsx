@@ -64,7 +64,7 @@ export default function CreativeHubPage() {
       // Fetch content stats and images count in parallel
       const [contentResponse, imagesResponse] = await Promise.all([
         fetch('/api/creative-hub/content?includeStats=true&limit=6'),
-        fetch('/api/creative-hub/images?limit=1'), // Just need the count
+        fetch('/api/creative-hub/images?includeStats=true&limit=0'), // Just need the count
       ])
 
       const contentData = await contentResponse.json()
@@ -74,7 +74,7 @@ export default function CreativeHubPage() {
         totalContent: contentData.stats?.total || 0,
         contentByPlatform: contentData.stats?.byPlatform || {},
         contentByStatus: contentData.stats?.byStatus || {},
-        totalImages: imagesData.pagination?.total || imagesData.images?.length || 0,
+        totalImages: imagesData.stats?.total || imagesData.images?.length || 0,
         recentContent: contentData.content || [],
       })
     } catch (error) {
@@ -119,7 +119,7 @@ export default function CreativeHubPage() {
 
       {/* Action Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-        {/* Generate Images (NEW - hero card) */}
+        {/* 1. Generate Images (hero card) */}
         <Link href="/creative-hub/generate" className="group">
           <div className="h-20 rounded-sm bg-gradient-to-br from-ocean-500 to-ocean-600 p-3 hover:from-ocean-600 hover:to-ocean-700 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-white/20 flex items-center justify-center shrink-0">
@@ -132,46 +132,7 @@ export default function CreativeHubPage() {
           </div>
         </Link>
 
-        {/* Create Content */}
-        <Link href="/creative-hub/create" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-lime-100 flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 text-lime-600" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Create</h2>
-              <p className="text-xs text-warm-500 truncate">Generate posts</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* Daily Inspiration */}
-        <Link href="/creative-hub/inspiration" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center shrink-0">
-              <Sun className="w-4 h-4 text-plum-600" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Inspiration</h2>
-              <p className="text-xs text-warm-500 truncate">Trending ideas</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* Brand Assets (NEW) */}
-        <Link href="/creative-hub/assets" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
-              <Package className="w-4 h-4 text-amber-600" />
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Brand Assets</h2>
-              <p className="text-xs text-warm-500 truncate">Logos & objects</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* Image Library */}
+        {/* 2. Image Library */}
         <Link href="/creative-hub/images" className="group">
           <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center shrink-0">
@@ -184,7 +145,33 @@ export default function CreativeHubPage() {
           </div>
         </Link>
 
-        {/* Content Gallery */}
+        {/* 3. Brand Assets */}
+        <Link href="/creative-hub/assets" className="group">
+          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
+              <Package className="w-4 h-4 text-amber-600" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-medium text-warm-900">Brand Assets</h2>
+              <p className="text-xs text-warm-500 truncate">Logos & objects</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* 4. Create Content */}
+        <Link href="/creative-hub/create" className="group">
+          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-lime-100 flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 text-lime-600" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-medium text-warm-900">Create</h2>
+              <p className="text-xs text-warm-500 truncate">Generate posts</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* 5. Content Gallery */}
         <Link href="/creative-hub/gallery" className="group">
           <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-warm-200 flex items-center justify-center shrink-0">
@@ -193,6 +180,19 @@ export default function CreativeHubPage() {
             <div className="min-w-0">
               <h2 className="text-sm font-medium text-warm-900">Gallery</h2>
               <p className="text-xs text-warm-500 truncate">Browse & export</p>
+            </div>
+          </div>
+        </Link>
+
+        {/* 6. Inspiration */}
+        <Link href="/creative-hub/inspiration" className="group">
+          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center shrink-0">
+              <Sun className="w-4 h-4 text-plum-600" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-medium text-warm-900">Inspiration</h2>
+              <p className="text-xs text-warm-500 truncate">Trending ideas</p>
             </div>
           </div>
         </Link>

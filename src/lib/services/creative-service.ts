@@ -337,17 +337,18 @@ export async function deleteImage(id: string) {
 }
 
 export async function getImageStats(companyId: string) {
+  const visibleStatuses = ['draft', 'approved', 'active']
   const [total, byType, aiGenerated] = await Promise.all([
     prisma.creativeImage.count({
-      where: { companyId, status: 'active' },
+      where: { companyId, status: { in: visibleStatuses } },
     }),
     prisma.creativeImage.groupBy({
       by: ['imageType'],
-      where: { companyId, status: 'active' },
+      where: { companyId, status: { in: visibleStatuses } },
       _count: true,
     }),
     prisma.creativeImage.count({
-      where: { companyId, isAiGenerated: true, status: 'active' },
+      where: { companyId, isAiGenerated: true, status: { in: visibleStatuses } },
     }),
   ])
 
