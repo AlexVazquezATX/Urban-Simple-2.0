@@ -129,15 +129,14 @@ export default function CreativeDetailPage({
 
   function getGalleryImageSrc(img: CreativeImage): string {
     if (img.imageUrl) return img.imageUrl
-    if (img.imageBase64) return `data:image/png;base64,${img.imageBase64}`
-    return ''
+    return `/api/creative-hub/images/${img.id}/image`
   }
 
   function getImageSrc(): string {
     if (!image) return ''
     if (image.imageUrl) return image.imageUrl
     if (image.imageBase64) return `data:image/png;base64,${image.imageBase64}`
-    return ''
+    return `/api/creative-hub/images/${image.id}/image`
   }
 
   function getActiveCaption(): string {

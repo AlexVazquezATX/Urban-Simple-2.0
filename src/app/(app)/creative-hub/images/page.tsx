@@ -41,11 +41,9 @@ interface CreativeImage {
   id: string
   name: string
   imageUrl?: string
-  imageBase64?: string
   imageType: string
   aspectRatio: string
   isAiGenerated: boolean
-  aiPrompt?: string
   aiModel?: string
   tags: string[]
   category?: string
@@ -189,8 +187,7 @@ export default function ImageLibraryPage() {
 
   function getImageSrc(image: CreativeImage): string {
     if (image.imageUrl) return image.imageUrl
-    if (image.imageBase64) return `data:image/png;base64,${image.imageBase64}`
-    return ''
+    return `/api/creative-hub/images/${image.id}/image`
   }
 
   return (

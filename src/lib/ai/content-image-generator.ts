@@ -13,6 +13,7 @@
  */
 
 import { GoogleGenAI } from '@google/genai'
+import * as sharp from 'sharp'
 import {
   buildPrompt,
   REFERENCE_MODES,
@@ -259,8 +260,10 @@ export async function generateImage(
         const anyPart = part as { inlineData?: { data: string; mimeType: string } }
         if (anyPart.inlineData?.data) {
           console.log(`[Content Studio] Success with ${model.label}`)
+          // Remove Gemini's visible sparkle watermark before returning
+          const cleanedBase64 = await removeGeminiWatermark(anyPart.inlineData.data)
           return {
-            imageBase64: anyPart.inlineData.data,
+            imageBase64: cleanedBase64,
             prompt: assembledPrompt,
             model: model.id,
             aspectRatio,
@@ -275,6 +278,66 @@ export async function generateImage(
 
   console.error('[Content Studio] All models failed')
   return null
+}
+
+// ============================================
+// GEMINI WATERMARK REMOVAL
+// ============================================
+
+/**
+ * Remove the visible Gemini sparkle watermark from generated images.
+ *
+ * Gemini native image generation models add a semi-transparent four-pointed
+ * star logo in the bottom-right corner. The watermark is:
+ * - 48x48 px with 32px margin for images ≤1024px on either side
+ * - 96x96 px with 64px margin for larger images
+ *
+ * This uses a clone-stamp approach: sample adjacent pixels and composite
+ * them over the watermark region. For a 48px area in a 1024+ image,
+ * the patch is visually undetectable.
+ */
+async function removeGeminiWatermark(imageBase64: string): Promise<string> {
+  try {
+    const buffer = Buffer.from(imageBase64, 'base64')
+    const metadata = await sharp(buffer).metadata()
+    const { width, height } = metadata
+
+    if (!width || !height) return imageBase64
+
+    // Determine watermark size based on image dimensions
+    const isLarge = width > 1024 && height > 1024
+    const wmSize = isLarge ? 96 : 48
+    const margin = isLarge ? 64 : 32
+
+    // Watermark position (bottom-right corner)
+    const wmX = width - wmSize - margin
+    const wmY = height - wmSize - margin
+
+    // Sanity check — image must be large enough
+    if (wmX < wmSize + 16 || wmY < wmSize + 16) return imageBase64
+
+    // Source patch: sample from the left of the watermark area
+    // Use a slight offset to avoid any edge bleed from the watermark
+    const srcX = wmX - wmSize - 4
+    const srcY = wmY
+
+    // Extract the source patch
+    const patch = await sharp(buffer)
+      .extract({ left: srcX, top: srcY, width: wmSize, height: wmSize })
+      .toBuffer()
+
+    // Composite the patch over the watermark position
+    const result = await sharp(buffer)
+      .composite([{ input: patch, left: wmX, top: wmY }])
+      .png()
+      .toBuffer()
+
+    console.log('[Content Studio] Watermark removed successfully')
+    return result.toString('base64')
+  } catch (error) {
+    console.error('[Content Studio] Watermark removal failed, returning original:', error)
+    return imageBase64
+  }
 }
 
 // ============================================

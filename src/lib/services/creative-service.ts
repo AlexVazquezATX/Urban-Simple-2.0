@@ -301,6 +301,13 @@ export async function getImagesByCompany(
       ...(filters?.projectId ? { projectId: filters.projectId } : {}),
       ...(filters?.status ? { status: filters.status } : { status: { in: ['draft', 'approved', 'active'] } }),
     },
+    omit: {
+      imageBase64: true,
+      aiPrompt: true,
+      captionInstagram: true,
+      captionFacebook: true,
+      captionTwitter: true,
+    },
     orderBy: { createdAt: 'desc' },
     take: filters?.limit,
   })
