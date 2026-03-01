@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { ArrowRight, Menu, X } from 'lucide-react'
+import { ArrowRight, Menu, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { CONTACT } from './landing-data'
 
 export function PublicNav() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -24,18 +25,18 @@ export function PublicNav() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-6">
             <Link href="/#services" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Services
             </Link>
             <Link href="/#industries" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Industries
             </Link>
+            <Link href="/#why-us" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
+              Why Us
+            </Link>
             <Link href="/blog" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Blog
-            </Link>
-            <Link href="/pricing" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
-              Pricing
             </Link>
             <Link href="/our-team" className="text-charcoal-600 hover:text-ocean-700 transition-colors text-sm font-medium">
               Our Team
@@ -48,13 +49,15 @@ export function PublicNav() {
             </Link>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/products/creative-studio">
-              <Button variant="outline" size="default" className="border-ocean-200 text-ocean-700 hover:bg-ocean-50">
-                Creative Studio
-              </Button>
-            </Link>
+          {/* CTA Buttons + Phone */}
+          <div className="hidden lg:flex items-center gap-3">
+            <a
+              href={CONTACT.phoneHref}
+              className="flex items-center gap-2 text-sm font-semibold text-charcoal-700 hover:text-ocean-700 transition-colors mr-1"
+            >
+              <Phone className="w-4 h-4" />
+              {CONTACT.phone}
+            </a>
             <Link href="/login">
               <Button variant="ghost" size="default">
                 Client Login
@@ -74,7 +77,7 @@ export function PublicNav() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-charcoal-600 hover:text-charcoal-900"
+            className="lg:hidden p-2 text-charcoal-600 hover:text-charcoal-900"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -87,20 +90,29 @@ export function PublicNav() {
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: 'auto' }}
           exit={{ opacity: 0, height: 0 }}
-          className="md:hidden bg-white border-t border-cream-200"
+          className="lg:hidden bg-white border-t border-cream-200"
         >
           <div className="px-4 py-6 space-y-4">
+            {/* Phone number prominent on mobile */}
+            <a
+              href={CONTACT.phoneHref}
+              className="flex items-center gap-2 text-ocean-700 font-semibold text-lg"
+            >
+              <Phone className="w-5 h-5" />
+              {CONTACT.phone}
+            </a>
+            <div className="border-b border-cream-200 pb-2" />
             <Link href="/#services" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Services
             </Link>
             <Link href="/#industries" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Industries
             </Link>
+            <Link href="/#why-us" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
+              Why Us
+            </Link>
             <Link href="/blog" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Blog
-            </Link>
-            <Link href="/pricing" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
-              Pricing
             </Link>
             <Link href="/our-team" className="block text-charcoal-700 hover:text-ocean-700 font-medium">
               Our Team
@@ -112,9 +124,6 @@ export function PublicNav() {
               Contact
             </Link>
             <div className="pt-4 space-y-3">
-              <Link href="/products/creative-studio" className="block">
-                <Button variant="outline" className="w-full border-ocean-200 text-ocean-700">Creative Studio</Button>
-              </Link>
               <Link href="/login" className="block">
                 <Button variant="secondary" className="w-full">Client Login</Button>
               </Link>
@@ -128,4 +137,3 @@ export function PublicNav() {
     </nav>
   )
 }
-

@@ -232,7 +232,7 @@ export async function generateImage(
 
   // Shared config — native aspect ratio + resolution via imageConfig
   const sharedConfig = {
-    responseModalities: ['IMAGE', 'TEXT'] as const,
+    responseModalities: ['IMAGE', 'TEXT'] as string[],
     imageConfig: {
       aspectRatio,
       imageSize: '1K' as const,

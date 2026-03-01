@@ -712,3 +712,13 @@ input[type="checkbox"] {
   accent-color: #A67C52; /* bronze-500 */
 }
 
+/* Certifications marquee animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}
+
