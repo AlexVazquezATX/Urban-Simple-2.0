@@ -299,7 +299,7 @@ export async function getImagesByCompany(
       ...(filters?.imageType ? { imageType: filters.imageType } : {}),
       ...(filters?.category ? { category: filters.category } : {}),
       ...(filters?.projectId ? { projectId: filters.projectId } : {}),
-      ...(filters?.status ? { status: filters.status } : { status: 'active' }),
+      ...(filters?.status ? { status: filters.status } : { status: { in: ['draft', 'approved', 'active'] } }),
     },
     orderBy: { createdAt: 'desc' },
     take: filters?.limit,

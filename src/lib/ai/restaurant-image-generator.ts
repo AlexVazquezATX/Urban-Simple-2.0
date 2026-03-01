@@ -200,6 +200,7 @@ The goal is to make the dish photo look like it belongs in the same photo set as
       config: {
         numberOfImages: 1,
         aspectRatio: formatConfig.aspectRatio,
+        addWatermark: false,
       },
     })
 
@@ -230,6 +231,7 @@ The goal is to make the dish photo look like it belongs in the same photo set as
       config: {
         numberOfImages: 1,
         aspectRatio: formatConfig.aspectRatio,
+        addWatermark: false,
       },
     })
 
@@ -374,6 +376,7 @@ export async function generateBrandedPost(
       config: {
         numberOfImages: 1,
         aspectRatio,
+        addWatermark: false,
       },
     })
 
@@ -402,6 +405,7 @@ export async function generateBrandedPost(
       config: {
         numberOfImages: 1,
         aspectRatio,
+        addWatermark: false,
       },
     })
 

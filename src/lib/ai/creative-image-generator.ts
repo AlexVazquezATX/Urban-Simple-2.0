@@ -527,6 +527,7 @@ export async function generateCreativeImage(
       config: {
         numberOfImages: 1,
         aspectRatio: params.aspectRatio,
+        addWatermark: false,
       },
     })
 
@@ -554,6 +555,7 @@ export async function generateCreativeImage(
       config: {
         numberOfImages: 1,
         aspectRatio: params.aspectRatio,
+        addWatermark: false,
       },
     })
 
