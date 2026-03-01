@@ -120,20 +120,28 @@ export const valueProps = [
     title: 'Custom Cleaning Programs',
     description: 'Every facility is different. We design cleaning programs tailored to your space, your schedule, and your standards.',
     color: 'ocean' as const,
+    metric: '500+',
+    metricLabel: 'Properties customized',
   },
   {
     title: 'Green & Guest-Safe Products',
     description: 'EPA-approved cleaning solutions that protect your guests, your staff, and the environment. No harsh chemicals, no compromises.',
     color: 'sage' as const,
+    metric: '100%',
+    metricLabel: 'EPA-approved products',
   },
   {
     title: 'Uncompromising Quality Assurance',
     description: 'Digital checklists, photo documentation, and post-service reports. We measure what matters so you never have to wonder.',
     color: 'bronze' as const,
+    metric: '99.8%',
+    metricLabel: 'Client retention rate',
   },
   {
     title: 'Scale Without Worry',
     description: 'We handle the cleaning so you can scale your business. From one location to fifty, our systems grow with you.',
     color: 'terracotta' as const,
+    metric: '1–50+',
+    metricLabel: 'Locations supported',
   },
 ]
