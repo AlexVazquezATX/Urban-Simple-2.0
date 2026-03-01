@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import Link from 'next/link'
+import { useRef } from 'react'
 import Image from 'next/image'
-import { motion, useInView } from 'framer-motion'
+import { motion, useScroll, useTransform } from 'framer-motion'
 import { PublicNav } from '@/components/landing/public-nav'
 import {
   Sparkles,
@@ -30,10 +29,13 @@ import { BlogFilmstripSection } from '@/components/landing/blog-filmstrip-sectio
 import { FAQSection } from '@/components/landing/faq-section'
 import { InlineContactForm } from '@/components/landing/inline-contact-form'
 import { FooterSection } from '@/components/landing/footer-section'
+import { BeforeAfterSection } from '@/components/landing/before-after-section'
+import { Spotlight } from '@/components/landing/spotlight'
+import { SlidingNumber } from '@/components/landing/sliding-number'
 import { useWalkthrough } from '@/components/landing/walkthrough-context'
 import { cn } from '@/lib/utils'
 import { testimonials, stats, CONTACT } from '@/components/landing/landing-data'
-import { fadeInUp, staggerContainer } from '@/components/landing/landing-animations'
+import { fadeInUp, fadeInLeft, fadeInRight, scaleIn, staggerContainer } from '@/components/landing/landing-animations'
 
 // ============================================
 // CONTENT DATA (kept inline for JSX icons)
@@ -79,57 +81,6 @@ const features = [
 ]
 
 // ============================================
-// COMPONENTS
-// ============================================
-
-function CountUp({ value, suffix = '' }: { value: string; suffix?: string }) {
-  const ref = useRef<HTMLSpanElement>(null)
-  const isInView = useInView(ref, { once: true })
-  const [displayValue, setDisplayValue] = useState('0')
-
-  useEffect(() => {
-    if (isInView) {
-      const numericValue = parseFloat(value.replace(/[^0-9.]/g, ''))
-      const hasPlus = value.includes('+')
-      const duration = 2000
-      const steps = 60
-      const stepDuration = duration / steps
-      let currentStep = 0
-
-      const timer = setInterval(() => {
-        currentStep++
-        const progress = currentStep / steps
-        const easeOut = 1 - Math.pow(1 - progress, 3)
-        const currentValue = Math.floor(numericValue * easeOut)
-
-        if (value.includes(',')) {
-          setDisplayValue(currentValue.toLocaleString() + (hasPlus ? '+' : ''))
-        } else if (value.includes('%')) {
-          setDisplayValue(currentValue + '%')
-        } else if (value.includes('/')) {
-          setDisplayValue(value)
-        } else {
-          setDisplayValue(currentValue.toLocaleString() + (hasPlus ? '+' : ''))
-        }
-
-        if (currentStep >= steps) {
-          clearInterval(timer)
-          setDisplayValue(value + suffix)
-        }
-      }, stepDuration)
-
-      return () => clearInterval(timer)
-    }
-  }, [isInView, value, suffix])
-
-  return (
-    <span ref={ref} className="tabular-nums">
-      {displayValue}
-    </span>
-  )
-}
-
-// ============================================
 // QUOTE BUTTON (uses walkthrough context)
 // ============================================
 
@@ -146,7 +97,14 @@ function QuoteButton({ children, className }: { children: React.ReactNode; class
 // MAIN COMPONENT
 // ============================================
 
+// Split text animation: each word fades up with stagger
+const headlineWords = "Texas' most trusted hospitality cleaning partner".split(' ')
+
 export default function LandingPage() {
+  const heroRef = useRef<HTMLElement>(null)
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
+  const heroImageY = useTransform(scrollYProgress, [0, 1], [0, -150])
+
   return (
     <div className="min-h-screen bg-cream-50">
       <PublicNav />
@@ -154,17 +112,17 @@ export default function LandingPage() {
       {/* ============================================
           HERO SECTION — Full-bleed team photo
           ============================================ */}
-      <section className="relative min-h-[85vh] flex items-end overflow-hidden">
-        {/* Full-bleed Background Image */}
-        <div className="absolute inset-0">
+      <section ref={heroRef} className="relative min-h-[85vh] flex items-end overflow-hidden">
+        {/* Full-bleed Background Image with Parallax */}
+        <motion.div className="absolute inset-0" style={{ y: heroImageY }}>
           <Image
             src="/images/Headers-1767818867/Urban-Simple-Team-in-Front-of-HQ-Viviana-Replacement.jpg"
             alt="Urban Simple team in front of headquarters"
             fill
-            className="object-cover"
+            className="object-cover scale-110"
             priority
           />
-        </div>
+        </motion.div>
 
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/90 via-charcoal-900/40 to-charcoal-900/20" />
@@ -186,12 +144,19 @@ export default function LandingPage() {
                 </Badge>
               </motion.div>
 
-              <motion.h1
-                variants={fadeInUp}
-                className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold text-cream-100 leading-[1.1] tracking-tight mb-6"
-              >
-                Texas&rsquo; most trusted hospitality cleaning partner
-              </motion.h1>
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-semibold text-cream-100 leading-[1.1] tracking-tight mb-6">
+                {headlineWords.map((word, i) => (
+                  <motion.span
+                    key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 + i * 0.08 }}
+                    className="inline-block mr-[0.3em]"
+                  >
+                    {word}
+                  </motion.span>
+                ))}
+              </h1>
 
               <motion.p
                 variants={fadeInUp}
@@ -247,6 +212,11 @@ export default function LandingPage() {
       <WhyUsSection />
 
       {/* ============================================
+          BEFORE / AFTER SLIDER
+          ============================================ */}
+      <BeforeAfterSection />
+
+      {/* ============================================
           INDUSTRIES SECTION
           ============================================ */}
       <section id="industries" className="py-16 lg:py-20 bg-cream-50">
@@ -258,7 +228,7 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="text-center mb-12"
           >
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={fadeInRight}>
               <Badge variant="secondary" className="mb-4 bg-bronze-100 text-bronze-700 border-bronze-200">
                 Industries We Serve
               </Badge>
@@ -333,7 +303,7 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="text-center mb-12"
           >
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={scaleIn}>
               <Badge variant="secondary" className="mb-4 bg-ocean-100 text-ocean-700 border-ocean-200">
                 Our Services
               </Badge>
@@ -381,7 +351,7 @@ export default function LandingPage() {
       {/* ============================================
           STATS SECTION
           ============================================ */}
-      <section className="py-16 lg:py-20 bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900 relative overflow-hidden">
+      <Spotlight className="py-16 lg:py-20 bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900 relative overflow-hidden">
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1920&h=1080&fit=crop&q=80"
@@ -431,14 +401,14 @@ export default function LandingPage() {
             {stats.map((stat, index) => (
               <motion.div key={index} variants={fadeInUp} className="text-center">
                 <div className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-white mb-2">
-                  <CountUp value={stat.value} suffix={stat.suffix} />
+                  <SlidingNumber value={stat.value} suffix={stat.suffix} />
                 </div>
                 <p className="text-charcoal-400">{stat.label}</p>
               </motion.div>
             ))}
           </motion.div>
         </div>
-      </section>
+      </Spotlight>
 
       {/* ============================================
           CLIENT LOGOS SECTION
@@ -452,7 +422,7 @@ export default function LandingPage() {
             variants={staggerContainer}
             className="text-center mb-12"
           >
-            <motion.div variants={fadeInUp}>
+            <motion.div variants={scaleIn}>
               <Badge variant="secondary" className="mb-4 bg-cream-200 text-charcoal-700 border-cream-300">
                 Trusted By
               </Badge>
@@ -483,7 +453,7 @@ export default function LandingPage() {
             ].map((client, index) => (
               <motion.div
                 key={index}
-                variants={fadeInUp}
+                variants={scaleIn}
                 className="flex items-center justify-center h-16 lg:h-20 w-full grayscale hover:grayscale-0 transition-all duration-300"
               >
                 <Image
@@ -557,7 +527,7 @@ export default function LandingPage() {
             {testimonials.map((testimonial, index) => (
               <motion.div
                 key={index}
-                variants={fadeInUp}
+                variants={index % 2 === 0 ? fadeInLeft : fadeInRight}
                 className="bg-white rounded-2xl p-8 border border-cream-200 shadow-card hover:shadow-elevated transition-shadow"
               >
                 <div className="flex items-center gap-1 mb-6">
@@ -599,7 +569,7 @@ export default function LandingPage() {
       {/* ============================================
           CTA SECTION WITH INLINE FORM
           ============================================ */}
-      <section id="contact" className="relative py-16 lg:py-20 overflow-hidden bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900">
+      <Spotlight className="relative py-16 lg:py-20 overflow-hidden bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900" id="contact">
         <div className="absolute inset-0">
           <Image
             src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1920&h=1080&fit=crop&q=80"
@@ -705,7 +675,7 @@ export default function LandingPage() {
             </motion.div>
           </div>
         </div>
-      </section>
+      </Spotlight>
 
       {/* ============================================
           FOOTER
