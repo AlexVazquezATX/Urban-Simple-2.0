@@ -23,12 +23,24 @@ const STACK_PHOTOS = [
     alt: 'Urban Simple team in a planning meeting',
   },
   {
-    src: '/images/Team-1767818889/team_Urban-Simple-Group-01.jpg',
-    alt: 'Urban Simple cleaning crew on site',
+    src: '/images/Team-1767818889/3C1A9195_02.jpg',
+    alt: 'Urban Simple team member at work',
+  },
+  {
+    src: '/images/Team-1767818889/3C1A9298.jpg',
+    alt: 'Urban Simple crew member on site',
   },
   {
     src: '/images/Headers-1767818867/Urban-Simple-Van.jpg',
     alt: 'Urban Simple service vehicle',
+  },
+  {
+    src: '/images/Team-1767818889/3C1A9554.jpg',
+    alt: 'Urban Simple team in action',
+  },
+  {
+    src: '/images/Team-1767818889/3C1A9576.jpg',
+    alt: 'Urban Simple professional crew',
   },
 ]
 
@@ -110,19 +122,17 @@ export function WhyUsSection() {
                 </div>
               </div>
 
-              {/* Photo indicators */}
-              <div className="flex justify-center gap-2 mt-4">
+              {/* Progress dots (visual only, not clickable) */}
+              <div className="flex justify-center gap-1.5 mt-4">
                 {STACK_PHOTOS.map((_, i) => (
-                  <button
+                  <div
                     key={i}
-                    onClick={() => setActivePhoto(i)}
                     className={cn(
-                      'h-1.5 rounded-full transition-all duration-300',
+                      'h-1 rounded-full transition-all duration-500',
                       i === activePhoto
-                        ? 'w-8 bg-ocean-500'
-                        : 'w-4 bg-charcoal-200 hover:bg-charcoal-300'
+                        ? 'w-6 bg-ocean-500'
+                        : 'w-2 bg-charcoal-200'
                     )}
-                    aria-label={`View photo ${i + 1}`}
                   />
                 ))}
               </div>
