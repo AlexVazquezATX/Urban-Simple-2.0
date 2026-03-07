@@ -57,6 +57,8 @@ interface Prospect {
   priority: string
   estimatedValue?: number | null
   source: string
+  sourceDetail?: string | null
+  tags?: string[]
   phone?: string | null
   website?: string | null
   address?: any
@@ -105,6 +107,8 @@ const ALL_COLUMNS = [
   { id: 'phone', label: 'Phone', alwaysVisible: false },
   { id: 'estimatedValue', label: 'Value', alwaysVisible: false },
   { id: 'source', label: 'Source', alwaysVisible: false },
+  { id: 'sourceDetail', label: 'Import List', alwaysVisible: false },
+  { id: 'tags', label: 'Tags', alwaysVisible: false },
   { id: 'aiEnriched', label: 'Enriched', alwaysVisible: false },
   { id: 'createdAt', label: 'Date Added', alwaysVisible: false },
   { id: 'actions', label: 'Actions', alwaysVisible: true },
@@ -123,6 +127,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [priorityFilter, setPriorityFilter] = useState<string>('all')
   const [facilityFilter, setFacilityFilter] = useState<string>('all')
   const [priceLevelFilter, setPriceLevelFilter] = useState<string>('all')
+  const [tagFilter, setTagFilter] = useState<string>('all')
+  const [sourceDetailFilter, setSourceDetailFilter] = useState<string>('all')
   const [activeTab, setActiveTab] = useState('all')
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
@@ -186,6 +192,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       // Price Level filter
       const matchesPriceLevel = priceLevelFilter === 'all' || prospect.priceLevel === priceLevelFilter
 
+      // Tag filter
+      const matchesTag = tagFilter === 'all' || (prospect.tags?.includes(tagFilter) ?? false)
+
+      // Source Detail filter
+      const matchesSourceDetail = sourceDetailFilter === 'all' || prospect.sourceDetail === sourceDetailFilter
+
       // Tab filter
       let matchesTab = true
       if (activeTab === 'contact_today') {
@@ -211,7 +223,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         matchesTab = !prospect.website || prospect.website.trim().length === 0
       }
 
-      return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTab
+      return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTag && matchesSourceDetail && matchesTab
     })
 
     // Sort
@@ -252,7 +264,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     })
 
     return filtered
-  }, [prospects, searchQuery, statusFilter, sourceFilter, priorityFilter, facilityFilter, priceLevelFilter, activeTab, sortField, sortDirection])
+  }, [prospects, searchQuery, statusFilter, sourceFilter, priorityFilter, facilityFilter, priceLevelFilter, tagFilter, sourceDetailFilter, activeTab, sortField, sortDirection])
 
   // Get unique values for filters
   const uniqueSources = useMemo(() => {
@@ -263,6 +275,17 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const uniqueFacilities = useMemo(() => {
     const facilities = new Set(prospects.map(p => p.businessType).filter(Boolean))
     return Array.from(facilities).sort() as string[]
+  }, [prospects])
+
+  const uniqueTags = useMemo(() => {
+    const tags = new Set<string>()
+    prospects.forEach(p => p.tags?.forEach(t => tags.add(t)))
+    return Array.from(tags).sort()
+  }, [prospects])
+
+  const uniqueSourceDetails = useMemo(() => {
+    const details = new Set(prospects.map(p => p.sourceDetail).filter(Boolean))
+    return Array.from(details).sort() as string[]
   }, [prospects])
 
   // Selection handlers
@@ -1170,6 +1193,32 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 <option key={s} value={s}>{s.replace('_', ' ')}</option>
               ))}
             </select>
+
+            {uniqueSourceDetails.length > 0 && (
+              <select
+                value={sourceDetailFilter}
+                onChange={(e) => setSourceDetailFilter(e.target.value)}
+                className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              >
+                <option value="all">All Import Lists</option>
+                {uniqueSourceDetails.map((sd) => (
+                  <option key={sd} value={sd}>{sd}</option>
+                ))}
+              </select>
+            )}
+
+            {uniqueTags.length > 0 && (
+              <select
+                value={tagFilter}
+                onChange={(e) => setTagFilter(e.target.value)}
+                className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              >
+                <option value="all">All Tags</option>
+                {uniqueTags.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -1438,6 +1487,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('source') && (
                     <th className="p-3 text-left text-xs font-medium text-warm-700">Source</th>
                   )}
+                  {visibleColumns.includes('sourceDetail') && (
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Import List</th>
+                  )}
+                  {visibleColumns.includes('tags') && (
+                    <th className="p-3 text-left text-xs font-medium text-warm-700">Tags</th>
+                  )}
                   {visibleColumns.includes('aiEnriched') && (
                     <th className="p-3 text-left text-xs font-medium text-warm-700">Enriched</th>
                   )}
@@ -1588,6 +1643,31 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         {visibleColumns.includes('source') && (
                           <td className="p-3 text-xs text-warm-600 capitalize">
                             {prospect.source.replace('_', ' ')}
+                          </td>
+                        )}
+                        {visibleColumns.includes('sourceDetail') && (
+                          <td className="p-3 text-xs text-warm-600">
+                            {prospect.sourceDetail || <span className="text-warm-400">-</span>}
+                          </td>
+                        )}
+                        {visibleColumns.includes('tags') && (
+                          <td className="p-3">
+                            {prospect.tags && prospect.tags.length > 0 ? (
+                              <div className="flex flex-wrap gap-1 max-w-[200px]">
+                                {prospect.tags.slice(0, 3).map(tag => (
+                                  <Badge key={tag} className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {prospect.tags.length > 3 && (
+                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1 py-0 border-warm-200 text-warm-500">
+                                    +{prospect.tags.length - 3}
+                                  </Badge>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-warm-400 text-xs">-</span>
+                            )}
                           </td>
                         )}
                         {visibleColumns.includes('aiEnriched') && (

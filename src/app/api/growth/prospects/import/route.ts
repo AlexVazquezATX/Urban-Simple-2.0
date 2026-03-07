@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
 
     let created = 0
     let skipped = 0
+    let contactsAdded = 0
     const errors: string[] = []
 
     // Process prospects in batches to avoid overwhelming the database
@@ -45,9 +46,37 @@ export async function POST(request: NextRequest) {
                   mode: 'insensitive',
                 },
               },
+              include: { contacts: { select: { email: true } } },
             })
 
             if (existing) {
+              // Duplicate company — add new contacts if provided
+              if (prospectData.contacts && prospectData.contacts.length > 0) {
+                const existingEmails = new Set(
+                  existing.contacts.map(c => c.email?.toLowerCase()).filter(Boolean)
+                )
+                for (const contact of prospectData.contacts) {
+                  const email = contact.email?.trim()?.toLowerCase()
+                  // Skip if no identifying info or email already exists
+                  if (!contact.firstName?.trim() && !email) continue
+                  if (email && existingEmails.has(email)) continue
+
+                  await prisma.prospectContact.create({
+                    data: {
+                      prospectId: existing.id,
+                      firstName: contact.firstName?.trim() || '',
+                      lastName: contact.lastName?.trim() || '',
+                      email: contact.email?.trim() || null,
+                      phone: contact.phone?.trim() || null,
+                      title: contact.title?.trim() || null,
+                      role: contact.role || 'primary',
+                      isDecisionMaker: contact.isDecisionMaker || false,
+                      notes: contact.notes?.trim() || null,
+                    },
+                  })
+                  contactsAdded++
+                }
+              }
               skipped++
               return
             }
@@ -108,6 +137,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       created,
       skipped,
+      contactsAdded,
       total: prospects.length,
       errors: errors.slice(0, 10), // Return first 10 errors
     })

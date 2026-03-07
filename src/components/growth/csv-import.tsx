@@ -13,7 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { Upload, FileSpreadsheet, CheckCircle2, AlertCircle, Loader2, X } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
@@ -47,6 +48,7 @@ const PROSPECT_FIELDS = [
   { value: 'contact.email', label: 'Contact - Email' },
   { value: 'contact.phone', label: 'Contact - Phone' },
   { value: 'contact.title', label: 'Contact - Title' },
+  { value: '__tag__', label: '\u2192 Map to Tag' },
 ]
 
 export function CSVImport() {
@@ -60,6 +62,28 @@ export function CSVImport() {
   const [duplicates, setDuplicates] = useState<string[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [isImporting, setIsImporting] = useState(false)
+  const [batchSourceDetail, setBatchSourceDetail] = useState('')
+  const [batchTags, setBatchTags] = useState<string[]>([])
+  const [tagInput, setTagInput] = useState('')
+
+  const addBatchTag = () => {
+    const tag = tagInput.trim()
+    if (tag && !batchTags.includes(tag)) {
+      setBatchTags(prev => [...prev, tag])
+    }
+    setTagInput('')
+  }
+
+  const removeBatchTag = (tag: string) => {
+    setBatchTags(prev => prev.filter(t => t !== tag))
+  }
+
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addBatchTag()
+    }
+  }
 
   const parseCSV = (text: string): CSVRow[] => {
     const lines = text.split('\n').filter(line => line.trim())
@@ -237,6 +261,12 @@ export function CSVImport() {
         const prospect: any = {
           contacts: [],
         }
+        // Start with batch tags
+        const rowTags: string[] = [...batchTags]
+        // Set batch sourceDetail (column-mapped sourceDetail will override)
+        if (batchSourceDetail.trim()) {
+          prospect.sourceDetail = batchSourceDetail.trim()
+        }
 
         Object.keys(columnMapping).forEach(csvColumn => {
           const field = columnMapping[csvColumn]
@@ -244,6 +274,14 @@ export function CSVImport() {
 
           const value = row[csvColumn].trim()
           if (!value) return
+
+          // Handle "Map to Tag" columns
+          if (field === '__tag__') {
+            if (!rowTags.includes(value)) {
+              rowTags.push(value)
+            }
+            return
+          }
 
           if (field.startsWith('contact.')) {
             const contactField = field.replace('contact.', '')
@@ -265,7 +303,8 @@ export function CSVImport() {
         // Set defaults
         if (!prospect.status) prospect.status = 'new'
         if (!prospect.priority) prospect.priority = 'medium'
-        if (!prospect.source) prospect.source = 'csv_import'
+        prospect.source = 'csv_import'
+        prospect.tags = rowTags
 
         return prospect
       })
@@ -282,7 +321,10 @@ export function CSVImport() {
       }
 
       const result = await response.json()
-      toast.success(`Successfully imported ${result.created} prospects`)
+      const parts = [`${result.created} prospects imported`]
+      if (result.contactsAdded > 0) parts.push(`${result.contactsAdded} contacts added to existing`)
+      if (result.skipped > 0) parts.push(`${result.skipped} duplicates`)
+      toast.success(parts.join(', '))
       router.push('/growth/prospects')
       router.refresh()
     } catch (error: any) {
@@ -342,9 +384,58 @@ export function CSVImport() {
             </div>
           </div>
 
-          {/* Column Mapping */}
+          {/* Batch Import Settings & Column Mapping */}
           {headers.length > 0 && (
             <>
+              <div className="space-y-4 border rounded-lg p-4 bg-muted/50">
+                <div>
+                  <Label className="text-sm font-medium">Import Source Name</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                    Label this batch (e.g. &quot;Austin Luxury Hotels Sheet&quot;). Saved as Source Detail on every prospect.
+                  </p>
+                  <Input
+                    value={batchSourceDetail}
+                    onChange={(e) => setBatchSourceDetail(e.target.value)}
+                    placeholder="e.g., Austin Luxury Hotels Sheet"
+                    className="max-w-md"
+                  />
+                </div>
+                <div>
+                  <Label className="text-sm font-medium">Batch Tags</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5 mb-2">
+                    Tags applied to ALL imported prospects. Press Enter or comma to add.
+                  </p>
+                  <div className="flex items-center gap-2 max-w-md">
+                    <Input
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={handleTagKeyDown}
+                      placeholder="Type a tag and press Enter..."
+                      className="flex-1"
+                    />
+                    <Button type="button" variant="outline" size="sm" onClick={addBatchTag}>
+                      Add
+                    </Button>
+                  </div>
+                  {batchTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {batchTags.map(tag => (
+                        <Badge key={tag} className="rounded-sm text-xs px-2 py-0.5 bg-lime-100 text-lime-700 border-lime-200">
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeBatchTag(tag)}
+                            className="ml-1 hover:text-red-600"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <Label>Map Columns</Label>
                 <p className="text-sm text-muted-foreground mt-1 mb-4">
@@ -374,6 +465,9 @@ export function CSVImport() {
                           ))}
                         </SelectContent>
                       </Select>
+                      {columnMapping[header] === '__tag__' && (
+                        <span className="text-xs text-lime-600 whitespace-nowrap">Values become tags</span>
+                      )}
                     </div>
                   ))}
                 </div>

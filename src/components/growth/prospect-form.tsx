@@ -340,6 +340,41 @@ export function ProspectForm({ prospect, children }: ProspectFormProps) {
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
+                name="sourceDetail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Source Detail</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={loading} placeholder="e.g., Campaign name, spreadsheet" />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Where specifically this lead came from
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input {...field} disabled={loading} placeholder="e.g., Tier 1, Hotel, Austin" />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Comma-separated tags
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
                 name="status"
                 render={({ field }) => (
                   <FormItem>

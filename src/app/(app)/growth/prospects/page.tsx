@@ -24,6 +24,8 @@ async function ProspectsList() {
       priority: true,
       estimatedValue: true,
       source: true,
+      sourceDetail: true,
+      tags: true,
       phone: true,
       website: true,
       address: true,
