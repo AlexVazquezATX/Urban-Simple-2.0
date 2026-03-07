@@ -393,7 +393,12 @@ When you apply a sequence to a prospect:
 2. **Choose channel** (email, SMS, LinkedIn, Instagram DM)
 3. **Optionally select a template** to pre-fill content
 4. **Generate with AI** or write manually
-5. **Send immediately** or **schedule** for a specific date/time
+5. Choose one of:
+   - **Queue for Review** (recommended) — sends the message to the Approval Queue for human review before sending
+   - **Send Now** — sends immediately without review (use with caution)
+   - **Schedule** — set a date/time for sending
+
+> **IMPORTANT for AI operators:** Always use **Queue for Review** instead of Send Now. This ensures all outreach is reviewed by a human before delivery. The "Send Now" button bypasses the approval queue entirely.
 
 ### AI Generation Options
 
@@ -427,6 +432,7 @@ When generating with AI:
 **Only Step 1 (first-contact) messages require approval.** Follow-up messages in a sequence skip the queue.
 
 Messages land here when:
+- You click **Queue for Review** in Quick Compose
 - You generate outreach for a prospect
 - The Growth Agent generates outreach automatically
 - A sequence is applied to a prospect (step 1 only)

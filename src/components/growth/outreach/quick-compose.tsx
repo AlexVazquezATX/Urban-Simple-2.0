@@ -25,6 +25,7 @@ import {
   Loader2,
   Calendar,
   Clock,
+  ShieldCheck,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ProspectSelector } from './prospect-selector'
@@ -45,6 +46,7 @@ export function QuickCompose() {
   const [purpose, setPurpose] = useState('cold_outreach')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSending, setIsSending] = useState(false)
+  const [isQueuing, setIsQueuing] = useState(false)
   const [scheduleFor, setScheduleFor] = useState<string>('')
   const [templates, setTemplates] = useState<any[]>([])
   const [selectedTemplate, setSelectedTemplate] = useState<string>('')
@@ -197,6 +199,58 @@ export function QuickCompose() {
       toast.error(error.message || 'Failed to send')
     } finally {
       setIsSending(false)
+    }
+  }
+
+  const handleQueueForReview = async () => {
+    if (!prospectId || !to || !body) {
+      toast.error('Please fill in all required fields')
+      return
+    }
+
+    if (channel === 'email' && !subject) {
+      toast.error('Email subject is required')
+      return
+    }
+
+    setIsQueuing(true)
+    try {
+      const queueData: any = {
+        prospectId,
+        to,
+        body,
+        channel,
+      }
+
+      if (channel === 'email') {
+        queueData.subject = subject
+      }
+
+      const response = await fetch('/api/growth/outreach/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(queueData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to queue message')
+      }
+
+      toast.success('Message queued for review. Check the Approval Queue to approve and send.')
+
+      // Reset form
+      setSubject('')
+      setBody('')
+      setScheduleFor('')
+      setSelectedTemplate('')
+
+      router.push('/growth/outreach?tab=approval')
+    } catch (error: any) {
+      console.error('Error queuing message:', error)
+      toast.error(error.message || 'Failed to queue message')
+    } finally {
+      setIsQueuing(false)
     }
   }
 
@@ -454,6 +508,24 @@ export function QuickCompose() {
                           Send Now
                         </>
                       )}
+                    </>
+                  )}
+                </Button>
+                <Button
+                  onClick={handleQueueForReview}
+                  disabled={isQueuing || isSending || !to || !body || (channel === 'email' && !subject)}
+                  variant="outline"
+                  className="rounded-sm border-ocean-200 text-ocean-700 hover:bg-ocean-50"
+                >
+                  {isQueuing ? (
+                    <>
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      Queuing...
+                    </>
+                  ) : (
+                    <>
+                      <ShieldCheck className="mr-1.5 h-3.5 w-3.5" />
+                      Queue for Review
                     </>
                   )}
                 </Button>
