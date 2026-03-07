@@ -28,7 +28,7 @@ interface ColumnMapping {
 }
 
 const PROSPECT_FIELDS = [
-  { value: '', label: 'Skip Column' },
+  { value: '__skip__', label: 'Skip Column' },
   { value: 'companyName', label: 'Company Name *' },
   { value: 'legalName', label: 'Legal Name' },
   { value: 'industry', label: 'Industry' },
@@ -270,7 +270,7 @@ export function CSVImport() {
 
         Object.keys(columnMapping).forEach(csvColumn => {
           const field = columnMapping[csvColumn]
-          if (!field || !row[csvColumn]) return
+          if (!field || field === '__skip__' || !row[csvColumn]) return
 
           const value = row[csvColumn].trim()
           if (!value) return
