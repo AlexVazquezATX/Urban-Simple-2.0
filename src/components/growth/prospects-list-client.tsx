@@ -146,8 +146,18 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [isQueueing, setIsQueueing] = useState(false)
   const [isDiscoveringOwners, setIsDiscoveringOwners] = useState(false)
   const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false)
+  const [sequences, setSequences] = useState<any[]>([])
+  const [isApplyingSequence, setIsApplyingSequence] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
+
+  // Fetch available sequences for bulk apply
+  useEffect(() => {
+    fetch('/api/growth/outreach/sequences')
+      .then(res => res.json())
+      .then(data => setSequences(Array.isArray(data) ? data.filter((s: any) => s.status === 'active' || s.status === 'draft') : []))
+      .catch(() => setSequences([]))
+  }, [])
 
   // Calculate stats for tabs
   const stats = useMemo(() => {
@@ -1015,6 +1025,39 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     }
   }
 
+  // Bulk apply sequence handler
+  const handleBulkApplySequence = async (sequenceId: string) => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select prospects')
+      return
+    }
+
+    setIsApplyingSequence(true)
+    try {
+      const res = await fetch(`/api/growth/outreach/sequences/${sequenceId}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectIds: Array.from(selectedIds) }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to apply sequence')
+        return
+      }
+
+      const parts = []
+      if (data.applied > 0) parts.push(`Applied to ${data.applied} prospect${data.applied !== 1 ? 's' : ''}`)
+      if (data.skipped > 0) parts.push(`${data.skipped} skipped`)
+      toast.success(parts.join(', ') + '. Step 1 queued for review.')
+
+      setSelectedIds(new Set())
+    } catch {
+      toast.error('Failed to apply sequence')
+    } finally {
+      setIsApplyingSequence(false)
+    }
+  }
+
   // Prospect detail panel handlers
   const handleSelectProspect = (prospect: Prospect) => {
     setSelectedProspect(prospect)
@@ -1397,6 +1440,21 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     <AtSign className="mr-2 h-4 w-4" />
                     Find Emails
                   </DropdownMenuItem>
+                  {sequences.length > 0 && (
+                    <>
+                      <DropdownMenuSeparator />
+                      {sequences.map((seq) => (
+                        <DropdownMenuItem
+                          key={seq.id}
+                          onClick={() => handleBulkApplySequence(seq.id)}
+                          disabled={isApplyingSequence}
+                        >
+                          <Zap className="mr-2 h-4 w-4" />
+                          {seq.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   {prospects.some((p) => selectedIds.has(p.id) && p.agentQueued) && (
                     <DropdownMenuItem

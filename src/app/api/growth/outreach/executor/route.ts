@@ -1,6 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { Resend } from 'resend'
+
+// Initialize Resend lazily
+let resend: Resend | null = null
+function getResend() {
+  if (!resend && process.env.RESEND_API_KEY) {
+    resend = new Resend(process.env.RESEND_API_KEY)
+  }
+  return resend
+}
 
 /**
  * Sequence Executor - Runs as a cron job to auto-send approved follow-up messages
@@ -189,19 +199,59 @@ export async function POST(request: NextRequest) {
 
 /**
  * Send message via appropriate channel
- * TODO: Integrate with actual email/SMS/LinkedIn/Instagram APIs
  */
 async function sendMessage(message: any): Promise<boolean> {
-  // Placeholder implementation
-  // In production, integrate with:
-  // - Resend/SendGrid for email
-  // - Twilio for SMS
-  // - LinkedIn API for LinkedIn messages
-  // - Instagram API for DMs
+  if (message.channel === 'email') {
+    const recipientEmail = message.prospect?.contacts?.[0]?.email
+    if (!recipientEmail) {
+      console.warn(`[SEND] No email for prospect ${message.prospectId}, skipping`)
+      return false
+    }
 
-  console.log(`[SEND] ${message.channel} to prospect ${message.prospectId}`)
-  
-  // For now, just return true to simulate success
-  // In production, make actual API calls here
+    const resendClient = getResend()
+    if (!resendClient) {
+      console.error('[SEND] Resend not configured (RESEND_API_KEY missing)')
+      return false
+    }
+
+    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+
+    // Build HTML body with optional signature
+    let emailHtml = message.body.replace(/\n/g, '<br>')
+
+    // Fetch sender's signature if available
+    if (message.campaign?.createdById) {
+      const sender = await prisma.user.findUnique({
+        where: { id: message.campaign.createdById },
+        select: { emailSignature: true, signatureLogoUrl: true },
+      })
+      if (sender?.emailSignature || sender?.signatureLogoUrl) {
+        emailHtml += '<br><br>--<br>'
+        if (sender.emailSignature) {
+          emailHtml += sender.emailSignature.replace(/\n/g, '<br>')
+        }
+        if (sender.signatureLogoUrl) {
+          emailHtml += `<br><br><img src="${sender.signatureLogoUrl}" alt="Logo" style="max-height: 60px; width: auto;" />`
+        }
+      }
+    }
+
+    const { error } = await resendClient.emails.send({
+      from: fromEmail,
+      to: recipientEmail,
+      subject: message.subject || 'Hello',
+      html: emailHtml,
+    })
+
+    if (error) {
+      console.error(`[SEND] Resend error for message ${message.id}:`, error)
+      return false
+    }
+
+    return true
+  }
+
+  // Non-email channels: log and mark as sent (operator sends manually)
+  console.log(`[SEND] ${message.channel} to prospect ${message.prospectId} — manual send required`)
   return true
 }

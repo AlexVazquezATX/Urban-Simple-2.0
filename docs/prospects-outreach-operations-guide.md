@@ -373,13 +373,29 @@ For each step, click "Generate with AI" to auto-create content. The AI:
 
 You can generate individual steps or all at once, then edit manually as needed.
 
-### Applying a Sequence to a Prospect
+### Applying a Sequence to Prospects
 
-When you apply a sequence to a prospect:
-- Creates OutreachMessage records for each step
-- **Step 1 messages go to the Approval Queue** (first-contact quality control)
-- Subsequent steps are auto-approved
-- Delays between steps are calculated from the previous step's send date
+**From Prospects List (bulk):**
+1. Navigate to `/growth/prospects`
+2. Select one or more prospects using the checkboxes
+3. Click **More** → find your sequence name under the separator (with ⚡ icon)
+4. Step 1 of the sequence is queued for human review in the Approval Queue
+5. Steps 2+ are pre-approved and will auto-send via the executor on schedule
+
+**From Prospect Detail Panel (single):**
+1. Click on a prospect to open the detail panel
+2. Click the **Sequence** button (⚡ icon) in the footer
+3. Select the sequence to apply
+
+**What happens when you apply a sequence:**
+- A new campaign is created for that prospect
+- Step 1: `approvalStatus: pending` → goes to Approval Queue for human review
+- Steps 2+: `approvalStatus: approved`, `scheduledAt` calculated from cumulative delay days
+- The executor cron (`/api/growth/outreach/executor`) processes approved follow-ups automatically
+- If the prospect replies with a positive outcome, remaining steps are cancelled
+- Duplicate protection: cannot apply the same sequence to a prospect that already has it active
+
+> **IMPORTANT for AI operators:** Always review Step 1 messages in the Approval Queue before they are sent. Follow-up steps send automatically after approval.
 
 ---
 
@@ -570,7 +586,12 @@ The dashboard shows:
    - Upload new spreadsheets with batch tags + source name
    - Map columns, import
 
-6. **Pipeline Review** (`/growth/pipeline`)
+6. **Apply Sequences** (`/growth/prospects`)
+   - Select prospects ready for outreach (use "Has email" filter)
+   - Click More → select a sequence to apply
+   - Step 1 messages go to Approval Queue for review
+
+7. **Pipeline Review** (`/growth/pipeline`)
    - Drag prospects through stages as deals progress
    - Set lost reasons for dead leads
    - Convert won prospects to clients

@@ -29,6 +29,7 @@ import {
   Trash2,
   ChevronDown,
   Users,
+  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,6 +49,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -193,6 +200,10 @@ export function ProspectDetailPanel({
   const [selectedContactIndex, setSelectedContactIndex] = useState(0)
   const [contacts, setContacts] = useState(prospect?.contacts || [])
 
+  // Sequence state
+  const [sequences, setSequences] = useState<any[]>([])
+  const [isApplyingSequence, setIsApplyingSequence] = useState(false)
+
   // Email finder state
   const [isFindingEmail, setIsFindingEmail] = useState(false)
   const [emailSuggestions, setEmailSuggestions] = useState<any[]>([])
@@ -238,6 +249,40 @@ export function ProspectDetailPanel({
   useEffect(() => {
     requestAnimationFrame(() => setIsVisible(true))
   }, [])
+
+  // Fetch available sequences
+  useEffect(() => {
+    fetch('/api/growth/outreach/sequences')
+      .then(res => res.json())
+      .then(data => setSequences(Array.isArray(data) ? data.filter((s: any) => s.status === 'active' || s.status === 'draft') : []))
+      .catch(() => setSequences([]))
+  }, [])
+
+  const handleApplySequence = async (sequenceId: string) => {
+    if (!prospect) return
+    setIsApplyingSequence(true)
+    try {
+      const res = await fetch(`/api/growth/outreach/sequences/${sequenceId}/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prospectIds: [prospect.id] }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to apply sequence')
+        return
+      }
+      if (data.applied > 0) {
+        toast.success('Sequence applied. Step 1 queued for review.')
+      } else {
+        toast.info(data.errors?.[0] || 'Sequence already active for this prospect')
+      }
+    } catch {
+      toast.error('Failed to apply sequence')
+    } finally {
+      setIsApplyingSequence(false)
+    }
+  }
 
   // Handle escape key
   useEffect(() => {
@@ -1240,15 +1285,47 @@ export function ProspectDetailPanel({
 
         {/* Footer Actions */}
         <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 bg-white">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push(`/growth/outreach?prospect=${prospect.id}&channel=email`)}
-            className="rounded-sm"
-          >
-            <Mail className="mr-1.5 h-3.5 w-3.5" />
-            Email
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push(`/growth/outreach?prospect=${prospect.id}&channel=email`)}
+              className="rounded-sm"
+            >
+              <Mail className="mr-1.5 h-3.5 w-3.5" />
+              Email
+            </Button>
+            {sequences.length > 0 && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={isApplyingSequence}
+                    className="rounded-sm"
+                  >
+                    {isApplyingSequence ? (
+                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Zap className="mr-1.5 h-3.5 w-3.5" />
+                    )}
+                    Sequence
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" className="rounded-sm w-48">
+                  {sequences.map((seq) => (
+                    <DropdownMenuItem
+                      key={seq.id}
+                      onClick={() => handleApplySequence(seq.id)}
+                    >
+                      <Zap className="mr-2 h-4 w-4" />
+                      {seq.name}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
