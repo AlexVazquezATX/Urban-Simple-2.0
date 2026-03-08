@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,12 +40,17 @@ import {
   UserPlus,
   Bot,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { Switch } from '@/components/ui/switch'
 import { ProspectDetailPanel } from './prospect-detail-panel'
 import { ProspectForm } from './prospect-form'
+
+const PAGE_SIZE = 50
 
 interface Prospect {
   id: string
@@ -129,7 +134,9 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [priceLevelFilter, setPriceLevelFilter] = useState<string>('all')
   const [tagFilter, setTagFilter] = useState<string>('all')
   const [sourceDetailFilter, setSourceDetailFilter] = useState<string>('all')
+  const [hasEmailOnly, setHasEmailOnly] = useState(false)
   const [activeTab, setActiveTab] = useState('all')
+  const [currentPage, setCurrentPage] = useState(1)
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -223,7 +230,9 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         matchesTab = !prospect.website || prospect.website.trim().length === 0
       }
 
-      return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTag && matchesSourceDetail && matchesTab
+      const matchesHasEmail = !hasEmailOnly || prospect.contacts?.some(c => c.email)
+
+      return matchesSearch && matchesStatus && matchesSource && matchesPriority && matchesFacility && matchesPriceLevel && matchesTag && matchesSourceDetail && matchesTab && matchesHasEmail
     })
 
     // Sort
@@ -264,7 +273,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     })
 
     return filtered
-  }, [prospects, searchQuery, statusFilter, sourceFilter, priorityFilter, facilityFilter, priceLevelFilter, tagFilter, sourceDetailFilter, activeTab, sortField, sortDirection])
+  }, [prospects, searchQuery, statusFilter, sourceFilter, priorityFilter, facilityFilter, priceLevelFilter, tagFilter, sourceDetailFilter, hasEmailOnly, activeTab, sortField, sortDirection])
 
   // Get unique values for filters
   const uniqueSources = useMemo(() => {
@@ -287,6 +296,16 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     const details = new Set(prospects.map(p => p.sourceDetail).filter(Boolean))
     return Array.from(details).sort() as string[]
   }, [prospects])
+
+  // Pagination
+  const totalPages = Math.ceil(filteredProspects.length / PAGE_SIZE)
+  const paginatedProspects = useMemo(() => {
+    const start = (currentPage - 1) * PAGE_SIZE
+    return filteredProspects.slice(start, start + PAGE_SIZE)
+  }, [filteredProspects, currentPage])
+
+  // Reset page when filters change
+  useEffect(() => { setCurrentPage(1) }, [searchQuery, statusFilter, sourceFilter, priorityFilter, facilityFilter, priceLevelFilter, tagFilter, sourceDetailFilter, hasEmailOnly, activeTab])
 
   // Selection handlers
   const toggleSelectAll = () => {
@@ -1219,6 +1238,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 ))}
               </select>
             )}
+
+            <label className="flex items-center gap-1.5 h-8 px-2 border border-warm-200 rounded-sm bg-white cursor-pointer">
+              <Switch
+                checked={hasEmailOnly}
+                onCheckedChange={setHasEmailOnly}
+                className="scale-75"
+              />
+              <span className="text-xs text-warm-700 whitespace-nowrap">Has email</span>
+            </label>
           </div>
         </CardContent>
       </Card>
@@ -1513,14 +1541,14 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 </tr>
               </thead>
               <tbody className="divide-y divide-warm-100">
-                {filteredProspects.length === 0 ? (
+                {paginatedProspects.length === 0 ? (
                   <tr>
                     <td colSpan={visibleColumns.length + 1} className="p-8 text-center text-warm-500 text-sm">
                       No leads found matching your criteria
                     </td>
                   </tr>
                 ) : (
-                  filteredProspects.map((prospect) => {
+                  paginatedProspects.map((prospect) => {
                     const primaryContact = prospect.contacts[0]
                     const address = prospect.address as any
 
@@ -1752,10 +1780,38 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         </CardContent>
       </Card>
 
-      {/* Results count */}
-      <p className="text-xs text-warm-500 text-center mt-4">
-        Showing {filteredProspects.length} of {prospects.length} leads
-      </p>
+      {/* Pagination */}
+      <div className="flex items-center justify-between mt-4">
+        <p className="text-xs text-warm-500">
+          Showing {filteredProspects.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredProspects.length)} of {filteredProspects.length} leads
+          {filteredProspects.length !== prospects.length && ` (${prospects.length} total)`}
+        </p>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-sm h-7 px-2"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => p - 1)}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <span className="text-xs text-warm-600">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-sm h-7 px-2"
+              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(p => p + 1)}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Prospect Detail Panel */}
       {selectedProspect && (
