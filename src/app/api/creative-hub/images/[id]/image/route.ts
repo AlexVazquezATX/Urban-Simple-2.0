@@ -25,7 +25,7 @@ export async function GET(
 
     const image = await prisma.creativeImage.findUnique({
       where: { id },
-      select: { imageBase64: true, imageUrl: true, companyId: true },
+      select: { imageBase64: true, imageUrl: true, companyId: true, name: true },
     })
 
     if (!image || image.companyId !== user.companyId) {
@@ -44,10 +44,16 @@ export async function GET(
       // Detect format from magic bytes
       const isPng = buffer[0] === 0x89 && buffer[1] === 0x50
       const mimeType = isPng ? 'image/png' : 'image/jpeg'
+      const ext = isPng ? '.png' : '.jpg'
+
+      // Build a clean filename with proper extension
+      const safeName = (image.name || 'image').replace(/[^a-zA-Z0-9 _-]/g, '').trim() || 'image'
+      const filename = safeName.endsWith(ext) ? safeName : `${safeName}${ext}`
 
       return new NextResponse(buffer, {
         headers: {
           'Content-Type': mimeType,
+          'Content-Disposition': `inline; filename="${filename}"`,
           'Cache-Control': 'private, max-age=3600',
         },
       })

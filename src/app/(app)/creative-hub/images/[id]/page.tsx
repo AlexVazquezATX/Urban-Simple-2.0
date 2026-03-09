@@ -248,7 +248,8 @@ export default function CreativeDetailPage({
     if (!src) return
     const link = document.createElement('a')
     link.href = src
-    link.download = name || 'creative'
+    const filename = name || 'creative'
+    link.download = filename.match(/\.(png|jpg|jpeg|webp)$/i) ? filename : `${filename}.png`
     link.click()
   }
 

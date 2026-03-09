@@ -396,7 +396,7 @@ export default function ImageLibraryPage() {
                       e.stopPropagation()
                       const link = document.createElement('a')
                       link.href = getImageSrc(image)
-                      link.download = image.name
+                      link.download = image.name.match(/\.(png|jpg|jpeg|webp)$/i) ? image.name : `${image.name}.png`
                       link.click()
                     }}
                   >
@@ -470,7 +470,7 @@ export default function ImageLibraryPage() {
                     onClick={() => {
                       const link = document.createElement('a')
                       link.href = getImageSrc(image)
-                      link.download = image.name
+                      link.download = image.name.match(/\.(png|jpg|jpeg|webp)$/i) ? image.name : `${image.name}.png`
                       link.click()
                     }}
                   >
