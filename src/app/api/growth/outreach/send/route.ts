@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+      const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
       // Build email body with optional signature and logo
       let emailHtml = messageBody.replace(/\n/g, '<br>')

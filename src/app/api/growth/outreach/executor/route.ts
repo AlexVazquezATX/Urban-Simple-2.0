@@ -214,7 +214,7 @@ async function sendMessage(message: any): Promise<boolean> {
       return false
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
     // Build HTML body with optional signature
     let emailHtml = message.body.replace(/\n/g, '<br>')
