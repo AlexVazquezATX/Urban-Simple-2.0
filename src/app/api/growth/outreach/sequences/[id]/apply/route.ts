@@ -46,13 +46,26 @@ export async function POST(
       return NextResponse.json({ error: 'Sequence has no steps' }, { status: 400 })
     }
 
-    // Verify all prospects belong to the user's company
+    // Verify all prospects belong to the user's company (include contacts for merge tags)
     const prospects = await prisma.prospect.findMany({
       where: {
         id: { in: prospectIds },
         companyId: user.companyId,
       },
-      select: { id: true, companyName: true },
+      select: {
+        id: true,
+        companyName: true,
+        address: true,
+        contacts: {
+          take: 1,
+          select: {
+            firstName: true,
+            lastName: true,
+            title: true,
+            email: true,
+          },
+        },
+      },
     })
 
     const validIds = new Set(prospects.map(p => p.id))
@@ -100,6 +113,32 @@ export async function POST(
           },
         })
 
+        // Resolve merge tags for this prospect
+        const prospectData = prospects.find(p => p.id === prospectId)!
+        const contact = prospectData.contacts?.[0]
+        const addr = prospectData.address as any || {}
+        const locationParts = [addr.city, addr.state].filter(Boolean)
+
+        const resolveTags = (text: string | null): string | null => {
+          if (!text) return text
+          const replacements: Record<string, string> = {
+            '{{company_name}}': prospectData.companyName,
+            '{{business_name}}': prospectData.companyName,
+            '{{contact_name}}': contact ? `${contact.firstName} ${contact.lastName}`.trim() : '',
+            '{{first_name}}': contact?.firstName || '',
+            '{{last_name}}': contact?.lastName || '',
+            '{{title}}': contact?.title || '',
+            '{{location}}': locationParts.join(', '),
+            '{{city}}': addr.city || '',
+            '{{state}}': addr.state || '',
+          }
+          let resolved = text
+          for (const [tag, value] of Object.entries(replacements)) {
+            resolved = resolved.replaceAll(tag, value)
+          }
+          return resolved
+        }
+
         // Create message records for each step
         let cumulativeDelayDays = 0
         for (const step of sequence.messages) {
@@ -115,8 +154,8 @@ export async function POST(
               step: step.step,
               delayDays: step.delayDays,
               channel: step.channel,
-              subject: step.subject,
-              body: step.body,
+              subject: resolveTags(step.subject),
+              body: resolveTags(step.body) || step.body,
               isAiGenerated: step.isAiGenerated,
               status: 'pending',
               // Step 1 goes to approval queue; steps 2+ are pre-approved

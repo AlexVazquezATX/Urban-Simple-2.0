@@ -20,6 +20,8 @@ import {
   ChevronDown,
   ChevronRight,
   Pencil,
+  Clock,
+  XCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -34,6 +36,8 @@ interface MessageItem {
   channel: string
   subject: string | null
   body: string
+  step?: number
+  scheduledAt?: string | null
   isAiGenerated: boolean
   createdAt: string
   approvedAt: string | null
@@ -45,9 +49,12 @@ export function MessagesHub() {
   const [activeTab, setActiveTab] = useState('pending')
   const [pendingCount, setPendingCount] = useState(0)
   const [approvedMessages, setApprovedMessages] = useState<MessageItem[]>([])
+  const [scheduledMessages, setScheduledMessages] = useState<MessageItem[]>([])
   const [sentMessages, setSentMessages] = useState<MessageItem[]>([])
   const [loadingApproved, setLoadingApproved] = useState(true)
+  const [loadingScheduled, setLoadingScheduled] = useState(true)
   const [loadingSent, setLoadingSent] = useState(true)
+  const [cancellingId, setCancellingId] = useState<string | null>(null)
   const [sendingIds, setSendingIds] = useState<Set<string>>(new Set())
   const [sendingAll, setSendingAll] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -57,6 +64,7 @@ export function MessagesHub() {
   useEffect(() => {
     fetchPendingCount()
     fetchApproved()
+    fetchScheduled()
     fetchSent()
   }, [])
 
@@ -64,6 +72,7 @@ export function MessagesHub() {
     setActiveTab(tab)
     if (tab === 'pending') fetchPendingCount()
     else if (tab === 'approved') fetchApproved()
+    else if (tab === 'scheduled') fetchScheduled()
     else if (tab === 'sent') fetchSent()
   }
 
@@ -92,6 +101,21 @@ export function MessagesHub() {
     }
   }
 
+  const fetchScheduled = async () => {
+    setLoadingScheduled(true)
+    try {
+      const res = await fetch('/api/growth/outreach/approval-queue?view=scheduled')
+      if (res.ok) {
+        const data = await res.json()
+        setScheduledMessages(data.messages || [])
+      }
+    } catch {
+      toast.error('Failed to load scheduled messages')
+    } finally {
+      setLoadingScheduled(false)
+    }
+  }
+
   const fetchSent = async () => {
     setLoadingSent(true)
     try {
@@ -104,6 +128,27 @@ export function MessagesHub() {
       toast.error('Failed to load sent messages')
     } finally {
       setLoadingSent(false)
+    }
+  }
+
+  const handleCancelScheduled = async (messageId: string) => {
+    setCancellingId(messageId)
+    try {
+      const res = await fetch('/api/growth/outreach/approval-queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reject', messageIds: [messageId] }),
+      })
+      if (res.ok) {
+        toast.success('Scheduled message cancelled')
+        fetchScheduled()
+      } else {
+        toast.error('Failed to cancel message')
+      }
+    } catch {
+      toast.error('Failed to cancel message')
+    } finally {
+      setCancellingId(null)
     }
   }
 
@@ -204,7 +249,7 @@ export function MessagesHub() {
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-3 rounded-none bg-white border-b border-warm-200 p-0 h-auto">
+        <TabsList className="grid w-full grid-cols-4 rounded-none bg-white border-b border-warm-200 p-0 h-auto">
           <TabsTrigger
             value="pending"
             className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50"
@@ -226,6 +271,18 @@ export function MessagesHub() {
             {approvedMessages.length > 0 && (
               <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
                 {approvedMessages.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger
+            value="scheduled"
+            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50"
+          >
+            <Clock className="h-3.5 w-3.5 text-amber-500" />
+            <span>Scheduled</span>
+            {scheduledMessages.length > 0 && (
+              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200">
+                {scheduledMessages.length}
               </Badge>
             )}
           </TabsTrigger>
@@ -317,6 +374,47 @@ export function MessagesHub() {
           </Card>
         </TabsContent>
 
+        {/* ── Scheduled Follow-ups ── */}
+        <TabsContent value="scheduled" className="mt-4">
+          <Card className="rounded-sm border-warm-200">
+            <CardContent className="p-4">
+              {loadingScheduled ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="h-5 w-5 animate-spin text-warm-400" />
+                </div>
+              ) : scheduledMessages.length === 0 ? (
+                <div className="text-center py-10">
+                  <Clock className="h-10 w-10 mx-auto text-warm-300 mb-3" />
+                  <p className="text-sm text-warm-500">No scheduled follow-ups</p>
+                  <p className="text-xs text-warm-400 mt-1">
+                    Follow-up steps from sequences will appear here before their send date
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-warm-600 mb-4">
+                    {scheduledMessages.length} follow-up{scheduledMessages.length !== 1 ? 's' : ''} scheduled
+                  </p>
+                  <div className="space-y-1.5">
+                    {scheduledMessages.map((msg) => (
+                      <MessageCard
+                        key={msg.id}
+                        msg={msg}
+                        mode="scheduled"
+                        expanded={expandedIds.has(msg.id)}
+                        onToggleExpand={() => toggleExpanded(msg.id)}
+                        getChannelIcon={getChannelIcon}
+                        onCancel={() => handleCancelScheduled(msg.id)}
+                        cancelling={cancellingId === msg.id}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* ── Sent History ── */}
         <TabsContent value="sent" className="mt-4">
           <Card className="rounded-sm border-warm-200">
@@ -371,9 +469,11 @@ function MessageCard({
   emailOverride,
   onEmailChange,
   getChannelIcon,
+  onCancel,
+  cancelling,
 }: {
   msg: MessageItem
-  mode: 'approved' | 'sent'
+  mode: 'approved' | 'sent' | 'scheduled'
   expanded: boolean
   onToggleExpand: () => void
   sending?: boolean
@@ -381,9 +481,11 @@ function MessageCard({
   emailOverride?: string
   onEmailChange?: (email: string) => void
   getChannelIcon: (channel: string) => React.ReactNode
+  onCancel?: () => void
+  cancelling?: boolean
 }) {
   const [editingEmail, setEditingEmail] = useState(false)
-  const borderHover = mode === 'approved' ? 'hover:border-lime-400' : ''
+  const borderHover = mode === 'approved' ? 'hover:border-lime-400' : mode === 'scheduled' ? 'hover:border-amber-300' : ''
   const effectiveEmail = emailOverride?.trim() || msg.contactEmail || ''
 
   return (
@@ -397,6 +499,11 @@ function MessageCard({
             >
               {msg.prospectName}
             </Link>
+            {msg.step && msg.step > 1 && (
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200">
+                Step {msg.step}
+              </Badge>
+            )}
             {msg.isAiGenerated && (
               <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">
                 <Sparkles className="h-2.5 w-2.5 mr-0.5" />
@@ -475,6 +582,34 @@ function MessageCard({
               )}
             </Button>
           )}
+          {mode === 'scheduled' && (
+            <div className="flex items-center gap-2">
+              {msg.scheduledAt && (
+                <span className="text-[10px] text-amber-600 whitespace-nowrap">
+                  <Clock className="h-2.5 w-2.5 inline mr-0.5" />
+                  {format(new Date(msg.scheduledAt), 'MMM d, yyyy')}
+                </span>
+              )}
+              {onCancel && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={cancelling}
+                  className="rounded-sm h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  {cancelling ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <>
+                      <XCircle className="h-3 w-3 mr-1" />
+                      Cancel
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
+          )}
           {mode === 'sent' && msg.sentAt && (
             <span className="text-[10px] text-warm-400 whitespace-nowrap">
               {format(new Date(msg.sentAt), 'MMM d, h:mm a')}
@@ -515,6 +650,9 @@ function MessageCard({
           <span className="text-[10px] text-warm-400">
             Approved {format(new Date(msg.approvedAt), 'MMM d, h:mm a')}
           </span>
+        )}
+        {mode === 'scheduled' && msg.campaignName && (
+          <span className="text-[10px] text-warm-400">Sequence: {msg.campaignName}</span>
         )}
         {mode === 'sent' && msg.campaignName && (
           <span className="text-[10px] text-warm-400">Campaign: {msg.campaignName}</span>

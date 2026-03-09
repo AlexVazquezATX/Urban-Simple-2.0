@@ -31,9 +31,23 @@ export async function GET(request: NextRequest) {
       prospect: { companyId: user.companyId },
     }
 
+    const now = new Date()
+
     if (view === 'approved') {
+      // Only show messages that are actually ready to send RIGHT NOW
+      // Step 1 approved messages + follow-ups whose scheduled date has arrived
       where.approvalStatus = 'approved'
       where.status = 'pending'
+      where.OR = [
+        { step: 1 },
+        { step: { gt: 1 }, scheduledAt: { lte: now } },
+      ]
+    } else if (view === 'scheduled') {
+      // Follow-up steps that are approved but not yet due
+      where.approvalStatus = 'approved'
+      where.status = 'pending'
+      where.step = { gt: 1 }
+      where.scheduledAt = { gt: now }
     } else if (view === 'sent') {
       where.status = 'sent'
     } else {
@@ -74,6 +88,8 @@ export async function GET(request: NextRequest) {
         channel: m.channel,
         subject: m.subject,
         body: m.body,
+        step: m.step,
+        scheduledAt: m.scheduledAt,
         isAiGenerated: m.isAiGenerated,
         createdAt: m.createdAt,
         approvedAt: m.approvedAt,
@@ -235,12 +251,18 @@ export async function POST(request: NextRequest) {
       // Optional: UI can override recipient emails per message
       const toOverrides: Record<string, string> = body.toOverrides || {}
 
+      const sendNow = new Date()
       const messages = await prisma.outreachMessage.findMany({
         where: {
           id: { in: messageIds },
           approvalStatus: 'approved',
           status: 'pending',
           prospect: { companyId: user.companyId },
+          // Only send messages whose scheduled time has arrived (or have no schedule)
+          OR: [
+            { scheduledAt: null },
+            { scheduledAt: { lte: sendNow } },
+          ],
         },
         include: {
           prospect: {

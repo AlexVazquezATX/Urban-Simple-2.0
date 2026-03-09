@@ -453,6 +453,15 @@ Messages land here when:
 - The Growth Agent generates outreach automatically
 - A sequence is applied to a prospect (step 1 only)
 
+### Tabs
+
+| Tab | What It Shows |
+|-----|---------------|
+| **Pending Review** | Step 1 (first-contact) messages awaiting human approval |
+| **Ready to Send** | Approved messages that can be sent right now (step 1 approved, or follow-ups whose scheduled date has arrived) |
+| **Scheduled** | Follow-up steps (2, 3, 4...) that are pre-approved but waiting for their scheduled date. Shows step number, scheduled date, and sequence name. Each can be cancelled individually. |
+| **Sent** | History of all sent messages |
+
 ### Approval Actions
 
 | Action | What It Does |
@@ -463,6 +472,31 @@ Messages land here when:
 | **Regenerate** | Get a fresh AI-generated version (with optional custom instructions) |
 | **Reject** | Remove from queue (won't be sent) |
 | **Send** | Send approved messages (email via Resend, others logged for manual send) |
+| **Cancel** (Scheduled tab) | Cancel a scheduled follow-up step |
+
+### Message Lifecycle
+
+```
+Step 1:  pending_review → approved → ready_to_send → sent
+Step 2+: approved → scheduled (waiting for date) → ready_to_send → sent
+```
+
+- "Send All" in Ready to Send only sends messages that are actually due — it cannot fire future-scheduled steps
+- The executor cron also respects `scheduledAt` dates for automatic follow-up delivery
+
+### Merge Tags
+
+When a sequence is applied to a prospect, merge tags in message templates are automatically resolved:
+
+| Tag | Replaced With |
+|-----|---------------|
+| `{{company_name}}` / `{{business_name}}` | Prospect's company name |
+| `{{contact_name}}` | Primary contact's full name |
+| `{{first_name}}` / `{{last_name}}` | Contact's first or last name |
+| `{{title}}` | Contact's job title |
+| `{{location}}` / `{{city}}` / `{{state}}` | Prospect's address info |
+
+Tags are resolved at apply time, so the Pending Review and Scheduled tabs show the actual text that will be sent.
 
 ### Workflow
 
@@ -470,6 +504,7 @@ Messages land here when:
 2. For each message: read, edit if needed, approve
 3. Once approved, click "Send" to deliver
 4. For non-email channels (LinkedIn, SMS, Instagram), copy the message text and send manually through those platforms
+5. Check the "Scheduled" tab to see upcoming follow-ups and cancel any if needed
 
 ---
 
