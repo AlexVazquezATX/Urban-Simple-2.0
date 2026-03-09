@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -39,7 +39,7 @@ interface ApprovalMessage {
   campaignName: string | null
 }
 
-export function ApprovalQueue() {
+export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
   const [messages, setMessages] = useState<ApprovalMessage[]>([])
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
@@ -49,6 +49,20 @@ export function ApprovalQueue() {
   const [editedSubject, setEditedSubject] = useState<string>('')
   const [savingEdit, setSavingEdit] = useState(false)
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null)
+
+  const filteredMessages = useMemo(() => {
+    if (!searchQuery.trim()) return messages
+    const q = searchQuery.toLowerCase()
+    return messages.filter(
+      (m) =>
+        m.prospectName?.toLowerCase().includes(q) ||
+        m.contactName?.toLowerCase().includes(q) ||
+        m.contactEmail?.toLowerCase().includes(q) ||
+        m.subject?.toLowerCase().includes(q) ||
+        m.body?.toLowerCase().includes(q) ||
+        m.campaignName?.toLowerCase().includes(q)
+    )
+  }, [messages, searchQuery])
 
   useEffect(() => {
     fetchQueue()
@@ -294,7 +308,7 @@ export function ApprovalQueue() {
           <div>
             <CardTitle className="text-base font-display font-medium text-warm-900">Approval Queue</CardTitle>
             <CardDescription className="text-xs text-warm-500">
-              {messages.length} first-contact message{messages.length !== 1 ? 's' : ''} awaiting review
+              {filteredMessages.length}{searchQuery ? ` of ${messages.length}` : ''} first-contact message{filteredMessages.length !== 1 ? 's' : ''} awaiting review
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -345,7 +359,7 @@ export function ApprovalQueue() {
       </CardHeader>
       <CardContent className="p-4 pt-0">
         <div className="space-y-1.5">
-          {messages.map((message) => (
+          {filteredMessages.map((message) => (
             <div
               key={message.id}
               className="rounded-sm border border-warm-200 p-3 hover:border-ocean-400 transition-colors"

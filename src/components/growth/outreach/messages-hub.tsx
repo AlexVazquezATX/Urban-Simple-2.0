@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +22,7 @@ import {
   Pencil,
   Clock,
   XCircle,
+  Search,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -60,6 +61,26 @@ export function MessagesHub() {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   // Editable "To" email overrides per message
   const [emailOverrides, setEmailOverrides] = useState<Record<string, string>>({})
+  // Search filter
+  const [searchQuery, setSearchQuery] = useState('')
+
+  const filterMessages = (messages: MessageItem[]) => {
+    if (!searchQuery.trim()) return messages
+    const q = searchQuery.toLowerCase()
+    return messages.filter(
+      (m) =>
+        m.prospectName?.toLowerCase().includes(q) ||
+        m.contactName?.toLowerCase().includes(q) ||
+        m.contactEmail?.toLowerCase().includes(q) ||
+        m.subject?.toLowerCase().includes(q) ||
+        m.body?.toLowerCase().includes(q) ||
+        m.campaignName?.toLowerCase().includes(q)
+    )
+  }
+
+  const filteredApproved = useMemo(() => filterMessages(approvedMessages), [approvedMessages, searchQuery])
+  const filteredScheduled = useMemo(() => filterMessages(scheduledMessages), [scheduledMessages, searchQuery])
+  const filteredSent = useMemo(() => filterMessages(sentMessages), [sentMessages, searchQuery])
 
   useEffect(() => {
     fetchPendingCount()
@@ -211,11 +232,11 @@ export function MessagesHub() {
   }
 
   const handleSendAll = async () => {
-    if (approvedMessages.length === 0) return
-    if (!confirm(`Send all ${approvedMessages.length} approved message${approvedMessages.length > 1 ? 's' : ''}?`)) return
+    if (filteredApproved.length === 0) return
+    if (!confirm(`Send all ${filteredApproved.length} approved message${filteredApproved.length > 1 ? 's' : ''}?`)) return
 
     setSendingAll(true)
-    await handleSend(approvedMessages.map((m) => m.id))
+    await handleSend(filteredApproved.map((m) => m.id))
     setSendingAll(false)
   }
 
@@ -248,6 +269,15 @@ export function MessagesHub() {
 
   return (
     <div className="space-y-4">
+      <div className="relative">
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-warm-400" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search by prospect, contact, subject, or campaign..."
+          className="pl-8 h-8 text-xs rounded-sm border-warm-200"
+        />
+      </div>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-4 rounded-none bg-white border-b border-warm-200 p-0 h-auto">
           <TabsTrigger
@@ -302,7 +332,7 @@ export function MessagesHub() {
 
         {/* ── Pending Review ── */}
         <TabsContent value="pending" className="mt-4">
-          <ApprovalQueue />
+          <ApprovalQueue searchQuery={searchQuery} />
         </TabsContent>
 
         {/* ── Ready to Send ── */}
@@ -326,7 +356,7 @@ export function MessagesHub() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-sm text-warm-600">
-                        {approvedMessages.length} message{approvedMessages.length !== 1 ? 's' : ''} ready
+                        {filteredApproved.length}{searchQuery ? ` of ${approvedMessages.length}` : ''} message{filteredApproved.length !== 1 ? 's' : ''} ready
                       </p>
                       <p className="text-[10px] text-warm-400">
                         Your email signature will be appended automatically
@@ -347,13 +377,13 @@ export function MessagesHub() {
                       ) : (
                         <>
                           <Send className="h-3.5 w-3.5 mr-1.5" />
-                          Send All ({approvedMessages.length})
+                          Send All ({filteredApproved.length})
                         </>
                       )}
                     </Button>
                   </div>
                   <div className="space-y-1.5">
-                    {approvedMessages.map((msg) => (
+                    {filteredApproved.map((msg) => (
                       <MessageCard
                         key={msg.id}
                         msg={msg}
@@ -393,10 +423,10 @@ export function MessagesHub() {
               ) : (
                 <>
                   <p className="text-sm text-warm-600 mb-4">
-                    {scheduledMessages.length} follow-up{scheduledMessages.length !== 1 ? 's' : ''} scheduled
+                    {filteredScheduled.length}{searchQuery ? ` of ${scheduledMessages.length}` : ''} follow-up{filteredScheduled.length !== 1 ? 's' : ''} scheduled
                   </p>
                   <div className="space-y-1.5">
-                    {scheduledMessages.map((msg) => (
+                    {filteredScheduled.map((msg) => (
                       <MessageCard
                         key={msg.id}
                         msg={msg}
@@ -434,10 +464,10 @@ export function MessagesHub() {
               ) : (
                 <>
                   <p className="text-sm text-warm-600 mb-4">
-                    {sentMessages.length} message{sentMessages.length !== 1 ? 's' : ''} sent
+                    {filteredSent.length}{searchQuery ? ` of ${sentMessages.length}` : ''} message{filteredSent.length !== 1 ? 's' : ''} sent
                   </p>
                   <div className="space-y-1.5">
-                    {sentMessages.map((msg) => (
+                    {filteredSent.map((msg) => (
                       <MessageCard
                         key={msg.id}
                         msg={msg}
