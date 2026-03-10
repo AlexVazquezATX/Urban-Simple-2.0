@@ -68,6 +68,26 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to send email: ${error.message || JSON.stringify(error)}`)
     }
 
+    const now = new Date()
+
+    // Create OutreachMessage record for tracking in the Sent tab
+    await prisma.outreachMessage.create({
+      data: {
+        prospectId,
+        step: 1,
+        delayDays: 0,
+        channel: 'email',
+        subject,
+        body: emailBody,
+        status: 'sent',
+        approvalStatus: 'approved',
+        approvedAt: now,
+        approvedById: user.id,
+        sentAt: now,
+        resendEmailId: data?.id || null,
+      },
+    })
+
     // Create activity record
     const activity = await prisma.prospectActivity.create({
       data: {
@@ -77,7 +97,7 @@ export async function POST(request: NextRequest) {
         channel: 'email',
         subject,
         messageBody: emailBody,
-        sentAt: new Date(),
+        sentAt: now,
         metadata: {
           emailId: data?.id,
           templateId: templateId || null,
@@ -98,7 +118,7 @@ export async function POST(request: NextRequest) {
     await prisma.prospect.update({
       where: { id: prospectId },
       data: {
-        lastContactedAt: new Date(),
+        lastContactedAt: now,
       },
     })
 

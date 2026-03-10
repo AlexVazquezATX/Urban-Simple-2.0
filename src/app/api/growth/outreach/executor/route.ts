@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Check if campaign is still active
-      if (message.campaign.status !== 'active') {
+      if (message.campaign && message.campaign.status !== 'active') {
         results.push({
           messageId: message.id,
           action: 'skipped',
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
           await prisma.prospectActivity.create({
             data: {
               prospectId: message.prospectId!, // guaranteed non-null by guard above
-              userId: message.campaign.createdById, // Use campaign creator as user
+              userId: message.campaign?.createdById || 'system', // Use campaign creator as user
               type: message.channel === 'email' ? 'email' : 
                     message.channel === 'sms' ? 'sms' :
                     message.channel === 'linkedin' ? 'linkedin' :

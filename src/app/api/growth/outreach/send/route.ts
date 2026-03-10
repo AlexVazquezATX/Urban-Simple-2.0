@@ -167,6 +167,26 @@ export async function POST(request: NextRequest) {
       emailId = data?.id
     }
 
+    const now = new Date()
+
+    // Create OutreachMessage record for tracking in the Sent tab
+    await prisma.outreachMessage.create({
+      data: {
+        prospectId,
+        step: 1,
+        delayDays: 0,
+        channel,
+        subject: subject || null,
+        body: messageBody,
+        status: 'sent',
+        approvalStatus: 'approved',
+        approvedAt: now,
+        approvedById: user.id,
+        sentAt: now,
+        resendEmailId: emailId || null,
+      },
+    })
+
     // Log successful activity
     const activity = await prisma.prospectActivity.create({
       data: {
@@ -178,8 +198,8 @@ export async function POST(request: NextRequest) {
         description: channel === 'email' ? undefined : messageBody, // Don't duplicate body for emails
         subject: channel === 'email' ? subject : null,
         messageBody,
-        sentAt: new Date(),
-        completedAt: new Date(),
+        sentAt: now,
+        completedAt: now,
         metadata: emailId ? { emailId } : undefined,
       },
     })
@@ -187,7 +207,7 @@ export async function POST(request: NextRequest) {
     // Update prospect's lastContactedAt
     await prisma.prospect.update({
       where: { id: prospectId },
-      data: { lastContactedAt: new Date() },
+      data: { lastContactedAt: now },
     })
 
     return NextResponse.json({
