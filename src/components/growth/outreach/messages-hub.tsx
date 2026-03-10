@@ -23,6 +23,10 @@ import {
   Clock,
   XCircle,
   Search,
+  Eye,
+  MousePointerClick,
+  AlertTriangle,
+  CheckCircle,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -44,6 +48,14 @@ interface MessageItem {
   approvedAt: string | null
   sentAt: string | null
   campaignName: string | null
+  // Tracking fields (populated by Resend webhooks)
+  status?: string
+  deliveredAt?: string | null
+  openedAt?: string | null
+  clickedAt?: string | null
+  bouncedAt?: string | null
+  openCount?: number
+  clickCount?: number
 }
 
 export function MessagesHub() {
@@ -547,8 +559,32 @@ function MessageCard({
               {getChannelIcon(msg.channel)}
               {msg.channel}
             </Badge>
-            {mode === 'sent' && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
+            {mode === 'sent' && msg.bouncedAt && (
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200 flex items-center gap-0.5">
+                <AlertTriangle className="h-2.5 w-2.5" />
+                Bounced
+              </Badge>
+            )}
+            {mode === 'sent' && !msg.bouncedAt && msg.openedAt && (
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200 flex items-center gap-0.5">
+                <Eye className="h-2.5 w-2.5" />
+                Opened{msg.openCount && msg.openCount > 1 ? ` (${msg.openCount}x)` : ''}
+              </Badge>
+            )}
+            {mode === 'sent' && msg.clickedAt && (
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200 flex items-center gap-0.5">
+                <MousePointerClick className="h-2.5 w-2.5" />
+                Clicked{msg.clickCount && msg.clickCount > 1 ? ` (${msg.clickCount}x)` : ''}
+              </Badge>
+            )}
+            {mode === 'sent' && !msg.bouncedAt && msg.deliveredAt && !msg.openedAt && (
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200 flex items-center gap-0.5">
+                <CheckCircle className="h-2.5 w-2.5" />
+                Delivered
+              </Badge>
+            )}
+            {mode === 'sent' && !msg.bouncedAt && !msg.deliveredAt && !msg.openedAt && (
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">
                 Sent
               </Badge>
             )}
@@ -686,6 +722,30 @@ function MessageCard({
         )}
         {mode === 'sent' && msg.campaignName && (
           <span className="text-[10px] text-warm-400">Campaign: {msg.campaignName}</span>
+        )}
+        {mode === 'sent' && (msg.deliveredAt || msg.openedAt || msg.clickedAt) && (
+          <span className="text-[10px] text-warm-400 ml-auto flex items-center gap-2">
+            {msg.deliveredAt && (
+              <span title={`Delivered ${format(new Date(msg.deliveredAt), 'MMM d, h:mm a')}`}>
+                <CheckCircle className="h-2.5 w-2.5 inline mr-0.5 text-lime-500" />
+                {format(new Date(msg.deliveredAt), 'MMM d')}
+              </span>
+            )}
+            {msg.openedAt && (
+              <span title={`First opened ${format(new Date(msg.openedAt), 'MMM d, h:mm a')}`}>
+                <Eye className="h-2.5 w-2.5 inline mr-0.5 text-plum-500" />
+                {format(new Date(msg.openedAt), 'MMM d')}
+                {msg.openCount && msg.openCount > 1 ? ` (${msg.openCount}x)` : ''}
+              </span>
+            )}
+            {msg.clickedAt && (
+              <span title={`First clicked ${format(new Date(msg.clickedAt), 'MMM d, h:mm a')}`}>
+                <MousePointerClick className="h-2.5 w-2.5 inline mr-0.5 text-amber-500" />
+                {format(new Date(msg.clickedAt), 'MMM d')}
+                {msg.clickCount && msg.clickCount > 1 ? ` (${msg.clickCount}x)` : ''}
+              </span>
+            )}
+          </span>
         )}
       </div>
     </div>

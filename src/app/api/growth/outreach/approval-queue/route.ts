@@ -95,6 +95,14 @@ export async function GET(request: NextRequest) {
         approvedAt: m.approvedAt,
         sentAt: m.sentAt,
         campaignName: m.campaign?.name,
+        // Tracking data (from Resend webhooks)
+        status: m.status,
+        deliveredAt: m.deliveredAt,
+        openedAt: m.openedAt,
+        clickedAt: m.clickedAt,
+        bouncedAt: m.bouncedAt,
+        openCount: m.openCount,
+        clickCount: m.clickCount,
       })),
     })
   } catch (error) {
