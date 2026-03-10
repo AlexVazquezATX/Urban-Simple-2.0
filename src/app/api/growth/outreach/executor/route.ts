@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { Resend } from 'resend'
+import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
 
 // Initialize Resend lazily
 let resend: Resend | null = null
@@ -85,25 +86,20 @@ export async function POST(request: NextRequest) {
         continue
       }
 
+      // Block sending to Do Not Contact prospects
+      if (message.prospect.doNotContact) {
+        await cancelPendingMessagesForProspect(message.prospectId, 'do_not_contact')
+        results.push({ messageId: message.id, action: 'skipped', reason: 'do_not_contact' })
+        continue
+      }
+
       // Check if prospect replied (stop sequence on reply)
       const hasReply = message.prospect.activities.some(
         (a) => a.outcome === 'interested' && a.createdAt > message.createdAt
       )
 
       if (hasReply) {
-        // Mark sequence as paused
-        await prisma.outreachMessage.updateMany({
-          where: {
-            campaignId: message.campaignId,
-            prospectId: message.prospectId,
-            step: { gt: message.step },
-            status: 'pending',
-          },
-          data: {
-            status: 'cancelled',
-          },
-        })
-
+        await cancelPendingMessagesForProspect(message.prospectId, 'prospect_replied')
         results.push({
           messageId: message.id,
           action: 'skipped',

@@ -1034,6 +1034,10 @@ model Prospect {
   agentQueued   Boolean   @default(false) @map("agent_queued")
   agentQueuedAt DateTime? @map("agent_queued_at")
 
+  // Do Not Contact
+  doNotContact   Boolean   @default(false) @map("do_not_contact")
+  doNotContactAt DateTime? @map("do_not_contact_at")
+
   // Metadata
   tags                String[] @default([])
   notes               String?  @db.Text

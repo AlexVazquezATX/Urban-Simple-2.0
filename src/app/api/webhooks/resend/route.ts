@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import crypto from 'crypto'
+import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
 
 /**
  * POST /api/webhooks/resend
@@ -118,17 +119,29 @@ export async function POST(request: NextRequest) {
             bouncedAt: now,
           },
         })
+        // Auto-cancel remaining messages for this prospect
+        if (message.prospectId) {
+          await cancelPendingMessagesForProspect(message.prospectId, 'email_bounced')
+        }
         break
 
       case 'email.complained':
-        // Spam complaint — mark as failed and log
+        // Spam complaint — mark as failed and auto-cancel + flag Do Not Contact
         await prisma.outreachMessage.update({
           where: { id: message.id },
           data: {
             status: 'failed',
           },
         })
-        console.warn(`[RESEND WEBHOOK] Spam complaint for message ${message.id}, prospect ${message.prospectId}`)
+        if (message.prospectId) {
+          await cancelPendingMessagesForProspect(message.prospectId, 'spam_complaint')
+          // Auto-set Do Not Contact on spam complaint
+          await prisma.prospect.update({
+            where: { id: message.prospectId },
+            data: { doNotContact: true, doNotContactAt: now },
+          })
+        }
+        console.warn(`[RESEND WEBHOOK] Spam complaint for message ${message.id}, prospect ${message.prospectId} — marked Do Not Contact`)
         break
 
       default:

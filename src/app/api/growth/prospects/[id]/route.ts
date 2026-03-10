@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
 
 // GET /api/growth/prospects/[id] - Get prospect details
 export async function GET(
@@ -121,6 +122,7 @@ export async function PATCH(
       discoveryData,
       contact,
       contacts,
+      doNotContact,
     } = body
 
     const prospect = await prisma.prospect.update({
@@ -149,6 +151,10 @@ export async function PATCH(
         ...(convertedToClientId !== undefined && { convertedToClientId }),
         ...(status === 'won' && convertedToClientId && { convertedToClientId }),
         ...(discoveryData !== undefined && { discoveryData }),
+        ...(doNotContact !== undefined && {
+          doNotContact,
+          doNotContactAt: doNotContact ? new Date() : null,
+        }),
       },
     })
 
@@ -244,6 +250,22 @@ export async function PATCH(
           description: `Status updated from ${existing.status} to ${status}`,
         },
       })
+    }
+
+    // Auto-cancel pending messages when Do Not Contact is toggled on
+    if (doNotContact === true && !existing.doNotContact) {
+      const cancelled = await cancelPendingMessagesForProspect(id, 'do_not_contact', user.id)
+      if (cancelled > 0) {
+        await prisma.prospectActivity.create({
+          data: {
+            prospectId: id,
+            userId: user.id,
+            type: 'status_change',
+            title: 'Marked as Do Not Contact',
+            description: `All ${cancelled} pending outreach message(s) were cancelled`,
+          },
+        })
+      }
     }
 
     // Refetch with all relations

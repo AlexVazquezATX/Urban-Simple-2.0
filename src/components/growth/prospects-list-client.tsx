@@ -42,6 +42,7 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  Ban,
 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
@@ -71,6 +72,7 @@ interface Prospect {
   priceLevel?: string | null
   agentQueued?: boolean
   agentQueuedAt?: string | null
+  doNotContact?: boolean
   lastContactedAt?: string | null
   createdAt: string
   contacts: Array<{
@@ -88,6 +90,7 @@ interface Prospect {
   } | null
   _count?: {
     activities: number
+    outreachMessages: number
   }
 }
 
@@ -115,12 +118,13 @@ const ALL_COLUMNS = [
   { id: 'sourceDetail', label: 'Import List', alwaysVisible: false },
   { id: 'tags', label: 'Tags', alwaysVisible: false },
   { id: 'aiEnriched', label: 'Enriched', alwaysVisible: false },
+  { id: 'lastContacted', label: 'Last Contacted', alwaysVisible: false },
   { id: 'createdAt', label: 'Date Added', alwaysVisible: false },
   { id: 'actions', label: 'Actions', alwaysVisible: true },
 ]
 
 const DEFAULT_VISIBLE_COLUMNS = [
-  'companyName', 'contact', 'status', 'businessType', 'priceLevel', 'priority', 'address', 'email', 'estimatedValue', 'createdAt', 'actions'
+  'companyName', 'contact', 'status', 'businessType', 'priceLevel', 'priority', 'address', 'email', 'estimatedValue', 'lastContacted', 'createdAt', 'actions'
 ]
 
 export function ProspectsListClient({ prospects: initialProspects }: ProspectsListClientProps) {
@@ -1582,6 +1586,17 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('aiEnriched') && (
                     <th className="p-3 text-left text-xs font-medium text-warm-700">Enriched</th>
                   )}
+                  {visibleColumns.includes('lastContacted') && (
+                    <th className="p-3 text-left">
+                      <button
+                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        onClick={() => handleSort('lastContactedAt')}
+                      >
+                        Last Contacted
+                        <SortIcon field="lastContactedAt" />
+                      </button>
+                    </th>
+                  )}
                   {visibleColumns.includes('createdAt') && (
                     <th className="p-3 text-left">
                       <button
@@ -1626,6 +1641,11 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           <td className="p-3">
                             <div className="flex items-center gap-1.5">
                               <span className="text-sm font-medium text-warm-900">{prospect.companyName}</span>
+                              {prospect.doNotContact && (
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-300 text-red-600 bg-red-50">
+                                  <Ban className="h-2.5 w-2.5 mr-0.5" />DNC
+                                </Badge>
+                              )}
                               {prospect.agentQueued && (
                                 <Badge variant="outline" className="text-[10px] px-1 py-0 border-purple-300 text-purple-600">
                                   Queued
@@ -1765,6 +1785,29 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                               </Badge>
                             ) : (
                               <span className="text-warm-400 text-xs">-</span>
+                            )}
+                          </td>
+                        )}
+                        {visibleColumns.includes('lastContacted') && (
+                          <td className="p-3 text-xs text-warm-600">
+                            {prospect.lastContactedAt ? (
+                              <div className="flex flex-col">
+                                <span>
+                                  {(() => {
+                                    const days = Math.floor((Date.now() - new Date(prospect.lastContactedAt).getTime()) / 86400000)
+                                    if (days === 0) return 'Today'
+                                    if (days === 1) return 'Yesterday'
+                                    return `${days}d ago`
+                                  })()}
+                                </span>
+                                {(prospect._count?.outreachMessages ?? 0) > 0 && (
+                                  <span className="text-warm-400 text-[10px]">
+                                    {prospect._count!.outreachMessages} sent
+                                  </span>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-warm-400">Never</span>
                             )}
                           </td>
                         )}

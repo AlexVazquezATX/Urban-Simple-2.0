@@ -33,6 +33,7 @@ async function ProspectsList() {
       priceLevel: true,
       agentQueued: true,
       agentQueuedAt: true,
+      doNotContact: true,
       lastContactedAt: true,
       createdAt: true,
       contacts: {
@@ -56,6 +57,7 @@ async function ProspectsList() {
       _count: {
         select: {
           activities: true,
+          outreachMessages: true,
         },
       },
     },

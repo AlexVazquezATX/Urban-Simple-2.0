@@ -596,6 +596,7 @@ async function getStageWorkCounts(
     where: {
       ...baseFilter,
       aiScore: { gte: config.minScoreForOutreach },
+      doNotContact: false,
       contacts: { some: { email: { not: null } } },
       outreachMessages: { none: {} },
     },
@@ -1217,6 +1218,7 @@ async function processGenerateOutreach(
     where: {
       ...baseFilter,
       aiScore: { gte: config.minScoreForOutreach },
+      doNotContact: false,
       contacts: { some: { email: { not: null } } },
       outreachMessages: { none: {} },
     },

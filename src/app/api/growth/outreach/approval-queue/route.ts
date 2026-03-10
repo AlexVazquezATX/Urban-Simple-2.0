@@ -292,6 +292,12 @@ export async function POST(request: NextRequest) {
 
       for (const msg of messages) {
         try {
+          // Block sending to Do Not Contact prospects
+          if (msg.prospect?.doNotContact) {
+            results.push({ messageId: msg.id, status: 'blocked', reason: 'Prospect marked Do Not Contact' })
+            continue
+          }
+
           if (msg.channel === 'email') {
             // Use override email if provided, otherwise fall back to contact's email
             const toEmail = toOverrides[msg.id] || msg.prospect?.contacts[0]?.email

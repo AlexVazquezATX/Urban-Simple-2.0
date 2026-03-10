@@ -41,6 +41,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
     }
 
+    if (prospect.doNotContact) {
+      return NextResponse.json({ error: 'This prospect is marked Do Not Contact' }, { status: 403 })
+    }
+
     // If scheduled, create scheduled message
     if (scheduledAt) {
       // Create or find a campaign for scheduled messages

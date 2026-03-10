@@ -36,6 +36,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Prospect not found' }, { status: 404 })
     }
 
+    if (prospect.doNotContact) {
+      return NextResponse.json({ error: 'This prospect is marked Do Not Contact' }, { status: 403 })
+    }
+
     // Send email via Resend
     const resend = new Resend(process.env.RESEND_API_KEY || '')
     const from = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'

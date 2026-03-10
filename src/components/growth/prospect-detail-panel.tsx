@@ -30,6 +30,7 @@ import {
   ChevronDown,
   Users,
   Zap,
+  Ban,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,6 +56,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -78,6 +80,7 @@ interface Prospect {
   nextFollowUp?: string | null
   estimatedSize?: string | null
   priceLevel?: string | null
+  doNotContact?: boolean
   lastContactedAt?: string | null
   createdAt: string
   contacts: Array<{
@@ -108,6 +111,7 @@ interface Prospect {
   } | null
   _count?: {
     activities: number
+    outreachMessages: number
   }
 }
 
@@ -1158,6 +1162,42 @@ export function ProspectDetailPanel({
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+            </div>
+
+            {/* Do Not Contact */}
+            <div className="pt-4 border-t border-warm-200">
+              <div className={`flex items-center justify-between rounded-sm p-3 ${prospect?.doNotContact ? 'bg-red-50 border border-red-200' : 'bg-warm-50 border border-warm-200'}`}>
+                <div className="flex items-center gap-2">
+                  <Ban className={`h-4 w-4 ${prospect?.doNotContact ? 'text-red-500' : 'text-warm-400'}`} />
+                  <div>
+                    <p className={`text-sm font-medium ${prospect?.doNotContact ? 'text-red-700' : 'text-warm-700'}`}>Do Not Contact</p>
+                    <p className="text-[10px] text-warm-500">
+                      {prospect?.doNotContact ? 'All outreach is blocked. Pending messages were cancelled.' : 'Toggle on to block all outreach to this prospect.'}
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  checked={!!prospect?.doNotContact}
+                  onCheckedChange={async (checked) => {
+                    if (checked && !confirm('This will cancel all pending outreach messages for this prospect. Continue?')) return
+                    try {
+                      const res = await fetch(`/api/growth/prospects/${prospect?.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ doNotContact: checked }),
+                      })
+                      if (res.ok) {
+                        const updated = await res.json()
+                        onSave(updated)
+                        toast.success(checked ? 'Prospect marked Do Not Contact — pending messages cancelled' : 'Do Not Contact removed')
+                      }
+                    } catch {
+                      toast.error('Failed to update')
+                    }
+                  }}
+                  className={prospect?.doNotContact ? 'data-[state=checked]:bg-red-500' : ''}
+                />
               </div>
             </div>
 
