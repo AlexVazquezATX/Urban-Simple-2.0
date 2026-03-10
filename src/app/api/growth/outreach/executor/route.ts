@@ -123,16 +123,17 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        // Send the message (placeholder - integrate with actual sending service)
-        const sent = await sendMessage(message)
+        // Send the message via Resend (email) or mark as sent (other channels)
+        const sendResult = await sendMessage(message)
 
-        if (sent) {
-          // Update message status
+        if (sendResult.sent) {
+          // Update message status + store Resend email ID for webhook tracking
           await prisma.outreachMessage.update({
             where: { id: message.id },
             data: {
               status: 'sent',
               sentAt: new Date(),
+              resendEmailId: sendResult.emailId || null,
             },
           })
 
@@ -170,7 +171,7 @@ export async function POST(request: NextRequest) {
           results.push({
             messageId: message.id,
             action: 'failed',
-            reason: 'send_failed',
+            reason: 'send_failed' as const,
           })
         }
       } catch (error) {
@@ -199,19 +200,20 @@ export async function POST(request: NextRequest) {
 
 /**
  * Send message via appropriate channel
+ * Returns { sent: boolean, emailId?: string }
  */
-async function sendMessage(message: any): Promise<boolean> {
+async function sendMessage(message: any): Promise<{ sent: boolean; emailId?: string }> {
   if (message.channel === 'email') {
     const recipientEmail = message.prospect?.contacts?.[0]?.email
     if (!recipientEmail) {
       console.warn(`[SEND] No email for prospect ${message.prospectId}, skipping`)
-      return false
+      return { sent: false }
     }
 
     const resendClient = getResend()
     if (!resendClient) {
       console.error('[SEND] Resend not configured (RESEND_API_KEY missing)')
-      return false
+      return { sent: false }
     }
 
     const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
@@ -236,7 +238,7 @@ async function sendMessage(message: any): Promise<boolean> {
       }
     }
 
-    const { error } = await resendClient.emails.send({
+    const { data, error } = await resendClient.emails.send({
       from: fromEmail,
       to: recipientEmail,
       subject: message.subject || 'Hello',
@@ -245,13 +247,13 @@ async function sendMessage(message: any): Promise<boolean> {
 
     if (error) {
       console.error(`[SEND] Resend error for message ${message.id}:`, error)
-      return false
+      return { sent: false }
     }
 
-    return true
+    return { sent: true, emailId: data?.id }
   }
 
   // Non-email channels: log and mark as sent (operator sends manually)
   console.log(`[SEND] ${message.channel} to prospect ${message.prospectId} — manual send required`)
-  return true
+  return { sent: true }
 }

@@ -8,7 +8,8 @@ import { QuickCompose } from '@/components/growth/outreach/quick-compose'
 import { TemplateLibrary } from '@/components/growth/outreach/template-library'
 import { SequenceList } from '@/components/growth/outreach/sequence-list'
 import { OutreachSettings } from '@/components/growth/outreach/outreach-settings'
-import { Inbox, Send, FileText, Zap, Settings } from 'lucide-react'
+import { OutreachAnalytics } from '@/components/growth/outreach/outreach-analytics'
+import { Inbox, Send, FileText, Zap, Settings, BarChart3 } from 'lucide-react'
 
 export default function OutreachPage() {
   return (
@@ -47,7 +48,7 @@ function OutreachContent() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 rounded-none bg-white border-b border-warm-200 p-0 mb-6 h-auto">
+        <TabsList className="grid w-full grid-cols-6 rounded-none bg-white border-b border-warm-200 p-0 mb-6 h-auto">
           <TabsTrigger value="messages" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
             <Inbox className="h-3.5 w-3.5 text-ocean-500" />
             <span className="hidden sm:inline">Messages</span>
@@ -63,6 +64,10 @@ function OutreachContent() {
           <TabsTrigger value="templates" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
             <FileText className="h-3.5 w-3.5 text-warm-600" />
             <span className="hidden sm:inline">Templates</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+            <BarChart3 className="h-3.5 w-3.5 text-plum-500" />
+            <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
             <Settings className="h-3.5 w-3.5 text-warm-500" />
@@ -84,6 +89,10 @@ function OutreachContent() {
 
         <TabsContent value="templates" className="mt-0">
           <TemplateLibrary />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-0">
+          <OutreachAnalytics />
         </TabsContent>
 
         <TabsContent value="settings" className="mt-0">

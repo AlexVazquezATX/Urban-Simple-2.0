@@ -325,10 +325,14 @@ export async function POST(request: NextRequest) {
               continue
             }
 
-            // Mark as sent
+            // Mark as sent + store Resend email ID for webhook tracking
             await prisma.outreachMessage.update({
               where: { id: msg.id },
-              data: { status: 'sent', sentAt: new Date() },
+              data: {
+                status: 'sent',
+                sentAt: new Date(),
+                resendEmailId: emailData?.id || null,
+              },
             })
 
             // Log activity
