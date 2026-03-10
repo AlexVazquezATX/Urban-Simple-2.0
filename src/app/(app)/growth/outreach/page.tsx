@@ -21,13 +21,18 @@ export default function OutreachPage() {
 function OutreachContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
-  const [activeTab, setActiveTab] = useState(tabParam || 'messages')
+  const prospectParam = searchParams.get('prospect')
+  // Auto-switch to compose tab when prospect param is present (e.g. from "Send Email" button)
+  const defaultTab = tabParam || (prospectParam ? 'compose' : 'messages')
+  const [activeTab, setActiveTab] = useState(defaultTab)
 
   useEffect(() => {
     if (tabParam) {
       setActiveTab(tabParam)
+    } else if (prospectParam) {
+      setActiveTab('compose')
     }
-  }, [tabParam])
+  }, [tabParam, prospectParam])
 
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
