@@ -15,6 +15,16 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      // Old WordPress URL redirects
+      { source: '/cleaning-services', destination: '/landing#services', permanent: true },
+      { source: '/cleaning-services/:path*', destination: '/landing#services', permanent: true },
+      { source: '/our-team', destination: '/our-team', permanent: false },
+      { source: '/contact-us', destination: '/landing#contact', permanent: true },
+      { source: '/why-us', destination: '/landing#why-us', permanent: true },
+    ];
+  },
   async rewrites() {
     return [
       {

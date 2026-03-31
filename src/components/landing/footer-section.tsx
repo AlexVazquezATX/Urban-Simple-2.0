@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { MapPin, Phone, Mail } from 'lucide-react'
 import { CONTACT, SOCIAL_LINKS } from './landing-data'
 
@@ -48,13 +49,22 @@ export function FooterSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
           {/* Brand + Contact */}
           <div className="sm:col-span-2 lg:col-span-1">
-            <Link href="/" className="flex items-baseline gap-1 mb-6">
-              <span className="font-bold text-2xl tracking-tight text-white">
-                Urban
-              </span>
-              <span className="font-display italic font-normal text-2xl text-ocean-400">
-                Simple
-              </span>
+            <Link href="/" className="flex items-center gap-2 mb-6">
+              <Image
+                src="/images/Urban Simple Logos/Urban Simple Icon.png"
+                alt=""
+                width={28}
+                height={28}
+                className="h-7 w-7"
+              />
+              <div className="flex items-baseline gap-0.5">
+                <span className="font-bold text-2xl tracking-tight text-white">
+                  Urban
+                </span>
+                <span className="font-display italic font-normal text-2xl text-ocean-400">
+                  Simple
+                </span>
+              </div>
             </Link>
             <p className="text-charcoal-400 leading-relaxed mb-6">
               Premier commercial cleaning services for the hospitality industry.
@@ -134,8 +144,8 @@ export function FooterSection() {
             &copy; {new Date().getFullYear()} Urban Simple. All rights reserved.
           </p>
           <div className="flex items-center gap-6 text-sm">
-            <a href="#" className="text-charcoal-400 hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="text-charcoal-400 hover:text-white transition-colors">Terms of Service</a>
+            <a href="/privacy" className="text-charcoal-400 hover:text-white transition-colors">Privacy Policy</a>
+            <a href="/terms" className="text-charcoal-400 hover:text-white transition-colors">Terms of Service</a>
           </div>
         </div>
       </div>

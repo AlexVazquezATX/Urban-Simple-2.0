@@ -72,32 +72,32 @@ const features = [
 ]
 
 const stats = [
-  { value: '500+', label: 'Hospitality Clients', suffix: '' },
-  { value: '15', label: 'Years Experience', suffix: '+' },
-  { value: '99.8', label: 'Client Retention', suffix: '%' },
+  { value: '575+', label: 'Hospitality Clients', suffix: '' },
+  { value: '10', label: 'Years Experience', suffix: '+' },
+  { value: '98', label: 'Client Retention', suffix: '%' },
   { value: '24/7', label: 'Service Available', suffix: '' },
 ]
 
 const testimonials = [
   {
-    quote: 'Urban Simple transformed our hotel cleaning operations. Their attention to detail and reliability are unmatched. Guests constantly compliment our cleanliness.',
-    author: 'Patricia Williams',
+    quote: "I can't say enough good things about their responsiveness and willingness to collaborate with our team to find solutions. They are a true partner in our operation.",
+    author: 'Zach Adams',
     role: 'General Manager',
-    company: 'Seaside Grand Hotel',
+    company: 'Kitchen United',
     rating: 5,
   },
   {
-    quote: 'The kitchen deep cleaning service is exceptional. They work with our schedule and meet every health code requirement. True hospitality professionals.',
-    author: 'Chef Marcus Thompson',
-    role: 'Executive Chef',
-    company: 'The Sterling Restaurant Group',
+    quote: 'Since Urban Simple took over our cleaning, we achieved a 99 health inspection score. Their team is thorough, professional, and understands what food service facilities need.',
+    author: 'Matt Luther',
+    role: 'Facilities Manager',
+    company: 'Facebook (Meta)',
     rating: 5,
   },
   {
-    quote: 'Managing 12 locations, consistency is everything. Urban Simple delivers the same high standards across all our properties. They are an extension of our team.',
-    author: 'Diana Chen',
-    role: 'Regional Director',
-    company: 'Metro Hospitality Partners',
+    quote: "I'd give them a 10 out of 10. They are reliable, consistent, and their crew takes genuine pride in their work. I'd recommend them to anyone in the industry.",
+    author: 'Mike Pottorff',
+    role: 'Owner',
+    company: 'Iron Cactus',
     rating: 5,
   },
 ]
@@ -211,7 +211,7 @@ export default function LandingPage() {
               <motion.div variants={fadeInUp}>
                 <Badge variant="secondary" className="mb-6 bg-ocean-100 text-ocean-700 border-ocean-200">
                   <Sparkles className="w-4 h-4 mr-1" />
-                  Trusted by 500+ Hospitality Brands
+                  Trusted by 575+ Hospitality Brands
                 </Badge>
               </motion.div>
 
@@ -825,15 +825,15 @@ export default function LandingPage() {
                 variants={fadeInUp}
                 className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8"
               >
-                <a href="tel:+1-555-0123">
+                <a href="tel:+18005134157">
                   <Button
                     size="lg"
                     className="bg-gradient-to-br from-ocean-500 to-ocean-600 text-white hover:from-ocean-600 hover:to-ocean-700 shadow-xl hover:shadow-2xl transition-all"
                   >
-                    Call (555) 012-3456
+                    Call (800) 513-4157
                   </Button>
                 </a>
-                <a href="mailto:info@urbansimple.com">
+                <a href="mailto:info@urbansimple.net">
                   <Button
                     variant="outline"
                     size="lg"
@@ -874,13 +874,22 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
             {/* Brand */}
             <div className="col-span-2">
-              <Link href="/" className="flex items-baseline gap-1 mb-6">
-                <span className="font-bold text-2xl tracking-tight text-white">
-                  Urban
-                </span>
-                <span className="font-display italic font-normal text-2xl text-ocean-400">
-                  Simple
-                </span>
+              <Link href="/" className="flex items-center gap-2 mb-6">
+                <Image
+                  src="/images/Urban Simple Logos/Urban Simple Icon.png"
+                  alt=""
+                  width={28}
+                  height={28}
+                  className="h-7 w-7"
+                />
+                <div className="flex items-baseline gap-0.5">
+                  <span className="font-bold text-2xl tracking-tight text-white">
+                    Urban
+                  </span>
+                  <span className="font-display italic font-normal text-2xl text-ocean-400">
+                    Simple
+                  </span>
+                </div>
               </Link>
               <p className="text-charcoal-400 leading-relaxed max-w-xs mb-6">
                 Premier commercial cleaning services for the hospitality industry.
@@ -903,7 +912,7 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-white mb-4">Company</h4>
               <ul className="space-y-3">
-                <li><a href="#" className="text-charcoal-400 hover:text-white transition-colors">About Us</a></li>
+                <li><a href="#why-us" className="text-charcoal-400 hover:text-white transition-colors">About Us</a></li>
                 <li><a href="#testimonials" className="text-charcoal-400 hover:text-white transition-colors">Testimonials</a></li>
                 <li><a href="#contact" className="text-charcoal-400 hover:text-white transition-colors">Contact</a></li>
                 <li><Link href="/login" className="text-charcoal-400 hover:text-white transition-colors">Client Portal</Link></li>
@@ -917,8 +926,8 @@ export default function LandingPage() {
               &copy; {new Date().getFullYear()} Urban Simple. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="text-charcoal-400 hover:text-white transition-colors">Privacy Policy</a>
-              <a href="#" className="text-charcoal-400 hover:text-white transition-colors">Terms of Service</a>
+              <a href="/privacy" className="text-charcoal-400 hover:text-white transition-colors">Privacy Policy</a>
+              <a href="/terms" className="text-charcoal-400 hover:text-white transition-colors">Terms of Service</a>
             </div>
           </div>
         </div>

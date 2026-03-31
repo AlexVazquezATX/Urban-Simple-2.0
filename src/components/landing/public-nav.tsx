@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowRight, Menu, Phone, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -17,13 +18,23 @@ export function PublicNav() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-18 py-4">
           {/* Logo */}
-          <Link href="/" className="flex items-baseline gap-1">
-            <span className="font-bold text-2xl tracking-tight text-charcoal-900">
-              Urban
-            </span>
-            <span className="font-display italic font-normal text-2xl text-bronze-600">
-              Simple
-            </span>
+          <Link href="/" className="flex items-center gap-1.5">
+            <Image
+              src="/images/Urban Simple Logos/Urban Simple Icon.png"
+              alt=""
+              width={36}
+              height={36}
+              className="h-9 w-9 -mt-[5px]"
+              priority
+            />
+            <div className="flex items-baseline gap-0.5">
+              <span className="font-bold text-2xl tracking-tight text-charcoal-900">
+                Urban
+              </span>
+              <span className="font-display italic font-normal text-2xl text-bronze-600">
+                Simple
+              </span>
+            </div>
           </Link>
 
           {/* Desktop Nav */}

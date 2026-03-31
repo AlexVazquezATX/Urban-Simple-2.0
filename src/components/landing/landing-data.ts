@@ -25,9 +25,9 @@ export const SOCIAL_LINKS = [
 // ============================================
 
 export const stats = [
-  { value: '500+', label: 'Hospitality Clients', suffix: '' },
-  { value: '15', label: 'Years Experience', suffix: '+' },
-  { value: '99.8', label: 'Client Retention', suffix: '%' },
+  { value: '575+', label: 'Hospitality Clients', suffix: '' },
+  { value: '10', label: 'Years Experience', suffix: '+' },
+  { value: '98', label: 'Client Retention', suffix: '%' },
   { value: '24/7', label: 'Service Available', suffix: '' },
 ]
 

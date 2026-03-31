@@ -24,25 +24,25 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "BackHaus — AI Creative Studio for Restaurants",
-    template: "%s — BackHaus",
+    default: "Urban Simple | Commercial Cleaning Services in Austin, TX",
+    template: "%s | Urban Simple",
   },
   description:
-    "Create stunning food photography and branded content with AI. Built for restaurants and hospitality.",
-  metadataBase: new URL("https://backhaus.ai"),
+    "Premier commercial kitchen cleaning and hospitality cleaning services in Austin, TX. Hotels, restaurants, and event venues. Trusted by 500+ hospitality brands.",
+  metadataBase: new URL("https://urbansimple.net"),
   openGraph: {
     type: "website",
-    siteName: "BackHaus",
-    title: "BackHaus — AI Creative Studio for Restaurants",
+    siteName: "Urban Simple",
+    title: "Urban Simple | Commercial Cleaning Services in Austin, TX",
     description:
-      "Create stunning food photography and branded content with AI. Built for restaurants and hospitality.",
-    url: "https://backhaus.ai",
+      "Premier commercial kitchen cleaning and hospitality cleaning services in Austin, TX. Hotels, restaurants, and event venues. Trusted by 500+ hospitality brands.",
+    url: "https://urbansimple.net",
   },
   twitter: {
     card: "summary_large_image",
-    title: "BackHaus — AI Creative Studio for Restaurants",
+    title: "Urban Simple | Commercial Cleaning Services in Austin, TX",
     description:
-      "Create stunning food photography and branded content with AI. Built for restaurants and hospitality.",
+      "Premier commercial kitchen cleaning and hospitality cleaning services in Austin, TX. Hotels, restaurants, and event venues. Trusted by 500+ hospitality brands.",
   },
 };
 

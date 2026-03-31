@@ -6,9 +6,8 @@ import { motion, useInView } from 'framer-motion'
 import { Badge } from '@/components/ui/badge'
 import { fadeInUp } from './landing-animations'
 
-// Placeholder images — swap with real before/after cleaning photos
-const BEFORE_IMAGE = '/images/Services-1767818882/service_Kitchen-Cleaning-01.jpg'
-const AFTER_IMAGE = '/images/Services-1767818882/service_Kitchen-Cleaning-02.jpg'
+const BEFORE_IMAGE = '/images/Services-1767818882/Kitchen 01 - Dirty.jpg'
+const AFTER_IMAGE = '/images/Services-1767818882/Kitchen 01 - Clean.png'
 
 export function BeforeAfterSection() {
   const sectionRef = useRef<HTMLElement>(null)

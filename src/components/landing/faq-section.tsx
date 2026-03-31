@@ -18,7 +18,7 @@ export function FAQSection() {
 
   return (
     <section id="faq" ref={ref} className="py-16 lg:py-20 bg-white">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <motion.div
           initial="hidden"
@@ -39,29 +39,30 @@ export function FAQSection() {
           </motion.div>
         </motion.div>
 
-        {/* Accordion */}
+        {/* Two-column FAQ grid */}
         <motion.div
           initial="hidden"
           animate={isInView ? 'visible' : 'hidden'}
           variants={staggerContainer}
+          className="grid md:grid-cols-2 gap-6 lg:gap-8"
         >
-          <Accordion type="single" collapsible className="space-y-3">
-            {faqItems.map((item, index) => (
-              <motion.div key={index} variants={fadeInUp}>
+          {faqItems.map((item, index) => (
+            <motion.div key={index} variants={fadeInUp}>
+              <Accordion type="single" collapsible>
                 <AccordionItem
                   value={`faq-${index}`}
                   className="border border-cream-200 rounded-xl px-6 data-[state=open]:border-ocean-200 data-[state=open]:shadow-card transition-all"
                 >
-                  <AccordionTrigger className="text-left font-semibold text-charcoal-900 hover:text-ocean-700 py-5 [&[data-state=open]]:text-ocean-700">
+                  <AccordionTrigger className="text-left text-base font-semibold text-charcoal-900 hover:text-ocean-700 py-5 [&[data-state=open]]:text-ocean-700">
                     {item.question}
                   </AccordionTrigger>
-                  <AccordionContent className="text-charcoal-600 leading-relaxed pb-5">
+                  <AccordionContent className="text-charcoal-600 text-base leading-relaxed pb-5">
                     {item.answer}
                   </AccordionContent>
                 </AccordionItem>
-              </motion.div>
-            ))}
-          </Accordion>
+              </Accordion>
+            </motion.div>
+          ))}
         </motion.div>
       </div>
     </section>
