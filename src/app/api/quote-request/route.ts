@@ -90,6 +90,7 @@ export async function POST(request: NextRequest) {
         sourceDetail: 'Quote Request Form',
         status: 'new',
         priority: estimatedValue && estimatedValue > 5000 ? 'high' : 'medium',
+        tags: ['Website Lead', 'Quote Request'],
         estimatedValue: estimatedValue ? estimatedValue : null,
         notes: `Quote Request Details:
 - Property Type: ${propertyType || 'Not specified'}

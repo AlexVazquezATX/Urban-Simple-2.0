@@ -197,7 +197,7 @@ export const INDUSTRY_DETAILS: IndustryDetail[] = [
     slug: 'event-venues',
     title: 'Event Venues',
     tagline: 'From black-tie to breakdown, spotless every time',
-    heroImage: '/images/Services-1767818882/service_Event-Venues-01.jpg',
+    heroImage: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=1200&h=800&fit=crop&q=80',
     description:
       'Banquet halls, ballrooms, and event spaces demand rapid turnaround between events. Our teams handle kitchen cleaning, carpet care, pressure washing, and full venue resets — so your next event starts with a blank canvas.',
     color: 'plum',
@@ -224,7 +224,7 @@ export const INDUSTRY_DETAILS: IndustryDetail[] = [
     slug: 'spas-wellness',
     title: 'Spas & Wellness',
     tagline: 'Pristine spaces for total relaxation',
-    heroImage: '/images/Headers-1767818867/header_Sanitizing-Services-01.jpg',
+    heroImage: 'https://images.unsplash.com/photo-1507652313519-d4e9174996dd?w=1200&h=800&fit=crop&q=80',
     description:
       'Wellness environments demand the highest standards of cleanliness. We service kitchen facilities, treatment rooms, relaxation areas, locker rooms, and pool areas with eco-friendly products that are safe for both guests and the environment.',
     color: 'sage',

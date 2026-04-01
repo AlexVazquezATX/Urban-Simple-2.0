@@ -53,10 +53,10 @@ export function BeforeAfterSection() {
             See the Difference
           </Badge>
           <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
-            The Urban Simple standard
+            What a difference a night makes
           </h2>
           <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
-            Drag the slider to see the transformation our team delivers every night.
+            We mocked this up to give you the idea — but the results are real. Drag the slider to see the kind of transformation our teams deliver every single night.
           </p>
         </motion.div>
 

@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
         sourceDetail: 'Walkthrough Request Form',
         status: 'new',
         priority: 'high', // Walkthrough requests are high priority
+        tags: ['Website Lead', 'Walkthrough Request'],
         notes: `Walkthrough Request:
 - Property Type: ${propertyType || 'Not specified'}
 ${message ? `\nDetails:\n${message}` : ''}`,
