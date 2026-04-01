@@ -467,7 +467,7 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: '-50px' }}
             variants={staggerContainer}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5"
+            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8"
           >
             {testimonials.map((testimonial, index) => {
               const accentColors = ['border-t-ocean-500', 'border-t-bronze-500', 'border-t-plum-500', 'border-t-terracotta-500']
@@ -477,7 +477,7 @@ export default function LandingPage() {
                   key={index}
                   variants={fadeInUp}
                   className={cn(
-                    'relative bg-charcoal-900 rounded-2xl p-6 border border-charcoal-800 border-t-4 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 overflow-hidden',
+                    'relative bg-charcoal-900 rounded-2xl p-6 border border-charcoal-800 border-t-4 transition-all duration-300 hover:-translate-y-1 overflow-hidden',
                     accentColors[index % accentColors.length]
                   )}
                 >
