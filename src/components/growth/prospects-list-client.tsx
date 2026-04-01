@@ -1113,7 +1113,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       case 'urgent':
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">urgent</Badge>
       case 'high':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">hot</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-500 text-white border-orange-600 font-bold uppercase tracking-wider">hot</Badge>
       case 'medium':
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-700 border-warm-200">warm</Badge>
       default:
@@ -1625,10 +1625,17 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     const primaryContact = prospect.contacts[0]
                     const address = prospect.address as any
 
+                    const isWebsiteLead = prospect.tags?.includes('Website Lead')
+                    const isNewWebsiteLead = isWebsiteLead && prospect.status === 'new'
+
                     return (
                       <tr
                         key={prospect.id}
-                        className={`hover:bg-warm-50 cursor-pointer transition-colors ${selectedIds.has(prospect.id) ? 'bg-lime-50' : ''}`}
+                        className={`hover:bg-warm-50 cursor-pointer transition-colors ${
+                          selectedIds.has(prospect.id) ? 'bg-lime-50'
+                          : isNewWebsiteLead ? 'bg-ocean-50/60 border-l-2 border-l-ocean-500'
+                          : ''
+                        }`}
                         onClick={() => handleSelectProspect(prospect)}
                       >
                         <td className="p-3" onClick={(e) => e.stopPropagation()}>
@@ -1644,6 +1651,11 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                               {prospect.doNotContact && (
                                 <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-300 text-red-600 bg-red-50">
                                   <Ban className="h-2.5 w-2.5 mr-0.5" />DNC
+                                </Badge>
+                              )}
+                              {isWebsiteLead && (
+                                <Badge className={`text-[10px] px-1.5 py-0 bg-ocean-500 text-white border-ocean-600 ${isNewWebsiteLead ? 'animate-pulse' : ''}`}>
+                                  Website Lead
                                 </Badge>
                               )}
                               {prospect.agentQueued && (
