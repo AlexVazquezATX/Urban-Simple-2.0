@@ -24,19 +24,19 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ROICalculator } from '@/components/landing/roi-calculator'
 import { FloatingQuoteCTA } from '@/components/landing/floating-quote-cta'
 import { WhyUsSection } from '@/components/landing/why-us-section'
-import { CertificationsSection } from '@/components/landing/certifications-section'
+import { SocialProofSection } from '@/components/landing/social-proof-section'
+import { VideoBannerSection } from '@/components/landing/video-banner-section'
 import { BlogFilmstripSection } from '@/components/landing/blog-filmstrip-section'
 import { FAQSection } from '@/components/landing/faq-section'
 import { InlineContactForm } from '@/components/landing/inline-contact-form'
 import { FooterSection } from '@/components/landing/footer-section'
 import { BeforeAfterSection } from '@/components/landing/before-after-section'
 import { Spotlight } from '@/components/landing/spotlight'
-import { SlidingNumber } from '@/components/landing/sliding-number'
 import { IndustryDetailModal, INDUSTRY_DETAILS } from '@/components/landing/industry-detail-modal'
 import { useWalkthrough } from '@/components/landing/walkthrough-context'
 import { cn } from '@/lib/utils'
-import { testimonials, stats, CONTACT } from '@/components/landing/landing-data'
-import { fadeInUp, fadeInLeft, fadeInRight, scaleIn, staggerContainer } from '@/components/landing/landing-animations'
+import { testimonials, CONTACT } from '@/components/landing/landing-data'
+import { fadeInUp, fadeInRight, scaleIn, staggerContainer } from '@/components/landing/landing-animations'
 
 // ============================================
 // CONTENT DATA (kept inline for JSX icons)
@@ -71,7 +71,7 @@ const features = [
     icon: <Droplets className="w-6 h-6" />,
     title: 'Green Cleaning Solutions',
     description: 'EPA-approved, guest-safe products. Sustainable practices that protect your reputation.',
-    color: 'sage',
+    color: 'plum',
   },
   {
     icon: <BarChart3 className="w-6 h-6" />,
@@ -106,6 +106,7 @@ export default function LandingPage() {
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] })
   const heroImageY = useTransform(scrollYProgress, [0, 1], [0, -150])
   const [selectedIndustry, setSelectedIndustry] = useState<string | null>(null)
+  const [activeService, setActiveService] = useState(0)
 
   return (
     <div className="min-h-screen bg-cream-50">
@@ -129,6 +130,12 @@ export default function LandingPage() {
         {/* Gradient overlays */}
         <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/90 via-charcoal-900/40 to-charcoal-900/20" />
         <div className="absolute inset-0 bg-gradient-to-r from-charcoal-900/60 via-transparent to-transparent" />
+
+        {/* Animated gradient blobs */}
+        <div className="absolute inset-0 z-[1] overflow-hidden pointer-events-none">
+          <div className="absolute -top-32 -right-32 w-[900px] h-[900px] bg-gradient-to-br from-ocean-500/50 via-plum-500/30 to-transparent rounded-full blur-3xl animate-blob" />
+          <div className="absolute -bottom-32 -left-32 w-[700px] h-[700px] bg-gradient-to-tr from-bronze-500/40 via-ocean-400/20 to-transparent rounded-full blur-3xl animate-blob-reverse" />
+        </div>
 
         {/* Content — positioned at bottom */}
         <div className="relative w-full pt-32 pb-16 lg:pb-20">
@@ -303,7 +310,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
-          SERVICES SECTION
+          SERVICES SECTION — Interactive Expanding Panels
           ============================================ */}
       <section id="services" className="py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -327,163 +334,90 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
-          >
-            {features.map((feature, index) => (
-              <motion.div key={index} variants={fadeInUp}>
-                <div className="h-full p-8 rounded-2xl border border-cream-200 bg-gradient-to-b from-cream-50 to-white hover:shadow-card transition-all duration-300 hover:border-ocean-200">
-                  <div className={cn(
-                    'w-12 h-12 rounded-xl flex items-center justify-center mb-6',
-                    feature.color === 'ocean' && 'bg-ocean-100 text-ocean-600',
-                    feature.color === 'bronze' && 'bg-bronze-100 text-bronze-600',
-                    feature.color === 'terracotta' && 'bg-terracotta-100 text-terracotta-600',
-                    feature.color === 'sage' && 'bg-sage-100 text-sage-600'
-                  )}>
-                    {feature.icon}
+          {/* Desktop: Expanding panels */}
+          <div className="hidden lg:flex gap-3 h-[260px]">
+            {features.map((feature, index) => {
+              const isActive = activeService === index
+              const colorMap: Record<string, { bg: string; bgLight: string; border: string; borderLight: string; icon: string; iconLight: string; text: string }> = {
+                ocean: { bg: 'bg-ocean-600', bgLight: 'bg-ocean-50', border: 'border-ocean-500', borderLight: 'border-ocean-200', icon: 'text-ocean-200', iconLight: 'text-ocean-600', text: 'text-ocean-100' },
+                bronze: { bg: 'bg-bronze-600', bgLight: 'bg-bronze-50', border: 'border-bronze-500', borderLight: 'border-bronze-200', icon: 'text-bronze-200', iconLight: 'text-bronze-600', text: 'text-bronze-100' },
+                terracotta: { bg: 'bg-terracotta-600', bgLight: 'bg-terracotta-50', border: 'border-terracotta-500', borderLight: 'border-terracotta-200', icon: 'text-terracotta-200', iconLight: 'text-terracotta-600', text: 'text-terracotta-100' },
+                plum: { bg: 'bg-plum-600', bgLight: 'bg-plum-50', border: 'border-plum-500', borderLight: 'border-plum-200', icon: 'text-plum-200', iconLight: 'text-plum-600', text: 'text-plum-100' },
+              }
+              const colors = colorMap[feature.color] || colorMap.ocean
+              return (
+                <motion.div
+                  key={index}
+                  animate={{ flex: isActive ? 4 : 1 }}
+                  transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+                  onClick={() => setActiveService(index)}
+                  className={cn(
+                    'relative rounded-2xl overflow-hidden cursor-pointer border transition-colors duration-300',
+                    isActive ? `${colors.bg} ${colors.border}` : `${colors.bgLight} ${colors.borderLight} hover:shadow-card`
+                  )}
+                >
+                  <div className="h-full flex flex-col justify-between p-5">
+                    <div className={cn(
+                      'w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0',
+                      isActive ? 'bg-white/20' : `${colors.bgLight}`
+                    )}>
+                      <div className={isActive ? colors.icon : colors.iconLight}>
+                        {feature.icon}
+                      </div>
+                    </div>
+                    {isActive ? (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                        className="mt-auto"
+                      >
+                        <h3 className="text-xl font-semibold text-white mb-2">{feature.title}</h3>
+                        <p className={cn('text-sm leading-relaxed', colors.text)}>{feature.description}</p>
+                      </motion.div>
+                    ) : (
+                      <div className="mt-auto">
+                        <h3 className="text-sm font-semibold text-charcoal-800">{feature.title}</h3>
+                      </div>
+                    )}
                   </div>
-                  <h3 className="text-xl font-semibold text-charcoal-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-charcoal-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
+                </motion.div>
+              )
+            })}
+          </div>
+
+          {/* Mobile: Colored cards */}
+          <div className="grid grid-cols-2 gap-4 lg:hidden">
+            {features.map((feature, index) => {
+              const colorMap: Record<string, string> = {
+                ocean: 'bg-ocean-50 border-ocean-200',
+                bronze: 'bg-bronze-50 border-bronze-200',
+                terracotta: 'bg-terracotta-50 border-terracotta-200',
+                plum: 'bg-plum-50 border-plum-200',
+              }
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className={cn('p-5 rounded-xl border', colorMap[feature.color] || 'bg-cream-50 border-cream-200')}
+                >
+                  <div className="mb-3">{feature.icon}</div>
+                  <h3 className="text-sm font-semibold text-charcoal-900 mb-1">{feature.title}</h3>
+                  <p className="text-xs text-charcoal-600 leading-relaxed">{feature.description}</p>
+                </motion.div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
       {/* ============================================
-          STATS SECTION
+          SOCIAL PROOF — Clients + Awards
           ============================================ */}
-      <Spotlight className="py-16 lg:py-20 bg-gradient-to-br from-charcoal-900 via-charcoal-800 to-charcoal-900 relative overflow-hidden">
-        <div className="absolute inset-0">
-          <Image
-            src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1920&h=1080&fit=crop&q=80"
-            alt="Restaurant kitchen"
-            fill
-            className="object-cover opacity-30"
-            priority={false}
-          />
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-charcoal-900/85 via-charcoal-800/85 to-charcoal-900/85" />
-        <div className="absolute inset-0 opacity-5">
-          <div className="absolute inset-0"
-            style={{
-              backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-              backgroundSize: '50px 50px',
-            }}
-          />
-        </div>
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-ocean-500/15 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-plum-500/15 rounded-full blur-3xl" />
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={staggerContainer}
-            className="text-center mb-12"
-          >
-            <motion.div variants={fadeInUp}>
-              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-white leading-tight tracking-tight mb-4">
-                Trusted by hospitality leaders
-              </h2>
-              <p className="text-lg text-charcoal-300 max-w-2xl mx-auto">
-                Industry-leading service with proven results across hundreds of properties.
-              </p>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={staggerContainer}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12"
-          >
-            {stats.map((stat, index) => (
-              <motion.div key={index} variants={fadeInUp} className="text-center">
-                <div className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-white mb-2">
-                  <SlidingNumber value={stat.value} suffix={stat.suffix} />
-                </div>
-                <p className="text-charcoal-400">{stat.label}</p>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </Spotlight>
-
-      {/* ============================================
-          CLIENT LOGOS SECTION
-          ============================================ */}
-      <section className="py-16 lg:py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-100px' }}
-            variants={staggerContainer}
-            className="text-center mb-12"
-          >
-            <motion.div variants={scaleIn}>
-              <Badge variant="secondary" className="mb-4 bg-cream-200 text-charcoal-700 border-cream-300">
-                Trusted By
-              </Badge>
-              <h2 className="font-display text-3xl sm:text-4xl lg:text-5xl font-semibold text-charcoal-900 leading-tight tracking-tight mb-4">
-                Notable Hospitality Brands
-              </h2>
-              <p className="text-lg text-charcoal-600 max-w-2xl mx-auto">
-                We&rsquo;re proud to serve some of the most recognized names in hospitality.
-              </p>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: '-50px' }}
-            variants={staggerContainer}
-            className="grid grid-cols-3 md:grid-cols-7 gap-6 lg:gap-8 items-center justify-items-center opacity-60 hover:opacity-100 transition-opacity"
-          >
-            {[
-              { name: 'Facebook', image: '/images/Clients-1767818842/current client logos/client-brand_Facebook.jpg' },
-              { name: 'Darden Group', image: '/images/Clients-1767818842/current client logos/client-brand_Darden-Group.png' },
-              { name: 'Chameleon Group', image: '/images/Clients-1767818842/current client logos/client-brand_Chameleon-Group.png' },
-              { name: 'Horseshoe Bay Resort', image: '/images/Clients-1767818842/current client logos/client-brand-horseshoe-bay-resort.png' },
-              { name: 'The Loren', image: '/images/Clients-1767818842/current client logos/client-brand-the-loren-hotel.png' },
-              { name: 'Tarka', image: '/images/Clients-1767818842/current client logos/client-brand_Tarka.png' },
-              { name: 'Wu Chow', image: '/images/Clients-1767818842/current client logos/client-brand_Wu-Chow.png' },
-            ].map((client, index) => (
-              <motion.div
-                key={index}
-                variants={scaleIn}
-                className="flex items-center justify-center h-16 lg:h-20 w-full grayscale hover:grayscale-0 transition-all duration-300"
-              >
-                <Image
-                  src={client.image}
-                  alt={client.name}
-                  width={180}
-                  height={80}
-                  className="object-contain max-h-full max-w-full w-auto"
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ============================================
-          CERTIFICATIONS & AWARDS (NEW)
-          ============================================ */}
-      <CertificationsSection />
+      <SocialProofSection />
 
       {/* ============================================
           ROI CALCULATOR SECTION
@@ -504,7 +438,7 @@ export default function LandingPage() {
       </section>
 
       {/* ============================================
-          TESTIMONIALS SECTION
+          TESTIMONIALS SECTION — Dark Cards
           ============================================ */}
       <section id="testimonials" className="py-16 lg:py-20 bg-cream-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -533,39 +467,57 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true, margin: '-50px' }}
             variants={staggerContainer}
-            className="grid md:grid-cols-2 gap-6 lg:gap-8"
+            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5"
           >
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                variants={index % 2 === 0 ? fadeInLeft : fadeInRight}
-                className="bg-white rounded-2xl p-8 border border-cream-200 shadow-card hover:shadow-elevated transition-shadow"
-              >
-                <div className="flex items-center gap-1 mb-6">
-                  {Array.from({ length: testimonial.rating }).map((_, i) => (
-                    <Star key={i} className="w-5 h-5 fill-honey-400 text-honey-400" />
-                  ))}
-                </div>
-                <blockquote className="text-charcoal-700 leading-relaxed mb-8">
-                  &ldquo;{testimonial.quote}&rdquo;
-                </blockquote>
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-plum-100 text-plum-700 font-semibold">
-                      {testimonial.author.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold text-charcoal-900">{testimonial.author}</p>
-                    <p className="text-sm text-charcoal-500">{testimonial.role}</p>
-                    <p className="text-sm text-ocean-600">{testimonial.company}</p>
+            {testimonials.map((testimonial, index) => {
+              const accentColors = ['border-t-ocean-500', 'border-t-bronze-500', 'border-t-plum-500', 'border-t-terracotta-500']
+              const quoteColors = ['text-ocean-500/20', 'text-bronze-500/20', 'text-plum-500/20', 'text-terracotta-500/20']
+              return (
+                <motion.div
+                  key={index}
+                  variants={fadeInUp}
+                  className={cn(
+                    'relative bg-charcoal-900 rounded-2xl p-6 border border-charcoal-800 border-t-4 shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1 overflow-hidden',
+                    accentColors[index % accentColors.length]
+                  )}
+                >
+                  {/* Decorative quote mark */}
+                  <span className={cn('absolute top-3 right-4 font-display text-6xl leading-none select-none pointer-events-none', quoteColors[index % quoteColors.length])}>
+                    &ldquo;
+                  </span>
+                  <div className="relative">
+                    <div className="flex items-center gap-0.5 mb-4">
+                      {Array.from({ length: testimonial.rating }).map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-honey-400 text-honey-400" />
+                      ))}
+                    </div>
+                    <blockquote className="text-charcoal-200 text-sm leading-relaxed mb-6">
+                      &ldquo;{testimonial.quote}&rdquo;
+                    </blockquote>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-charcoal-700 text-white font-semibold text-xs">
+                          {testimonial.author.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold text-white text-sm">{testimonial.author}</p>
+                        <p className="text-xs text-charcoal-400">{testimonial.role}</p>
+                        <p className="text-xs text-ocean-400">{testimonial.company}</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              )
+            })}
           </motion.div>
         </div>
       </section>
+
+      {/* ============================================
+          VIDEO BANNER — Full-bleed commercial loop
+          ============================================ */}
+      <VideoBannerSection />
 
       {/* ============================================
           BLOG FILMSTRIP (NEW)

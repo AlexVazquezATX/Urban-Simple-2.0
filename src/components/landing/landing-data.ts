@@ -37,28 +37,28 @@ export const stats = [
 
 export const testimonials = [
   {
-    quote: "I can't say enough good things about their responsiveness and willingness to collaborate with our team to find solutions. They are a true partner in our operation.",
+    quote: "I can't say enough good things about their responsiveness and willingness to collaborate. They are a true partner in our operation.",
     author: 'Zach Adams',
     role: 'General Manager',
     company: 'Kitchen United',
     rating: 5,
   },
   {
-    quote: 'Since Urban Simple took over our cleaning, we achieved a 99 health inspection score. Their team is thorough, professional, and understands what food service facilities need.',
+    quote: 'Since Urban Simple took over, we achieved a 99 health inspection score. Their team is thorough and understands food service.',
     author: 'Matt Luther',
     role: 'Facilities Manager',
     company: 'Facebook (Meta)',
     rating: 5,
   },
   {
-    quote: "I'd give them a 10 out of 10. They are reliable, consistent, and their crew takes genuine pride in their work. I'd recommend them to anyone in the industry.",
+    quote: "10 out of 10. They are reliable, consistent, and their crew takes genuine pride in their work. I'd recommend them to anyone.",
     author: 'Mike Pottorff',
     role: 'Owner',
     company: 'Iron Cactus',
     rating: 5,
   },
   {
-    quote: "Very accommodating and easy to work with. I would give them a 10 out of 10. They've been a great partner for our restaurant.",
+    quote: "Very accommodating and easy to work with. A 10 out of 10. They've been a great partner for our restaurant.",
     author: 'CK Chin',
     role: 'Owner',
     company: 'Wu Chow',

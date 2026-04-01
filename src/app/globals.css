@@ -722,3 +722,25 @@ input[type="checkbox"] {
   animation: marquee 35s linear infinite;
 }
 
+@keyframes blob {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; transform: translate(0, 0) rotate(0deg); }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; transform: translate(20px, -30px) rotate(90deg); }
+  50% { border-radius: 50% 60% 30% 60% / 30% 40% 70% 60%; transform: translate(-10px, 20px) rotate(180deg); }
+  75% { border-radius: 60% 30% 60% 40% / 70% 50% 40% 60%; transform: translate(15px, 10px) rotate(270deg); }
+}
+
+@keyframes blob-reverse {
+  0%, 100% { border-radius: 40% 60% 70% 30% / 40% 70% 30% 60%; transform: translate(0, 0) rotate(0deg); }
+  25% { border-radius: 60% 30% 40% 70% / 60% 40% 60% 30%; transform: translate(-20px, 20px) rotate(-90deg); }
+  50% { border-radius: 30% 50% 60% 40% / 60% 30% 50% 70%; transform: translate(10px, -15px) rotate(-180deg); }
+  75% { border-radius: 50% 40% 30% 60% / 40% 60% 70% 30%; transform: translate(-15px, -10px) rotate(-270deg); }
+}
+
+.animate-blob {
+  animation: blob 20s ease-in-out infinite;
+}
+
+.animate-blob-reverse {
+  animation: blob-reverse 25s ease-in-out infinite;
+}
+
