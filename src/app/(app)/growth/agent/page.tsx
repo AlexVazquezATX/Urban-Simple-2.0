@@ -15,7 +15,7 @@ export default async function GrowthAgentPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       <Suspense
         fallback={
           <div className="space-y-6">

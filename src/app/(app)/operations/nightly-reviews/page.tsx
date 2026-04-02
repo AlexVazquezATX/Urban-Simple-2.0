@@ -90,7 +90,7 @@ export default function NightlyReviewsPage() {
       case 'in_progress':
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-100 text-orange-700 border-orange-200">In Progress</Badge>
       default:
-        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">Pending</Badge>
+        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">Pending</Badge>
     }
   }
 
@@ -115,8 +115,8 @@ export default function NightlyReviewsPage() {
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Tonight's Route</h1>
-        <p className="text-sm text-warm-500 mt-1">
+        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Tonight's Route</h1>
+        <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
           Review locations scheduled for tonight's service
         </p>
       </div>
@@ -126,17 +126,17 @@ export default function NightlyReviewsPage() {
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs text-warm-500">Progress</p>
-              <p className="text-2xl font-bold text-warm-900 mt-1">
+              <p className="text-xs text-warm-500 dark:text-cream-400">Progress</p>
+              <p className="text-2xl font-bold text-warm-900 dark:text-cream-100 mt-1">
                 {completedCount} / {locations.length}
               </p>
             </div>
             <div className="text-right">
-              <p className="text-xs text-warm-500">Pending</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400">Pending</p>
               <p className="text-2xl font-bold mt-1 text-orange-600">{pendingCount}</p>
             </div>
             <div className="hidden sm:block w-32">
-              <div className="w-full bg-warm-200 rounded-sm h-2">
+              <div className="w-full bg-warm-200 dark:bg-charcoal-700 rounded-sm h-2">
                 <div
                   className="bg-ocean-600 h-2 rounded-sm transition-all duration-300"
                   style={{ width: `${(completedCount / locations.length) * 100}%` }}
@@ -175,8 +175,8 @@ export default function NightlyReviewsPage() {
       {/* Location Cards */}
       <div className="space-y-3">
         {filteredLocations.length === 0 ? (
-          <Card className="rounded-sm border-warm-200">
-            <CardContent className="py-12 text-center text-warm-500">
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardContent className="py-12 text-center text-warm-500 dark:text-cream-400">
               <Building2 className="h-12 w-12 mx-auto mb-4 text-warm-300" />
               <p>No locations found for this filter</p>
             </CardContent>
@@ -186,7 +186,7 @@ export default function NightlyReviewsPage() {
             <Card
               key={location.id}
               className={cn(
-                'rounded-sm border-warm-200 hover:border-ocean-400 transition-colors',
+                'rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors',
                 location.status === 'completed' && 'bg-lime-50/50 border-lime-200'
               )}
             >
@@ -201,22 +201,22 @@ export default function NightlyReviewsPage() {
                   <div className="flex-1 min-w-0 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-medium text-warm-900">{location.locationName}</h3>
-                        <p className="text-xs text-warm-500">{location.clientName}</p>
+                        <h3 className="font-medium text-warm-900 dark:text-cream-100">{location.locationName}</h3>
+                        <p className="text-xs text-warm-500 dark:text-cream-400">{location.clientName}</p>
                       </div>
                       {getStatusBadge(location.status)}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-2 text-warm-500">
+                      <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400">
                         <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="truncate text-xs">{location.address}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-warm-500">
+                      <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400">
                         <Clock className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="text-xs">{location.scheduledTime}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-warm-500 sm:col-span-2">
+                      <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 sm:col-span-2">
                         <ClipboardCheck className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="text-xs">{location.checklistName}</span>
                       </div>

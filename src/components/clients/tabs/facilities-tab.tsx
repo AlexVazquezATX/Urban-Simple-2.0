@@ -98,15 +98,15 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
   )
 
   return (
-    <Card className="rounded-sm border-warm-200">
+    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="font-display font-medium text-warm-900">
+            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
               Facilities
             </CardTitle>
-            <p className="text-sm text-warm-500 mt-1">
-              {activeFacilities.length} of {facilities.length} active · <span className="font-medium text-warm-700">{formatRate(activeTotal)}</span>/mo
+            <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
+              {activeFacilities.length} of {facilities.length} active · <span className="font-medium text-warm-700 dark:text-cream-300">{formatRate(activeTotal)}</span>/mo
             </p>
           </div>
           {availableLocations.length > 0 && (
@@ -124,9 +124,9 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
       </CardHeader>
       <CardContent>
         {facilities.length === 0 ? (
-          <div className="text-center py-12 text-warm-500">
-            <Calendar className="mx-auto h-16 w-16 mb-4 text-warm-400" />
-            <p className="text-lg font-medium mb-2 text-warm-700">
+          <div className="text-center py-12 text-warm-500 dark:text-cream-400">
+            <Calendar className="mx-auto h-16 w-16 mb-4 text-warm-400 dark:text-charcoal-600" />
+            <p className="text-lg font-medium mb-2 text-warm-700 dark:text-cream-300">
               No facilities configured
             </p>
             <p className="text-sm mb-4">
@@ -137,13 +137,13 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
                 clientId={clientId}
                 availableLocations={availableLocations}
               >
-                <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
+                <Button variant="outline" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400">
                   <Plus className="mr-2 h-4 w-4" />
                   Add First Facility
                 </Button>
               </FacilityProfileForm>
             ) : (
-              <p className="text-xs text-warm-400">
+              <p className="text-xs text-warm-400 dark:text-cream-400">
                 Add locations to this client first, then configure facility profiles.
               </p>
             )}
@@ -152,34 +152,34 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200">
-                  <TableHead className="text-warm-500 font-medium">Facility</TableHead>
-                  <TableHead className="text-warm-500 font-medium">Category</TableHead>
-                  <TableHead className="text-warm-500 font-medium">Status</TableHead>
-                  <TableHead className="text-warm-500 font-medium text-right">Monthly Rate</TableHead>
-                  <TableHead className="text-warm-500 font-medium">Frequency</TableHead>
-                  <TableHead className="text-warm-500 font-medium">Days</TableHead>
-                  <TableHead className="text-warm-500 font-medium">Seasonal</TableHead>
-                  <TableHead className="text-warm-500 font-medium">Overrides</TableHead>
-                  <TableHead className="text-warm-500 font-medium w-10"></TableHead>
+                <TableRow className="border-warm-200 dark:border-charcoal-700">
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Facility</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Category</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Status</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium text-right">Monthly Rate</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Frequency</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Days</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Seasonal</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium">Overrides</TableHead>
+                  <TableHead className="text-warm-500 dark:text-cream-400 font-medium w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {facilities.map((facility: any) => (
                   <TableRow
                     key={facility.id}
-                    className="border-warm-200 hover:bg-warm-50"
+                    className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800"
                   >
-                    <TableCell className="font-medium text-warm-900">
+                    <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                       {facility.location?.name || 'Unknown'}
                     </TableCell>
                     <TableCell>
                       {facility.category ? (
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600 capitalize">
+                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400 capitalize">
                           {facility.category}
                         </Badge>
                       ) : (
-                        <span className="text-warm-400">-</span>
+                        <span className="text-warm-400 dark:text-cream-400">-</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -198,10 +198,10 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-right font-mono text-warm-900">
+                    <TableCell className="text-right font-mono text-warm-900 dark:text-cream-100">
                       {formatRate(facility.defaultMonthlyRate)}
                     </TableCell>
-                    <TableCell className="text-warm-700">
+                    <TableCell className="text-warm-700 dark:text-cream-300">
                       {facility.normalFrequencyPerWeek > 0
                         ? `${facility.normalFrequencyPerWeek}x/week`
                         : '-'}
@@ -216,7 +216,7 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
                           Yes
                         </Badge>
                       ) : (
-                        <span className="text-warm-400">-</span>
+                        <span className="text-warm-400 dark:text-cream-400">-</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -228,13 +228,13 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="h-8 w-8 p-0 rounded-sm text-warm-500 hover:text-warm-700"
+                            className="h-8 w-8 p-0 rounded-sm text-warm-500 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200"
                             disabled={updating === facility.id}
                           >
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-sm border-warm-200">
+                        <DropdownMenuContent align="end" className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <FacilityProfileForm
                             clientId={clientId}
                             availableLocations={availableLocations}
@@ -294,7 +294,7 @@ export function FacilitiesTab({ clientId, facilities, locations }: FacilitiesTab
 
 function OverrideIndicator({ overrides }: { overrides: any[] }) {
   if (overrides.length === 0) {
-    return <span className="text-warm-400">-</span>
+    return <span className="text-warm-400 dark:text-cream-400">-</span>
   }
 
   const now = new Date()

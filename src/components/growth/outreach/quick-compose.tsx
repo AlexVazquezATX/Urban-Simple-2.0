@@ -256,17 +256,17 @@ export function QuickCompose() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900">Quick Compose</CardTitle>
-          <CardDescription className="text-xs text-warm-500">
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Quick Compose</CardTitle>
+          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
             Send a message to a prospect or schedule it for later
           </CardDescription>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-4">
           {/* Prospect Selector */}
           <div>
-            <Label className="text-xs font-medium text-warm-700">Select Prospect</Label>
+            <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Select Prospect</Label>
             <ProspectSelector
               value={prospectId || ''}
               onValueChange={(id) => {
@@ -282,20 +282,20 @@ export function QuickCompose() {
           {prospectId && (
             <>
               <Tabs value={channel} onValueChange={setChannel}>
-                <TabsList className="grid w-full grid-cols-4 rounded-none bg-white border-b border-warm-200 p-0 h-auto">
-                  <TabsTrigger value="email" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                <TabsList className="grid w-full grid-cols-4 rounded-none bg-white dark:bg-charcoal-900 border-b border-warm-200 dark:border-charcoal-700 p-0 h-auto">
+                  <TabsTrigger value="email" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                     <Mail className="h-3.5 w-3.5 text-ocean-500" />
                     Email
                   </TabsTrigger>
-                  <TabsTrigger value="sms" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                  <TabsTrigger value="sms" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                     <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
                     SMS
                   </TabsTrigger>
-                  <TabsTrigger value="linkedin" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                  <TabsTrigger value="linkedin" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                     <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
                     LinkedIn
                   </TabsTrigger>
-                  <TabsTrigger value="instagram_dm" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50">
+                  <TabsTrigger value="instagram_dm" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                     <Instagram className="h-3.5 w-3.5 text-plum-500" />
                     Instagram
                   </TabsTrigger>
@@ -303,56 +303,56 @@ export function QuickCompose() {
 
                 <TabsContent value="email" className="space-y-4 mt-4">
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">To</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">To</Label>
                     <Input
                       value={to}
                       onChange={(e) => setTo(e.target.value)}
                       placeholder="email@example.com"
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Subject</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Subject</Label>
                     <Input
                       value={subject}
                       onChange={(e) => setSubject(e.target.value)}
                       placeholder="Email subject"
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Message</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Message</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={10}
                       placeholder="Email body..."
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="sms" className="space-y-4 mt-4">
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Phone Number</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Phone Number</Label>
                     <Input
                       value={to}
                       onChange={(e) => setTo(e.target.value)}
                       placeholder="(555) 123-4567"
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Message (160 characters max)</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Message (160 characters max)</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={4}
                       maxLength={160}
                       placeholder="SMS message..."
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
-                    <p className="text-[10px] text-warm-400 mt-1">
+                    <p className="text-[10px] text-warm-400 dark:text-cream-500 mt-1">
                       {body.length}/160 characters
                     </p>
                   </div>
@@ -360,26 +360,26 @@ export function QuickCompose() {
 
                 <TabsContent value="linkedin" className="space-y-4 mt-4">
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">LinkedIn Message</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">LinkedIn Message</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={8}
                       placeholder="LinkedIn message..."
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
                   </div>
                 </TabsContent>
 
                 <TabsContent value="instagram_dm" className="space-y-4 mt-4">
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Instagram DM</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Instagram DM</Label>
                     <Textarea
                       value={body}
                       onChange={(e) => setBody(e.target.value)}
                       rows={8}
                       placeholder="Instagram DM message..."
-                      className="rounded-sm border-warm-200 mt-1"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                     />
                   </div>
                 </TabsContent>
@@ -388,9 +388,9 @@ export function QuickCompose() {
               {/* Template Selector */}
               {templates.length > 0 && (
                 <div>
-                  <Label className="text-xs font-medium text-warm-700">Use Template</Label>
+                  <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Use Template</Label>
                   <Select value={selectedTemplate} onValueChange={setSelectedTemplate}>
-                    <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                    <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                       <SelectValue placeholder="Select a template..." />
                     </SelectTrigger>
                     <SelectContent className="rounded-sm">
@@ -405,14 +405,14 @@ export function QuickCompose() {
               )}
 
               {/* AI Content Generator */}
-              <div className="border-t border-warm-200 pt-4">
+              <div className="border-t border-warm-200 dark:border-charcoal-700 pt-4">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <Label className="flex items-center gap-2 text-xs font-medium text-warm-700">
+                    <Label className="flex items-center gap-2 text-xs font-medium text-warm-700 dark:text-cream-300">
                       <Sparkles className="h-3.5 w-3.5 text-plum-500" />
                       AI Content Assistant
                     </Label>
-                    <p className="text-xs text-warm-500 mt-0.5">
+                    <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                       Generate personalized outreach content
                     </p>
                   </div>
@@ -438,9 +438,9 @@ export function QuickCompose() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Tone</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Tone</Label>
                     <Select value={tone} onValueChange={setTone}>
-                      <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                      <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="rounded-sm">
@@ -452,9 +452,9 @@ export function QuickCompose() {
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs font-medium text-warm-700">Purpose</Label>
+                    <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Purpose</Label>
                     <Select value={purpose} onValueChange={setPurpose}>
-                      <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                      <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="rounded-sm">
@@ -469,21 +469,21 @@ export function QuickCompose() {
               </div>
 
               {/* Schedule Option */}
-              <div className="border-t border-warm-200 pt-4">
-                <Label className="text-xs font-medium text-warm-700">Schedule (Optional)</Label>
+              <div className="border-t border-warm-200 dark:border-charcoal-700 pt-4">
+                <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Schedule (Optional)</Label>
                 <Input
                   type="datetime-local"
                   value={scheduleFor}
                   onChange={(e) => setScheduleFor(e.target.value)}
-                  className="rounded-sm border-warm-200 mt-1"
+                  className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                 />
-                <p className="text-[10px] text-warm-400 mt-1">
+                <p className="text-[10px] text-warm-400 dark:text-cream-500 mt-1">
                   Leave empty to send immediately
                 </p>
               </div>
 
               {/* Actions */}
-              <div className="flex items-center gap-3 pt-4 border-t border-warm-200">
+              <div className="flex items-center gap-3 pt-4 border-t border-warm-200 dark:border-charcoal-700">
                 <Button
                   onClick={handleSend}
                   disabled={isSending || !to || !body || (channel === 'email' && !subject)}

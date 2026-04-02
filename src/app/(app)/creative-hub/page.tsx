@@ -95,24 +95,24 @@ export default function CreativeHubPage() {
   const hasContent = stats?.recentContent && stats.recentContent.length > 0
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header with Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Creative Hub</h1>
-          <p className="text-sm text-warm-500 mt-0.5">
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Creative Hub</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
             AI-powered content for Urban Simple
           </p>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <div className="text-right">
-            <p className="text-xl font-semibold text-warm-900">{stats?.totalContent || 0}</p>
-            <p className="text-xs text-warm-500">created</p>
+            <p className="text-xl font-semibold text-warm-900 dark:text-cream-100">{stats?.totalContent || 0}</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">created</p>
           </div>
-          <div className="h-8 w-px bg-warm-200" />
+          <div className="h-8 w-px bg-warm-200 dark:bg-charcoal-700" />
           <div className="text-right">
             <p className="text-xl font-semibold text-lime-600">{stats?.contentByStatus?.approved || 0}</p>
-            <p className="text-xs text-warm-500">ready</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">ready</p>
           </div>
         </div>
       </div>
@@ -134,12 +134,12 @@ export default function CreativeHubPage() {
 
         {/* 2. Image Library */}
         <Link href="/creative-hub/images" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center shrink-0">
               <ImageIcon className="w-4 h-4 text-ocean-600" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Images</h2>
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Images</h2>
               <p className="text-xs text-ocean-600 font-medium">{stats?.totalImages || 0} saved</p>
             </div>
           </div>
@@ -147,61 +147,61 @@ export default function CreativeHubPage() {
 
         {/* 3. Brand Assets */}
         <Link href="/creative-hub/assets" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
               <Package className="w-4 h-4 text-amber-600" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Brand Assets</h2>
-              <p className="text-xs text-warm-500 truncate">Logos & objects</p>
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Brand Assets</h2>
+              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Logos & objects</p>
             </div>
           </div>
         </Link>
 
         {/* 4. Create Content */}
         <Link href="/creative-hub/create" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-lime-100 flex items-center justify-center shrink-0">
               <Sparkles className="w-4 h-4 text-lime-600" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Create</h2>
-              <p className="text-xs text-warm-500 truncate">Generate posts</p>
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Create</h2>
+              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Generate posts</p>
             </div>
           </div>
         </Link>
 
         {/* 5. Content Gallery */}
         <Link href="/creative-hub/gallery" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-warm-200 flex items-center justify-center shrink-0">
               <Layers className="w-4 h-4 text-warm-700" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Gallery</h2>
-              <p className="text-xs text-warm-500 truncate">Browse & export</p>
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Gallery</h2>
+              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Browse & export</p>
             </div>
           </div>
         </Link>
 
         {/* 6. Inspiration */}
         <Link href="/creative-hub/inspiration" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-ocean-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center shrink-0">
               <Sun className="w-4 h-4 text-plum-600" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-sm font-medium text-warm-900">Inspiration</h2>
-              <p className="text-xs text-warm-500 truncate">Trending ideas</p>
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Inspiration</h2>
+              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Trending ideas</p>
             </div>
           </div>
         </Link>
       </div>
 
       {/* Recent Content Section */}
-      <div className="rounded-sm bg-white border border-warm-200">
-        <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
-          <h2 className="text-base font-display font-medium text-warm-900">Recent Creations</h2>
+      <div className="rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700">
+        <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
+          <h2 className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Recent Creations</h2>
           {hasContent && (
             <Link href="/creative-hub/gallery" className="text-xs text-ocean-600 hover:text-ocean-700 font-medium">
               View all
@@ -212,7 +212,7 @@ export default function CreativeHubPage() {
         {hasContent ? (
           <div className="p-4 space-y-1.5">
             {stats?.recentContent.slice(0, 5).map((content) => (
-              <div key={content.id} className="px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors flex items-center gap-3 group">
+              <div key={content.id} className="px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors flex items-center gap-3 group">
                 {/* Thumbnail or Platform Icon */}
                 {content.image ? (
                   <div className="w-10 h-10 rounded-sm overflow-hidden bg-warm-100 shrink-0">
@@ -230,10 +230,10 @@ export default function CreativeHubPage() {
 
                 {/* Content Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-warm-900 truncate">
+                  <p className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">
                     {content.headline || content.primaryText.substring(0, 50)}
                   </p>
-                  <p className="text-xs text-warm-500 mt-0.5">
+                  <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                     {content.platform.replace('_', ' ')} · {new Date(content.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                   </p>
                 </div>
@@ -274,8 +274,8 @@ export default function CreativeHubPage() {
             <div className="w-12 h-12 rounded-sm bg-lime-100 flex items-center justify-center mx-auto mb-3">
               <Sparkles className="w-5 h-5 text-lime-600" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">Your creative canvas awaits</h3>
-            <p className="text-xs text-warm-500 mb-4 max-w-sm mx-auto">
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">Your creative canvas awaits</h3>
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4 max-w-sm mx-auto">
               Generate social posts and ads in seconds with AI.
             </p>
             <Link href="/creative-hub/create">

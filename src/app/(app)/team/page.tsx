@@ -10,7 +10,7 @@ async function TeamList() {
   const user = await getCurrentUser()
 
   if (!user) {
-    return <div className="text-warm-500">Please log in</div>
+    return <div className="text-warm-500 dark:text-cream-400">Please log in</div>
   }
 
   // Get all users in the company
@@ -86,7 +86,7 @@ function TeamListSkeleton() {
       </div>
       <div className="grid gap-4 md:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
-          <Card key={i} className="rounded-sm border-warm-200">
+          <Card key={i} className="rounded-sm border-warm-200 dark:border-charcoal-700">
             <CardHeader>
               <Skeleton className="h-4 w-24 mb-2" />
               <Skeleton className="h-8 w-16" />
@@ -94,7 +94,7 @@ function TeamListSkeleton() {
           </Card>
         ))}
       </div>
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
           <Skeleton className="h-6 w-32 mb-2" />
           <Skeleton className="h-4 w-48" />

@@ -24,12 +24,12 @@ export function BrandContextToggle({
 }: BrandContextToggleProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-sm border border-warm-200 p-5">
+      <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
         <div className="animate-pulse flex items-center gap-3">
-          <div className="w-8 h-8 bg-warm-200 rounded-sm" />
+          <div className="w-8 h-8 bg-warm-200 dark:bg-charcoal-700 rounded-sm" />
           <div className="flex-1">
-            <div className="h-3 w-24 bg-warm-200 rounded" />
-            <div className="h-2 w-32 bg-warm-100 rounded mt-1.5" />
+            <div className="h-3 w-24 bg-warm-200 dark:bg-charcoal-700 rounded" />
+            <div className="h-2 w-32 bg-warm-100 dark:bg-charcoal-800 rounded mt-1.5" />
           </div>
         </div>
       </div>
@@ -38,8 +38,8 @@ export function BrandContextToggle({
 
   if (!brandKit) {
     return (
-      <div className="bg-white rounded-sm border border-warm-200 p-5">
-        <p className="text-xs text-warm-400">
+      <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+        <p className="text-xs text-warm-400 dark:text-cream-400">
           No brand kit found.{' '}
           <a href="/studio/brand-kit" className="text-lime-600 hover:text-lime-700 underline">
             Create one
@@ -57,19 +57,19 @@ export function BrandContextToggle({
           {/* Color swatches */}
           <div className="flex -space-x-1">
             <div
-              className="w-7 h-7 rounded-sm border border-warm-200"
+              className="w-7 h-7 rounded-sm border border-warm-200 dark:border-charcoal-700"
               style={{ backgroundColor: brandKit.primaryColor }}
             />
             {brandKit.secondaryColor && (
               <div
-                className="w-7 h-7 rounded-sm border border-warm-200"
+                className="w-7 h-7 rounded-sm border border-warm-200 dark:border-charcoal-700"
                 style={{ backgroundColor: brandKit.secondaryColor }}
               />
             )}
           </div>
           <div>
-            <p className="text-sm font-medium text-warm-800">{brandKit.restaurantName}</p>
-            <p className="text-xs text-warm-400">Brand identity</p>
+            <p className="text-sm font-medium text-warm-800 dark:text-cream-200">{brandKit.restaurantName}</p>
+            <p className="text-xs text-warm-400 dark:text-cream-400">Brand identity</p>
           </div>
         </div>
 

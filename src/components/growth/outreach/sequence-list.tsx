@@ -72,11 +72,11 @@ export function SequenceList() {
       case 'active':
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">Active</Badge>
       case 'paused':
-        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">Paused</Badge>
+        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">Paused</Badge>
       case 'completed':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">Completed</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">Completed</Badge>
       default:
-        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">{status}</Badge>
+        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">{status}</Badge>
     }
   }
 
@@ -84,8 +84,8 @@ export function SequenceList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-display font-medium text-warm-900">Automated Sequences</h2>
-          <p className="text-sm text-warm-500 mt-0.5">
+          <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Automated Sequences</h2>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
             Multi-step outreach campaigns that run automatically
           </p>
         </div>
@@ -99,13 +99,13 @@ export function SequenceList() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
+          <Loader2 className="h-8 w-8 animate-spin text-warm-400 dark:text-cream-500" />
         </div>
       ) : sequences.length === 0 ? (
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="py-12 text-center">
-            <Zap className="h-10 w-10 text-warm-300 mx-auto mb-3" />
-            <p className="text-sm text-warm-500 mb-4">No sequences created yet</p>
+            <Zap className="h-10 w-10 text-warm-300 dark:text-charcoal-500 mx-auto mb-3" />
+            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">No sequences created yet</p>
             <Link href="/growth/outreach/sequences/new">
               <Button variant="lime" className="rounded-sm">
                 <Plus className="h-3.5 w-3.5 mr-1.5" />
@@ -117,12 +117,12 @@ export function SequenceList() {
       ) : (
         <div className="space-y-1.5">
           {sequences.map((sequence) => (
-            <Card key={sequence.id} className="rounded-sm border-warm-200 hover:border-ocean-400 transition-colors">
+            <Card key={sequence.id} className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
               <CardHeader className="p-4 pb-3">
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm font-medium text-warm-900">{sequence.name}</CardTitle>
-                    <CardDescription className="text-xs text-warm-500 mt-0.5">
+                    <CardTitle className="text-sm font-medium text-warm-900 dark:text-cream-100">{sequence.name}</CardTitle>
+                    <CardDescription className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                       {sequence.description || 'No description'}
                     </CardDescription>
                   </div>
@@ -131,11 +131,11 @@ export function SequenceList() {
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs text-warm-500">
+                  <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
                     <span>{sequence._count?.messages || 0} steps</span>
                     {sequence.startDate && (
                       <>
-                        <span className="text-warm-300">•</span>
+                        <span className="text-warm-300 dark:text-charcoal-500">•</span>
                         <span>
                           Started {new Date(sequence.startDate).toLocaleDateString()}
                         </span>
@@ -172,7 +172,7 @@ export function SequenceList() {
                       variant="outline"
                       size="sm"
                       onClick={() => handleDelete(sequence.id)}
-                      className="rounded-sm h-7 w-7 p-0 text-warm-500 hover:text-red-600"
+                      className="rounded-sm h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-red-600"
                     >
                       <Trash2 className="h-3 w-3" />
                     </Button>

@@ -837,7 +837,7 @@ model Message {
 
   // AI-specific fields
   isAiGenerated Boolean @default(false) @map("is_ai_generated")
-  aiModel       String? @map("ai_model") // "gemini-2.0-flash-exp", etc.
+  aiModel       String? @map("ai_model") // "gemini-2.5-flash", etc.
   aiMetadata    Json?   @map("ai_metadata") // tokens used, latency, etc.
 
   createdAt DateTime @default(now()) @map("created_at")
@@ -963,7 +963,7 @@ model AIConversationMessage {
   timeframe  String? // today, week, month, etc.
 
   // Response metadata
-  aiModel      String? @map("ai_model") // gemini-2.0-flash-exp
+  aiModel      String? @map("ai_model") // gemini-2.5-flash
   responseTime Int?    @map("response_time") // milliseconds
   tokensUsed   Int?    @map("tokens_used")
 
@@ -1324,7 +1324,7 @@ model PulseBriefing {
   inspirationQuote String?   @map("inspiration_quote") @db.Text // Daily motivational quote
   generatedAt      DateTime? @map("generated_at")
   readAt           DateTime? @map("read_at")
-  aiModel          String?   @map("ai_model") // gemini-2.0-flash-exp
+  aiModel          String?   @map("ai_model") // gemini-2.5-flash
   generationTime   Int?      @map("generation_time") // milliseconds
   errorMessage     String?   @map("error_message") @db.Text
   createdAt        DateTime  @default(now()) @map("created_at")
@@ -1562,7 +1562,7 @@ model BlogPost {
 
   // AI Generation
   isAiGenerated    Boolean @default(false) @map("is_ai_generated")
-  aiModel          String? @map("ai_model") // gemini-2.0-flash-exp
+  aiModel          String? @map("ai_model") // gemini-2.5-flash
   aiGenerationData Json?   @map("ai_generation_data") // prompt, params, etc.
 
   // Content Focus (for AI generation)

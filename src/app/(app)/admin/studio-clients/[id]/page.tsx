@@ -147,7 +147,7 @@ export default function StudioClientDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-50 flex items-center justify-center">
+      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950 flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
       </div>
     )
@@ -155,9 +155,9 @@ export default function StudioClientDetailPage({
 
   if (!client) {
     return (
-      <div className="min-h-screen bg-warm-50 flex items-center justify-center">
+      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-warm-600 mb-4">Client not found</p>
+          <p className="text-warm-600 dark:text-cream-400 mb-4">Client not found</p>
           <Link href="/admin/studio-clients">
             <Button variant="outline" className="rounded-sm">
               <ArrowLeft className="w-4 h-4 mr-1.5" />
@@ -170,25 +170,25 @@ export default function StudioClientDetailPage({
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
+      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
         <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/admin/studio-clients"
-                className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+                className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 text-warm-600" />
+                <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
               </Link>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-warm-500" />
+                <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center">
+                  <Building2 className="w-5 h-5 text-warm-500 dark:text-cream-400" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <h1 className="text-lg font-display font-medium text-warm-900">
+                    <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
                       {client.restaurantName || client.companyName}
                     </h1>
                     {client.isComplementary && (
@@ -199,7 +199,7 @@ export default function StudioClientDetailPage({
                     )}
                   </div>
                   {client.restaurantName && (
-                    <p className="text-sm text-warm-500">{client.companyName}</p>
+                    <p className="text-sm text-warm-500 dark:text-cream-400">{client.companyName}</p>
                   )}
                 </div>
               </div>
@@ -234,28 +234,28 @@ export default function StudioClientDetailPage({
           {/* Left Column - Details & Settings */}
           <div className="lg:col-span-2 space-y-6">
             {/* Contact Info */}
-            <div className="bg-white rounded-sm border border-warm-200 p-5">
-              <h2 className="text-sm font-medium text-warm-900 mb-4">Contact Information</h2>
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Contact Information</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 {client.email && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-warm-400" />
-                    <a href={`mailto:${client.email}`} className="text-warm-700 hover:text-warm-900">
+                    <Mail className="w-4 h-4 text-warm-400 dark:text-cream-400" />
+                    <a href={`mailto:${client.email}`} className="text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100">
                       {client.email}
                     </a>
                   </div>
                 )}
                 {client.phone && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-warm-400" />
-                    <a href={`tel:${client.phone}`} className="text-warm-700 hover:text-warm-900">
+                    <Phone className="w-4 h-4 text-warm-400 dark:text-cream-400" />
+                    <a href={`tel:${client.phone}`} className="text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100">
                       {client.phone}
                     </a>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="w-4 h-4 text-warm-400" />
-                  <span className="text-warm-600">
+                  <Calendar className="w-4 h-4 text-warm-400 dark:text-cream-400" />
+                  <span className="text-warm-600 dark:text-cream-400">
                     Joined {new Date(client.createdAt).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -278,11 +278,11 @@ export default function StudioClientDetailPage({
             </div>
 
             {/* Subscription Settings */}
-            <div className="bg-white rounded-sm border border-warm-200 p-5">
-              <h2 className="text-sm font-medium text-warm-900 mb-4">Subscription Settings</h2>
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Subscription Settings</h2>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="planTier" className="text-warm-600 text-xs">
+                  <Label htmlFor="planTier" className="text-warm-600 dark:text-cream-400 text-xs">
                     Plan Tier
                   </Label>
                   <select
@@ -293,7 +293,7 @@ export default function StudioClientDetailPage({
                       const plan = PLAN_OPTIONS.find((p) => p.value === e.target.value)
                       if (plan) setGenerationsLimit(plan.limit)
                     }}
-                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm"
+                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100 text-sm"
                   >
                     {PLAN_OPTIONS.map((plan) => (
                       <option key={plan.value} value={plan.value}>
@@ -304,14 +304,14 @@ export default function StudioClientDetailPage({
                 </div>
 
                 <div>
-                  <Label htmlFor="status" className="text-warm-600 text-xs">
+                  <Label htmlFor="status" className="text-warm-600 dark:text-cream-400 text-xs">
                     Status
                   </Label>
                   <select
                     id="status"
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm"
+                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100 text-sm"
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s} value={s}>
@@ -322,7 +322,7 @@ export default function StudioClientDetailPage({
                 </div>
 
                 <div>
-                  <Label htmlFor="limit" className="text-warm-600 text-xs">
+                  <Label htmlFor="limit" className="text-warm-600 dark:text-cream-400 text-xs">
                     {planTier === 'TRIAL' ? 'Total' : 'Monthly'} Generation Limit
                   </Label>
                   <input
@@ -330,17 +330,17 @@ export default function StudioClientDetailPage({
                     type="number"
                     value={generationsLimit}
                     onChange={(e) => setGenerationsLimit(parseInt(e.target.value) || 0)}
-                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm"
+                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100 text-sm"
                   />
                 </div>
 
-                <div className="sm:col-span-2 pt-3 border-t border-warm-100 mt-2">
+                <div className="sm:col-span-2 pt-3 border-t border-warm-100 dark:border-charcoal-700 mt-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Gift className="w-4 h-4 text-purple-500" />
                       <div>
-                        <p className="text-sm font-medium text-warm-900">Complementary Access</p>
-                        <p className="text-xs text-warm-500">Grant free Pro tier access (bypasses Stripe billing)</p>
+                        <p className="text-sm font-medium text-warm-900 dark:text-cream-100">Complementary Access</p>
+                        <p className="text-xs text-warm-500 dark:text-cream-400">Grant free Pro tier access (bypasses Stripe billing)</p>
                       </div>
                     </div>
                     <button
@@ -374,14 +374,14 @@ export default function StudioClientDetailPage({
             </div>
 
             {/* Recent Content */}
-            <div className="bg-white rounded-sm border border-warm-200 p-5">
-              <h2 className="text-sm font-medium text-warm-900 mb-4">Recent Content</h2>
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Recent Content</h2>
               {client.recentContent.length > 0 ? (
                 <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                   {client.recentContent.map((content) => (
                     <div
                       key={content.id}
-                      className="aspect-square rounded-sm bg-warm-100 overflow-hidden"
+                      className="aspect-square rounded-sm bg-warm-100 dark:bg-charcoal-800 overflow-hidden"
                     >
                       {content.generatedImageUrl ? (
                         <img
@@ -391,14 +391,14 @@ export default function StudioClientDetailPage({
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon className="w-6 h-6 text-warm-300" />
+                          <ImageIcon className="w-6 h-6 text-warm-300 dark:text-charcoal-600" />
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-warm-500">No content generated yet</p>
+                <p className="text-sm text-warm-500 dark:text-cream-400">No content generated yet</p>
               )}
             </div>
           </div>
@@ -406,9 +406,9 @@ export default function StudioClientDetailPage({
           {/* Right Column - Usage Stats */}
           <div className="space-y-6">
             {/* Usage Card */}
-            <div className="bg-white rounded-sm border border-warm-200 p-5">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-medium text-warm-900">{client.planTier === 'TRIAL' ? 'Usage (Lifetime)' : 'Usage This Month'}</h2>
+                <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">{client.planTier === 'TRIAL' ? 'Usage (Lifetime)' : 'Usage This Month'}</h2>
                 <Badge
                   className={cn(
                     'text-xs rounded-sm',
@@ -426,12 +426,12 @@ export default function StudioClientDetailPage({
               <div className="space-y-3">
                 <div>
                   <div className="flex justify-between text-sm mb-1">
-                    <span className="text-warm-600">Generations</span>
-                    <span className="font-medium text-warm-900">
+                    <span className="text-warm-600 dark:text-cream-400">Generations</span>
+                    <span className="font-medium text-warm-900 dark:text-cream-100">
                       {client.generationsUsed} / {client.generationsLimit}
                     </span>
                   </div>
-                  <div className="h-3 bg-warm-100 rounded-full overflow-hidden">
+                  <div className="h-3 bg-warm-100 dark:bg-charcoal-800 rounded-full overflow-hidden">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',
@@ -446,10 +446,10 @@ export default function StudioClientDetailPage({
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-warm-100">
+                <div className="pt-2 border-t border-warm-100 dark:border-charcoal-700">
                   <div className="flex justify-between text-sm">
-                    <span className="text-warm-500">Remaining</span>
-                    <span className="text-warm-900">
+                    <span className="text-warm-500 dark:text-cream-400">Remaining</span>
+                    <span className="text-warm-900 dark:text-cream-100">
                       {Math.max(0, client.generationsLimit - client.generationsUsed)} generations
                     </span>
                   </div>
@@ -459,8 +459,8 @@ export default function StudioClientDetailPage({
 
             {/* Usage History Mini Chart */}
             {client.usageHistory.length > 0 && (
-              <div className="bg-white rounded-sm border border-warm-200 p-5">
-                <h2 className="text-sm font-medium text-warm-900 mb-4">Recent Activity</h2>
+              <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+                <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Recent Activity</h2>
                 <div className="flex items-end gap-1 h-20">
                   {client.usageHistory.slice(-14).map((day, i) => {
                     const max = Math.max(...client.usageHistory.map((d) => d.count))
@@ -475,13 +475,13 @@ export default function StudioClientDetailPage({
                     )
                   })}
                 </div>
-                <p className="text-xs text-warm-500 mt-2 text-center">Last 14 days</p>
+                <p className="text-xs text-warm-500 dark:text-cream-400 mt-2 text-center">Last 14 days</p>
               </div>
             )}
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-sm border border-warm-200 p-5">
-              <h2 className="text-sm font-medium text-warm-900 mb-4">Quick Actions</h2>
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Quick Actions</h2>
               <div className="space-y-2">
                 <Button variant="outline" size="sm" className="w-full rounded-sm justify-start">
                   <Mail className="w-4 h-4 mr-2" />

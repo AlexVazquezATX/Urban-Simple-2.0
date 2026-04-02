@@ -90,7 +90,7 @@ export function GalleryPickerDialog({
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-warm-400 dark:text-cream-400" />
           </div>
         ) : items.length > 0 ? (
           <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto scrollbar-elegant py-2">
@@ -128,9 +128,9 @@ export function GalleryPickerDialog({
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <ImageIcon className="w-10 h-10 text-warm-300 mb-3" />
-            <p className="text-sm text-warm-600">No saved content yet</p>
-            <p className="text-xs text-warm-500 mt-1">
+            <ImageIcon className="w-10 h-10 text-warm-300 dark:text-charcoal-600 mb-3" />
+            <p className="text-sm text-warm-600 dark:text-cream-400">No saved content yet</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
               Generate and save some content first
             </p>
           </div>

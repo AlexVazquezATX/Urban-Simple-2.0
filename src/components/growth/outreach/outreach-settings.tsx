@@ -113,22 +113,22 @@ export function OutreachSettings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-warm-400 dark:text-cream-500" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-3">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-sm bg-ocean-100 flex items-center justify-center">
               <Mail className="h-4 w-4 text-ocean-600" />
             </div>
             <div>
-              <CardTitle className="text-base font-display font-medium text-warm-900">Email Signature</CardTitle>
-              <CardDescription className="text-xs text-warm-500">
+              <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Email Signature</CardTitle>
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
                 This signature will be automatically appended to all outreach emails you send
               </CardDescription>
             </div>
@@ -137,13 +137,13 @@ export function OutreachSettings() {
         <CardContent className="p-4 pt-0 space-y-6">
           {/* Logo Upload */}
           <div>
-            <Label className="text-xs font-medium text-warm-700">Signature Logo (Optional)</Label>
-            <p className="text-[10px] text-warm-400 mb-3">
+            <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Signature Logo (Optional)</Label>
+            <p className="text-[10px] text-warm-400 dark:text-cream-500 mb-3">
               Add your company logo to appear at the bottom of your signature
             </p>
             {logoUrl ? (
               <div className="flex items-center gap-4">
-                <div className="relative h-16 w-auto border border-warm-200 rounded-sm overflow-hidden bg-white p-2">
+                <div className="relative h-16 w-auto border border-warm-200 dark:border-charcoal-700 rounded-sm overflow-hidden bg-white dark:bg-charcoal-900 p-2">
                   <img
                     src={logoUrl}
                     alt="Signature logo"
@@ -182,7 +182,7 @@ export function OutreachSettings() {
                     </>
                   )}
                 </Button>
-                <span className="text-[10px] text-warm-400">
+                <span className="text-[10px] text-warm-400 dark:text-cream-500">
                   PNG, JPG, or WebP (max 2MB, recommended: 200px height)
                 </span>
               </div>
@@ -198,7 +198,7 @@ export function OutreachSettings() {
 
           {/* Signature Text */}
           <div>
-            <Label htmlFor="signature" className="text-xs font-medium text-warm-700">Signature Text</Label>
+            <Label htmlFor="signature" className="text-xs font-medium text-warm-700 dark:text-cream-300">Signature Text</Label>
             <Textarea
               id="signature"
               value={signature}
@@ -211,21 +211,21 @@ Business Development
 Urban Simple
 (512) 555-0123
 john@urbansimple.net`}
-              className="font-mono text-sm mt-1 rounded-sm border-warm-200"
+              className="font-mono text-sm mt-1 rounded-sm border-warm-200 dark:border-charcoal-700"
             />
-            <p className="text-[10px] text-warm-400 mt-1.5">
+            <p className="text-[10px] text-warm-400 dark:text-cream-500 mt-1.5">
               Plain text only. Line breaks will be preserved. A separator line (--) will be added automatically before your signature.
             </p>
           </div>
 
           {/* Preview */}
           {(signature || logoUrl) && (
-            <div className="border border-warm-200 rounded-sm p-3 bg-warm-50">
-              <p className="text-[10px] font-medium text-warm-500 uppercase tracking-wide mb-2">Preview:</p>
-              <div className="text-sm bg-white p-3 rounded-sm border border-warm-200">
-                <p className="text-warm-400 italic mb-4 text-xs">[Your email message here...]</p>
-                <p className="text-warm-400 mb-2">--</p>
-                {signature && <div className="whitespace-pre-wrap mb-3 text-warm-700 text-sm">{signature}</div>}
+            <div className="border border-warm-200 dark:border-charcoal-700 rounded-sm p-3 bg-warm-50 dark:bg-charcoal-800">
+              <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-2">Preview:</p>
+              <div className="text-sm bg-white dark:bg-charcoal-900 p-3 rounded-sm border border-warm-200 dark:border-charcoal-700">
+                <p className="text-warm-400 dark:text-cream-500 italic mb-4 text-xs">[Your email message here...]</p>
+                <p className="text-warm-400 dark:text-cream-500 mb-2">--</p>
+                {signature && <div className="whitespace-pre-wrap mb-3 text-warm-700 dark:text-cream-300 text-sm">{signature}</div>}
                 {logoUrl && (
                   <img
                     src={logoUrl}
@@ -237,7 +237,7 @@ john@urbansimple.net`}
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t border-warm-200">
+          <div className="flex justify-end pt-4 border-t border-warm-200 dark:border-charcoal-700">
             <Button onClick={handleSave} disabled={saving} variant="lime" className="rounded-sm">
               {saving ? (
                 <>

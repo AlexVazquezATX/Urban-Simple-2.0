@@ -92,7 +92,7 @@ export default async function PulseItemPage({ params }: PageProps) {
   const readTime = Math.max(1, Math.ceil(wordCount / 200))
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background dark:bg-charcoal-950">
       {/* Hero Section with Image */}
       <div className={`relative h-[50vh] min-h-[400px] bg-gradient-to-br ${gradient}`}>
         {item.imageBase64 ? (

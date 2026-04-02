@@ -169,20 +169,20 @@ export function GoalForm({
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md mx-4">
+      <div className="relative bg-white dark:bg-charcoal-900 rounded-2xl shadow-xl w-full max-w-md mx-4">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-charcoal-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-charcoal-100 dark:border-charcoal-700">
           <div className="flex items-center gap-2">
             <Target className="w-5 h-5 text-ocean-600" />
-            <h2 className="text-lg font-semibold text-charcoal-900">
+            <h2 className="text-lg font-semibold text-charcoal-900 dark:text-cream-100">
               {goal ? 'Edit Goal' : 'New Goal'}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-charcoal-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-charcoal-100 dark:hover:bg-charcoal-800 transition-colors"
           >
-            <X className="w-5 h-5 text-charcoal-500" />
+            <X className="w-5 h-5 text-charcoal-500 dark:text-cream-400" />
           </button>
         </div>
 
@@ -200,7 +200,7 @@ export function GoalForm({
                     'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                     period === 'weekly'
                       ? 'bg-ocean-100 text-ocean-700 border-2 border-ocean-500'
-                      : 'bg-charcoal-50 text-charcoal-600 border-2 border-transparent hover:bg-charcoal-100'
+                      : 'bg-charcoal-50 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-300 border-2 border-transparent hover:bg-charcoal-100 dark:hover:bg-charcoal-700'
                   )}
                 >
                   Weekly Goal
@@ -212,13 +212,13 @@ export function GoalForm({
                     'flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
                     period === 'monthly'
                       ? 'bg-ocean-100 text-ocean-700 border-2 border-ocean-500'
-                      : 'bg-charcoal-50 text-charcoal-600 border-2 border-transparent hover:bg-charcoal-100'
+                      : 'bg-charcoal-50 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-300 border-2 border-transparent hover:bg-charcoal-100 dark:hover:bg-charcoal-700'
                   )}
                 >
                   Monthly Goal
                 </button>
               </div>
-              <p className="text-xs text-charcoal-500">
+              <p className="text-xs text-charcoal-500 dark:text-cream-400">
                 {period === 'weekly'
                   ? `Week of ${formatDateRange(weekStart, weekEnd, true)}`
                   : formatDateRange(monthStart, monthEnd, false)}
@@ -293,7 +293,7 @@ export function GoalForm({
                   onClick={() => setColor(c)}
                   className={cn(
                     'w-7 h-7 rounded-full transition-all',
-                    color === c ? 'ring-2 ring-offset-2 ring-charcoal-400 scale-110' : 'hover:scale-105'
+                    color === c ? 'ring-2 ring-offset-2 ring-charcoal-400 dark:ring-offset-charcoal-900 scale-110' : 'hover:scale-105'
                   )}
                   style={{ backgroundColor: c }}
                 />
@@ -302,21 +302,21 @@ export function GoalForm({
           </div>
 
           {/* Preview */}
-          <div className="p-3 bg-charcoal-50 rounded-lg">
-            <p className="text-xs text-charcoal-500 mb-2">Preview</p>
+          <div className="p-3 bg-charcoal-50 dark:bg-charcoal-800 rounded-lg">
+            <p className="text-xs text-charcoal-500 dark:text-cream-400 mb-2">Preview</p>
             <div className="flex items-center gap-3">
               <span
                 className="w-4 h-4 rounded-full shrink-0"
                 style={{ backgroundColor: color }}
               />
-              <span className="font-medium text-charcoal-900">
+              <span className="font-medium text-charcoal-900 dark:text-cream-100">
                 {title || 'Goal Title'}
               </span>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-charcoal-100">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-charcoal-100 dark:border-charcoal-700">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>

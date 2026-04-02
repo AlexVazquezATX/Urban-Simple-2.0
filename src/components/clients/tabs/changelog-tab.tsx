@@ -167,10 +167,10 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
 
   if (error) {
     return (
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
-          <p className="text-sm text-warm-600 mb-4">{error}</p>
+          <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">{error}</p>
           <Button variant="outline" size="sm" onClick={() => fetchChangelog()} className="rounded-sm">
             Retry
           </Button>
@@ -181,11 +181,11 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
 
   if (entries.length === 0) {
     return (
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <History className="h-12 w-12 text-warm-300 mb-3" />
-          <p className="text-sm font-medium text-warm-700">No changes recorded yet</p>
-          <p className="text-xs text-warm-500 mt-1">
+          <History className="h-12 w-12 text-warm-300 dark:text-charcoal-600 mb-3" />
+          <p className="text-sm font-medium text-warm-700 dark:text-cream-300">No changes recorded yet</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
             Changes to facilities, overrides, and seasonal rules will appear here.
           </p>
         </CardContent>
@@ -197,25 +197,25 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
   const grouped = groupByDate(entries)
 
   return (
-    <Card className="border-warm-200">
+    <Card className="border-warm-200 dark:border-charcoal-700">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-display font-medium text-warm-900">
+          <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
             Change Log
           </CardTitle>
-          <span className="text-xs text-warm-500">
+          <span className="text-xs text-warm-500 dark:text-cream-400">
             {entries.length} changes{hasMore ? '+' : ''}
           </span>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-warm-100">
+        <div className="divide-y divide-warm-100 dark:divide-charcoal-700">
           {grouped.map(({ dateLabel, items }) => (
             <div key={dateLabel}>
-              <div className="px-4 py-2 bg-warm-50/50 sticky top-0">
-                <p className="text-xs font-medium text-warm-500">{dateLabel}</p>
+              <div className="px-4 py-2 bg-warm-50/50 dark:bg-charcoal-800/50 sticky top-0">
+                <p className="text-xs font-medium text-warm-500 dark:text-cream-400">{dateLabel}</p>
               </div>
-              <div className="divide-y divide-warm-100">
+              <div className="divide-y divide-warm-100 dark:divide-charcoal-700">
                 {items.map(entry => (
                   <ChangelogEntry key={entry.id} entry={entry} />
                 ))}
@@ -225,13 +225,13 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
         </div>
 
         {hasMore && (
-          <div className="p-4 text-center border-t border-warm-100">
+          <div className="p-4 text-center border-t border-warm-100 dark:border-charcoal-700">
             <Button
               variant="outline"
               size="sm"
               onClick={() => fetchChangelog(nextCursor!)}
               disabled={loadingMore}
-              className="rounded-sm border-warm-200 text-warm-700"
+              className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
             >
               {loadingMore ? (
                 'Loading...'
@@ -276,10 +276,10 @@ function ChangelogEntry({ entry }: { entry: AuditLogEntry }) {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-warm-800">
+            <span className="text-sm text-warm-800 dark:text-cream-200">
               <span className="font-medium">{entry.user.firstName} {entry.user.lastName}</span>
               {' '}{config.label.toLowerCase()}{' '}
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-warm-200 text-warm-600">
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-warm-200 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">
                 {entityLabel}
               </Badge>
             </span>
@@ -287,7 +287,7 @@ function ChangelogEntry({ entry }: { entry: AuditLogEntry }) {
               <ChevronDown className={`h-3 w-3 text-warm-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
             )}
           </div>
-          <p className="text-xs text-warm-500 mt-0.5">{time}</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{time}</p>
         </div>
       </div>
 
@@ -296,7 +296,7 @@ function ChangelogEntry({ entry }: { entry: AuditLogEntry }) {
         <div className="mt-2 ml-9 space-y-1.5">
           {Object.keys(entry.newValues).map(field => (
             <div key={field} className="flex items-start gap-2 text-xs">
-              <span className="text-warm-500 min-w-[120px] flex-shrink-0">
+              <span className="text-warm-500 dark:text-cream-400 min-w-[120px] flex-shrink-0">
                 {FIELD_LABELS[field] || field}
               </span>
               <span className="text-red-500 line-through">
@@ -316,7 +316,7 @@ function ChangelogEntry({ entry }: { entry: AuditLogEntry }) {
         <div className="mt-2 ml-9 space-y-1.5">
           {Object.keys(entry.newValues).map(field => (
             <div key={field} className="flex items-start gap-2 text-xs">
-              <span className="text-warm-500 min-w-[120px] flex-shrink-0">
+              <span className="text-warm-500 dark:text-cream-400 min-w-[120px] flex-shrink-0">
                 {FIELD_LABELS[field] || field}
               </span>
               <span className="text-lime-700 font-medium">
@@ -369,7 +369,7 @@ function formatDateLabel(iso: string): string {
 
 function ChangelogSkeleton() {
   return (
-    <Card className="border-warm-200">
+    <Card className="border-warm-200 dark:border-charcoal-700">
       <CardHeader className="pb-3">
         <Skeleton className="h-4 w-32" />
       </CardHeader>

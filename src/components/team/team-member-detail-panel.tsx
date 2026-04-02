@@ -243,12 +243,12 @@ export function TeamMemberDetailPanel({
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full max-w-md bg-white shadow-xl border-l border-warm-200 flex flex-col transition-transform duration-200 ease-out',
+          'relative w-full max-w-md bg-white dark:bg-charcoal-900 shadow-xl border-l border-warm-200 dark:border-charcoal-700 flex flex-col transition-transform duration-200 ease-out',
           isVisible ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 bg-warm-50">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
               <AvatarFallback className="bg-bronze-100 text-bronze-700 text-sm font-semibold">
@@ -256,11 +256,11 @@ export function TeamMemberDetailPanel({
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="font-display text-lg font-medium text-warm-900">
+              <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100">
                 {member && !isNew ? 'Team Member Details' : 'New Team Member'}
               </h2>
               {member && !isNew && (
-                <p className="text-sm text-warm-500">
+                <p className="text-sm text-warm-500 dark:text-cream-400">
                   {displayName || `${firstName} ${lastName}`}
                 </p>
               )}
@@ -268,9 +268,9 @@ export function TeamMemberDetailPanel({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-sm hover:bg-warm-200 transition-colors"
+            className="p-2 rounded-sm hover:bg-warm-200 dark:hover:bg-charcoal-700 transition-colors"
           >
-            <X className="w-5 h-5 text-warm-500" />
+            <X className="w-5 h-5 text-warm-500 dark:text-cream-400" />
           </button>
         </div>
 
@@ -330,7 +330,7 @@ export function TeamMemberDetailPanel({
               placeholder="Optional nickname or preferred name"
               className="rounded-sm"
             />
-            <p className="text-xs text-warm-500">Optional. Defaults to first and last name.</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">Optional. Defaults to first and last name.</p>
           </div>
 
           {/* Email */}
@@ -411,17 +411,17 @@ export function TeamMemberDetailPanel({
 
           {/* Active Status (for existing members) */}
           {member && !isNew && (
-            <div className="flex items-center space-x-3 p-3 border border-warm-200 rounded-sm bg-warm-50/50">
+            <div className="flex items-center space-x-3 p-3 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50">
               <Checkbox
                 id="isActive"
                 checked={isActive}
                 onCheckedChange={(checked) => setIsActive(checked === true)}
               />
               <div className="space-y-0.5">
-                <Label htmlFor="isActive" className="font-medium text-warm-900">
+                <Label htmlFor="isActive" className="font-medium text-warm-900 dark:text-cream-100">
                   Active Member
                 </Label>
-                <p className="text-xs text-warm-500">
+                <p className="text-xs text-warm-500 dark:text-cream-400">
                   Inactive members cannot log in or access the platform
                 </p>
               </div>
@@ -430,7 +430,7 @@ export function TeamMemberDetailPanel({
 
           {/* Auth Account Section (for new members or setting password) */}
           {(!member || isNew) && (
-            <div className="space-y-4 p-4 border border-warm-200 rounded-sm bg-warm-50/50">
+            <div className="space-y-4 p-4 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50">
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="createAuthAccount"
@@ -438,10 +438,10 @@ export function TeamMemberDetailPanel({
                   onCheckedChange={(checked) => setCreateAuthAccount(checked === true)}
                 />
                 <div className="space-y-0.5">
-                  <Label htmlFor="createAuthAccount" className="font-medium text-warm-900">
+                  <Label htmlFor="createAuthAccount" className="font-medium text-warm-900 dark:text-cream-100">
                     Create Login Account
                   </Label>
-                  <p className="text-xs text-warm-500">
+                  <p className="text-xs text-warm-500 dark:text-cream-400">
                     Allow this user to log in to the platform
                   </p>
                 </div>
@@ -468,8 +468,8 @@ export function TeamMemberDetailPanel({
 
           {/* Member Info (read-only for existing) */}
           {member && !isNew && member.createdAt && (
-            <div className="pt-4 border-t border-warm-200">
-              <p className="text-xs text-warm-500">
+            <div className="pt-4 border-t border-warm-200 dark:border-charcoal-700">
+              <p className="text-xs text-warm-500 dark:text-cream-400">
                 Member since {new Date(member.createdAt).toLocaleDateString()}
               </p>
             </div>
@@ -477,7 +477,7 @@ export function TeamMemberDetailPanel({
         </form>
 
         {/* Footer Actions - Fixed */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 bg-white">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
           {member && !isNew && onDelete ? (
             <Button
               type="button"

@@ -106,7 +106,7 @@ export function StudioNav() {
   const tierColor = TIER_COLORS[usage?.planTier || 'TRIAL'] || TIER_COLORS.TRIAL
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-warm-200">
+    <nav className="sticky top-0 z-50 bg-white dark:bg-charcoal-900 border-b border-warm-200 dark:border-charcoal-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
@@ -133,8 +133,8 @@ export function StudioNav() {
                   className={cn(
                     'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                     isActive
-                      ? 'bg-warm-100 text-warm-900'
-                      : 'text-warm-500 hover:text-warm-900 hover:bg-warm-50'
+                      ? 'bg-warm-100 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                      : 'text-warm-500 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100 hover:bg-warm-50 dark:hover:bg-charcoal-800'
                   )}
                 >
                   <Icon className="w-4 h-4" />
@@ -162,7 +162,7 @@ export function StudioNav() {
             <div className="relative" ref={accountMenuRef}>
               <button
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
-                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-warm-600 hover:text-warm-900 hover:bg-warm-50 transition-colors"
+                className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-warm-600 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100 hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors"
               >
                 <div className="w-7 h-7 rounded-full bg-ocean-100 flex items-center justify-center">
                   <span className="text-xs font-medium text-ocean-700">
@@ -176,25 +176,25 @@ export function StudioNav() {
               </button>
 
               {accountMenuOpen && (
-                <div className="absolute right-0 top-full mt-1 w-56 bg-white rounded-lg shadow-lg border border-warm-200 py-1 z-50">
+                <div className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-charcoal-900 rounded-lg shadow-lg border border-warm-200 dark:border-charcoal-700 py-1 z-50">
                   {user && (
-                    <div className="px-3 py-2 border-b border-warm-100">
-                      <p className="text-sm font-medium text-warm-900 truncate">
+                    <div className="px-3 py-2 border-b border-warm-100 dark:border-charcoal-700">
+                      <p className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">
                         {user.firstName} {user.lastName}
                       </p>
-                      <p className="text-xs text-warm-500 truncate">{user.email}</p>
+                      <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{user.email}</p>
                     </div>
                   )}
                   <Link
                     href="/studio/account"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-warm-700 hover:bg-warm-50"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-warm-700 dark:text-cream-300 hover:bg-warm-50 dark:hover:bg-charcoal-800"
                   >
                     <User className="w-4 h-4" />
                     Account
                   </Link>
                   <Link
                     href="/studio/account"
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-warm-700 hover:bg-warm-50"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-warm-700 dark:text-cream-300 hover:bg-warm-50 dark:hover:bg-charcoal-800"
                   >
                     <CreditCard className="w-4 h-4" />
                     Billing
@@ -206,7 +206,7 @@ export function StudioNav() {
                     <MessageSquare className="w-4 h-4" />
                     Feedback
                   </button>
-                  <div className="border-t border-warm-100 mt-1 pt-1">
+                  <div className="border-t border-warm-100 dark:border-charcoal-700 mt-1 pt-1">
                     <button
                       onClick={handleSignOut}
                       className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left"
@@ -232,7 +232,7 @@ export function StudioNav() {
             </Link>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-warm-600 hover:text-warm-900"
+              className="p-2 text-warm-600 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -242,7 +242,7 @@ export function StudioNav() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-white border-t border-warm-200">
+        <div className="md:hidden bg-white dark:bg-charcoal-900 border-t border-warm-200 dark:border-charcoal-700">
           <div className="px-4 py-3 space-y-1">
             {NAV_LINKS.map(({ href, label, icon: Icon, exact }) => {
               const isActive = exact ? pathname === href : pathname === href || pathname?.startsWith(href + '/')
@@ -253,8 +253,8 @@ export function StudioNav() {
                   className={cn(
                     'flex items-center gap-2 px-3 py-2.5 rounded-md text-sm font-medium',
                     isActive
-                      ? 'bg-warm-100 text-warm-900'
-                      : 'text-warm-600 hover:bg-warm-50'
+                      ? 'bg-warm-100 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                      : 'text-warm-600 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800'
                   )}
                 >
                   <Icon className="w-4 h-4" />
@@ -263,17 +263,17 @@ export function StudioNav() {
               )
             })}
 
-            <div className="border-t border-warm-100 pt-2 mt-2 space-y-1">
+            <div className="border-t border-warm-100 dark:border-charcoal-700 pt-2 mt-2 space-y-1">
               <Link
                 href="/studio/account"
-                className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-warm-600 hover:bg-warm-50"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-warm-600 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
               >
                 <User className="w-4 h-4" />
                 Account & Billing
               </Link>
               <button
                 onClick={() => setFeedbackOpen(true)}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-warm-600 hover:bg-warm-50 w-full text-left"
+                className="flex items-center gap-2 px-3 py-2.5 rounded-md text-sm text-warm-600 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800 w-full text-left"
               >
                 <MessageSquare className="w-4 h-4" />
                 Feedback

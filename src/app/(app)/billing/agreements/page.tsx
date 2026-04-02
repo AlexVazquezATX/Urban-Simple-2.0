@@ -67,10 +67,10 @@ async function ServiceAgreementsList() {
 
   if (agreements.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <DollarSign className="h-12 w-12 mb-4 text-warm-400" />
-          <p className="text-warm-500 mb-4">No service agreements yet</p>
+          <DollarSign className="h-12 w-12 mb-4 text-warm-400 dark:text-cream-400" />
+          <p className="text-warm-500 dark:text-cream-400 mb-4">No service agreements yet</p>
           <ServiceAgreementForm>
             <Button variant="lime" className="rounded-sm">
               <Plus className="mr-2 h-4 w-4" />
@@ -93,8 +93,8 @@ async function ServiceAgreementsList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Service Agreements</h1>
-          <p className="text-sm text-warm-500">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Service Agreements</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400">
             Manage recurring service agreements and billing
           </p>
         </div>
@@ -107,91 +107,91 @@ async function ServiceAgreementsList() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Active Agreements</CardTitle>
-            <DollarSign className="h-4 w-4 text-warm-400" />
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Active Agreements</CardTitle>
+            <DollarSign className="h-4 w-4 text-warm-400 dark:text-cream-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">{agreements.length}</div>
-            <p className="text-xs text-warm-500">Currently active</p>
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">{agreements.length}</div>
+            <p className="text-xs text-warm-500 dark:text-cream-400">Currently active</p>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-warm-400" />
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Monthly Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-warm-400 dark:text-cream-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
               ${totalMonthly.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">Recurring monthly</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">Recurring monthly</p>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Annual Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-warm-400" />
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Annual Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-warm-400 dark:text-cream-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
               ${(totalMonthly * 12).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">Projected annual</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">Projected annual</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900">Active Agreements</CardTitle>
-          <CardDescription className="text-warm-500">
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Active Agreements</CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">
             {agreements.length} {agreements.length === 1 ? 'agreement' : 'agreements'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="border-warm-200 hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Client</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Location</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Description</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Monthly Amount</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Billing Day</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
+              <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Location</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Description</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Amount</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Billing Day</TableHead>
+                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
+                <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {agreements.map((agreement: any) => (
-                <TableRow key={agreement.id} className="border-warm-200 hover:bg-warm-50">
-                  <TableCell className="font-medium text-warm-900">
+                <TableRow key={agreement.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
+                  <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                     {agreement.location.client.name}
                   </TableCell>
-                  <TableCell className="text-warm-600">{agreement.location.name}</TableCell>
-                  <TableCell className="max-w-xs truncate text-warm-600">
+                  <TableCell className="text-warm-600 dark:text-cream-400">{agreement.location.name}</TableCell>
+                  <TableCell className="max-w-xs truncate text-warm-600 dark:text-cream-400">
                     {agreement.description}
                   </TableCell>
-                  <TableCell className="text-warm-900">
+                  <TableCell className="text-warm-900 dark:text-cream-100">
                     ${Number(agreement.monthlyAmount).toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     })}
                   </TableCell>
-                  <TableCell className="text-warm-600">Day {agreement.billingDay}</TableCell>
+                  <TableCell className="text-warm-600 dark:text-cream-400">Day {agreement.billingDay}</TableCell>
                   <TableCell>
                     <Badge
                       className={`rounded-sm text-[10px] px-1.5 py-0 ${
                         agreement.isActive
                           ? 'bg-lime-100 text-lime-700 border-lime-200'
-                          : 'bg-warm-100 text-warm-600 border-warm-200'
+                          : 'bg-warm-100 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700'
                       }`}
                     >
                       {agreement.isActive ? 'Active' : 'Inactive'}
@@ -199,7 +199,7 @@ async function ServiceAgreementsList() {
                   </TableCell>
                   <TableCell className="text-right">
                     <ServiceAgreementForm agreement={agreement}>
-                      <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+                      <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                         Edit
                       </Button>
                     </ServiceAgreementForm>

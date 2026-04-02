@@ -54,12 +54,12 @@ export function PreviewPanel({
   }
 
   return (
-    <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
+    <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden">
       {/* Preview Header */}
-      <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-warm-900">Preview</h2>
+      <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
+        <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Preview</h2>
         {aspectRatio && (
-          <span className="text-xs text-warm-500 bg-warm-100 px-2 py-0.5 rounded-sm">
+          <span className="text-xs text-warm-500 dark:text-cream-400 bg-warm-100 dark:bg-charcoal-800 px-2 py-0.5 rounded-sm">
             {aspectRatio}
           </span>
         )}
@@ -68,14 +68,14 @@ export function PreviewPanel({
       {/* Preview Area */}
       <div className="p-4">
         <div
-          className="relative w-full bg-warm-100 rounded-sm overflow-hidden"
+          className="relative w-full bg-warm-100 dark:bg-charcoal-800 rounded-sm overflow-hidden"
           style={{ paddingBottom: getAspectRatioPadding(aspectRatio) }}
         >
           {isGenerating ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <Loader2 className="w-10 h-10 text-lime-600 animate-spin mb-3" />
-              <p className="text-sm font-medium text-warm-700">Generating...</p>
-              <p className="text-xs text-warm-500 mt-1">This may take 20-30 seconds</p>
+              <p className="text-sm font-medium text-warm-700 dark:text-cream-300">Generating...</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">This may take 20-30 seconds</p>
             </div>
           ) : imageBase64 ? (
             <img
@@ -89,11 +89,11 @@ export function PreviewPanel({
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 rounded-sm bg-warm-200 flex items-center justify-center mb-3">
-                <ImageIcon className="w-7 h-7 text-warm-400" />
+              <div className="w-16 h-16 rounded-sm bg-warm-200 dark:bg-charcoal-700 flex items-center justify-center mb-3">
+                <ImageIcon className="w-7 h-7 text-warm-400 dark:text-cream-400" />
               </div>
-              <p className="text-sm text-warm-500">Your generated image will appear here</p>
-              <p className="text-xs text-warm-400 mt-1">Upload a photo and generate</p>
+              <p className="text-sm text-warm-500 dark:text-cream-400">Your generated image will appear here</p>
+              <p className="text-xs text-warm-400 dark:text-cream-400 mt-1">Upload a photo and generate</p>
             </div>
           )}
         </div>

@@ -76,7 +76,7 @@ export function BrandedPostForm({
     <div className="space-y-5">
       {/* Post Type Selection */}
       <div>
-        <Label className="text-warm-700 mb-2 block">Post Type</Label>
+        <Label className="text-warm-700 dark:text-cream-300 mb-2 block">Post Type</Label>
         <div className="grid grid-cols-2 gap-2">
           {BRANDED_POST_TYPE_LIST.map((type) => {
             const Icon = ICON_MAP[type.icon] || Megaphone
@@ -91,7 +91,7 @@ export function BrandedPostForm({
                   'p-3 rounded-sm border transition-all text-left',
                   isSelected
                     ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                    : 'border-warm-200 hover:border-warm-300 bg-white',
+                    : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                   disabled && 'opacity-50 cursor-not-allowed'
                 )}
               >
@@ -99,7 +99,7 @@ export function BrandedPostForm({
                   <div
                     className={cn(
                       'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
-                      isSelected ? 'bg-plum-100 text-plum-600' : 'bg-warm-100 text-warm-500'
+                      isSelected ? 'bg-plum-100 text-plum-600' : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -108,12 +108,12 @@ export function BrandedPostForm({
                     <h4
                       className={cn(
                         'text-sm font-medium truncate',
-                        isSelected ? 'text-plum-700' : 'text-warm-900'
+                        isSelected ? 'text-plum-700' : 'text-warm-900 dark:text-cream-100'
                       )}
                     >
                       {type.title}
                     </h4>
-                    <p className="text-xs text-warm-500 truncate">{type.description}</p>
+                    <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{type.description}</p>
                   </div>
                 </div>
               </button>
@@ -133,7 +133,7 @@ export function BrandedPostForm({
 
       {/* Headline Input */}
       <div>
-        <Label htmlFor="headline" className="text-warm-700 mb-2 block">
+        <Label htmlFor="headline" className="text-warm-700 dark:text-cream-300 mb-2 block">
           {postType === 'custom' ? 'Text to Display (optional)' : 'Headline / Text'}
         </Label>
         <Input
@@ -144,14 +144,14 @@ export function BrandedPostForm({
           disabled={disabled}
           className="rounded-sm"
         />
-        <p className="text-xs text-warm-500 mt-1">
+        <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
           {postType === 'custom' ? 'Optional — only add if you want text on the graphic' : 'The main text to display on the graphic'}
         </p>
       </div>
 
       {/* Brand Kit Info (if selected) */}
       {brandKit && (
-        <div className="p-3 rounded-sm bg-warm-50 border border-warm-200">
+        <div className="p-3 rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
@@ -162,10 +162,10 @@ export function BrandedPostForm({
                 style={{ backgroundColor: brandKit.primaryColor }}
               />
               <div>
-                <p className="text-sm font-medium text-warm-900">
+                <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
                   {brandKit.restaurantName}
                 </p>
-                <p className="text-xs text-warm-500">
+                <p className="text-xs text-warm-500 dark:text-cream-400">
                   {applyBrandColors ? 'Brand colors applied' : 'Brand colors off'}
                 </p>
               </div>
@@ -194,7 +194,7 @@ export function BrandedPostForm({
 
       {/* Aspect Ratio */}
       <div>
-        <Label className="text-warm-700 mb-2 block">Aspect Ratio</Label>
+        <Label className="text-warm-700 dark:text-cream-300 mb-2 block">Aspect Ratio</Label>
         <div className="flex flex-wrap gap-2">
           {ASPECT_RATIOS.map((ratio) => (
             <button
@@ -205,7 +205,7 @@ export function BrandedPostForm({
                 'px-3 py-2 rounded-sm border text-sm transition-all',
                 aspectRatio === ratio.value
                   ? 'border-plum-500 bg-plum-50 text-plum-700 font-medium'
-                  : 'border-warm-200 hover:border-warm-300 text-warm-700',
+                  : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 text-warm-700 dark:text-cream-300',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -217,7 +217,7 @@ export function BrandedPostForm({
 
       {/* Style Preference */}
       <div>
-        <Label className="text-warm-700 mb-2 block">Style</Label>
+        <Label className="text-warm-700 dark:text-cream-300 mb-2 block">Style</Label>
         <div className="space-y-2">
           {STYLE_PREFERENCES.map((pref) => (
             <button
@@ -228,19 +228,19 @@ export function BrandedPostForm({
                 'w-full p-3 rounded-sm border transition-all text-left',
                 style === pref.value
                   ? 'border-plum-500 bg-plum-50'
-                  : 'border-warm-200 hover:border-warm-300 bg-white',
+                  : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
               <p
                 className={cn(
                   'text-sm font-medium',
-                  style === pref.value ? 'text-plum-700' : 'text-warm-900'
+                  style === pref.value ? 'text-plum-700' : 'text-warm-900 dark:text-cream-100'
                 )}
               >
                 {pref.label}
               </p>
-              <p className="text-xs text-warm-500">{pref.description}</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400">{pref.description}</p>
             </button>
           ))}
         </div>

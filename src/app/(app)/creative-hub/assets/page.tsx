@@ -169,8 +169,8 @@ export default function BrandAssetsPage() {
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-lg font-semibold text-warm-900">Brand Assets</h1>
-            <p className="text-xs text-warm-500">
+            <h1 className="text-lg font-semibold text-warm-900 dark:text-cream-100">Brand Assets</h1>
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               Upload logos, products, crew photos, and objects to use in image generation
             </p>
           </div>
@@ -191,8 +191,8 @@ export default function BrandAssetsPage() {
           className={cn(
             'px-3 py-1.5 rounded-sm text-xs font-medium transition-colors',
             filterCategory === 'all'
-              ? 'bg-warm-900 text-white'
-              : 'bg-warm-100 text-warm-600 hover:bg-warm-200'
+              ? 'bg-warm-900 dark:bg-cream-100 text-white dark:text-charcoal-900'
+              : 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 hover:bg-warm-200 dark:hover:bg-charcoal-700'
           )}
         >
           All ({assets.length})
@@ -228,9 +228,9 @@ export default function BrandAssetsPage() {
           {filteredAssets.map((asset) => (
             <div
               key={asset.id}
-              className="group relative rounded-sm border border-warm-200 overflow-hidden bg-white"
+              className="group relative rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden bg-white dark:bg-charcoal-900"
             >
-              <div className="aspect-square bg-warm-100">
+              <div className="aspect-square bg-warm-100 dark:bg-charcoal-800">
                 <img
                   src={asset.imageUrl}
                   alt={asset.name}
@@ -249,11 +249,11 @@ export default function BrandAssetsPage() {
               </div>
 
               <div className="p-2">
-                <p className="text-xs font-medium text-warm-800 truncate">{asset.name}</p>
+                <p className="text-xs font-medium text-warm-800 dark:text-cream-200 truncate">{asset.name}</p>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-[10px] text-warm-400 capitalize">{asset.category}</span>
                   {asset.usageCount > 0 && (
-                    <span className="text-[10px] text-warm-400">
+                    <span className="text-[10px] text-warm-400 dark:text-cream-400">
                       Used {asset.usageCount}x
                     </span>
                   )}
@@ -265,10 +265,10 @@ export default function BrandAssetsPage() {
       ) : (
         <div className="text-center py-20">
           <ImageIcon className="w-12 h-12 text-warm-300 mx-auto mb-3" />
-          <p className="text-sm text-warm-500 mb-2">
+          <p className="text-sm text-warm-500 dark:text-cream-400 mb-2">
             {filterCategory !== 'all' ? 'No assets in this category' : 'No brand assets yet'}
           </p>
-          <p className="text-xs text-warm-400 mb-4">
+          <p className="text-xs text-warm-400 dark:text-cream-400 mb-4">
             Upload logos, products, and objects to use in your AI-generated images
           </p>
           <Button

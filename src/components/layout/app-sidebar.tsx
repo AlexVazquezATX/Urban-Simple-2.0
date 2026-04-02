@@ -17,6 +17,7 @@ import {
   SidebarHeader,
 } from '@/components/ui/sidebar'
 import {
+  Radar,
   LayoutDashboard,
   Users,
   FileText,
@@ -46,6 +47,7 @@ import {
   Bot,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DarkModeToggle } from '@/components/ui/dark-mode-toggle'
 
 // Storage key for sidebar state
 const SIDEBAR_STATE_KEY = 'urbansimple-sidebar-state'
@@ -193,18 +195,18 @@ export function AppSidebar() {
   }
 
   return (
-    <Sidebar className="border-r border-warm-200 bg-warm-100">
-      <SidebarHeader className="border-b border-warm-200 p-5">
+    <Sidebar className="border-r border-warm-200 dark:border-charcoal-700 bg-warm-100 dark:bg-charcoal-900">
+      <SidebarHeader className="border-b border-warm-200 dark:border-charcoal-700 p-5">
         <div className="flex flex-col gap-0.5">
           <div className="flex items-baseline gap-1.5">
-            <span className="font-semibold text-xl tracking-tight text-warm-900">
+            <span className="font-semibold text-xl tracking-tight text-warm-900 dark:text-cream-100">
               Urban
             </span>
             <span className="font-display italic font-normal text-xl text-lime-600">
               Simple
             </span>
           </div>
-          <p className="text-[10px] text-warm-500 tracking-widest uppercase font-medium">
+          <p className="text-[10px] text-warm-500 dark:text-cream-400 tracking-widest uppercase font-medium">
             Business Management
           </p>
         </div>
@@ -215,7 +217,7 @@ export function AppSidebar() {
         {adminItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup>
           <SidebarGroupLabel
-            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 dark:text-cream-400 px-3 mb-1.5 cursor-pointer hover:text-warm-700 dark:hover:text-cream-200 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('admin')}
           >
             <span>Admin Tools</span>
@@ -239,8 +241,8 @@ export function AppSidebar() {
                         className={cn(
                           'h-10 px-3 rounded-sm transition-all duration-150 group',
                           active
-                            ? 'bg-warm-200 text-warm-900'
-                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                            ? 'bg-warm-200 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                            : 'text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
@@ -248,8 +250,8 @@ export function AppSidebar() {
                             className={cn(
                               'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-lime-600'
-                                : 'text-warm-500 group-hover:text-warm-700'
+                                ? 'text-lime-600 dark:text-lime-400'
+                                : 'text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300'
                             )}
                           />
                           <span className="font-medium text-[13px]">{item.label}</span>
@@ -268,7 +270,7 @@ export function AppSidebar() {
         {growthItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup className="mt-2">
           <SidebarGroupLabel
-            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 dark:text-cream-400 px-3 mb-1.5 cursor-pointer hover:text-warm-700 dark:hover:text-cream-200 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('growth')}
           >
             <span>Growth</span>
@@ -292,8 +294,8 @@ export function AppSidebar() {
                         className={cn(
                           'h-10 px-3 rounded-sm transition-all duration-150 group',
                           active
-                            ? 'bg-warm-200 text-warm-900'
-                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                            ? 'bg-warm-200 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                            : 'text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
@@ -301,8 +303,8 @@ export function AppSidebar() {
                             className={cn(
                               'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-lime-600'
-                                : 'text-warm-500 group-hover:text-warm-700'
+                                ? 'text-lime-600 dark:text-lime-400'
+                                : 'text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300'
                             )}
                           />
                           <span className="font-medium text-[13px]">{item.label}</span>
@@ -321,7 +323,7 @@ export function AppSidebar() {
         {operationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup className="mt-2">
           <SidebarGroupLabel
-            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 dark:text-cream-400 px-3 mb-1.5 cursor-pointer hover:text-warm-700 dark:hover:text-cream-200 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('operations')}
           >
             <span>Operations</span>
@@ -345,8 +347,8 @@ export function AppSidebar() {
                         className={cn(
                           'h-10 px-3 rounded-sm transition-all duration-150 group',
                           active
-                            ? 'bg-warm-200 text-warm-900'
-                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                            ? 'bg-warm-200 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                            : 'text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
@@ -354,8 +356,8 @@ export function AppSidebar() {
                             className={cn(
                               'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-lime-600'
-                                : 'text-warm-500 group-hover:text-warm-700'
+                                ? 'text-lime-600 dark:text-lime-400'
+                                : 'text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300'
                             )}
                           />
                           <span className="font-medium text-[13px]">{item.label}</span>
@@ -374,7 +376,7 @@ export function AppSidebar() {
         {clientRelationsItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup className="mt-2">
           <SidebarGroupLabel
-            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 dark:text-cream-400 px-3 mb-1.5 cursor-pointer hover:text-warm-700 dark:hover:text-cream-200 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('clientRelations')}
           >
             <span>Client Relations</span>
@@ -398,8 +400,8 @@ export function AppSidebar() {
                         className={cn(
                           'h-10 px-3 rounded-sm transition-all duration-150 group',
                           active
-                            ? 'bg-warm-200 text-warm-900'
-                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                            ? 'bg-warm-200 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                            : 'text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
@@ -407,8 +409,8 @@ export function AppSidebar() {
                             className={cn(
                               'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-lime-600'
-                                : 'text-warm-500 group-hover:text-warm-700'
+                                ? 'text-lime-600 dark:text-lime-400'
+                                : 'text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300'
                             )}
                           />
                           <span className="font-medium text-[13px]">{item.label}</span>
@@ -427,7 +429,7 @@ export function AppSidebar() {
         {administrativeItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup className="mt-2">
           <SidebarGroupLabel
-            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 dark:text-cream-400 px-3 mb-1.5 cursor-pointer hover:text-warm-700 dark:hover:text-cream-200 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('administrative')}
           >
             <span>Administrative</span>
@@ -451,8 +453,8 @@ export function AppSidebar() {
                         className={cn(
                           'h-10 px-3 rounded-sm transition-all duration-150 group',
                           active
-                            ? 'bg-warm-200 text-warm-900'
-                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                            ? 'bg-warm-200 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                            : 'text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
@@ -460,8 +462,8 @@ export function AppSidebar() {
                             className={cn(
                               'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-lime-600'
-                                : 'text-warm-500 group-hover:text-warm-700'
+                                ? 'text-lime-600 dark:text-lime-400'
+                                : 'text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300'
                             )}
                           />
                           <span className="font-medium text-[13px]">{item.label}</span>
@@ -480,7 +482,7 @@ export function AppSidebar() {
         {backhausAdminItems.filter((item) => hasAccess(item.roles)).length > 0 && (
         <SidebarGroup className="mt-2">
           <SidebarGroupLabel
-            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 px-3 mb-1.5 cursor-pointer hover:text-warm-700 transition-colors flex items-center justify-between"
+            className="text-[11px] font-semibold uppercase tracking-widest text-warm-500 dark:text-cream-400 px-3 mb-1.5 cursor-pointer hover:text-warm-700 dark:hover:text-cream-200 transition-colors flex items-center justify-between"
             onClick={() => toggleSection('backhausAdmin')}
           >
             <span>Backhaus Admin</span>
@@ -504,8 +506,8 @@ export function AppSidebar() {
                         className={cn(
                           'h-10 px-3 rounded-sm transition-all duration-150 group',
                           active
-                            ? 'bg-warm-200 text-warm-900'
-                            : 'text-warm-600 hover:bg-warm-200/60 hover:text-warm-800'
+                            ? 'bg-warm-200 dark:bg-charcoal-800 text-warm-900 dark:text-cream-100'
+                            : 'text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200'
                         )}
                       >
                         <Link href={item.href} className="flex items-center gap-3">
@@ -513,8 +515,8 @@ export function AppSidebar() {
                             className={cn(
                               'h-4.5 w-4.5 transition-colors duration-150',
                               active
-                                ? 'text-lime-600'
-                                : 'text-warm-500 group-hover:text-warm-700'
+                                ? 'text-lime-600 dark:text-lime-400'
+                                : 'text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300'
                             )}
                           />
                           <span className="font-medium text-[13px]">{item.label}</span>
@@ -530,14 +532,17 @@ export function AppSidebar() {
         )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-warm-200 p-3">
+      <SidebarFooter className="border-t border-warm-200 dark:border-charcoal-700 p-3">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <DarkModeToggle />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
               onClick={handleLogout}
-              className="h-10 px-3 rounded-sm text-warm-600 hover:bg-warm-200/60 hover:text-warm-800 transition-all duration-150 group"
+              className="h-10 px-3 rounded-sm text-warm-600 dark:text-cream-400 hover:bg-warm-200/60 dark:hover:bg-charcoal-800 hover:text-warm-800 dark:hover:text-cream-200 transition-all duration-150 group"
             >
-              <LogOut className="h-4.5 w-4.5 text-warm-500 group-hover:text-warm-700 transition-colors" />
+              <LogOut className="h-4.5 w-4.5 text-warm-500 dark:text-cream-500 group-hover:text-warm-700 dark:group-hover:text-cream-300 transition-colors" />
               <span className="font-medium text-[13px]">Sign out</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

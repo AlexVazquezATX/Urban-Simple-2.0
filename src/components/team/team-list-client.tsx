@@ -121,10 +121,10 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
             Team Members
           </h1>
-          <p className="text-sm text-warm-500">
+          <p className="text-sm text-warm-500 dark:text-cream-400">
             Manage your team members and their access
           </p>
         </div>
@@ -136,45 +136,45 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Total Members</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Total Members</CardTitle>
             <Users className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">{users.length}</div>
-            <p className="text-xs text-warm-500">{activeUsers.length} active</p>
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">{users.length}</div>
+            <p className="text-xs text-warm-500 dark:text-cream-400">{activeUsers.length} active</p>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Admins</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Admins</CardTitle>
             <Shield className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
               {users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN').length}
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Managers</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Managers</CardTitle>
             <UserCheck className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
               {users.filter((u) => u.role === 'MANAGER').length}
             </div>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Associates</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Associates</CardTitle>
             <User className="h-4 w-4 text-warm-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
               {users.filter((u) => u.role === 'ASSOCIATE').length}
             </div>
           </CardContent>
@@ -182,16 +182,16 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
       </div>
 
       {/* Active Members */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900">Active Members</CardTitle>
-          <CardDescription className="text-warm-500">
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Active Members</CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">
             {activeUsers.length} active team member{activeUsers.length !== 1 ? 's' : ''}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {activeUsers.length === 0 ? (
-            <div className="text-center py-8 text-warm-500">
+            <div className="text-center py-8 text-warm-500 dark:text-cream-400">
               <Users className="h-12 w-12 mx-auto mb-4 text-warm-400" />
               <p>No active team members yet</p>
               <Button
@@ -206,23 +206,23 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Member
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Email
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Phone
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Role
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Branch
                   </TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -233,7 +233,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                   return (
                     <TableRow
                       key={member.id}
-                      className="border-warm-200 hover:bg-warm-50 cursor-pointer"
+                      className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer"
                       onClick={() => handleSelectMember(member)}
                     >
                       <TableCell>
@@ -244,11 +244,11 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium text-warm-900">
+                            <div className="font-medium text-warm-900 dark:text-cream-100">
                               {member.displayName || `${member.firstName} ${member.lastName}`}
                             </div>
                             {member.displayName && (
-                              <div className="text-xs text-warm-500">
+                              <div className="text-xs text-warm-500 dark:text-cream-400">
                                 {member.firstName} {member.lastName}
                               </div>
                             )}
@@ -256,14 +256,14 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-warm-600">
+                        <div className="flex items-center gap-2 text-warm-600 dark:text-cream-300">
                           <Mail className="h-3 w-3 text-warm-400" />
                           <span className="text-sm">{member.email}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         {member.phone ? (
-                          <div className="flex items-center gap-2 text-warm-600">
+                          <div className="flex items-center gap-2 text-warm-600 dark:text-cream-300">
                             <Phone className="h-3 w-3 text-warm-400" />
                             <span className="text-sm">{member.phone}</span>
                           </div>
@@ -280,7 +280,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                       </TableCell>
                       <TableCell>
                         {member.branch ? (
-                          <div className="flex items-center gap-2 text-warm-600">
+                          <div className="flex items-center gap-2 text-warm-600 dark:text-cream-300">
                             <Building2 className="h-3 w-3 text-warm-400" />
                             <span className="text-sm">{member.branch.name}</span>
                           </div>
@@ -312,29 +312,29 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
 
       {/* Inactive Members */}
       {inactiveUsers.length > 0 && (
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900">
+            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
               Inactive Members
             </CardTitle>
-            <CardDescription className="text-warm-500">
+            <CardDescription className="text-warm-500 dark:text-cream-400">
               {inactiveUsers.length} inactive team member{inactiveUsers.length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Member
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Email
                   </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Role
                   </TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">
+                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
                     Actions
                   </TableHead>
                 </TableRow>
@@ -345,7 +345,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                   return (
                     <TableRow
                       key={member.id}
-                      className="border-warm-200 opacity-60 hover:bg-warm-50 cursor-pointer"
+                      className="border-warm-200 dark:border-charcoal-700 opacity-60 hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer"
                       onClick={() => handleSelectMember(member)}
                     >
                       <TableCell>
@@ -356,14 +356,14 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium text-warm-700">
+                            <div className="font-medium text-warm-700 dark:text-cream-300">
                               {member.displayName || `${member.firstName} ${member.lastName}`}
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-warm-600">{member.email}</span>
+                        <span className="text-sm text-warm-600 dark:text-cream-300">{member.email}</span>
                       </TableCell>
                       <TableCell>
                         <Badge

@@ -85,12 +85,12 @@ export default function BlogManagementPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Blog Management</h1>
-          <p className="text-sm text-warm-500 mt-0.5">
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Blog Management</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
             Create engaging Austin content with AI
           </p>
         </div>
@@ -107,53 +107,53 @@ export default function BlogManagementPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-warm-400">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Total Posts</div>
-          <div className="text-2xl font-semibold text-warm-900">{posts.length}</div>
-          <p className="text-xs text-warm-500 mt-1">All blog content</p>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-warm-400">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Posts</div>
+          <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{posts.length}</div>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">All blog content</p>
         </Card>
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Published</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Published</div>
           <div className="text-2xl font-semibold text-ocean-600">
             {posts.filter((p) => p.status === 'published').length}
           </div>
-          <p className="text-xs text-warm-500 mt-1">Live on site</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Live on site</p>
         </Card>
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Drafts</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Drafts</div>
           <div className="text-2xl font-semibold text-lime-600">
             {posts.filter((p) => p.status === 'draft').length}
           </div>
-          <p className="text-xs text-warm-500 mt-1">Pending review</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Pending review</p>
         </Card>
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Total Views</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Views</div>
           <div className="text-2xl font-semibold text-plum-600">
             {posts.reduce((sum, p) => sum + p.viewCount, 0).toLocaleString()}
           </div>
-          <p className="text-xs text-warm-500 mt-1">All-time reads</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">All-time reads</p>
         </Card>
       </div>
 
       {/* Posts List */}
-      <Card className="rounded-sm border-warm-200">
-        <div className="px-4 py-3 border-b border-warm-200">
-          <h2 className="text-base font-display font-medium text-warm-900">All Posts</h2>
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700">
+          <h2 className="text-base font-display font-medium text-warm-900 dark:text-cream-100">All Posts</h2>
         </div>
 
         {loading ? (
           <div className="text-center py-8">
-            <p className="text-warm-500 text-sm">Loading posts...</p>
+            <p className="text-warm-500 dark:text-cream-400 text-sm">Loading posts...</p>
           </div>
         ) : posts.length === 0 ? (
           <div className="text-center py-10 px-4">
             <div className="w-12 h-12 rounded-sm bg-lime-100 flex items-center justify-center mx-auto mb-3">
               <Sparkles className="w-5 h-5 text-lime-600" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">
               No posts yet
             </h3>
-            <p className="text-xs text-warm-500 mb-4 max-w-sm mx-auto">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4 max-w-sm mx-auto">
               Create your first Austin blog post with AI
             </p>
             <Button
@@ -171,11 +171,11 @@ export default function BlogManagementPage() {
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors group"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors group"
               >
                 {/* Featured Image */}
                 {post.featuredImage && (
-                  <div className="w-16 h-16 rounded-sm overflow-hidden bg-warm-100 shrink-0">
+                  <div className="w-16 h-16 rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800 shrink-0">
                     <img
                       src={post.featuredImage}
                       alt={post.title}
@@ -212,10 +212,10 @@ export default function BlogManagementPage() {
                       </Badge>
                     )}
                   </div>
-                  <h3 className="text-sm font-medium text-warm-900 truncate">
+                  <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">
                     {post.title}
                   </h3>
-                  <div className="flex items-center gap-3 text-xs text-warm-500">
+                  <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
                     <span>
                       {post.publishedAt
                         ? new Date(post.publishedAt).toLocaleDateString()
@@ -236,14 +236,14 @@ export default function BlogManagementPage() {
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => window.location.href = `/dashboard/blog/edit/${post.id}`}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 text-warm-500 hover:text-ocean-600 transition-colors"
+                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
                     title="Edit"
                   >
                     <Edit className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handlePublish(post)}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 text-warm-500 hover:text-ocean-600 transition-colors"
+                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
                     title={post.status === 'published' ? 'Unpublish' : 'Publish'}
                   >
                     {post.status === 'published' ? (
@@ -254,14 +254,14 @@ export default function BlogManagementPage() {
                   </button>
                   <button
                     onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 text-warm-500 hover:text-ocean-600 transition-colors"
+                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
                     title="Preview"
                   >
                     <Eye className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDelete(post)}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 text-warm-500 hover:text-red-600 transition-colors"
+                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-red-600 transition-colors"
                     title="Delete"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

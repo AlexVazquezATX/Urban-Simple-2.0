@@ -67,13 +67,13 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) reset() }}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-warm-900">Send Feedback</DialogTitle>
+          <DialogTitle className="text-warm-900 dark:text-cream-100">Send Feedback</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5">
           {/* Star Rating */}
           <div>
-            <label className="text-sm font-medium text-warm-700 mb-2 block">
+            <label className="text-sm font-medium text-warm-700 dark:text-cream-300 mb-2 block">
               How&apos;s your experience?
             </label>
             <div className="flex gap-1">
@@ -90,7 +90,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                       'w-7 h-7 transition-colors',
                       (hoveredRating || rating) >= star
                         ? 'fill-amber-400 text-amber-400'
-                        : 'text-warm-300'
+                        : 'text-warm-300 dark:text-charcoal-600'
                     )}
                   />
                 </button>
@@ -100,7 +100,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
 
           {/* Category */}
           <div>
-            <label className="text-sm font-medium text-warm-700 mb-2 block">
+            <label className="text-sm font-medium text-warm-700 dark:text-cream-300 mb-2 block">
               Category
             </label>
             <div className="flex gap-2">
@@ -112,7 +112,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
                     'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
                     category === cat.value
                       ? 'bg-warm-900 text-white'
-                      : 'bg-warm-100 text-warm-600 hover:bg-warm-200'
+                      : 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 hover:bg-warm-200 dark:hover:bg-charcoal-700'
                   )}
                 >
                   {cat.label}
@@ -123,7 +123,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
 
           {/* Message */}
           <div>
-            <label className="text-sm font-medium text-warm-700 mb-2 block">
+            <label className="text-sm font-medium text-warm-700 dark:text-cream-300 mb-2 block">
               Your feedback
             </label>
             <textarea
@@ -131,7 +131,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Tell us what you think, what could be better, or report an issue..."
               rows={4}
-              className="w-full rounded-md border border-warm-200 bg-white px-3 py-2 text-sm text-warm-900 placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-warm-400 focus:border-transparent resize-none"
+              className="w-full rounded-md border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 px-3 py-2 text-sm text-warm-900 dark:text-cream-100 placeholder:text-warm-400 dark:placeholder:text-cream-400 focus:outline-none focus:ring-2 focus:ring-warm-400 focus:border-transparent resize-none"
             />
           </div>
 

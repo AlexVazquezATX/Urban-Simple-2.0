@@ -83,12 +83,12 @@ export function TopicCard({ topic, onClick }: TopicCardProps) {
       </div>
 
       {/* Title */}
-      <h3 className="font-semibold text-charcoal-900 mb-2 line-clamp-2 group-hover:text-charcoal-700">
+      <h3 className="font-semibold text-charcoal-900 dark:text-cream-100 mb-2 line-clamp-2 group-hover:text-charcoal-700 dark:group-hover:text-cream-300">
         {topic.title}
       </h3>
 
       {/* Summary */}
-      <p className="text-sm text-charcoal-600 line-clamp-2 mb-4">
+      <p className="text-sm text-charcoal-600 dark:text-cream-400 line-clamp-2 mb-4">
         {topic.summary}
       </p>
 
@@ -98,13 +98,13 @@ export function TopicCard({ topic, onClick }: TopicCardProps) {
           {topic.relatedHashtags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="px-2 py-0.5 rounded-full bg-white/70 text-charcoal-500 text-xs"
+              className="px-2 py-0.5 rounded-full bg-white/70 dark:bg-charcoal-800/70 text-charcoal-500 dark:text-cream-400 text-xs"
             >
               #{tag}
             </span>
           ))}
           {topic.relatedHashtags.length > 3 && (
-            <span className="px-2 py-0.5 text-charcoal-400 text-xs">
+            <span className="px-2 py-0.5 text-charcoal-400 dark:text-cream-400 text-xs">
               +{topic.relatedHashtags.length - 3}
             </span>
           )}
@@ -114,9 +114,9 @@ export function TopicCard({ topic, onClick }: TopicCardProps) {
       {/* Footer */}
       <div className="flex items-center justify-between">
         {topic.sourceName && (
-          <span className="text-xs text-charcoal-400">via {topic.sourceName}</span>
+          <span className="text-xs text-charcoal-400 dark:text-cream-400">via {topic.sourceName}</span>
         )}
-        <div className="flex items-center gap-1 text-charcoal-400 group-hover:text-charcoal-600 transition-colors ml-auto">
+        <div className="flex items-center gap-1 text-charcoal-400 dark:text-cream-400 group-hover:text-charcoal-600 dark:group-hover:text-cream-200 transition-colors ml-auto">
           <span className="text-xs font-medium">Create Post</span>
           <ArrowUpRight className="w-3.5 h-3.5" />
         </div>
@@ -127,7 +127,7 @@ export function TopicCard({ topic, onClick }: TopicCardProps) {
         <div
           className={`w-8 h-8 rounded-full bg-white shadow-md flex items-center justify-center`}
         >
-          <span className="text-xs font-bold text-charcoal-700">
+          <span className="text-xs font-bold text-charcoal-700 dark:text-cream-300">
             {Math.round(topic.relevanceScore * 100)}
           </span>
         </div>

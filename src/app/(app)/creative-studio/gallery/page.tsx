@@ -138,23 +138,23 @@ function GalleryContent() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
+      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/creative-studio"
-                className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+                className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 text-warm-600" />
+                <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
               </Link>
               <div>
-                <h1 className="text-lg font-display font-medium text-warm-900">
+                <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
                   Gallery
                 </h1>
-                <p className="text-sm text-warm-500">
+                <p className="text-sm text-warm-500 dark:text-cream-400">
                   {content.length} {content.length === 1 ? 'image' : 'images'} saved
                 </p>
               </div>
@@ -173,7 +173,7 @@ function GalleryContent() {
       {/* Filters */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-warm-500" />
+          <Filter className="w-4 h-4 text-warm-500 dark:text-cream-400" />
           <div className="flex gap-2">
             {(['all', 'food_photo', 'branded_post'] as FilterMode[]).map((mode) => (
               <button
@@ -183,7 +183,7 @@ function GalleryContent() {
                   'px-3 py-1.5 rounded-sm text-sm font-medium transition-colors',
                   filterMode === mode
                     ? 'bg-warm-900 text-white'
-                    : 'bg-white border border-warm-200 text-warm-700 hover:border-warm-300'
+                    : 'bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-warm-300'
                 )}
               >
                 {mode === 'all' ? 'All' : mode === 'food_photo' ? 'Food Photos' : 'Branded Posts'}
@@ -207,9 +207,9 @@ function GalleryContent() {
                 onClick={() => setSelectedItem(item)}
                 className="group cursor-pointer"
               >
-                <div className="rounded-sm border border-warm-200 overflow-hidden bg-white hover:border-lime-400 hover:shadow-md transition-all">
+                <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden bg-white dark:bg-charcoal-900 hover:border-lime-400 hover:shadow-md transition-all">
                   {/* Image */}
-                  <div className="aspect-square bg-warm-100 relative">
+                  <div className="aspect-square bg-warm-100 dark:bg-charcoal-800 relative">
                     {item.hasImage ? (
                       <img
                         src={imageUrl(item.id)}
@@ -219,7 +219,7 @@ function GalleryContent() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-10 h-10 text-warm-300" />
+                        <ImageIcon className="w-10 h-10 text-warm-300 dark:text-charcoal-600" />
                       </div>
                     )}
 
@@ -259,10 +259,10 @@ function GalleryContent() {
 
                   {/* Info */}
                   <div className="p-3">
-                    <p className="text-sm text-warm-900 font-medium truncate">
+                    <p className="text-sm text-warm-900 dark:text-cream-100 font-medium truncate">
                       {item.headline || item.outputFormat || 'Untitled'}
                     </p>
-                    <p className="text-xs text-warm-500 mt-0.5">
+                    <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -276,13 +276,13 @@ function GalleryContent() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
-              <ImageIcon className="w-7 h-7 text-warm-400" />
+            <div className="w-16 h-16 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-4">
+              <ImageIcon className="w-7 h-7 text-warm-400 dark:text-cream-400" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">
               No images yet
             </h3>
-            <p className="text-sm text-warm-500 mb-4">
+            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
               {filterMode !== 'all'
                 ? `No ${filterMode === 'food_photo' ? 'food photos' : 'branded posts'} saved yet.`
                 : 'Start creating to build your gallery.'}
@@ -313,7 +313,7 @@ function GalleryContent() {
           {selectedItem && (
             <div className="space-y-4">
               {/* Image */}
-              <div className="rounded-sm overflow-hidden bg-warm-100 relative group">
+              <div className="rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800 relative group">
                 {selectedItem.hasImage ? (
                   <>
                     <img
@@ -332,7 +332,7 @@ function GalleryContent() {
                   </>
                 ) : (
                   <div className="aspect-square flex items-center justify-center">
-                    <ImageIcon className="w-12 h-12 text-warm-300" />
+                    <ImageIcon className="w-12 h-12 text-warm-300 dark:text-charcoal-600" />
                   </div>
                 )}
               </div>
@@ -340,20 +340,20 @@ function GalleryContent() {
               {/* Details */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-warm-500">Type</p>
-                  <p className="font-medium text-warm-900">
+                  <p className="text-warm-500 dark:text-cream-400">Type</p>
+                  <p className="font-medium text-warm-900 dark:text-cream-100">
                     {selectedItem.mode === 'food_photo' ? 'Food Photography' : 'Branded Post'}
                   </p>
                 </div>
                 {selectedItem.outputFormat && (
                   <div>
-                    <p className="text-warm-500">Format</p>
-                    <p className="font-medium text-warm-900">{selectedItem.outputFormat}</p>
+                    <p className="text-warm-500 dark:text-cream-400">Format</p>
+                    <p className="font-medium text-warm-900 dark:text-cream-100">{selectedItem.outputFormat}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-warm-500">Created</p>
-                  <p className="font-medium text-warm-900">
+                  <p className="text-warm-500 dark:text-cream-400">Created</p>
+                  <p className="font-medium text-warm-900 dark:text-cream-100">
                     {new Date(selectedItem.createdAt).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -363,8 +363,8 @@ function GalleryContent() {
                 </div>
                 {selectedItem.aiModel && (
                   <div>
-                    <p className="text-warm-500">Model</p>
-                    <p className="font-medium text-warm-900">{selectedItem.aiModel}</p>
+                    <p className="text-warm-500 dark:text-cream-400">Model</p>
+                    <p className="font-medium text-warm-900 dark:text-cream-100">{selectedItem.aiModel}</p>
                   </div>
                 )}
               </div>

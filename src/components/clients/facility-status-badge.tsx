@@ -17,7 +17,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   },
   PENDING_APPROVAL: {
     label: 'Pending',
-    className: 'bg-warm-100 text-warm-600 border-warm-200',
+    className: 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700',
   },
   CLOSED: {
     label: 'Closed',

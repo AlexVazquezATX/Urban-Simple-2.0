@@ -45,17 +45,17 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Locations</h1>
-            <p className="text-sm text-warm-500">
+            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Locations</h1>
+            <p className="text-sm text-warm-500 dark:text-cream-400">
               View all service locations across all clients
             </p>
           </div>
         </div>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="h-12 w-12 mb-4 text-warm-400" />
-            <p className="text-warm-600 mb-2">No locations yet</p>
-            <p className="text-sm text-warm-500 mb-4">
+            <Building2 className="h-12 w-12 mb-4 text-warm-400 dark:text-cream-400" />
+            <p className="text-warm-600 dark:text-cream-400 mb-2">No locations yet</p>
+            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
               Create your first location and link it to a client
             </p>
             <LocationForm>
@@ -74,8 +74,8 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Locations</h1>
-          <p className="text-sm text-warm-500">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Locations</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400">
             View all service locations across all clients
           </p>
         </div>
@@ -86,8 +86,8 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="font-display font-medium text-warm-900">All Locations</CardTitle>
-              <CardDescription className="text-warm-500">
+              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">All Locations</CardTitle>
+              <CardDescription className="text-warm-500 dark:text-cream-400">
                 {locations.length}{' '}
                 {locations.length === 1 ? 'location' : 'locations'}
               </CardDescription>
@@ -104,15 +104,15 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
           {viewMode === 'table' ? (
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 hover:bg-transparent">
-                  <TableHead className="w-16 text-xs font-medium text-warm-500 uppercase tracking-wider">Logo</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Location</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Client</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Branch</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Address</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Checklist</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Issues</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
+                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                  <TableHead className="w-16 text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Logo</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Location</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Branch</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Address</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Checklist</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Issues</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -122,7 +122,7 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                     ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
                     : '-'
                   return (
-                    <TableRow key={location.id} className="border-warm-200 hover:bg-warm-50">
+                    <TableRow key={location.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50">
                       <TableCell>
                         {location.logoUrl ? (
                           <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-warm-100">
@@ -140,7 +140,7 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium text-warm-900">
+                      <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                         <Link
                           href={`/locations/${location.id}`}
                           className="hover:text-ocean-600 transition-colors"
@@ -151,7 +151,7 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                       <TableCell>
                         <Link
                           href={`/clients/${location.client.id}`}
-                          className="hover:text-ocean-600 text-warm-600 transition-colors"
+                          className="hover:text-ocean-600 text-warm-600 dark:text-cream-400 transition-colors"
                         >
                           {location.client.name}
                         </Link>
@@ -159,7 +159,7 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                       <TableCell>
                         <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">{location.branch.code}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-warm-500 max-w-xs truncate">
+                      <TableCell className="text-sm text-warm-500 dark:text-cream-400 max-w-xs truncate">
                         {addressStr}
                       </TableCell>
                       <TableCell>

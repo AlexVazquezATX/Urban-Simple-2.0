@@ -74,20 +74,20 @@ export function DuplicateChecklistButton({
       </DialogTrigger>
       <DialogContent className="rounded-sm">
         <DialogHeader>
-          <DialogTitle className="text-lg font-display font-medium text-warm-900">Duplicate Checklist</DialogTitle>
-          <DialogDescription className="text-sm text-warm-500">
+          <DialogTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Duplicate Checklist</DialogTitle>
+          <DialogDescription className="text-sm text-warm-500 dark:text-cream-400">
             Create a copy of "{templateName}" with a new name
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="duplicate-name" className="text-xs font-medium text-warm-700">New Checklist Name *</Label>
+            <Label htmlFor="duplicate-name" className="text-xs font-medium text-warm-700 dark:text-cream-300">New Checklist Name *</Label>
             <Input
               id="duplicate-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter name for duplicate..."
-              className="rounded-sm border-warm-200 mt-1"
+              className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleDuplicate()

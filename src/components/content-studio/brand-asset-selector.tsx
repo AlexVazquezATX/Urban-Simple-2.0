@@ -102,21 +102,21 @@ export function BrandAssetSelector({
         <DialogHeader>
           <DialogTitle>
             Select Brand Assets
-            <span className="text-sm font-normal text-warm-500 ml-2">
+            <span className="text-sm font-normal text-warm-500 dark:text-cream-400 ml-2">
               ({localSelected.length}/{maxSelection})
             </span>
           </DialogTitle>
         </DialogHeader>
 
         {/* Category tabs */}
-        <div className="flex gap-1.5 flex-wrap pb-2 border-b border-warm-200">
+        <div className="flex gap-1.5 flex-wrap pb-2 border-b border-warm-200 dark:border-charcoal-700">
           <button
             onClick={() => setFilterCategory('all')}
             className={cn(
               'px-2.5 py-1 rounded-sm text-xs font-medium transition-colors',
               filterCategory === 'all'
-                ? 'bg-warm-900 text-white'
-                : 'bg-warm-100 text-warm-600 hover:bg-warm-200'
+                ? 'bg-warm-900 dark:bg-cream-100 text-white dark:text-charcoal-900'
+                : 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 hover:bg-warm-200 dark:hover:bg-charcoal-700'
             )}
           >
             All
@@ -158,11 +158,11 @@ export function BrandAssetSelector({
                       isSelected
                         ? 'border-lime-500 ring-2 ring-lime-500/30'
                         : isDisabled
-                        ? 'border-warm-200 opacity-40 cursor-not-allowed'
-                        : 'border-warm-200 hover:border-warm-300'
+                        ? 'border-warm-200 dark:border-charcoal-700 opacity-40 cursor-not-allowed'
+                        : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300'
                     )}
                   >
-                    <div className="aspect-square bg-warm-100">
+                    <div className="aspect-square bg-warm-100 dark:bg-charcoal-800">
                       <img
                         src={asset.imageUrl}
                         alt={asset.name}
@@ -178,7 +178,7 @@ export function BrandAssetSelector({
                     )}
 
                     <div className="p-2">
-                      <p className="text-xs font-medium text-warm-800 truncate">{asset.name}</p>
+                      <p className="text-xs font-medium text-warm-800 dark:text-cream-200 truncate">{asset.name}</p>
                     </div>
                   </button>
                 )
@@ -186,8 +186,8 @@ export function BrandAssetSelector({
             </div>
           ) : (
             <div className="text-center py-12">
-              <ImageIcon className="w-10 h-10 text-warm-300 mx-auto mb-2" />
-              <p className="text-sm text-warm-500">
+              <ImageIcon className="w-10 h-10 text-warm-300 dark:text-charcoal-600 mx-auto mb-2" />
+              <p className="text-sm text-warm-500 dark:text-cream-400">
                 {filterCategory !== 'all' ? 'No assets in this category' : 'No brand assets uploaded yet'}
               </p>
               <a
@@ -201,14 +201,14 @@ export function BrandAssetSelector({
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between items-center pt-3 border-t border-warm-200">
+        <div className="flex justify-between items-center pt-3 border-t border-warm-200 dark:border-charcoal-700">
           {/* Selected preview strip */}
           <div className="flex gap-1.5">
             {localSelected.map((id) => {
               const asset = assets.find((a) => a.id === id)
               if (!asset) return null
               return (
-                <div key={id} className="relative w-8 h-8 rounded-sm overflow-hidden border border-warm-200">
+                <div key={id} className="relative w-8 h-8 rounded-sm overflow-hidden border border-warm-200 dark:border-charcoal-700">
                   <img src={asset.imageUrl} alt={asset.name} className="w-full h-full object-cover" />
                   <button
                     onClick={() => toggleAsset(id)}

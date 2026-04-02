@@ -493,7 +493,7 @@ export function GrowthAgentDashboard() {
                           'flex-1 px-3 py-2.5 text-sm font-medium transition-colors border-r last:border-r-0',
                           config.processingMode === mode.value
                             ? 'bg-amber-100 text-amber-800'
-                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                            : 'bg-white dark:bg-charcoal-900 text-gray-600 hover:bg-gray-50'
                         )}
                       >
                         <div className="flex items-center justify-center gap-1.5">
@@ -1047,7 +1047,7 @@ export function GrowthAgentDashboard() {
 
           {/* Results */}
           {cfResult && (
-            <div className="bg-white rounded-lg p-4 border border-green-200 space-y-3">
+            <div className="bg-white dark:bg-charcoal-900 rounded-lg p-4 border border-green-200 space-y-3">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
                 <div>
                   <p className="text-xs text-gray-500">Discovered</p>
@@ -1156,7 +1156,7 @@ export function GrowthAgentDashboard() {
                 { label: 'Has City', value: diagnosticsData.summary.hasCity },
                 { label: 'Missing City', value: diagnosticsData.summary.missingCity, color: diagnosticsData.summary.missingCity > 0 ? 'text-red-700' : '' },
               ].map((item) => (
-                <div key={item.label} className="bg-white rounded-lg p-2 text-center">
+                <div key={item.label} className="bg-white dark:bg-charcoal-900 rounded-lg p-2 text-center">
                   <p className="text-xs text-gray-500">{item.label}</p>
                   <p className={cn('text-lg font-bold', item.color)}>{item.value}</p>
                 </div>
@@ -1190,7 +1190,7 @@ export function GrowthAgentDashboard() {
               <p className="text-sm font-medium mb-2">
                 Prospect Details ({diagnosticsData.prospects.length}):
               </p>
-              <div className="max-h-[300px] overflow-y-auto bg-white rounded-lg divide-y divide-gray-100">
+              <div className="max-h-[300px] overflow-y-auto bg-white dark:bg-charcoal-900 rounded-lg divide-y divide-gray-100">
                 {(diagnosticsData.prospects as Array<any>).map((p: any, i: number) => (
                   <div key={i} className="flex items-center gap-2 px-3 py-1.5 text-xs">
                     <span className={cn(

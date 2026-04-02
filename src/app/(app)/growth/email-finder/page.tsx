@@ -249,7 +249,7 @@ export default function EmailFinderPage() {
           ? 'bg-sage-50 text-sage-700 border-sage-200'
           : confidence >= 40
             ? 'bg-amber-50 text-amber-700 border-amber-200'
-            : 'bg-warm-100 text-warm-600 border-warm-200'
+            : 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700'
       return (
         <Badge variant="outline" className={color}>
           {confidence}% confidence
@@ -260,13 +260,13 @@ export default function EmailFinderPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-6xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-display font-semibold text-warm-900">
+        <h1 className="text-2xl font-display font-semibold text-warm-900 dark:text-cream-100">
           Email Finder
         </h1>
-        <p className="text-sm text-warm-500 mt-1">
+        <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
           Search for contacts at any company or find a specific person&apos;s email
         </p>
       </div>
@@ -300,19 +300,19 @@ export default function EmailFinderPage() {
       </div>
 
       {/* Search Form */}
-      <Card className="rounded-sm border-warm-200 mb-6">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 mb-6">
         <CardContent className="p-4">
           {searchMode === 'domain' ? (
             <div className="flex gap-3">
               <div className="relative flex-1">
-                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400 w-4 h-4" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 text-warm-400 dark:text-cream-500 w-4 h-4" />
                 <Input
                   type="text"
                   placeholder="Enter company domain (e.g., marriott.com)"
                   value={domain}
                   onChange={(e) => setDomain(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleDomainSearch()}
-                  className="pl-10 rounded-sm border-warm-200"
+                  className="pl-10 rounded-sm border-warm-200 dark:border-charcoal-700"
                 />
               </div>
               <Button
@@ -332,7 +332,7 @@ export default function EmailFinderPage() {
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-warm-600 mb-1">
+                  <label className="block text-xs font-medium text-warm-600 dark:text-cream-400 mb-1">
                     First Name
                   </label>
                   <Input
@@ -340,11 +340,11 @@ export default function EmailFinderPage() {
                     placeholder="John"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="rounded-sm border-warm-200"
+                    className="rounded-sm border-warm-200 dark:border-charcoal-700"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-warm-600 mb-1">
+                  <label className="block text-xs font-medium text-warm-600 dark:text-cream-400 mb-1">
                     Last Name
                   </label>
                   <Input
@@ -352,12 +352,12 @@ export default function EmailFinderPage() {
                     placeholder="Smith"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="rounded-sm border-warm-200"
+                    className="rounded-sm border-warm-200 dark:border-charcoal-700"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-warm-600 mb-1">
+                <label className="block text-xs font-medium text-warm-600 dark:text-cream-400 mb-1">
                   Company Domain
                 </label>
                 <div className="flex gap-3">
@@ -367,7 +367,7 @@ export default function EmailFinderPage() {
                     value={domain}
                     onChange={(e) => setDomain(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handlePersonSearch()}
-                    className="flex-1 rounded-sm border-warm-200"
+                    className="flex-1 rounded-sm border-warm-200 dark:border-charcoal-700"
                   />
                   <Button
                     onClick={handlePersonSearch}
@@ -403,43 +403,43 @@ export default function EmailFinderPage() {
 
       {/* Results */}
       {results.length > 0 && (
-        <Card className="rounded-sm border-warm-200">
-          <CardHeader className="p-4 border-b border-warm-100 bg-warm-50/50">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardHeader className="p-4 border-b border-warm-100 dark:border-charcoal-700 bg-warm-50/50 dark:bg-charcoal-800/50">
             <div className="flex justify-between items-center">
               <div>
-                <CardTitle className="text-base font-display font-semibold text-warm-900">
+                <CardTitle className="text-base font-display font-semibold text-warm-900 dark:text-cream-100">
                   {results[0]?.company_name || domain}
                 </CardTitle>
-                <p className="text-xs text-warm-500 mt-0.5">
+                <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                   {results.length} contact(s) found
                 </p>
               </div>
-              <div className="text-xs text-warm-400">
+              <div className="text-xs text-warm-400 dark:text-cream-500">
                 Sources: {[...new Set(results.map((r) => r.source))].join(', ')}
               </div>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="divide-y divide-warm-100">
+            <div className="divide-y divide-warm-100 dark:divide-charcoal-700">
               {results.map((prospect, index) => (
                 <div
                   key={prospect.email || index}
                   className={cn(
-                    'p-4 flex items-center justify-between hover:bg-warm-50/50 transition-colors',
+                    'p-4 flex items-center justify-between hover:bg-warm-50 dark:hover:bg-charcoal-800/50 transition-colors',
                     prospect._saved && 'bg-sage-50/50'
                   )}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-warm-900 text-sm">
+                    <div className="font-medium text-warm-900 dark:text-cream-100 text-sm">
                       {prospect.full_name ||
                         `${prospect.first_name || ''} ${prospect.last_name || ''}`.trim() ||
                         'Unknown'}
                     </div>
                     {prospect.position && (
-                      <div className="text-xs text-warm-500">{prospect.position}</div>
+                      <div className="text-xs text-warm-500 dark:text-cream-400">{prospect.position}</div>
                     )}
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <div className="flex items-center gap-1 text-xs text-warm-600">
+                      <div className="flex items-center gap-1 text-xs text-warm-600 dark:text-cream-400">
                         <Mail className="w-3 h-3" />
                         <span className="truncate max-w-[200px]">{prospect.email}</span>
                       </div>
@@ -448,7 +448,7 @@ export default function EmailFinderPage() {
                         prospect.email_verified,
                         prospect.email_verification_status
                       )}
-                      <span className="text-[10px] text-warm-400">
+                      <span className="text-[10px] text-warm-400 dark:text-cream-500">
                         via {prospect.source}
                       </span>
                     </div>
@@ -471,7 +471,7 @@ export default function EmailFinderPage() {
                         size="sm"
                         onClick={() => verifyEmail(prospect.email!, index)}
                         disabled={verifyingEmail === prospect.email}
-                        className="rounded-sm border-warm-200 text-xs h-7"
+                        className="rounded-sm border-warm-200 dark:border-charcoal-700 text-xs h-7"
                       >
                         {verifyingEmail === prospect.email ? (
                           <Loader2 className="w-3 h-3 animate-spin" />
@@ -519,15 +519,15 @@ export default function EmailFinderPage() {
 
       {/* Empty state when no results yet */}
       {!loading && results.length === 0 && !error && (
-        <Card className="rounded-sm border-warm-200 border-dashed">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 border-dashed">
           <CardContent className="p-8 text-center">
-            <div className="mx-auto w-12 h-12 rounded-full bg-warm-100 flex items-center justify-center mb-3">
-              <Search className="w-6 h-6 text-warm-400" />
+            <div className="mx-auto w-12 h-12 rounded-full bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mb-3">
+              <Search className="w-6 h-6 text-warm-400 dark:text-cream-500" />
             </div>
-            <h3 className="font-medium text-warm-900 text-sm">
+            <h3 className="font-medium text-warm-900 dark:text-cream-100 text-sm">
               Search for prospects
             </h3>
-            <p className="text-xs text-warm-500 mt-1 max-w-sm mx-auto">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1 max-w-sm mx-auto">
               {searchMode === 'domain'
                 ? 'Enter a company domain to find contacts and their email addresses'
                 : "Enter a person's name and company domain to find their email"}

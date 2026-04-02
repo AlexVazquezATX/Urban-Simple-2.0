@@ -158,7 +158,7 @@ export function DishPhotoUpload({
         'relative rounded-sm border-2 border-dashed transition-colors cursor-pointer',
         isDragging
           ? 'border-lime-500 bg-lime-50'
-          : 'border-warm-300 hover:border-lime-400 bg-warm-50',
+          : 'border-warm-300 dark:border-charcoal-600 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800',
         disabled && 'opacity-50 cursor-not-allowed',
         isProcessing && 'pointer-events-none',
         className
@@ -168,27 +168,27 @@ export function DishPhotoUpload({
         {isProcessing ? (
           <>
             <Loader2 className="w-10 h-10 text-lime-600 animate-spin mb-3" />
-            <p className="text-sm font-medium text-warm-700">Processing image...</p>
-            <p className="text-xs text-warm-500 mt-1">Compressing for upload</p>
+            <p className="text-sm font-medium text-warm-700 dark:text-cream-300">Processing image...</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Compressing for upload</p>
           </>
         ) : error ? (
           <>
             <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
             <p className="text-sm font-medium text-red-600">{error}</p>
-            <p className="text-xs text-warm-500 mt-1">Click to try again</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Click to try again</p>
           </>
         ) : (
           <>
             <div className="w-14 h-14 rounded-sm bg-lime-100 flex items-center justify-center mb-3">
               <Upload className="w-6 h-6 text-lime-600" />
             </div>
-            <p className="text-sm font-medium text-warm-900">
+            <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
               Drop your dish photo here
             </p>
-            <p className="text-xs text-warm-500 mt-1">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
               or click to browse
             </p>
-            <p className="text-xs text-warm-400 mt-3">
+            <p className="text-xs text-warm-400 dark:text-cream-400 mt-3">
               JPG, PNG, HEIC up to 20MB
             </p>
           </>

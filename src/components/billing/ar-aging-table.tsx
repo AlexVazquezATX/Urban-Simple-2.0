@@ -64,13 +64,13 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
 
   if (data.invoices.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900">AR Aging Report</CardTitle>
-          <CardDescription className="text-warm-500">No outstanding invoices</CardDescription>
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">AR Aging Report</CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">No outstanding invoices</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-warm-500 text-center py-8">
+          <p className="text-warm-500 dark:text-cream-400 text-center py-8">
             All invoices are paid up!
           </p>
         </CardContent>
@@ -79,10 +79,10 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
   }
 
   return (
-    <Card className="rounded-sm border-warm-200">
+    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
       <CardHeader>
-        <CardTitle className="font-display font-medium text-warm-900">AR Aging Report</CardTitle>
-        <CardDescription className="text-warm-500">
+        <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">AR Aging Report</CardTitle>
+        <CardDescription className="text-warm-500 dark:text-cream-400">
           Outstanding invoices grouped by days past due
         </CardDescription>
       </CardHeader>
@@ -98,26 +98,26 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
 
           <TabsContent value={selectedBucket} className="mt-4">
             {filteredInvoices.length === 0 ? (
-              <p className="text-center py-8 text-warm-500">
+              <p className="text-center py-8 text-warm-500 dark:text-cream-400">
                 No invoices in this bucket
               </p>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-warm-200 hover:bg-transparent">
-                    <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Invoice #</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Client</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Due Date</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Days Past Due</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Balance Due</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
+                  <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Invoice #</TableHead>
+                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
+                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Due Date</TableHead>
+                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Days Past Due</TableHead>
+                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Balance Due</TableHead>
+                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
+                    <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredInvoices.map((invoice: any) => (
-                    <TableRow key={invoice.id} className="border-warm-200 hover:bg-warm-50">
-                      <TableCell className="font-medium text-warm-900">
+                    <TableRow key={invoice.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
+                      <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                         <Link
                           href={`/app/invoices/${invoice.id}`}
                           className="hover:text-ocean-600 transition-colors"
@@ -125,8 +125,8 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
                           {invoice.invoiceNumber}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-warm-600">{invoice.client.name}</TableCell>
-                      <TableCell className="text-warm-600">
+                      <TableCell className="text-warm-600 dark:text-cream-400">{invoice.client.name}</TableCell>
+                      <TableCell className="text-warm-600 dark:text-cream-400">
                         {new Date(invoice.dueDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
@@ -135,12 +135,12 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
                             {invoice.daysPastDue} days
                           </span>
                         ) : (
-                          <span className="text-warm-500">
+                          <span className="text-warm-500 dark:text-cream-400">
                             {Math.abs(invoice.daysPastDue)} days until due
                           </span>
                         )}
                       </TableCell>
-                      <TableCell className="text-warm-900 font-medium">
+                      <TableCell className="text-warm-900 dark:text-cream-100 font-medium">
                         ${Number(invoice.balanceDue).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -164,7 +164,7 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Link href={`/app/invoices/${invoice.id}`}>
-                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                               View
                             </Button>
                           </Link>

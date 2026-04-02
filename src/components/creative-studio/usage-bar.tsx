@@ -82,7 +82,7 @@ export function UsageBar() {
       isPaused ? 'bg-red-50 border-red-200' :
       isAtLimit ? 'bg-amber-50 border-amber-200' :
       isNearLimit ? 'bg-amber-50/50 border-amber-100' :
-      'bg-white border-warm-200'
+      'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700'
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -93,10 +93,10 @@ export function UsageBar() {
             </div>
           ) : (
             <>
-              <span className="text-xs text-warm-500 shrink-0">
+              <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">
                 {usage.generationsUsed} / {usage.generationsLimit}
               </span>
-              <div className="flex-1 max-w-[200px] h-1.5 bg-warm-200 rounded-full overflow-hidden">
+              <div className="flex-1 max-w-[200px] h-1.5 bg-warm-200 dark:bg-charcoal-700 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
@@ -113,7 +113,7 @@ export function UsageBar() {
                 </span>
               )}
               {usage.cancelledAt && usage.currentPeriodEnd && (
-                <span className="text-xs text-warm-500 shrink-0">
+                <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">
                   Plan ends {new Date(usage.currentPeriodEnd).toLocaleDateString()}
                 </span>
               )}
@@ -152,7 +152,7 @@ export function UsageBar() {
               size="sm"
               onClick={handleManageBilling}
               disabled={portalLoading}
-              className="h-7 text-xs text-warm-500 hover:text-warm-700"
+              className="h-7 text-xs text-warm-500 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200"
             >
               Billing
             </Button>

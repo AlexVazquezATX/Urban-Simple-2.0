@@ -170,29 +170,29 @@ export default function BrandKitPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50">
+      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50 dark:bg-charcoal-950">
         <Loader2 className="w-5 h-5 animate-spin text-warm-400" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
+      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
         <div className="max-w-3xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
             <Link
               href="/creative-studio"
-              className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+              className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-warm-600" />
+              <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
             </Link>
             <div>
-              <h1 className="text-lg font-display font-medium text-warm-900">
+              <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
                 Brand Kit
               </h1>
-              <p className="text-sm text-warm-500">
+              <p className="text-sm text-warm-500 dark:text-cream-400">
                 Configure your restaurant&apos;s branding
               </p>
             </div>
@@ -204,8 +204,8 @@ export default function BrandKitPage() {
       <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
         <div className="space-y-6">
           {/* Restaurant Name */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
-            <Label htmlFor="name" className="text-warm-700 mb-2 block">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+            <Label htmlFor="name" className="text-warm-700 dark:text-cream-300 mb-2 block">
               Restaurant Name
             </Label>
             <Input
@@ -218,23 +218,23 @@ export default function BrandKitPage() {
           </div>
 
           {/* Logos & Icons */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <ImageIcon className="w-4 h-4 text-warm-500" />
+              <ImageIcon className="w-4 h-4 text-warm-500 dark:text-cream-400" />
               <Label className="text-warm-700">Logos & Icons</Label>
             </div>
-            <p className="text-xs text-warm-500 mb-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4">
               Upload your logo and icon to automatically include them in branded posts
             </p>
 
             <div className="grid grid-cols-2 gap-4">
               {/* Full Logo */}
               <div>
-                <Label className="text-xs text-warm-500 mb-2 block">
+                <Label className="text-xs text-warm-500 dark:text-cream-400 mb-2 block">
                   Full Logo
                 </Label>
                 {logoUrl ? (
-                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 bg-warm-50 overflow-hidden">
+                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 overflow-hidden">
                     <img
                       src={logoUrl}
                       alt="Restaurant logo"
@@ -249,10 +249,10 @@ export default function BrandKitPage() {
                   </div>
                 ) : (
                   <label className="block cursor-pointer">
-                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
-                      <Upload className="w-5 h-5 text-warm-400 mb-1.5" />
-                      <span className="text-xs text-warm-500">Upload logo</span>
-                      <span className="text-[10px] text-warm-400 mt-0.5">PNG, SVG, JPG</span>
+                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-700 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800 flex flex-col items-center justify-center transition-colors">
+                      <Upload className="w-5 h-5 text-warm-400 dark:text-cream-400 mb-1.5" />
+                      <span className="text-xs text-warm-500 dark:text-cream-400">Upload logo</span>
+                      <span className="text-[10px] text-warm-400 dark:text-cream-400 mt-0.5">PNG, SVG, JPG</span>
                     </div>
                     <input
                       type="file"
@@ -262,18 +262,18 @@ export default function BrandKitPage() {
                     />
                   </label>
                 )}
-                <p className="text-[10px] text-warm-400 mt-1">
+                <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
                   Main logo with text
                 </p>
               </div>
 
               {/* Icon / Mark */}
               <div>
-                <Label className="text-xs text-warm-500 mb-2 block">
+                <Label className="text-xs text-warm-500 dark:text-cream-400 mb-2 block">
                   Icon / Mark
                 </Label>
                 {iconUrl ? (
-                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 bg-warm-50 overflow-hidden">
+                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 overflow-hidden">
                     <img
                       src={iconUrl}
                       alt="Restaurant icon"
@@ -288,10 +288,10 @@ export default function BrandKitPage() {
                   </div>
                 ) : (
                   <label className="block cursor-pointer">
-                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
-                      <Upload className="w-5 h-5 text-warm-400 mb-1.5" />
-                      <span className="text-xs text-warm-500">Upload icon</span>
-                      <span className="text-[10px] text-warm-400 mt-0.5">PNG, SVG, JPG</span>
+                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-700 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800 flex flex-col items-center justify-center transition-colors">
+                      <Upload className="w-5 h-5 text-warm-400 dark:text-cream-400 mb-1.5" />
+                      <span className="text-xs text-warm-500 dark:text-cream-400">Upload icon</span>
+                      <span className="text-[10px] text-warm-400 dark:text-cream-400 mt-0.5">PNG, SVG, JPG</span>
                     </div>
                     <input
                       type="file"
@@ -301,7 +301,7 @@ export default function BrandKitPage() {
                     />
                   </label>
                 )}
-                <p className="text-[10px] text-warm-400 mt-1">
+                <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
                   Smaller mark or symbol
                 </p>
               </div>
@@ -309,15 +309,15 @@ export default function BrandKitPage() {
           </div>
 
           {/* Colors */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
             <div className="flex items-center gap-2 mb-4">
-              <Palette className="w-4 h-4 text-warm-500" />
+              <Palette className="w-4 h-4 text-warm-500 dark:text-cream-400" />
               <Label className="text-warm-700">Brand Colors</Label>
             </div>
 
             {/* Color Palettes */}
             <div className="mb-4">
-              <p className="text-xs text-warm-500 mb-2">Quick palettes:</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400 mb-2">Quick palettes:</p>
               <div className="flex flex-wrap gap-2">
                 {COLOR_PALETTES.map((palette) => (
                   <button
@@ -340,7 +340,7 @@ export default function BrandKitPage() {
                         style={{ backgroundColor: palette.secondary }}
                       />
                     </div>
-                    <span className="text-xs text-warm-700">{palette.name}</span>
+                    <span className="text-xs text-warm-700 dark:text-cream-300">{palette.name}</span>
                   </button>
                 ))}
               </div>
@@ -349,7 +349,7 @@ export default function BrandKitPage() {
             {/* Custom Colors */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="primary" className="text-xs text-warm-500 mb-1.5 block">
+                <Label htmlFor="primary" className="text-xs text-warm-500 dark:text-cream-400 mb-1.5 block">
                   Primary Color
                 </Label>
                 <div className="flex items-center gap-2">
@@ -358,7 +358,7 @@ export default function BrandKitPage() {
                     id="primary"
                     value={primaryColor}
                     onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-10 h-10 rounded-sm border border-warm-200 cursor-pointer"
+                    className="w-10 h-10 rounded-sm border border-warm-200 dark:border-charcoal-700 cursor-pointer"
                   />
                   <Input
                     value={primaryColor}
@@ -368,7 +368,7 @@ export default function BrandKitPage() {
                 </div>
               </div>
               <div>
-                <Label htmlFor="secondary" className="text-xs text-warm-500 mb-1.5 block">
+                <Label htmlFor="secondary" className="text-xs text-warm-500 dark:text-cream-400 mb-1.5 block">
                   Secondary Color
                 </Label>
                 <div className="flex items-center gap-2">
@@ -377,7 +377,7 @@ export default function BrandKitPage() {
                     id="secondary"
                     value={secondaryColor}
                     onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="w-10 h-10 rounded-sm border border-warm-200 cursor-pointer"
+                    className="w-10 h-10 rounded-sm border border-warm-200 dark:border-charcoal-700 cursor-pointer"
                   />
                   <Input
                     value={secondaryColor}
@@ -389,8 +389,8 @@ export default function BrandKitPage() {
             </div>
 
             {/* Preview */}
-            <div className="mt-4 p-4 rounded-sm border border-warm-200">
-              <p className="text-xs text-warm-500 mb-2">Preview:</p>
+            <div className="mt-4 p-4 rounded-sm border border-warm-200 dark:border-charcoal-700">
+              <p className="text-xs text-warm-500 dark:text-cream-400 mb-2">Preview:</p>
               <div
                 className="h-20 rounded-sm flex items-center justify-center"
                 style={{ backgroundColor: primaryColor }}
@@ -406,15 +406,15 @@ export default function BrandKitPage() {
           </div>
 
           {/* Cuisine Type */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
-            <Label htmlFor="cuisine" className="text-warm-700 mb-2 block">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+            <Label htmlFor="cuisine" className="text-warm-700 dark:text-cream-300 mb-2 block">
               Cuisine Type (optional)
             </Label>
             <select
               id="cuisine"
               value={cuisineType}
               onChange={(e) => setCuisineType(e.target.value)}
-              className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
+              className="w-full px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-warm-900 dark:text-cream-100 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
             >
               <option value="">Select cuisine...</option>
               {CUISINE_TYPES.map((c) => (
@@ -429,8 +429,8 @@ export default function BrandKitPage() {
           </div>
 
           {/* Preferred Style */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
-            <Label className="text-warm-700 mb-3 block">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+            <Label className="text-warm-700 dark:text-cream-300 mb-3 block">
               Preferred Style (optional)
             </Label>
             <div className="space-y-2">
@@ -442,19 +442,19 @@ export default function BrandKitPage() {
                     'w-full p-3 rounded-sm border transition-all text-left flex items-center justify-between',
                     preferredStyle === style.value
                       ? 'border-lime-500 bg-lime-50'
-                      : 'border-warm-200 hover:border-warm-300 bg-white'
+                      : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900'
                   )}
                 >
                   <div>
                     <p
                       className={cn(
                         'text-sm font-medium',
-                        preferredStyle === style.value ? 'text-lime-700' : 'text-warm-900'
+                        preferredStyle === style.value ? 'text-lime-700' : 'text-warm-900 dark:text-cream-100'
                       )}
                     >
                       {style.label}
                     </p>
-                    <p className="text-xs text-warm-500">{style.description}</p>
+                    <p className="text-xs text-warm-500 dark:text-cream-400">{style.description}</p>
                   </div>
                   {preferredStyle === style.value && (
                     <Check className="w-4 h-4 text-lime-600 shrink-0" />

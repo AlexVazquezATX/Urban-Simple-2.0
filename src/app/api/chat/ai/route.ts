@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
     // Create Gemini model with system instruction
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
     })
 
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest) {
         content: aiResponse,
         contentType: 'ai_response',
         isAiGenerated: true,
-        aiModel: 'gemini-2.0-flash-exp',
+        aiModel: 'gemini-2.5-flash',
         aiMetadata: {
           responseTime,
           language,

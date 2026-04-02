@@ -86,7 +86,7 @@ export async function generateDailyBriefing(
         userId,
         date,
         status: 'generating',
-        aiModel: 'gemini-2.0-flash-exp',
+        aiModel: 'gemini-2.5-flash',
       },
     })
 
@@ -327,7 +327,7 @@ The "content" field MUST contain properly formatted HTML with the following stru
     console.log(`Calling Gemini for topic: ${topicName}`)
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: prompt }] },
       config: {
         responseMimeType: 'application/json',
@@ -402,7 +402,7 @@ Do NOT use asterisks or markdown. Just plain text.`
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: prompt }] },
     })
     return result.text?.trim() || `Good ${timeOfDay}, Alex! Here's your daily briefing to help you stay ahead.`
@@ -447,7 +447,7 @@ Do NOT use asterisks or markdown. Just plain text.`
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: prompt }] },
     })
     return result.text?.trim() || 'Your daily briefing is ready with insights across your topics of interest.'
@@ -472,7 +472,7 @@ Keep it brief and impactful. Do NOT use asterisks or markdown.`
 
   try {
     const result = await ai.models.generateContent({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: prompt }] },
     })
     return result.text?.trim() || '"The only way to do great work is to love what you do." - Steve Jobs'

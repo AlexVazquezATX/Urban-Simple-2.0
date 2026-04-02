@@ -99,8 +99,24 @@ async function ARDashboard() {
     counts[invoice.agingBucket as keyof typeof counts]++
   })
 
+  const serializedInvoices = invoicesWithAging.map((inv) => ({
+    id: inv.id,
+    invoiceNumber: inv.invoiceNumber,
+    status: inv.status,
+    issueDate: inv.issueDate.toISOString(),
+    dueDate: inv.dueDate.toISOString(),
+    subtotal: Number(inv.subtotal),
+    taxAmount: Number(inv.taxAmount),
+    totalAmount: Number(inv.totalAmount),
+    amountPaid: Number(inv.amountPaid),
+    balanceDue: Number(inv.balanceDue),
+    client: inv.client,
+    daysPastDue: inv.daysPastDue,
+    agingBucket: inv.agingBucket,
+  }))
+
   const data = {
-    invoices: invoicesWithAging,
+    invoices: serializedInvoices,
     totals,
     counts,
   }
@@ -108,17 +124,17 @@ async function ARDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Outstanding Payments</h1>
-        <p className="text-sm text-warm-500">
+        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Outstanding Payments</h1>
+        <p className="text-sm text-warm-500 dark:text-cream-400">
           Track unpaid invoices and how long they've been waiting
         </p>
       </div>
 
       {/* Payment Status by Age */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">On Time (0-30 days)</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">On Time (0-30 days)</CardTitle>
             <div className="rounded-sm bg-ocean-100 p-2">
               <Clock className="h-4 w-4 text-ocean-600" />
             </div>
@@ -130,15 +146,15 @@ async function ARDashboard() {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               {counts.current} {counts.current === 1 ? 'invoice' : 'invoices'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">1-2 Months Late</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">1-2 Months Late</CardTitle>
             <AlertTriangle className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -148,16 +164,16 @@ async function ARDashboard() {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               {counts.overdue_31_60}{' '}
               {counts.overdue_31_60 === 1 ? 'invoice' : 'invoices'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">2-3 Months Late</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">2-3 Months Late</CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-600" />
           </CardHeader>
           <CardContent>
@@ -167,16 +183,16 @@ async function ARDashboard() {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               {counts.overdue_61_90}{' '}
               {counts.overdue_61_90 === 1 ? 'invoice' : 'invoices'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">3+ Months Late</CardTitle>
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">3+ Months Late</CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-600" />
           </CardHeader>
           <CardContent>
@@ -186,7 +202,7 @@ async function ARDashboard() {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               {counts.overdue_90_plus}{' '}
               {counts.overdue_90_plus === 1 ? 'invoice' : 'invoices'}
             </p>
@@ -195,21 +211,21 @@ async function ARDashboard() {
       </div>
 
       {/* Total Outstanding */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900">Total Outstanding</CardTitle>
-          <CardDescription className="text-warm-500">
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Total Outstanding</CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">
             All unpaid invoices across all aging buckets
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-4xl font-display font-medium text-warm-900">
+          <div className="text-4xl font-display font-medium text-warm-900 dark:text-cream-100">
             ${totals.total.toLocaleString('en-US', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </div>
-          <p className="text-sm text-warm-500 mt-2">
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-2">
             {counts.total} {counts.total === 1 ? 'invoice' : 'invoices'} outstanding
           </p>
         </CardContent>

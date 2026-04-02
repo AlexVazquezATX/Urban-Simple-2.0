@@ -67,7 +67,7 @@ export default function CreativeStudioPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50">
+      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50 dark:bg-charcoal-950">
         <Loader2 className="w-5 h-5 animate-spin text-warm-400" />
       </div>
     )
@@ -76,30 +76,30 @@ export default function CreativeStudioPage() {
   const hasContent = recentContent.length > 0
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header with Stats */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
             Creative Studio
           </h1>
-          <p className="text-sm text-warm-500 mt-0.5">
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
             Professional food photography & branded content
           </p>
         </div>
         <div className="flex items-center gap-4 text-sm">
           <div className="text-right">
-            <p className="text-xl font-semibold text-warm-900">
+            <p className="text-xl font-semibold text-warm-900 dark:text-cream-100">
               {stats?.totalGenerations || 0}
             </p>
-            <p className="text-xs text-warm-500">generated</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">generated</p>
           </div>
-          <div className="h-8 w-px bg-warm-200" />
+          <div className="h-8 w-px bg-warm-200 dark:bg-charcoal-700" />
           <div className="text-right">
             <p className="text-xl font-semibold text-lime-600">
               {stats?.savedContent || 0}
             </p>
-            <p className="text-xs text-warm-500">saved</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">saved</p>
           </div>
         </div>
       </div>
@@ -147,37 +147,37 @@ export default function CreativeStudioPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         {/* Gallery */}
         <Link href="/creative-studio/gallery" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center shrink-0">
-              <Layers className="w-4 h-4 text-warm-600" />
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
+            <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center shrink-0">
+              <Layers className="w-4 h-4 text-warm-600 dark:text-cream-400" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-medium text-warm-900">Gallery</h3>
-              <p className="text-xs text-warm-500 truncate">Browse saved</p>
+              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Gallery</h3>
+              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Browse saved</p>
             </div>
           </div>
         </Link>
 
         {/* Brand Kit */}
         <Link href="/creative-studio/brand-kit" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-plum-400 transition-colors flex items-center gap-3">
+          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-plum-400 transition-colors flex items-center gap-3">
             <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center shrink-0">
               <ImageIcon className="w-4 h-4 text-plum-600" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-medium text-warm-900">Brand Kit</h3>
-              <p className="text-xs text-warm-500 truncate">Colors & logo</p>
+              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Brand Kit</h3>
+              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Colors & logo</p>
             </div>
           </div>
         </Link>
 
         {/* This Month Stats */}
-        <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 flex items-center gap-3">
+        <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 flex items-center gap-3">
           <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center shrink-0">
             <Calendar className="w-4 h-4 text-ocean-600" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-medium text-warm-900">This Month</h3>
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">This Month</h3>
             <p className="text-xs text-ocean-600 font-medium">
               {stats?.thisMonthGenerations || 0} created
             </p>
@@ -185,12 +185,12 @@ export default function CreativeStudioPage() {
         </div>
 
         {/* Food Photos Stats */}
-        <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 flex items-center gap-3">
+        <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 flex items-center gap-3">
           <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
             <TrendingUp className="w-4 h-4 text-amber-600" />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm font-medium text-warm-900">Food Photos</h3>
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Food Photos</h3>
             <p className="text-xs text-amber-600 font-medium">
               {stats?.generationsByMode?.food_photo || 0} generated
             </p>
@@ -199,9 +199,9 @@ export default function CreativeStudioPage() {
       </div>
 
       {/* Recent Content Section */}
-      <div className="rounded-sm bg-white border border-warm-200">
-        <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
-          <h2 className="text-base font-display font-medium text-warm-900">
+      <div className="rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700">
+        <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
+          <h2 className="text-base font-display font-medium text-warm-900 dark:text-cream-100">
             Recent Creations
           </h2>
           {hasContent && (
@@ -222,9 +222,9 @@ export default function CreativeStudioPage() {
                 href={`/creative-studio/gallery?view=${item.id}`}
                 className="group"
               >
-                <div className="rounded-sm border border-warm-200 overflow-hidden hover:border-lime-400 transition-colors">
+                <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden hover:border-lime-400 transition-colors">
                   {/* Image Preview */}
-                  <div className="aspect-square bg-warm-100 relative">
+                  <div className="aspect-square bg-warm-100 dark:bg-charcoal-800 relative">
                     {item.hasImage ? (
                       <img
                         src={`/api/creative-studio/content/image?id=${item.id}`}
@@ -234,7 +234,7 @@ export default function CreativeStudioPage() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-warm-300" />
+                        <ImageIcon className="w-8 h-8 text-warm-300 dark:text-charcoal-600" />
                       </div>
                     )}
                     {/* Mode Badge */}
@@ -251,10 +251,10 @@ export default function CreativeStudioPage() {
 
                   {/* Info */}
                   <div className="p-2.5">
-                    <p className="text-xs text-warm-900 font-medium truncate">
+                    <p className="text-xs text-warm-900 dark:text-cream-100 font-medium truncate">
                       {item.headline || item.outputFormat || 'Untitled'}
                     </p>
-                    <p className="text-[10px] text-warm-500 mt-0.5">
+                    <p className="text-[10px] text-warm-500 dark:text-cream-400 mt-0.5">
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -273,7 +273,7 @@ export default function CreativeStudioPage() {
             <h3 className="text-sm font-medium text-warm-900 mb-1">
               Start creating professional content
             </h3>
-            <p className="text-xs text-warm-500 mb-4 max-w-sm mx-auto">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4 max-w-sm mx-auto">
               Transform your dish photos or generate branded graphics in seconds.
             </p>
             <Link href="/creative-studio/generate">

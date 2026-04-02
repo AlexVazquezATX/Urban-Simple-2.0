@@ -77,7 +77,7 @@ export function RoleSwitcher({ currentRole, isSuperAdmin }: RoleSwitcherProps) {
 
   return (
     <div className="flex items-center gap-2">
-      <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
+      <Badge variant="outline" className="bg-lime-100 text-lime-800 border-lime-300 dark:bg-lime-900/30 dark:text-lime-300 dark:border-lime-700">
         Dev Mode
       </Badge>
       <Select
@@ -85,7 +85,7 @@ export function RoleSwitcher({ currentRole, isSuperAdmin }: RoleSwitcherProps) {
         onValueChange={handleRoleSwitch}
         disabled={isLoading}
       >
-        <SelectTrigger className="w-[180px] bg-white border-purple-300">
+        <SelectTrigger className="w-[180px] bg-white border-lime-300 dark:bg-charcoal-900 dark:border-lime-700">
           <div className="flex items-center gap-2">
             <CurrentIcon className="h-4 w-4" />
             <SelectValue />

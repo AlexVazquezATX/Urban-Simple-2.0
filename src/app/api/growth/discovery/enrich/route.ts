@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey)
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
 
     // Build prompt for AI enrichment
     const prompt = `You are a business research assistant. Analyze the following business information and provide insights:
