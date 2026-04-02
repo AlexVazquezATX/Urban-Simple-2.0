@@ -25,10 +25,10 @@ export function StylePresetSelector({ value, onChange, disabled }: StylePresetSe
   }
 
   return (
-    <div className="bg-white rounded-sm border border-warm-200 p-5">
+    <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
       <div className="flex items-center justify-between mb-3">
-        <label className="text-sm font-medium text-warm-900">Style</label>
-        <span className="text-xs text-warm-400">Optional</span>
+        <label className="text-sm font-medium text-warm-900 dark:text-cream-100">Style</label>
+        <span className="text-xs text-warm-400 dark:text-cream-400">Optional</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
         {STYLE_PRESET_LIST.filter((p) => p.id !== 'custom').map((preset) => {
@@ -43,7 +43,7 @@ export function StylePresetSelector({ value, onChange, disabled }: StylePresetSe
                 'flex items-start gap-2.5 p-3 rounded-sm border text-left transition-all',
                 isSelected
                   ? 'border-lime-500 bg-lime-50/50 ring-1 ring-lime-500/30'
-                  : 'border-warm-200 hover:border-warm-300',
+                  : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
@@ -56,10 +56,10 @@ export function StylePresetSelector({ value, onChange, disabled }: StylePresetSe
                 />
               )}
               <div>
-                <p className={cn('text-sm font-medium', isSelected ? 'text-lime-700' : 'text-warm-800')}>
+                <p className={cn('text-sm font-medium', isSelected ? 'text-lime-700' : 'text-warm-800 dark:text-cream-200')}>
                   {preset.title}
                 </p>
-                <p className="text-xs text-warm-500 mt-0.5">{preset.description}</p>
+                <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{preset.description}</p>
               </div>
             </button>
           )
@@ -72,20 +72,20 @@ export function StylePresetSelector({ value, onChange, disabled }: StylePresetSe
         className={cn(
           'w-full mt-2 p-3 rounded-sm border text-center transition-all',
           value === 'custom'
-            ? 'border-warm-700 bg-warm-50 ring-1 ring-warm-700/20'
-            : 'border-dashed border-warm-300 hover:border-warm-400',
+            ? 'border-warm-700 bg-warm-50 dark:bg-charcoal-800 ring-1 ring-warm-700/20'
+            : 'border-dashed border-warm-300 dark:border-charcoal-600 hover:border-warm-400',
           disabled && 'opacity-50 cursor-not-allowed'
         )}
       >
-        <p className={cn('text-sm font-medium', value === 'custom' ? 'text-warm-800' : 'text-warm-500')}>
+        <p className={cn('text-sm font-medium', value === 'custom' ? 'text-warm-800 dark:text-cream-200' : 'text-warm-500 dark:text-cream-400')}>
           Custom / Prompt Only
         </p>
-        <p className="text-xs text-warm-400 mt-0.5">
+        <p className="text-xs text-warm-400 dark:text-cream-400 mt-0.5">
           Your prompt is the only instruction sent to the AI
         </p>
       </button>
       {!value && (
-        <p className="text-xs text-warm-400 mt-2 text-center">
+        <p className="text-xs text-warm-400 dark:text-cream-400 mt-2 text-center">
           No style selected — your prompt controls everything
         </p>
       )}

@@ -597,7 +597,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                             emailSuggestions.map((suggestion, idx) => (
                               <div
                                 key={idx}
-                                className="p-3 border-b last:border-0 hover:bg-warm-50"
+                                className="p-3 border-b last:border-0 hover:bg-warm-50 dark:hover:bg-charcoal-800"
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex-1 min-w-0">
@@ -1014,13 +1014,13 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                 )}
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   {discoveryData.externalData?.googleRating && (
-                    <div className="bg-white rounded-lg p-3">
+                    <div className="bg-white dark:bg-charcoal-900 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground">Google Rating</p>
                       <p className="font-semibold">{discoveryData.externalData.googleRating}/5 ({discoveryData.externalData.googleReviewCount} reviews)</p>
                     </div>
                   )}
                   {discoveryData.externalData?.yelpRating && (
-                    <div className="bg-white rounded-lg p-3">
+                    <div className="bg-white dark:bg-charcoal-900 rounded-lg p-3">
                       <p className="text-xs text-muted-foreground">Yelp Rating</p>
                       <p className="font-semibold">{discoveryData.externalData.yelpRating}/5 ({discoveryData.externalData.yelpReviewCount} reviews)</p>
                     </div>

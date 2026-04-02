@@ -46,7 +46,7 @@ export function OutputFormatSelector({
               'p-3 rounded-sm border transition-all text-left',
               isSelected
                 ? 'border-lime-500 bg-lime-50 ring-1 ring-lime-500'
-                : 'border-warm-200 hover:border-warm-300 bg-white',
+                : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
@@ -54,7 +54,7 @@ export function OutputFormatSelector({
               <div
                 className={cn(
                   'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
-                  isSelected ? 'bg-lime-100 text-lime-600' : 'bg-warm-100 text-warm-500'
+                  isSelected ? 'bg-lime-100 text-lime-600' : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -63,12 +63,12 @@ export function OutputFormatSelector({
                 <h4
                   className={cn(
                     'text-sm font-medium truncate',
-                    isSelected ? 'text-lime-700' : 'text-warm-900'
+                    isSelected ? 'text-lime-700' : 'text-warm-900 dark:text-cream-100'
                   )}
                 >
                   {format.title}
                 </h4>
-                <p className="text-xs text-warm-500 truncate">{format.aspectRatio}</p>
+                <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{format.aspectRatio}</p>
               </div>
             </div>
           </button>

@@ -276,22 +276,22 @@ function GenerateContent() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
+      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-4">
             <Link
               href="/creative-studio"
-              className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+              className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-warm-600" />
+              <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
             </Link>
             <div>
-              <h1 className="text-lg font-display font-medium text-warm-900">
+              <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
                 Create Content
               </h1>
-              <p className="text-sm text-warm-500">
+              <p className="text-sm text-warm-500 dark:text-cream-400">
                 {mode === 'food_photo'
                   ? 'Transform your dish photos'
                   : 'Generate branded graphics'}
@@ -310,8 +310,8 @@ function GenerateContent() {
           {/* Left Column - Form */}
           <div className="space-y-5">
             {/* Mode Selector */}
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <Label className="text-warm-700 mb-3 block">Generation Mode</Label>
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Generation Mode</Label>
               <ModeSelector
                 value={mode}
                 onChange={setMode}
@@ -323,8 +323,8 @@ function GenerateContent() {
             {mode === 'food_photo' && (
               <>
                 {/* Photo Upload */}
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
-                  <Label className="text-warm-700 mb-3 block">Dish Photo</Label>
+                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+                  <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Dish Photo</Label>
                   <DishPhotoUpload
                     value={dishPhoto}
                     onImageSelect={setDishPhoto}
@@ -334,8 +334,8 @@ function GenerateContent() {
                 </div>
 
                 {/* Output Format */}
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
-                  <Label className="text-warm-700 mb-3 block">Output Format</Label>
+                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+                  <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Output Format</Label>
                   <OutputFormatSelector
                     value={outputFormat}
                     onChange={setOutputFormat}
@@ -344,9 +344,9 @@ function GenerateContent() {
                 </div>
 
                 {/* Optional Details */}
-                <div className="bg-white rounded-sm border border-warm-200 p-4 space-y-4">
+                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4 space-y-4">
                   <div>
-                    <Label htmlFor="description" className="text-warm-700 mb-2 block">
+                    <Label htmlFor="description" className="text-warm-700 dark:text-cream-300 mb-2 block">
                       Dish Description (optional)
                     </Label>
                     <Input
@@ -360,7 +360,7 @@ function GenerateContent() {
                   </div>
 
                   <div>
-                    <Label htmlFor="cuisine" className="text-warm-700 mb-2 block">
+                    <Label htmlFor="cuisine" className="text-warm-700 dark:text-cream-300 mb-2 block">
                       Cuisine Type (optional)
                     </Label>
                     <select
@@ -368,7 +368,7 @@ function GenerateContent() {
                       value={cuisineType}
                       onChange={(e) => setCuisineType(e.target.value)}
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
+                      className="w-full px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-warm-900 dark:text-cream-100 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
                     >
                       <option value="">Select cuisine...</option>
                       {CUISINE_TYPES.map((c) => (
@@ -380,7 +380,7 @@ function GenerateContent() {
                   </div>
 
                   <div>
-                    <Label htmlFor="style" className="text-warm-700 mb-2 block">
+                    <Label htmlFor="style" className="text-warm-700 dark:text-cream-300 mb-2 block">
                       Style (optional)
                     </Label>
                     <select
@@ -388,7 +388,7 @@ function GenerateContent() {
                       value={foodStyle}
                       onChange={(e) => setFoodStyle(e.target.value)}
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
+                      className="w-full px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-warm-900 dark:text-cream-100 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
                     >
                       <option value="">Select style...</option>
                       {STYLE_PREFERENCES.map((s) => (
@@ -401,34 +401,34 @@ function GenerateContent() {
                 </div>
 
                 {/* Style Reference (Collapsible) */}
-                <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
+                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setShowStyleReference(!showStyleReference)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-warm-50 transition-colors"
+                    className="w-full p-4 flex items-center justify-between text-left hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors"
                     disabled={isGenerating}
                   >
                     <div>
-                      <span className="text-sm font-medium text-warm-700">Style Reference</span>
-                      <p className="text-xs text-warm-500 mt-0.5">
+                      <span className="text-sm font-medium text-warm-700 dark:text-cream-300">Style Reference</span>
+                      <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                         Match the look of another dish photo (optional)
                       </p>
                     </div>
                     {showStyleReference ? (
-                      <ChevronDown className="w-4 h-4 text-warm-500" />
+                      <ChevronDown className="w-4 h-4 text-warm-500 dark:text-cream-400" />
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-warm-500" />
+                      <ChevronRight className="w-4 h-4 text-warm-500 dark:text-cream-400" />
                     )}
                   </button>
 
                   {showStyleReference && (
-                    <div className="px-4 pb-4 border-t border-warm-100">
-                      <p className="text-xs text-warm-500 mt-3 mb-3">
+                    <div className="px-4 pb-4 border-t border-warm-100 dark:border-charcoal-700">
+                      <p className="text-xs text-warm-500 dark:text-cream-400 mt-3 mb-3">
                         Upload a previously generated image to match its plates, background, and styling.
                       </p>
 
                       {styleReference ? (
-                        <div className="relative aspect-video rounded-sm overflow-hidden bg-warm-100">
+                        <div className="relative aspect-video rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800">
                           <img
                             src={styleReference}
                             alt="Style reference"
@@ -444,10 +444,10 @@ function GenerateContent() {
                         </div>
                       ) : (
                         <label className="block cursor-pointer">
-                          <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
-                            <ImageIcon className="w-8 h-8 text-warm-400 mb-2" />
-                            <span className="text-sm text-warm-600">Upload reference image</span>
-                            <span className="text-xs text-warm-400 mt-1">JPG, PNG</span>
+                          <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-700 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800 flex flex-col items-center justify-center transition-colors">
+                            <ImageIcon className="w-8 h-8 text-warm-400 dark:text-cream-400 mb-2" />
+                            <span className="text-sm text-warm-600 dark:text-cream-400">Upload reference image</span>
+                            <span className="text-xs text-warm-400 dark:text-cream-400 mt-1">JPG, PNG</span>
                           </div>
                           <input
                             type="file"
@@ -476,8 +476,8 @@ function GenerateContent() {
             {mode === 'branded_post' && (
               <>
               {/* Source Image Picker */}
-              <div className="bg-white rounded-sm border border-warm-200 p-4">
-                <Label className="text-warm-700 mb-3 block">Source Image</Label>
+              <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+                <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Source Image</Label>
                 <ImageSourcePicker
                   value={sourceImage}
                   onChange={setSourceImage}
@@ -487,7 +487,7 @@ function GenerateContent() {
                 />
               </div>
 
-              <div className="bg-white rounded-sm border border-warm-200 p-4">
+              <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
                 <BrandedPostForm
                   postType={postType}
                   onPostTypeChange={setPostType}
@@ -506,9 +506,9 @@ function GenerateContent() {
 
               {/* Logo Picker - only show if brand kit has at least one logo */}
               {brandKit && (brandKit.logoUrl || brandKit.iconUrl) && (
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
+                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <Stamp className="w-4 h-4 text-warm-500" />
+                    <Stamp className="w-4 h-4 text-warm-500 dark:text-cream-400" />
                     <Label className="text-warm-700">Include Logo</Label>
                   </div>
                   <div className="flex gap-2">
@@ -520,16 +520,16 @@ function GenerateContent() {
                         'flex-1 p-2.5 rounded-sm border text-center transition-all',
                         logoChoice === 'none'
                           ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                          : 'border-warm-200 hover:border-warm-300 bg-white',
+                          : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                         isGenerating && 'opacity-50 cursor-not-allowed'
                       )}
                     >
-                      <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-1.5">
+                      <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-1.5">
                         <X className="w-4 h-4 text-warm-400" />
                       </div>
                       <p className={cn(
                         'text-xs font-medium',
-                        logoChoice === 'none' ? 'text-plum-700' : 'text-warm-600'
+                        logoChoice === 'none' ? 'text-plum-700' : 'text-warm-600 dark:text-cream-400'
                       )}>
                         No Logo
                       </p>
@@ -544,11 +544,11 @@ function GenerateContent() {
                           'flex-1 p-2.5 rounded-sm border text-center transition-all',
                           logoChoice === 'logo'
                             ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                            : 'border-warm-200 hover:border-warm-300 bg-white',
+                            : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                           isGenerating && 'opacity-50 cursor-not-allowed'
                         )}
                       >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
+                        <div className="w-10 h-10 rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-100 dark:border-charcoal-700 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
                           <img
                             src={brandKit.logoUrl}
                             alt="Logo"
@@ -557,7 +557,7 @@ function GenerateContent() {
                         </div>
                         <p className={cn(
                           'text-xs font-medium',
-                          logoChoice === 'logo' ? 'text-plum-700' : 'text-warm-600'
+                          logoChoice === 'logo' ? 'text-plum-700' : 'text-warm-600 dark:text-cream-400'
                         )}>
                           Full Logo
                         </p>
@@ -573,11 +573,11 @@ function GenerateContent() {
                           'flex-1 p-2.5 rounded-sm border text-center transition-all',
                           logoChoice === 'icon'
                             ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                            : 'border-warm-200 hover:border-warm-300 bg-white',
+                            : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                           isGenerating && 'opacity-50 cursor-not-allowed'
                         )}
                       >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
+                        <div className="w-10 h-10 rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-100 dark:border-charcoal-700 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
                           <img
                             src={brandKit.iconUrl}
                             alt="Icon"
@@ -586,7 +586,7 @@ function GenerateContent() {
                         </div>
                         <p className={cn(
                           'text-xs font-medium',
-                          logoChoice === 'icon' ? 'text-plum-700' : 'text-warm-600'
+                          logoChoice === 'icon' ? 'text-plum-700' : 'text-warm-600 dark:text-cream-400'
                         )}>
                           Icon
                         </p>
@@ -599,8 +599,8 @@ function GenerateContent() {
             )}
 
             {/* Additional Instructions (both modes) */}
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <Label htmlFor="instructions" className="text-warm-700 mb-2 block">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <Label htmlFor="instructions" className="text-warm-700 dark:text-cream-300 mb-2 block">
                 Additional Directions (optional)
               </Label>
               <textarea
@@ -616,7 +616,7 @@ function GenerateContent() {
                 rows={3}
                 className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 resize-none disabled:opacity-50"
               />
-              <p className="text-xs text-warm-500 mt-1.5">
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1.5">
                 Guide the AI with specific details about what you want in the final image
               </p>
             </div>

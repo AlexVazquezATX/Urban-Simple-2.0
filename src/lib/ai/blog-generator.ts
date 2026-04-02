@@ -29,7 +29,7 @@ function getGenAI(): GoogleGenerativeAI {
  */
 async function searchAustinContent(query: string): Promise<string> {
   const model = getGenAI().getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.5-flash',
   })
 
   const searchPrompt = `You are a research assistant. Search for and compile REAL, CURRENT information about: "${query}"
@@ -172,7 +172,7 @@ export interface BlogPostContent {
 export async function generateBlogIdeas(
   params: BlogGenerationParams
 ): Promise<BlogIdea[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   // Step 1: Research real Austin content
   console.log('Researching real Austin content...')
@@ -263,7 +263,7 @@ export async function generateBlogPost(
   params: BlogGenerationParams,
   selectedIdea: BlogIdea
 ): Promise<BlogPostContent> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   // Research specific details about the topic
   console.log('Researching specific details for article...')
@@ -474,7 +474,7 @@ export async function expandContent(
   content: string,
   focusArea?: string
 ): Promise<string> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `You are an expert content editor. Expand and enrich the following blog content while maintaining its voice and style.
 
@@ -511,7 +511,7 @@ Return ONLY the expanded HTML content, nothing else.`
  * AI Enhancement: Improve writing quality
  */
 export async function improveWriting(content: string): Promise<string> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `You are an expert content editor specializing in engaging, magazine-style blog writing.
 
@@ -555,7 +555,7 @@ export async function regenerateSection(
   sectionToReplace: string,
   instructions: string
 ): Promise<string> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `You are an expert content editor. Rewrite a specific section of this blog post.
 
@@ -596,7 +596,7 @@ export async function generateTitleOptions(
   content: string,
   currentTitle: string
 ): Promise<string[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `You are an expert headline writer for a local Austin magazine blog.
 
@@ -635,7 +635,7 @@ Example: ["Title 1", "Title 2", "Title 3", "Title 4", "Title 5"]`
  * AI Enhancement: Update excerpt
  */
 export async function generateExcerpt(content: string, title: string): Promise<string> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `Write a compelling 2-3 sentence excerpt/preview for this blog post.
 
@@ -669,7 +669,7 @@ Return ONLY the excerpt text, nothing else.`
  * AI Enhancement: Generate meta description
  */
 export async function generateMetaDescription(content: string, title: string): Promise<string> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
 
   const prompt = `Write an SEO-optimized meta description for this blog post.
 

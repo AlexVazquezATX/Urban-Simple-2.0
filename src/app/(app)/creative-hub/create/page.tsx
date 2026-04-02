@@ -403,7 +403,7 @@ export default function ContentStudioPage() {
           hashtags,
           imageId,
           isAiGenerated: true,
-          aiModel: 'gemini-2.0-flash-exp',
+          aiModel: 'gemini-2.5-flash',
           aiGenerationData: {
             topicId,
             topicContext,
@@ -470,7 +470,7 @@ export default function ContentStudioPage() {
     (generatedImage?.imageBase64 ? `data:image/png;base64,${generatedImage.imageBase64}` : undefined)
 
   return (
-    <div className="min-h-screen bg-charcoal-50">
+    <div className="min-h-screen bg-charcoal-50 dark:bg-charcoal-950">
       {/* Batch Progress Bar */}
       {isBatchMode && (
         <div className="bg-gradient-to-r from-ocean-500 to-ocean-600 px-6 py-2">
@@ -519,7 +519,7 @@ export default function ContentStudioPage() {
       )}
 
       {/* Header */}
-      <div className="bg-white border-b border-charcoal-100 px-6 py-4">
+      <div className="bg-white dark:bg-charcoal-900 border-b border-charcoal-100 dark:border-charcoal-700 px-6 py-4">
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <Button variant="ghost" onClick={isBatchMode ? handleExitBatch : () => router.push('/creative-hub/inspiration')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -583,7 +583,7 @@ export default function ContentStudioPage() {
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                         isActive
                           ? `${config.color} text-white`
-                          : 'bg-charcoal-100 text-charcoal-600 hover:bg-charcoal-200'
+                          : 'bg-charcoal-100 text-charcoal-600 dark:text-cream-400 hover:bg-charcoal-200 dark:hover:bg-charcoal-700'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -597,9 +597,9 @@ export default function ContentStudioPage() {
             {/* Content Fields */}
             <Card className="p-5 space-y-5 relative">
               {generatingContent && (
-                <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg">
+                <div className="absolute inset-0 bg-white/80 dark:bg-charcoal-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg">
                   <Loader2 className="w-8 h-8 text-ocean-500 animate-spin mb-3" />
-                  <p className="text-sm font-medium text-charcoal-600">Generating content ideas...</p>
+                  <p className="text-sm font-medium text-charcoal-600 dark:text-cream-400">Generating content ideas...</p>
                 </div>
               )}
               {/* Content Generation Options */}
@@ -641,11 +641,11 @@ export default function ContentStudioPage() {
                               className={`text-left px-3 py-2 rounded-lg border text-sm transition-all ${
                                 contentTone === option.value
                                   ? 'border-ocean-500 bg-ocean-50 text-ocean-700'
-                                  : 'border-charcoal-200 bg-white hover:border-charcoal-300'
+                                  : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
                               }`}
                             >
                               <div className="font-medium">{option.label}</div>
-                              <div className="text-xs text-charcoal-500">{option.description}</div>
+                              <div className="text-xs text-charcoal-500 dark:text-cream-400">{option.description}</div>
                             </button>
                           ))}
                         </div>
@@ -662,7 +662,7 @@ export default function ContentStudioPage() {
                               className={`text-center px-2 py-2 rounded-lg border text-sm transition-all ${
                                 contentLength === option.value
                                   ? 'border-ocean-500 bg-ocean-50 text-ocean-700'
-                                  : 'border-charcoal-200 bg-white hover:border-charcoal-300'
+                                  : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
                               }`}
                             >
                               <div className="font-medium text-xs">{option.label}</div>
@@ -685,7 +685,7 @@ export default function ContentStudioPage() {
                                 className={`px-2 py-1.5 rounded border text-xs transition-all ${
                                   emojiUsage === option.value
                                     ? 'border-ocean-500 bg-ocean-50 text-ocean-700 font-medium'
-                                    : 'border-charcoal-200 bg-white hover:border-charcoal-300'
+                                    : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
                                 }`}
                               >
                                 {option.label}
@@ -705,7 +705,7 @@ export default function ContentStudioPage() {
                                 className={`px-2 py-1.5 rounded border text-xs transition-all ${
                                   ctaStyle === option.value
                                     ? 'border-ocean-500 bg-ocean-50 text-ocean-700 font-medium'
-                                    : 'border-charcoal-200 bg-white hover:border-charcoal-300'
+                                    : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
                                 }`}
                               >
                                 {option.label}
@@ -916,9 +916,9 @@ export default function ContentStudioPage() {
               <Label className="text-sm font-semibold mb-4 block">Live Preview</Label>
 
               {/* Platform Preview Frame */}
-              <div className="bg-white border border-charcoal-200 rounded-xl overflow-hidden">
+              <div className="bg-white dark:bg-charcoal-900 border border-charcoal-200 dark:border-charcoal-700 rounded-xl overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center gap-3 p-4 border-b border-charcoal-100">
+                <div className="flex items-center gap-3 p-4 border-b border-charcoal-100 dark:border-charcoal-700">
                   <div className={`w-10 h-10 rounded-full ${PLATFORMS[platform].color} flex items-center justify-center`}>
                     <PlatformIcon className="w-5 h-5 text-white" />
                   </div>
@@ -931,7 +931,7 @@ export default function ContentStudioPage() {
                 {/* Content */}
                 <div className="p-4">
                   {headline && (
-                    <h3 className="font-semibold text-charcoal-900 mb-2">{headline}</h3>
+                    <h3 className="font-semibold text-charcoal-900 dark:text-cream-100 mb-2">{headline}</h3>
                   )}
                   {primaryText ? (
                     <p className="text-sm text-charcoal-700 whitespace-pre-wrap mb-3">
@@ -961,7 +961,7 @@ export default function ContentStudioPage() {
                 )}
 
                 {/* Engagement Bar */}
-                <div className="px-4 py-3 border-t border-charcoal-100 flex items-center gap-6 text-charcoal-400 text-sm">
+                <div className="px-4 py-3 border-t border-charcoal-100 dark:border-charcoal-700 flex items-center gap-6 text-charcoal-400 dark:text-cream-400 text-sm">
                   <span>❤️ Like</span>
                   <span>💬 Comment</span>
                   <span>↗️ Share</span>

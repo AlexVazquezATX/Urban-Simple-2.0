@@ -158,9 +158,9 @@ export default function StudioClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
+      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -168,10 +168,10 @@ export default function StudioClientsPage() {
                 <Users className="w-5 h-5 text-lime-700" />
               </div>
               <div>
-                <h1 className="text-lg font-display font-medium text-warm-900">
+                <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
                   Studio Clients
                 </h1>
-                <p className="text-sm text-warm-500">
+                <p className="text-sm text-warm-500 dark:text-cream-400">
                   Manage Creative Studio subscriptions
                 </p>
               </div>
@@ -193,50 +193,50 @@ export default function StudioClientsPage() {
       {stats && (
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <div className="flex items-center gap-2 text-warm-500 text-xs mb-1">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
                 <Users className="w-3.5 h-3.5" />
                 Total Clients
               </div>
-              <p className="text-2xl font-display font-medium text-warm-900">
+              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
                 {stats.totalClients}
               </p>
-              <p className="text-xs text-warm-500 mt-1">
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
                 {stats.activeClients} active
               </p>
             </div>
 
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <div className="flex items-center gap-2 text-warm-500 text-xs mb-1">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
                 <Sparkles className="w-3.5 h-3.5" />
                 Generations
               </div>
-              <p className="text-2xl font-display font-medium text-warm-900">
+              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
                 {stats.totalGenerationsThisMonth}
               </p>
-              <p className="text-xs text-warm-500 mt-1">This month</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">This month</p>
             </div>
 
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <div className="flex items-center gap-2 text-warm-500 text-xs mb-1">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
                 <UserPlus className="w-3.5 h-3.5" />
                 New Signups
               </div>
-              <p className="text-2xl font-display font-medium text-warm-900">
+              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
                 {stats.recentSignups}
               </p>
-              <p className="text-xs text-warm-500 mt-1">Last 7 days</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Last 7 days</p>
             </div>
 
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <div className="flex items-center gap-2 text-warm-500 text-xs mb-1">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
                 <DollarSign className="w-3.5 h-3.5" />
                 MRR
               </div>
-              <p className="text-2xl font-display font-medium text-warm-900">
+              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
                 ${stats.revenueThisMonth.toLocaleString()}
               </p>
-              <p className="text-xs text-warm-500 mt-1">
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
                 {stats.trialClients} on trial
               </p>
             </div>
@@ -264,7 +264,7 @@ export default function StudioClientsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 text-sm rounded-sm border border-warm-300 bg-white"
+              className="px-3 py-2 text-sm rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100"
             >
               <option value="">All Status</option>
               <option value="active">Active</option>
@@ -276,7 +276,7 @@ export default function StudioClientsPage() {
             <select
               value={filterPlan}
               onChange={(e) => setFilterPlan(e.target.value)}
-              className="px-3 py-2 text-sm rounded-sm border border-warm-300 bg-white"
+              className="px-3 py-2 text-sm rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100"
             >
               <option value="">All Plans</option>
               <option value="TRIAL">Trial</option>
@@ -295,38 +295,38 @@ export default function StudioClientsPage() {
             <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
           </div>
         ) : clients.length > 0 ? (
-          <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden">
             <table className="w-full">
-              <thead className="bg-warm-50 border-b border-warm-200">
+              <thead className="bg-warm-50 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700">
                 <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
                     Client
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
                     Plan
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
                     Usage
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
                     Last Active
                   </th>
                   <th className="px-4 py-3"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-warm-100">
+              <tbody className="divide-y divide-warm-100 dark:divide-charcoal-700">
                 {clients.map((client) => (
-                  <tr key={client.id} className="hover:bg-warm-50 transition-colors">
+                  <tr key={client.id} className="hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-sm bg-warm-100 flex items-center justify-center">
                           <Building2 className="w-4 h-4 text-warm-500" />
                         </div>
                         <div>
-                          <p className="font-medium text-warm-900">
+                          <p className="font-medium text-warm-900 dark:text-cream-100">
                             {client.restaurantName || client.companyName}
                           </p>
                           {client.restaurantName && (
@@ -383,7 +383,7 @@ export default function StudioClientsPage() {
                         {client.status}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-sm text-warm-600">
+                    <td className="px-4 py-3 text-sm text-warm-600 dark:text-cream-400">
                       {client.lastActivity
                         ? new Date(client.lastActivity).toLocaleDateString('en-US', {
                             month: 'short',
@@ -404,12 +404,12 @@ export default function StudioClientsPage() {
             </table>
           </div>
         ) : (
-          <div className="text-center py-20 bg-white rounded-sm border border-warm-200">
+          <div className="text-center py-20 bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700">
             <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
               <Users className="w-7 h-7 text-warm-400" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">No clients yet</h3>
-            <p className="text-sm text-warm-500 mb-4">
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">No clients yet</h3>
+            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
               Add your first Creative Studio client
             </p>
             <Button

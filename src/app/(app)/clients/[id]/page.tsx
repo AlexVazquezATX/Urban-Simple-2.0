@@ -126,13 +126,13 @@ async function ClientDetail({ id }: { id: string }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Link href="/clients">
-            <Button variant="ghost" size="icon" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+            <Button variant="ghost" size="icon" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">{serializedClient.name}</h1>
-            <p className="text-sm text-warm-500">
+            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">{serializedClient.name}</h1>
+            <p className="text-sm text-warm-500 dark:text-cream-400">
               {serializedClient.legalName && `${serializedClient.legalName} • `}
               {serializedClient.branch.name}
               {serializedClient.locations.length > 0 && (
@@ -145,7 +145,7 @@ async function ClientDetail({ id }: { id: string }) {
           </div>
         </div>
         <ClientForm client={serializedClient}>
-          <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">Edit Client</Button>
+          <Button variant="outline" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">Edit Client</Button>
         </ClientForm>
       </div>
 

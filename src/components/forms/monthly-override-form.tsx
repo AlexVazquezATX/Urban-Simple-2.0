@@ -250,7 +250,7 @@ export function MonthlyOverrideForm({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md rounded-sm border-warm-200">
         <DialogHeader>
-          <DialogTitle className="font-display font-medium text-warm-900">
+          <DialogTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
             {isEditing ? 'Edit Monthly Override' : 'Add Monthly Override'}
             {isEditing && !override && (
               <span className="text-xs font-normal text-orange-600 ml-2">
@@ -259,7 +259,7 @@ export function MonthlyOverrideForm({
             )}
           </DialogTitle>
           {facilityName && (
-            <DialogDescription className="text-warm-500">
+            <DialogDescription className="text-warm-500 dark:text-cream-400">
               {facilityName}
             </DialogDescription>
           )}
@@ -274,14 +274,14 @@ export function MonthlyOverrideForm({
                 name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700">Year</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300">Year</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         type="number"
                         min="2020"
                         max="2035"
-                        className="rounded-sm border-warm-200"
+                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       />
                     </FormControl>
                     <FormMessage />
@@ -293,17 +293,17 @@ export function MonthlyOverrideForm({
                 name="month"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700">Month</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300">Month</FormLabel>
                     <Select
                       onValueChange={(v) => field.onChange(parseInt(v))}
                       defaultValue={String(field.value)}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm border-warm-200">
+                      <SelectContent className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         {MONTH_NAMES.map((name, i) => (
                           <SelectItem key={i + 1} value={String(i + 1)}>
                             {name}
@@ -323,17 +323,17 @@ export function MonthlyOverrideForm({
               name="overrideStatus"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Override Status</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Override Status</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger className="rounded-sm border-warm-200">
+                      <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         <SelectValue placeholder="No status override" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="rounded-sm border-warm-200">
+                    <SelectContent className="rounded-sm border-warm-200 dark:border-charcoal-700">
                       <SelectItem value="ACTIVE">Active</SelectItem>
                       <SelectItem value="PAUSED">Paused</SelectItem>
                       <SelectItem value="CANCELLED">Cancelled</SelectItem>
@@ -350,7 +350,7 @@ export function MonthlyOverrideForm({
               name="overrideRate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Override Rate ($)</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Override Rate ($)</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -359,7 +359,7 @@ export function MonthlyOverrideForm({
                       step="0.01"
                       min="0"
                       placeholder="Leave blank to use default rate"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -373,7 +373,7 @@ export function MonthlyOverrideForm({
               name="overrideFrequency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Override Frequency (per week)</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Override Frequency (per week)</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
@@ -382,7 +382,7 @@ export function MonthlyOverrideForm({
                       min="0"
                       max="7"
                       placeholder="Leave blank to use default"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -396,7 +396,7 @@ export function MonthlyOverrideForm({
               name="overrideDaysOfWeek"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Override Days of Week</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Override Days of Week</FormLabel>
                   <div className="flex gap-2 flex-wrap">
                     {DAY_OPTIONS.map((day) => {
                       const isChecked = field.value.includes(day.value)
@@ -406,7 +406,7 @@ export function MonthlyOverrideForm({
                           className={`flex items-center justify-center w-12 h-8 rounded-sm border text-xs font-medium cursor-pointer transition-colors ${
                             isChecked
                               ? 'bg-orange-100 border-orange-300 text-orange-700'
-                              : 'bg-white border-warm-200 text-warm-500 hover:border-warm-300'
+                              : 'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400 hover:border-warm-300'
                           }`}
                         >
                           <input
@@ -432,8 +432,8 @@ export function MonthlyOverrideForm({
 
             {/* Date-Range Pause */}
             <div className="space-y-2">
-              <p className="text-sm font-medium text-warm-700">Partial-Month Pause</p>
-              <p className="text-xs text-warm-500">
+              <p className="text-sm font-medium text-warm-700 dark:text-cream-300">Partial-Month Pause</p>
+              <p className="text-xs text-warm-500 dark:text-cream-400">
                 Pause service for specific days this month. The monthly rate will be pro-rated based on scheduled working days.
               </p>
               <div className="grid grid-cols-2 gap-4">
@@ -442,7 +442,7 @@ export function MonthlyOverrideForm({
                   name="pauseStartDay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-warm-700 text-xs">Pause From (day)</FormLabel>
+                      <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Pause From (day)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -451,7 +451,7 @@ export function MonthlyOverrideForm({
                           min="1"
                           max="31"
                           placeholder="e.g. 16"
-                          className="rounded-sm border-warm-200"
+                          className="rounded-sm border-warm-200 dark:border-charcoal-700"
                         />
                       </FormControl>
                       <FormMessage />
@@ -463,7 +463,7 @@ export function MonthlyOverrideForm({
                   name="pauseEndDay"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-warm-700 text-xs">Pause Through (day)</FormLabel>
+                      <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Pause Through (day)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -472,7 +472,7 @@ export function MonthlyOverrideForm({
                           min="1"
                           max="31"
                           placeholder="e.g. 27"
-                          className="rounded-sm border-warm-200"
+                          className="rounded-sm border-warm-200 dark:border-charcoal-700"
                         />
                       </FormControl>
                       <FormMessage />
@@ -488,13 +488,13 @@ export function MonthlyOverrideForm({
               name="overrideNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Notes</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       placeholder="Reason for this override..."
                       rows={2}
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -523,7 +523,7 @@ export function MonthlyOverrideForm({
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
-                  className="rounded-sm border-warm-200 text-warm-700"
+                  className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
                 >
                   Cancel
                 </Button>

@@ -202,8 +202,8 @@ export default function ImageLibraryPage() {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-charcoal-900">Image Library</h1>
-            <p className="text-charcoal-600">Generate and manage marketing images</p>
+            <h1 className="text-2xl font-bold text-charcoal-900 dark:text-cream-100">Image Library</h1>
+            <p className="text-charcoal-600 dark:text-cream-400">Generate and manage marketing images</p>
           </div>
         </div>
 
@@ -353,10 +353,10 @@ export default function ImageLibraryPage() {
         <Card>
           <CardContent className="py-12 text-center">
             <ImageIcon className="w-12 h-12 mx-auto text-charcoal-300 mb-4" />
-            <h3 className="text-lg font-semibold text-charcoal-900 mb-2">
+            <h3 className="text-lg font-semibold text-charcoal-900 dark:text-cream-100 mb-2">
               No images yet
             </h3>
-            <p className="text-charcoal-600 mb-4">
+            <p className="text-charcoal-600 dark:text-cream-400 mb-4">
               Generate AI images or upload your own
             </p>
             <Link href="/creative-hub/generate">
@@ -372,7 +372,7 @@ export default function ImageLibraryPage() {
           {images.map((image, index) => (
             <div
               key={image.id}
-              className="group overflow-hidden cursor-pointer rounded-lg border bg-white shadow-sm hover:shadow-md transition-shadow"
+              className="group overflow-hidden cursor-pointer rounded-lg border bg-white dark:bg-charcoal-900 dark:border-charcoal-700 shadow-sm hover:shadow-md transition-shadow"
               onClick={() => openLightbox(index)}
             >
               <div className="aspect-square relative">
@@ -416,8 +416,8 @@ export default function ImageLibraryPage() {
                 </div>
               </div>
               <div className="px-3 py-2.5">
-                <p className="text-sm font-medium text-warm-900 truncate">{image.name}</p>
-                <p className="text-xs text-warm-500 capitalize">
+                <p className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">{image.name}</p>
+                <p className="text-xs text-warm-500 dark:text-cream-400 capitalize">
                   {image.imageType.replace('_', ' ')} • {image.aspectRatio}
                 </p>
                 {image.photoCredit && (

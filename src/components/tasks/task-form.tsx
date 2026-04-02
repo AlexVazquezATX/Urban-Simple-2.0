@@ -247,11 +247,11 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
       />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white dark:bg-charcoal-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-charcoal-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-charcoal-100 dark:border-charcoal-700">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-charcoal-900">
+            <h2 className="text-lg font-semibold text-charcoal-900 dark:text-cream-100">
               {task ? 'Edit Task' : 'New Task'}
             </h2>
             <button
@@ -261,7 +261,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                 'p-1.5 rounded-lg transition-all',
                 isStarred
                   ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
-                  : 'text-charcoal-400 hover:text-amber-400 hover:bg-charcoal-100'
+                  : 'text-charcoal-400 hover:text-amber-400 hover:bg-charcoal-100 dark:hover:bg-charcoal-800'
               )}
               title={isStarred ? 'Unstar task' : 'Star task'}
             >
@@ -270,9 +270,9 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-charcoal-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-charcoal-100 dark:hover:bg-charcoal-800 transition-colors"
           >
-            <X className="w-5 h-5 text-charcoal-500" />
+            <X className="w-5 h-5 text-charcoal-500 dark:text-cream-400" />
           </button>
         </div>
 
@@ -388,7 +388,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                   {goals.length > 0 && (
                     <>
                       {goals.filter(g => g.period === 'weekly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500">
+                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500 dark:text-cream-400">
                           This Week
                         </div>
                       )}
@@ -404,7 +404,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                         </SelectItem>
                       ))}
                       {goals.filter(g => g.period === 'monthly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500">
+                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500 dark:text-cream-400">
                           This Month
                         </div>
                       )}
@@ -469,7 +469,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                     'px-3 py-1 rounded-full text-sm border transition-colors',
                     selectedTagIds.includes(tag.id)
                       ? 'border-transparent'
-                      : 'border-charcoal-200 bg-white text-charcoal-600'
+                      : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-300'
                   )}
                   style={selectedTagIds.includes(tag.id) ? {
                     backgroundColor: `${tag.color}20`,
@@ -508,7 +508,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-charcoal-100">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-charcoal-100 dark:border-charcoal-700">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>

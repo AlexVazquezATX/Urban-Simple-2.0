@@ -275,26 +275,26 @@ export function MessagesHub() {
       case 'instagram_dm':
         return <Instagram className="h-3.5 w-3.5 text-plum-500" />
       default:
-        return <Mail className="h-3.5 w-3.5 text-warm-500" />
+        return <Mail className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
     }
   }
 
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-warm-400" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-warm-400 dark:text-cream-500" />
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by prospect, contact, subject, or campaign..."
-          className="pl-8 h-8 text-xs rounded-sm border-warm-200"
+          className="pl-8 h-8 text-xs rounded-sm border-warm-200 dark:border-charcoal-700"
         />
       </div>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-4 rounded-none bg-white border-b border-warm-200 p-0 h-auto">
+        <TabsList className="grid w-full grid-cols-4 rounded-none bg-white dark:bg-charcoal-900 border-b border-warm-200 dark:border-charcoal-700 p-0 h-auto">
           <TabsTrigger
             value="pending"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50"
+            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
           >
             <Inbox className="h-3.5 w-3.5 text-ocean-500" />
             <span>Pending Review</span>
@@ -306,7 +306,7 @@ export function MessagesHub() {
           </TabsTrigger>
           <TabsTrigger
             value="approved"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50"
+            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
           >
             <CheckCircle2 className="h-3.5 w-3.5 text-lime-600" />
             <span>Ready to Send</span>
@@ -318,7 +318,7 @@ export function MessagesHub() {
           </TabsTrigger>
           <TabsTrigger
             value="scheduled"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50"
+            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
           >
             <Clock className="h-3.5 w-3.5 text-amber-500" />
             <span>Scheduled</span>
@@ -330,12 +330,12 @@ export function MessagesHub() {
           </TabsTrigger>
           <TabsTrigger
             value="sent"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:text-warm-900 text-warm-500 hover:bg-warm-50"
+            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
           >
             <Send className="h-3.5 w-3.5 text-plum-500" />
             <span>Sent</span>
             {sentMessages.length > 0 && (
-              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-warm-200 text-warm-600">
+              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-warm-200 dark:bg-charcoal-700 text-warm-600 dark:text-cream-400">
                 {sentMessages.length}
               </Badge>
             )}
@@ -349,17 +349,17 @@ export function MessagesHub() {
 
         {/* ── Ready to Send ── */}
         <TabsContent value="approved" className="mt-4">
-          <Card className="rounded-sm border-warm-200">
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
             <CardContent className="p-4">
               {loadingApproved ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-warm-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
                 </div>
               ) : approvedMessages.length === 0 ? (
                 <div className="text-center py-10">
-                  <CheckCircle2 className="h-10 w-10 mx-auto text-warm-300 mb-3" />
-                  <p className="text-sm text-warm-500">No approved messages waiting to send</p>
-                  <p className="text-xs text-warm-400 mt-1">
+                  <CheckCircle2 className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
+                  <p className="text-sm text-warm-500 dark:text-cream-400">No approved messages waiting to send</p>
+                  <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
                     Approve messages in the Pending Review tab first
                   </p>
                 </div>
@@ -367,10 +367,10 @@ export function MessagesHub() {
                 <>
                   <div className="flex items-center justify-between mb-4">
                     <div>
-                      <p className="text-sm text-warm-600">
+                      <p className="text-sm text-warm-600 dark:text-cream-400">
                         {filteredApproved.length}{searchQuery ? ` of ${approvedMessages.length}` : ''} message{filteredApproved.length !== 1 ? 's' : ''} ready
                       </p>
-                      <p className="text-[10px] text-warm-400">
+                      <p className="text-[10px] text-warm-400 dark:text-cream-500">
                         Your email signature will be appended automatically
                       </p>
                     </div>
@@ -418,23 +418,23 @@ export function MessagesHub() {
 
         {/* ── Scheduled Follow-ups ── */}
         <TabsContent value="scheduled" className="mt-4">
-          <Card className="rounded-sm border-warm-200">
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
             <CardContent className="p-4">
               {loadingScheduled ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-warm-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
                 </div>
               ) : scheduledMessages.length === 0 ? (
                 <div className="text-center py-10">
-                  <Clock className="h-10 w-10 mx-auto text-warm-300 mb-3" />
-                  <p className="text-sm text-warm-500">No scheduled follow-ups</p>
-                  <p className="text-xs text-warm-400 mt-1">
+                  <Clock className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
+                  <p className="text-sm text-warm-500 dark:text-cream-400">No scheduled follow-ups</p>
+                  <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
                     Follow-up steps from sequences will appear here before their send date
                   </p>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-warm-600 mb-4">
+                  <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">
                     {filteredScheduled.length}{searchQuery ? ` of ${scheduledMessages.length}` : ''} follow-up{filteredScheduled.length !== 1 ? 's' : ''} scheduled
                   </p>
                   <div className="space-y-1.5">
@@ -459,23 +459,23 @@ export function MessagesHub() {
 
         {/* ── Sent History ── */}
         <TabsContent value="sent" className="mt-4">
-          <Card className="rounded-sm border-warm-200">
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
             <CardContent className="p-4">
               {loadingSent ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-warm-400" />
+                  <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
                 </div>
               ) : sentMessages.length === 0 ? (
                 <div className="text-center py-10">
-                  <Send className="h-10 w-10 mx-auto text-warm-300 mb-3" />
-                  <p className="text-sm text-warm-500">No sent messages yet</p>
-                  <p className="text-xs text-warm-400 mt-1">
+                  <Send className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
+                  <p className="text-sm text-warm-500 dark:text-cream-400">No sent messages yet</p>
+                  <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
                     Messages will appear here after you send them
                   </p>
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-warm-600 mb-4">
+                  <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">
                     {filteredSent.length}{searchQuery ? ` of ${sentMessages.length}` : ''} message{filteredSent.length !== 1 ? 's' : ''} sent
                   </p>
                   <div className="space-y-1.5">
@@ -531,13 +531,13 @@ function MessageCard({
   const effectiveEmail = emailOverride?.trim() || msg.contactEmail || ''
 
   return (
-    <div className={`rounded-sm border border-warm-200 p-3 transition-colors ${borderHover}`}>
+    <div className={`rounded-sm border border-warm-200 dark:border-charcoal-700 p-3 transition-colors ${borderHover}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
             <Link
               href={`/growth/prospects/${msg.prospectId}`}
-              className="text-sm font-medium text-warm-900 hover:text-ocean-600"
+              className="text-sm font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600"
             >
               {msg.prospectName}
             </Link>
@@ -554,7 +554,7 @@ function MessageCard({
             )}
             <Badge
               variant="outline"
-              className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 flex items-center gap-1"
+              className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 flex items-center gap-1"
             >
               {getChannelIcon(msg.channel)}
               {msg.channel}
@@ -584,7 +584,7 @@ function MessageCard({
               </Badge>
             )}
             {mode === 'sent' && !msg.bouncedAt && !msg.deliveredAt && !msg.openedAt && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">
+              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
                 Sent
               </Badge>
             )}
@@ -593,7 +593,7 @@ function MessageCard({
           {/* Editable To field for approved messages */}
           {mode === 'approved' && msg.channel === 'email' ? (
             <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-xs text-warm-500 shrink-0">To:</span>
+              <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">To:</span>
               {editingEmail ? (
                 <Input
                   type="email"
@@ -604,22 +604,22 @@ function MessageCard({
                     if (e.key === 'Enter') setEditingEmail(false)
                   }}
                   autoFocus
-                  className="h-6 text-xs rounded-sm border-warm-300 px-1.5 py-0 max-w-xs"
+                  className="h-6 text-xs rounded-sm border-warm-300 dark:border-charcoal-700 px-1.5 py-0 max-w-xs"
                   placeholder="recipient@example.com"
                 />
               ) : (
                 <button
                   onClick={() => setEditingEmail(true)}
-                  className="flex items-center gap-1 text-xs text-warm-700 hover:text-ocean-600 group"
+                  className="flex items-center gap-1 text-xs text-warm-700 dark:text-cream-300 hover:text-ocean-600 group"
                 >
                   <span>{effectiveEmail || 'No email — click to add'}</span>
-                  <Pencil className="h-2.5 w-2.5 text-warm-400 group-hover:text-ocean-500" />
+                  <Pencil className="h-2.5 w-2.5 text-warm-400 dark:text-cream-500 group-hover:text-ocean-500" />
                 </button>
               )}
             </div>
           ) : (
             (msg.contactName || msg.contactEmail) && (
-              <p className="text-xs text-warm-500">
+              <p className="text-xs text-warm-500 dark:text-cream-400">
                 To:{' '}
                 {msg.contactName
                   ? `${msg.contactName}${msg.contactEmail ? ` <${msg.contactEmail}>` : ''}`
@@ -677,7 +677,7 @@ function MessageCard({
             </div>
           )}
           {mode === 'sent' && msg.sentAt && (
-            <span className="text-[10px] text-warm-400 whitespace-nowrap">
+            <span className="text-[10px] text-warm-400 dark:text-cream-500 whitespace-nowrap">
               {format(new Date(msg.sentAt), 'MMM d, h:mm a')}
             </span>
           )}
@@ -687,10 +687,10 @@ function MessageCard({
       {/* Subject */}
       {msg.subject && (
         <div className="mt-2">
-          <p className="text-[10px] font-medium text-warm-500 uppercase tracking-wide mb-0.5">
+          <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-0.5">
             Subject
           </p>
-          <p className="text-sm text-warm-900">{msg.subject}</p>
+          <p className="text-sm text-warm-900 dark:text-cream-100">{msg.subject}</p>
         </div>
       )}
 
@@ -698,33 +698,33 @@ function MessageCard({
       <div className="mt-2">
         <button
           onClick={onToggleExpand}
-          className="flex items-center gap-1 text-[10px] font-medium text-warm-500 uppercase tracking-wide hover:text-warm-700"
+          className="flex items-center gap-1 text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide hover:text-warm-700 dark:hover:text-cream-300"
         >
           {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           Message
         </button>
         {expanded && (
-          <div className="mt-1 text-sm whitespace-pre-wrap bg-warm-50 p-2.5 rounded-sm border border-warm-200 text-warm-700">
+          <div className="mt-1 text-sm whitespace-pre-wrap bg-warm-50 dark:bg-charcoal-800 p-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300">
             {msg.body}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-warm-100">
+      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
         {mode === 'approved' && msg.approvedAt && (
-          <span className="text-[10px] text-warm-400">
+          <span className="text-[10px] text-warm-400 dark:text-cream-500">
             Approved {format(new Date(msg.approvedAt), 'MMM d, h:mm a')}
           </span>
         )}
         {mode === 'scheduled' && msg.campaignName && (
-          <span className="text-[10px] text-warm-400">Sequence: {msg.campaignName}</span>
+          <span className="text-[10px] text-warm-400 dark:text-cream-500">Sequence: {msg.campaignName}</span>
         )}
         {mode === 'sent' && msg.campaignName && (
-          <span className="text-[10px] text-warm-400">Campaign: {msg.campaignName}</span>
+          <span className="text-[10px] text-warm-400 dark:text-cream-500">Campaign: {msg.campaignName}</span>
         )}
         {mode === 'sent' && (msg.deliveredAt || msg.openedAt || msg.clickedAt) && (
-          <span className="text-[10px] text-warm-400 ml-auto flex items-center gap-2">
+          <span className="text-[10px] text-warm-400 dark:text-cream-500 ml-auto flex items-center gap-2">
             {msg.deliveredAt && (
               <span title={`Delivered ${format(new Date(msg.deliveredAt), 'MMM d, h:mm a')}`}>
                 <CheckCircle className="h-2.5 w-2.5 inline mr-0.5 text-lime-500" />

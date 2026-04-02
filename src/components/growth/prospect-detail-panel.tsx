@@ -678,19 +678,19 @@ export function ProspectDetailPanel({
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      prospect: 'bg-warm-100 text-warm-600 border-warm-200',
-      new: 'bg-warm-100 text-warm-700 border-warm-200',
+      prospect: 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700',
+      new: 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700',
       researching: 'bg-plum-100 text-plum-700 border-plum-200',
       contacted: 'bg-ocean-100 text-ocean-700 border-ocean-200',
       engaged: 'bg-ocean-100 text-ocean-700 border-ocean-200',
       qualified: 'bg-lime-100 text-lime-700 border-lime-200',
-      proposal_sent: 'bg-warm-200 text-warm-700 border-warm-300',
+      proposal_sent: 'bg-warm-200 dark:bg-charcoal-700 text-warm-700 dark:text-cream-300 border-warm-300 dark:border-charcoal-700',
       won: 'bg-lime-100 text-lime-700 border-lime-200',
       lost: 'bg-red-100 text-red-700 border-red-200',
       nurturing: 'bg-plum-100 text-plum-700 border-plum-200',
     }
     return (
-      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 text-warm-700 border-warm-200'}`}>
+      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700'}`}>
         {status.replace('_', ' ')}
       </Badge>
     )
@@ -712,14 +712,14 @@ export function ProspectDetailPanel({
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full max-w-xl bg-white shadow-xl border-l border-warm-200 flex flex-col transition-transform duration-200 ease-out',
+          'relative w-full max-w-xl bg-white dark:bg-charcoal-900 shadow-xl border-l border-warm-200 dark:border-charcoal-700 flex flex-col transition-transform duration-200 ease-out',
           isVisible ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 bg-warm-50">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
           <div className="flex-1 min-w-0">
-            <h2 className="font-display text-lg font-medium text-warm-900 truncate">
+            <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100 truncate">
               {formData.companyName}
             </h2>
             <div className="flex items-center gap-2 mt-1">
@@ -753,18 +753,18 @@ export function ProspectDetailPanel({
             </Button>
             <button
               onClick={handleClose}
-              className="p-2 rounded-sm hover:bg-warm-200 transition-colors"
+              className="p-2 rounded-sm hover:bg-warm-200 dark:bg-charcoal-700 transition-colors"
             >
-              <X className="w-5 h-5 text-warm-500" />
+              <X className="w-5 h-5 text-warm-500 dark:text-cream-400" />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="mx-5 mt-3 rounded-sm bg-warm-100 p-1 justify-start">
-            <TabsTrigger value="details" className="text-xs rounded-sm data-[state=active]:bg-white">Details</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs rounded-sm data-[state=active]:bg-white">Activity</TabsTrigger>
+          <TabsList className="mx-5 mt-3 rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1 justify-start">
+            <TabsTrigger value="details" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Details</TabsTrigger>
+            <TabsTrigger value="activity" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Activity</TabsTrigger>
           </TabsList>
 
           {/* Details Tab */}
@@ -772,7 +772,7 @@ export function ProspectDetailPanel({
             {/* Contact Information */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-warm-700 flex items-center gap-2">
+                <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
                   <Users className="h-4 w-4" />
                   Contacts
                   {contacts.length > 1 && (
@@ -794,7 +794,7 @@ export function ProspectDetailPanel({
 
               {/* Contact Selector - shows when multiple contacts */}
               {contacts.length > 1 && (
-                <div className="flex flex-wrap gap-1.5 p-2 bg-warm-50 rounded-sm border border-warm-200">
+                <div className="flex flex-wrap gap-1.5 p-2 bg-warm-50 dark:bg-charcoal-800 rounded-sm border border-warm-200 dark:border-charcoal-700">
                   {contacts.map((contact, index) => (
                     <div
                       key={contact.id}
@@ -802,7 +802,7 @@ export function ProspectDetailPanel({
                         'group flex items-center gap-1.5 px-2 py-1 rounded-sm text-xs cursor-pointer transition-colors',
                         selectedContactIndex === index
                           ? 'bg-bronze-500 text-white'
-                          : 'bg-white border border-warm-200 hover:border-bronze-300 text-warm-700'
+                          : 'bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 hover:border-bronze-300 text-warm-700 dark:text-cream-300'
                       )}
                       onClick={() => handleSwitchContact(index)}
                     >
@@ -814,7 +814,7 @@ export function ProspectDetailPanel({
                       {contact.email && (
                         <Mail className={cn(
                           'h-3 w-3',
-                          selectedContactIndex === index ? 'text-white/70' : 'text-warm-400'
+                          selectedContactIndex === index ? 'text-white/70' : 'text-warm-400 dark:text-cream-500'
                         )} />
                       )}
                       {contacts.length > 1 && selectedContactIndex === index && (
@@ -823,7 +823,7 @@ export function ProspectDetailPanel({
                             e.stopPropagation()
                             handleDeleteContact(index)
                           }}
-                          className="ml-0.5 p-0.5 rounded hover:bg-white/20"
+                          className="ml-0.5 p-0.5 rounded hover:bg-white dark:bg-charcoal-900/20"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -911,7 +911,7 @@ export function ProspectDetailPanel({
                           </div>
                         ) : (
                           emailSuggestions.map((suggestion, idx) => (
-                            <div key={idx} className="p-2.5 border-b last:border-0 hover:bg-warm-50">
+                            <div key={idx} className="p-2.5 border-b last:border-0 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-xs truncate">{suggestion.email}</p>
@@ -1002,8 +1002,8 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Location & Business */}
-            <div className="space-y-4 pt-4 border-t border-warm-200">
-              <h3 className="text-sm font-medium text-warm-700 flex items-center gap-2">
+            <div className="space-y-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
+              <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 Location & Business
               </h3>
@@ -1094,8 +1094,8 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Pipeline & Status */}
-            <div className="space-y-4 pt-4 border-t border-warm-200">
-              <h3 className="text-sm font-medium text-warm-700 flex items-center gap-2">
+            <div className="space-y-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
+              <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
                 Pipeline & Status
               </h3>
@@ -1166,13 +1166,13 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Do Not Contact */}
-            <div className="pt-4 border-t border-warm-200">
-              <div className={`flex items-center justify-between rounded-sm p-3 ${prospect?.doNotContact ? 'bg-red-50 border border-red-200' : 'bg-warm-50 border border-warm-200'}`}>
+            <div className="pt-4 border-t border-warm-200 dark:border-charcoal-700">
+              <div className={`flex items-center justify-between rounded-sm p-3 ${prospect?.doNotContact ? 'bg-red-50 border border-red-200' : 'bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700'}`}>
                 <div className="flex items-center gap-2">
-                  <Ban className={`h-4 w-4 ${prospect?.doNotContact ? 'text-red-500' : 'text-warm-400'}`} />
+                  <Ban className={`h-4 w-4 ${prospect?.doNotContact ? 'text-red-500' : 'text-warm-400 dark:text-cream-500'}`} />
                   <div>
-                    <p className={`text-sm font-medium ${prospect?.doNotContact ? 'text-red-700' : 'text-warm-700'}`}>Do Not Contact</p>
-                    <p className="text-[10px] text-warm-500">
+                    <p className={`text-sm font-medium ${prospect?.doNotContact ? 'text-red-700' : 'text-warm-700 dark:text-cream-300'}`}>Do Not Contact</p>
+                    <p className="text-[10px] text-warm-500 dark:text-cream-400">
                       {prospect?.doNotContact ? 'All outreach is blocked. Pending messages were cancelled.' : 'Toggle on to block all outreach to this prospect.'}
                     </p>
                   </div>
@@ -1202,8 +1202,8 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Social Media */}
-            <div className="space-y-4 pt-4 border-t border-warm-200">
-              <h3 className="text-sm font-medium text-warm-700 flex items-center gap-2">
+            <div className="space-y-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
+              <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
                 <Globe className="h-4 w-4" />
                 Social Media
               </h3>
@@ -1264,7 +1264,7 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Notes */}
-            <div className="space-y-2 pt-4 border-t border-warm-200">
+            <div className="space-y-2 pt-4 border-t border-warm-200 dark:border-charcoal-700">
               <Label className="text-xs">Notes</Label>
               <Textarea
                 value={formData.notes}
@@ -1324,7 +1324,7 @@ export function ProspectDetailPanel({
         </Tabs>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 bg-white">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -1371,7 +1371,7 @@ export function ProspectDetailPanel({
               variant="outline"
               size="sm"
               onClick={handleClose}
-              className="rounded-sm border-warm-200"
+              className="rounded-sm border-warm-200 dark:border-charcoal-700"
             >
               Cancel
             </Button>

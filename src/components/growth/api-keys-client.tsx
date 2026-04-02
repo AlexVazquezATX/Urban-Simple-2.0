@@ -166,12 +166,12 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-4xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">API Keys</h1>
-          <p className="text-sm text-warm-500 mt-0.5">Manage API keys for external agent access to the Growth API</p>
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">API Keys</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">Manage API keys for external agent access to the Growth API</p>
         </div>
         <Dialog open={createOpen} onOpenChange={(open) => {
           setCreateOpen(open)
@@ -199,7 +199,7 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
                 </DialogHeader>
                 <div className="space-y-4 py-2">
                   <div>
-                    <label className="text-sm font-medium text-warm-700">Name</label>
+                    <label className="text-sm font-medium text-warm-700 dark:text-cream-300">Name</label>
                     <Input
                       value={newKeyName}
                       onChange={(e) => setNewKeyName(e.target.value)}
@@ -209,7 +209,7 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
                     />
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-warm-700">Description (optional)</label>
+                    <label className="text-sm font-medium text-warm-700 dark:text-cream-300">Description (optional)</label>
                     <Input
                       value={newKeyDescription}
                       onChange={(e) => setNewKeyDescription(e.target.value)}
@@ -274,57 +274,57 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
       </div>
 
       {/* Usage Info */}
-      <Card className="rounded-sm border-warm-200 border-l-4 border-l-ocean-500 mb-6">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500 mb-6">
         <CardContent className="p-4">
-          <p className="text-sm text-warm-700">
+          <p className="text-sm text-warm-700 dark:text-cream-300">
             <strong>Usage:</strong> Include your API key in requests as{' '}
-            <code className="bg-warm-100 px-1.5 py-0.5 rounded text-xs font-mono">
+            <code className="bg-warm-100 dark:bg-charcoal-800 px-1.5 py-0.5 rounded text-xs font-mono">
               Authorization: Bearer us_live_...
             </code>
           </p>
-          <p className="text-xs text-warm-500 mt-1">
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
             API keys grant full access to Growth endpoints (prospects, discovery, outreach, email-prospecting, pipeline) scoped to your company.
           </p>
         </CardContent>
       </Card>
 
       {/* Keys Table */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardContent className="p-0">
           {apiKeys.length === 0 ? (
             <div className="p-12 text-center">
-              <Key className="h-10 w-10 text-warm-300 mx-auto mb-3" />
-              <p className="text-sm text-warm-500">No API keys yet</p>
-              <p className="text-xs text-warm-400 mt-1">Create one to start using the Growth API programmatically</p>
+              <Key className="h-10 w-10 text-warm-300 dark:text-charcoal-500 mx-auto mb-3" />
+              <p className="text-sm text-warm-500 dark:text-cream-400">No API keys yet</p>
+              <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">Create one to start using the Growth API programmatically</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-warm-100 border-b border-warm-200">
+                <thead className="bg-warm-100 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700">
                   <tr>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Name</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Key</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Status</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Last Used</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Usage</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Created</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Name</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Key</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Status</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Last Used</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Usage</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Created</th>
                     <th className="w-12 p-3"></th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-warm-100">
+                <tbody className="divide-y divide-warm-100 dark:divide-charcoal-700">
                   {apiKeys.map((key) => (
-                    <tr key={key.id} className="hover:bg-warm-50 transition-colors">
+                    <tr key={key.id} className="hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors">
                       <td className="p-3">
-                        <div className="text-sm font-medium text-warm-900">{key.name}</div>
+                        <div className="text-sm font-medium text-warm-900 dark:text-cream-100">{key.name}</div>
                         {key.description && (
-                          <div className="text-xs text-warm-500 mt-0.5">{key.description}</div>
+                          <div className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{key.description}</div>
                         )}
-                        <div className="text-xs text-warm-400 mt-0.5">
+                        <div className="text-xs text-warm-400 dark:text-cream-500 mt-0.5">
                           by {key.user.firstName} {key.user.lastName}
                         </div>
                       </td>
                       <td className="p-3">
-                        <code className="text-xs font-mono text-warm-600 bg-warm-100 px-1.5 py-0.5 rounded">
+                        <code className="text-xs font-mono text-warm-600 dark:text-cream-400 bg-warm-100 dark:bg-charcoal-800 px-1.5 py-0.5 rounded">
                           {key.keyPrefix}...
                         </code>
                       </td>
@@ -338,25 +338,25 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
                             Active
                           </Badge>
                         ) : (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">
+                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
                             Inactive
                           </Badge>
                         )}
                       </td>
-                      <td className="p-3 text-xs text-warm-600">
+                      <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                         {formatRelative(key.lastUsedAt)}
                       </td>
-                      <td className="p-3 text-xs text-warm-600">
+                      <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                         {key.usageCount.toLocaleString()} calls
                       </td>
-                      <td className="p-3 text-xs text-warm-600">
+                      <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                         {formatDate(key.createdAt)}
                       </td>
                       <td className="p-3">
                         {key.isActive && !key.revokedAt && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 hover:text-warm-900">
+                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100">
                                 <MoreHorizontal className="h-3.5 w-3.5" />
                               </Button>
                             </DropdownMenuTrigger>

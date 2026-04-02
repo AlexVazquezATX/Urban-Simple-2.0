@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       role: 'assistant',
       content: response,
       language: detectedLanguage,
-      aiModel: 'gemini-2.0-flash-exp',
+      aiModel: 'gemini-2.5-flash',
       responseTime,
     })
 

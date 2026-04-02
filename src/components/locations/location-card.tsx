@@ -18,8 +18,8 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
     : null
 
   return (
-    <Card className="overflow-hidden rounded-sm border-warm-200 hover:border-ocean-400 hover:shadow-md transition-all p-0">
-      <div className="relative h-36 bg-gradient-to-br from-warm-100 to-warm-50 rounded-t-sm overflow-hidden">
+    <Card className="overflow-hidden rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 hover:shadow-md transition-all p-0 flex flex-col h-full">
+      <div className="relative h-36 bg-gradient-to-br from-warm-100 to-warm-50 dark:from-charcoal-800 dark:to-charcoal-900 rounded-t-sm overflow-hidden">
         {location.logoUrl ? (
           <Image
             src={location.logoUrl}
@@ -30,7 +30,7 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Building2 className="h-24 w-24 text-warm-300" />
+            <Building2 className="h-24 w-24 text-warm-300 dark:text-charcoal-600" />
           </div>
         )}
         <div className="absolute top-2 right-2 z-10">
@@ -45,17 +45,17 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
           </Badge>
         </div>
       </div>
-      <CardContent className="p-3">
-        <div className="space-y-2">
+      <CardContent className="p-3 flex flex-col flex-1">
+        <div className="flex flex-col flex-1">
           <div>
             <Link href={`/locations/${location.id}`}>
-              <h3 className="text-base font-display font-medium text-warm-900 hover:text-ocean-600 transition-colors leading-tight">
+              <h3 className="text-base font-display font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600 transition-colors leading-tight">
                 {location.name}
               </h3>
             </Link>
             {location.client && (
               <Link href={`/clients/${location.client.id}`}>
-                <div className="flex items-center gap-1 mt-0.5 text-xs text-warm-500 hover:text-ocean-600 transition-colors">
+                <div className="flex items-center gap-1 mt-0.5 text-xs text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors">
                   <Users className="h-2.5 w-2.5" />
                   <span className="truncate">{location.client.name}</span>
                 </div>
@@ -63,15 +63,15 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
             )}
           </div>
 
-          <div className="space-y-1.5 text-xs">
+          <div className="space-y-1.5 text-xs mt-2">
             {addressStr && (
-              <div className="flex items-start gap-1.5 text-warm-500">
+              <div className="flex items-start gap-1.5 text-warm-500 dark:text-cream-400">
                 <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span className="line-clamp-2">{addressStr}</span>
               </div>
             )}
             {location.checklistTemplate && (
-              <div className="flex items-center gap-1.5 text-warm-500">
+              <div className="flex items-center gap-1.5 text-warm-500 dark:text-cream-400">
                 <CheckSquare className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">
                   {location.checklistTemplate.name}
@@ -81,19 +81,22 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
           </div>
 
           {location.accessInstructions && (
-            <div className="text-[10px] text-warm-400 line-clamp-2">
+            <div className="text-[10px] text-warm-400 dark:text-cream-400 line-clamp-2 mt-2">
               {location.accessInstructions}
             </div>
           )}
 
-          <div className="flex items-center gap-1.5 pt-2 border-t border-warm-200">
+          {/* Spacer pushes buttons to bottom */}
+          <div className="flex-1 min-h-2" />
+
+          <div className="flex items-center gap-1.5 pt-2 border-t border-warm-200 dark:border-charcoal-700 mt-2">
             <Link href={`/locations/${location.id}`} className="flex-1">
-              <Button variant="outline" size="sm" className="w-full h-7 text-xs rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
+              <Button variant="outline" size="sm" className="w-full h-7 text-xs rounded-sm border-ocean-400 dark:border-ocean-600 text-ocean-600 dark:text-ocean-400 hover:bg-ocean-50 dark:hover:bg-ocean-900/30 hover:border-ocean-500">
                 View Details
               </Button>
             </Link>
             <LocationForm clientId={clientId} location={location}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+              <Button variant="ghost" size="sm" className="h-7 text-xs rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                 Edit
               </Button>
             </LocationForm>

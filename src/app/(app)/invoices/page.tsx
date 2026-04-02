@@ -66,8 +66,8 @@ async function InvoicesList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Invoices</h1>
-          <p className="text-sm text-warm-500">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Invoices</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400">
             Manage invoices and track payments
           </p>
         </div>
@@ -80,20 +80,20 @@ async function InvoicesList() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Total Invoices</CardTitle>
-            <FileText className="h-4 w-4 text-warm-400" />
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Total Invoices</CardTitle>
+            <FileText className="h-4 w-4 text-warm-400 dark:text-cream-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900">{invoices.length}</div>
-            <p className="text-xs text-warm-500">All time</p>
+            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">{invoices.length}</div>
+            <p className="text-xs text-warm-500 dark:text-cream-400">All time</p>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Outstanding</CardTitle>
-            <FileText className="h-4 w-4 text-warm-400" />
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Outstanding</CardTitle>
+            <FileText className="h-4 w-4 text-warm-400 dark:text-cream-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-display font-medium text-yellow-600">
@@ -102,13 +102,13 @@ async function InvoicesList() {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">Unpaid invoices</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">Unpaid invoices</p>
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700">Overdue</CardTitle>
-            <FileText className="h-4 w-4 text-warm-400" />
+            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Overdue</CardTitle>
+            <FileText className="h-4 w-4 text-warm-400 dark:text-cream-400" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-display font-medium text-red-600">
@@ -117,25 +117,25 @@ async function InvoicesList() {
                 maximumFractionDigits: 2,
               })}
             </div>
-            <p className="text-xs text-warm-500">Past due</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400">Past due</p>
           </CardContent>
         </Card>
       </div>
 
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900">All Invoices</CardTitle>
-          <CardDescription className="text-warm-500">
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">All Invoices</CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">
             {invoices.length} {invoices.length === 1 ? 'invoice' : 'invoices'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {invoices.length === 0 ? (
-            <div className="text-center py-12 text-warm-500">
-              <FileText className="mx-auto h-12 w-12 mb-4 text-warm-400" />
+            <div className="text-center py-12 text-warm-500 dark:text-cream-400">
+              <FileText className="mx-auto h-12 w-12 mb-4 text-warm-400 dark:text-cream-400" />
               <p>No invoices yet</p>
               <GenerateInvoicesDialog>
-                <Button variant="outline" className="mt-4 rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
+                <Button variant="outline" className="mt-4 rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400">
                   Generate Invoices from Agreements
                 </Button>
               </GenerateInvoicesDialog>
@@ -143,15 +143,15 @@ async function InvoicesList() {
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Invoice #</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Client</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Issue Date</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Due Date</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Amount</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Balance</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
+                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Invoice #</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Issue Date</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Due Date</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Amount</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Balance</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -163,8 +163,8 @@ async function InvoicesList() {
                     Number(invoice.balanceDue) > 0
 
                   return (
-                    <TableRow key={invoice.id} className="border-warm-200 hover:bg-warm-50">
-                      <TableCell className="font-medium text-warm-900">
+                    <TableRow key={invoice.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
+                      <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                         <Link
                           href={`/app/invoices/${invoice.id}`}
                           className="hover:text-ocean-600 transition-colors"
@@ -172,22 +172,22 @@ async function InvoicesList() {
                           {invoice.invoiceNumber}
                         </Link>
                       </TableCell>
-                      <TableCell className="text-warm-600">{invoice.client.name}</TableCell>
-                      <TableCell className="text-warm-600">
+                      <TableCell className="text-warm-600 dark:text-cream-400">{invoice.client.name}</TableCell>
+                      <TableCell className="text-warm-600 dark:text-cream-400">
                         {new Date(invoice.issueDate).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
-                        <span className={isOverdue ? 'text-red-600' : 'text-warm-600'}>
+                        <span className={isOverdue ? 'text-red-600' : 'text-warm-600 dark:text-cream-400'}>
                           {new Date(invoice.dueDate).toLocaleDateString()}
                         </span>
                       </TableCell>
-                      <TableCell className="text-warm-900 font-medium">
+                      <TableCell className="text-warm-900 dark:text-cream-100 font-medium">
                         ${Number(invoice.totalAmount).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </TableCell>
-                      <TableCell className="text-warm-900 font-medium">
+                      <TableCell className="text-warm-900 dark:text-cream-100 font-medium">
                         ${Number(invoice.balanceDue).toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -199,7 +199,7 @@ async function InvoicesList() {
                             invoice.status === 'paid'
                               ? 'bg-lime-100 text-lime-700 border-lime-200'
                               : invoice.status === 'draft'
-                                ? 'bg-warm-100 text-warm-600 border-warm-200'
+                                ? 'bg-warm-100 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700'
                                 : isOverdue
                                   ? 'bg-red-100 text-red-700 border-red-200'
                                   : 'bg-ocean-100 text-ocean-700 border-ocean-200'
@@ -218,7 +218,7 @@ async function InvoicesList() {
                             defaultEmail={invoice.client.billingEmail || ''}
                           />
                           <Link href={`/invoices/${invoice.id}`}>
-                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                               View
                             </Button>
                           </Link>

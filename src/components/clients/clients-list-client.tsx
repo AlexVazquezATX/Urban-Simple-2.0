@@ -42,9 +42,9 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
 
   if (clients.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-warm-500 mb-4">No clients yet</p>
+          <p className="text-warm-500 dark:text-cream-400 mb-4">No clients yet</p>
           <ClientForm>
             <Button variant="lime" className="rounded-sm">
               <Plus className="mr-2 h-4 w-4" />
@@ -60,8 +60,8 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Clients</h1>
-          <p className="text-sm text-warm-500">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Clients</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400">
             Manage your clients and their locations
           </p>
         </div>
@@ -76,12 +76,12 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
         </div>
       </div>
 
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="font-display font-medium text-warm-900">All Clients</CardTitle>
-              <CardDescription className="text-warm-500">
+              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">All Clients</CardTitle>
+              <CardDescription className="text-warm-500 dark:text-cream-400">
                 {clients.length} {clients.length === 1 ? 'client' : 'clients'}
               </CardDescription>
             </div>
@@ -91,23 +91,23 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
           {viewMode === 'table' ? (
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 hover:bg-transparent">
-                  <TableHead className="w-16 text-xs font-medium text-warm-500 uppercase tracking-wider">Logo</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Name</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Branch</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Billing Email</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Locations</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Payment Terms</TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 uppercase tracking-wider">Actions</TableHead>
+                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                  <TableHead className="w-16 text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Logo</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Name</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Branch</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Billing Email</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Locations</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Payment Terms</TableHead>
+                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client: any) => (
-                  <TableRow key={client.id} className="border-warm-200 hover:bg-warm-50">
+                  <TableRow key={client.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                     <TableCell>
                       {client.logoUrl ? (
-                        <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-warm-100">
+                        <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800">
                           <Image
                             src={client.logoUrl}
                             alt={client.name}
@@ -117,14 +117,14 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
                           />
                         </div>
                       ) : (
-                        <div className="h-10 w-10 rounded-sm bg-warm-100 flex items-center justify-center">
-                          <span className="text-xs font-medium text-warm-500">
+                        <div className="h-10 w-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center">
+                          <span className="text-xs font-medium text-warm-500 dark:text-cream-400">
                             {client.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                     </TableCell>
-                    <TableCell className="font-medium text-warm-900">
+                    <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                       <Link
                         href={`/clients/${client.id}`}
                         className="hover:text-ocean-600 transition-colors"
@@ -133,10 +133,10 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">{client.branch.code}</Badge>
+                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">{client.branch.code}</Badge>
                     </TableCell>
-                    <TableCell className="text-warm-600">{client.billingEmail || '-'}</TableCell>
-                    <TableCell className="text-warm-600">{client.locations.length}</TableCell>
+                    <TableCell className="text-warm-600 dark:text-cream-400">{client.billingEmail || '-'}</TableCell>
+                    <TableCell className="text-warm-600 dark:text-cream-400">{client.locations.length}</TableCell>
                     <TableCell>
                       <Badge
                         variant={client.status === 'active' ? 'default' : 'secondary'}
@@ -149,10 +149,10 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
                         {client.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-warm-600">{client.paymentTerms}</TableCell>
+                    <TableCell className="text-warm-600 dark:text-cream-400">{client.paymentTerms}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/clients/${client.id}`}>
-                        <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+                        <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                           View
                         </Button>
                       </Link>

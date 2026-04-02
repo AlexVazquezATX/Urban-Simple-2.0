@@ -155,10 +155,10 @@ export function BulkSender() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900">Bulk Outreach</CardTitle>
-          <CardDescription className="text-xs text-warm-500">
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Bulk Outreach</CardTitle>
+          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
             Send personalized messages to multiple prospects at once
           </CardDescription>
         </CardHeader>
@@ -166,9 +166,9 @@ export function BulkSender() {
           {/* Filters */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label className="text-xs font-medium text-warm-700">Filter by Status</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Filter by Status</Label>
               <Select value={filters.status} onValueChange={(v) => setFilters({ ...filters, status: v })}>
-                <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-sm">
@@ -181,9 +181,9 @@ export function BulkSender() {
               </Select>
             </div>
             <div>
-              <Label className="text-xs font-medium text-warm-700">Filter by Business Type</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Filter by Business Type</Label>
               <Select value={filters.businessType} onValueChange={(v) => setFilters({ ...filters, businessType: v })}>
-                <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="rounded-sm">
@@ -200,14 +200,14 @@ export function BulkSender() {
           {/* Prospect Selection */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <Label className="text-xs font-medium text-warm-700">Select Prospects ({selectedProspects.size} selected)</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Select Prospects ({selectedProspects.size} selected)</Label>
               <Button variant="outline" size="sm" onClick={handleSelectAll} className="rounded-sm h-7 px-2 text-xs">
                 {selectedProspects.size === filteredProspects.length ? 'Deselect All' : 'Select All'}
               </Button>
             </div>
-            <div className="border border-warm-200 rounded-sm p-3 max-h-64 overflow-y-auto">
+            <div className="border border-warm-200 dark:border-charcoal-700 rounded-sm p-3 max-h-64 overflow-y-auto">
               {filteredProspects.length === 0 ? (
-                <p className="text-sm text-warm-500 text-center py-4">
+                <p className="text-sm text-warm-500 dark:text-cream-400 text-center py-4">
                   No prospects match your filters
                 </p>
               ) : (
@@ -215,14 +215,14 @@ export function BulkSender() {
                   {filteredProspects.map((prospect) => (
                     <div
                       key={prospect.id}
-                      className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-warm-50"
+                      className="flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-warm-50 dark:hover:bg-charcoal-800"
                     >
                       <Checkbox
                         checked={selectedProspects.has(prospect.id)}
                         onCheckedChange={() => handleToggleProspect(prospect.id)}
                       />
-                      <span className="text-sm text-warm-900 flex-1">{prospect.companyName}</span>
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
+                      <span className="text-sm text-warm-900 dark:text-cream-100 flex-1">{prospect.companyName}</span>
+                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
                         {prospect.status}
                       </Badge>
                     </div>
@@ -234,9 +234,9 @@ export function BulkSender() {
 
           {/* Channel Selection */}
           <div>
-            <Label className="text-xs font-medium text-warm-700">Channel</Label>
+            <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Channel</Label>
             <Select value={channel} onValueChange={setChannel}>
-              <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+              <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -271,10 +271,10 @@ export function BulkSender() {
           {/* Template Selection */}
           {templates.length > 0 && (
             <div>
-              <Label className="text-xs font-medium text-warm-700">Use Template (Optional)</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Use Template (Optional)</Label>
               <div className="flex gap-2 mt-1">
                 <Select value={templateId} onValueChange={setTemplateId}>
-                  <SelectTrigger className="rounded-sm border-warm-200">
+                  <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                     <SelectValue placeholder="Select a template..." />
                   </SelectTrigger>
                   <SelectContent className="rounded-sm">
@@ -295,32 +295,32 @@ export function BulkSender() {
           {/* Message Composition */}
           {channel === 'email' && (
             <div>
-              <Label className="text-xs font-medium text-warm-700">Subject</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Subject</Label>
               <Input
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Email subject (use {{company_name}} for personalization)"
-                className="rounded-sm border-warm-200 mt-1"
+                className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
               />
             </div>
           )}
 
           <div>
-            <Label className="text-xs font-medium text-warm-700">Message</Label>
+            <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Message</Label>
             <Textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={10}
               placeholder={`${channel === 'email' ? 'Email' : channel.toUpperCase()} message (use {{company_name}}, {{contact_first_name}} for personalization)`}
-              className="rounded-sm border-warm-200 mt-1"
+              className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
             />
-            <p className="text-[10px] text-warm-400 mt-1">
+            <p className="text-[10px] text-warm-400 dark:text-cream-500 mt-1">
               Variables: {`{{company_name}}`}, {`{{contact_first_name}}`}, {`{{your_name}}`}
             </p>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-4 pt-4 border-t border-warm-200">
+          <div className="flex items-center gap-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
             <Button
               onClick={handleSend}
               disabled={isSending || selectedProspects.size === 0 || !body || (channel === 'email' && !subject)}
@@ -339,7 +339,7 @@ export function BulkSender() {
                 </>
               )}
             </Button>
-            <p className="text-xs text-warm-500">
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               Messages will be sent with a 30-second delay between each to avoid spam detection
             </p>
           </div>

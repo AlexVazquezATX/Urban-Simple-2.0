@@ -167,8 +167,8 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">Schedule</h1>
-          <p className="text-sm text-warm-500 mt-1">
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Schedule</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
             View manager schedules and associate assignments
           </p>
         </div>
@@ -180,14 +180,14 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
         </ShiftForm>
       </div>
 
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-base font-display font-medium text-warm-900">
+              <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">
                 Week of {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
               </CardTitle>
-              <CardDescription className="text-xs text-warm-500 mt-1">
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400 mt-1">
                 {managerShifts.length} manager{' '}
                 {managerShifts.length === 1 ? 'shift' : 'shifts'} scheduled
               </CardDescription>
@@ -227,19 +227,19 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                   key={dateKey}
                   className={`border rounded-sm flex flex-col min-h-100 ${
                     isToday
-                      ? 'bg-warm-50 border-ocean-400'
+                      ? 'bg-warm-50 dark:bg-charcoal-800 border-ocean-400'
                       : isPast
-                        ? 'bg-warm-50/50 opacity-75'
-                        : 'border-warm-200'
+                        ? 'bg-warm-50/50 dark:bg-charcoal-950/50 opacity-75'
+                        : 'border-warm-200 dark:border-charcoal-700'
                   }`}
                 >
                   {/* Day Header */}
-                  <div className="p-3 border-b border-warm-200 bg-warm-50">
+                  <div className="p-3 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
                     <div className="text-center">
-                      <div className="text-xs font-medium text-warm-500 uppercase">
+                      <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase">
                         {format(day, 'EEE')}
                       </div>
-                      <div className="text-2xl font-bold text-warm-900 mt-1">
+                      <div className="text-2xl font-bold text-warm-900 dark:text-cream-100 mt-1">
                         {format(day, 'd')}
                       </div>
                       {isToday && (
@@ -255,7 +255,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                     {/* Manager Shifts */}
                     {dayShifts.length === 0 ? (
                       <div className="text-center py-4">
-                        <p className="text-xs text-warm-500 italic">
+                        <p className="text-xs text-warm-500 dark:text-cream-400 italic">
                           No shifts
                         </p>
                         {!isPast && (
@@ -281,16 +281,16 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                           return (
                             <div
                               key={shift.id}
-                              className="p-2 bg-white border border-warm-200 rounded-sm hover:border-ocean-400 transition-colors text-xs"
+                              className="p-2 bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm hover:border-ocean-400 transition-colors text-xs"
                             >
-                              <div className="font-medium text-sm text-warm-900 mb-1">
+                              <div className="font-medium text-sm text-warm-900 dark:text-cream-100 mb-1">
                                 {shift.manager.firstName} {shift.manager.lastName}
                               </div>
-                              <div className="text-warm-500 mb-1">
+                              <div className="text-warm-500 dark:text-cream-400 mb-1">
                                 {shift.startTime} - {shift.endTime}
                               </div>
                               {locations.length > 0 && (
-                                <div className="text-warm-500 space-y-0.5">
+                                <div className="text-warm-500 dark:text-cream-400 space-y-0.5">
                                   {locations.map((loc: any) => (
                                     <div key={loc.id} className="truncate" title={`${loc.client.name} - ${loc.name}`}>
                                       • {loc.name}
@@ -311,7 +311,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                                   {shift.status}
                                 </Badge>
                                 {locations.length > 1 && (
-                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
+                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
                                     {locations.length} stops
                                   </Badge>
                                 )}
@@ -344,20 +344,20 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
 
           {/* Associate Assignments - Show below the week grid */}
           {assignments.length > 0 && (
-            <div className="mt-6 pt-6 border-t border-warm-200">
-              <h4 className="text-sm font-medium text-warm-700 mb-3">
+            <div className="mt-6 pt-6 border-t border-warm-200 dark:border-charcoal-700">
+              <h4 className="text-sm font-medium text-warm-700 dark:text-cream-300 mb-3">
                 Associate Assignments (Recurring)
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {assignments.map((assignment: any) => (
                   <div
                     key={assignment.id}
-                    className="text-sm p-2 bg-warm-50 rounded-sm border border-warm-200"
+                    className="text-sm p-2 bg-warm-50 dark:bg-charcoal-800 rounded-sm border border-warm-200 dark:border-charcoal-700"
                   >
-                    <span className="font-medium text-warm-900">
+                    <span className="font-medium text-warm-900 dark:text-cream-100">
                       {assignment.user.firstName} {assignment.user.lastName}
                     </span>
-                    <span className="text-warm-500">
+                    <span className="text-warm-500 dark:text-cream-400">
                       {' '}
                       → {assignment.location.client.name} - {assignment.location.name}
                     </span>
@@ -382,7 +382,7 @@ function ScheduleViewSkeleton() {
         </div>
         <Skeleton className="h-10 w-40 rounded-sm" />
       </div>
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4">
           <Skeleton className="h-5 w-64 mb-2 rounded-sm" />
           <Skeleton className="h-3 w-48 rounded-sm" />

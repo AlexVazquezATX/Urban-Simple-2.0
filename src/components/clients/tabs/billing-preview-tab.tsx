@@ -187,10 +187,10 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
 
   if (error) {
     return (
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
-          <p className="text-sm text-warm-600 mb-4">{error}</p>
+          <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">{error}</p>
           <Button variant="outline" size="sm" onClick={fetchPreview} className="rounded-sm">
             Retry
           </Button>
@@ -212,14 +212,14 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
             variant="outline"
             size="icon"
             onClick={goToPreviousMonth}
-            className="rounded-sm border-warm-200 h-8 w-8"
+            className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
           <div className="flex items-center gap-2">
             <Select value={String(month)} onValueChange={(v) => setMonth(parseInt(v))}>
-              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 h-8 text-sm">
+              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -230,7 +230,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
             </Select>
 
             <Select value={String(year)} onValueChange={(v) => setYear(parseInt(v))}>
-              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 h-8 text-sm">
+              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -245,7 +245,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
             variant="outline"
             size="icon"
             onClick={goToNextMonth}
-            className="rounded-sm border-warm-200 h-8 w-8"
+            className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -269,7 +269,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
               onCheckedChange={setHideTax}
               className="data-[state=checked]:bg-ocean-500 data-[state=unchecked]:bg-warm-300"
             />
-            <span className="text-xs text-warm-600">Hide Tax</span>
+            <span className="text-xs text-warm-600 dark:text-cream-400">Hide Tax</span>
           </label>
 
           <DropdownMenu>
@@ -277,7 +277,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-sm border-warm-200 text-warm-700"
+                className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
               >
                 <Download className="h-3.5 w-3.5 mr-1.5" />
                 Export
@@ -326,13 +326,13 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
       </div>
 
       {/* Line items table */}
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-display font-medium text-warm-900">
+            <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
               Facility Line Items
             </CardTitle>
-            <span className="text-xs text-warm-500">
+            <span className="text-xs text-warm-500 dark:text-cream-400">
               {preview.activeFacilityCount} of {preview.totalFacilityCount} active
             </span>
           </div>
@@ -340,7 +340,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
         <CardContent className="p-0">
           {preview.lineItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-              <FileText className="h-8 w-8 text-warm-300 mb-3" />
+              <FileText className="h-8 w-8 text-warm-300 dark:text-charcoal-600 mb-3" />
               <p className="text-sm text-warm-500">
                 No facility profiles configured for this client.
               </p>
@@ -352,13 +352,13 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-warm-200 hover:bg-transparent">
-                    <TableHead className="text-warm-600 text-xs font-medium">Facility</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium">Status</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium">Schedule</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium text-right">Rate</TableHead>
-                    {!hideTax && <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>}
-                    <TableHead className="text-warm-600 text-xs font-medium text-right">Total</TableHead>
+                  <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Facility</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Status</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Schedule</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Rate</TableHead>
+                    {!hideTax && <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Tax</TableHead>}
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -376,19 +376,19 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
                     const facilitySubtotal = preview.lineItems.reduce((s, li) => s + li.lineItemTotal, 0)
                     const facilityTax = preview.lineItems.reduce((s, li) => s + li.lineItemTax, 0)
                     return (
-                      <TableRow className="border-warm-200 bg-warm-50 font-medium">
-                        <TableCell colSpan={3} className="text-sm text-warm-800">
+                      <TableRow className="border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 font-medium">
+                        <TableCell colSpan={3} className="text-sm text-warm-800 dark:text-cream-200">
                           Facility Subtotal ({preview.activeFacilityCount} active)
                         </TableCell>
-                        <TableCell className="text-right text-sm text-warm-800">
+                        <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
                           {formatCurrency(facilitySubtotal)}
                         </TableCell>
                         {!hideTax && (
-                          <TableCell className="text-right text-sm text-warm-800">
+                          <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
                             {formatCurrency(facilityTax)}
                           </TableCell>
                         )}
-                        <TableCell className="text-right text-sm text-warm-900 font-semibold">
+                        <TableCell className="text-right text-sm text-warm-900 dark:text-cream-100 font-semibold">
                           {formatCurrency(hideTax ? facilitySubtotal : facilitySubtotal + facilityTax)}
                         </TableCell>
                       </TableRow>
@@ -446,10 +446,10 @@ function SummaryCard({
   highlight?: boolean
 }) {
   return (
-    <Card className={`border-warm-200 ${highlight ? 'bg-ocean-50 border-ocean-200' : ''}`}>
+    <Card className={`border-warm-200 dark:border-charcoal-700 ${highlight ? 'bg-ocean-50 border-ocean-200' : ''}`}>
       <CardContent className="p-3">
-        <p className="text-xs text-warm-500 mb-0.5">{label}</p>
-        <p className={`text-lg font-display font-semibold ${highlight ? 'text-ocean-700' : 'text-warm-900'}`}>
+        <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">{label}</p>
+        <p className={`text-lg font-display font-semibold ${highlight ? 'text-ocean-700' : 'text-warm-900 dark:text-cream-100'}`}>
           {value}
         </p>
       </CardContent>
@@ -468,10 +468,10 @@ function DeltaCard({
 }) {
   if (previousTotal === null || deltaAmount === null) {
     return (
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="p-3">
-          <p className="text-xs text-warm-500 mb-0.5">vs. Prior Month</p>
-          <p className="text-sm text-warm-400">No data</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">vs. Prior Month</p>
+          <p className="text-sm text-warm-400 dark:text-cream-400">No data</p>
         </CardContent>
       </Card>
     )
@@ -482,9 +482,9 @@ function DeltaCard({
   const isFlat = deltaAmount === 0
 
   return (
-    <Card className={`border-warm-200 ${isUp ? 'bg-red-50/50' : isDown ? 'bg-lime-50/50' : ''}`}>
+    <Card className={`border-warm-200 dark:border-charcoal-700 ${isUp ? 'bg-red-50/50' : isDown ? 'bg-lime-50/50' : ''}`}>
       <CardContent className="p-3">
-        <p className="text-xs text-warm-500 mb-0.5">vs. Prior Month</p>
+        <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">vs. Prior Month</p>
         <div className="flex items-center gap-1.5">
           {isUp && <TrendingUp className="h-4 w-4 text-red-500" />}
           {isDown && <TrendingDown className="h-4 w-4 text-lime-600" />}
@@ -515,7 +515,7 @@ function LineItemRow({
   const canToggle = item.effectiveStatus === 'ACTIVE' || item.effectiveStatus === 'PAUSED'
 
   return (
-    <TableRow className={`border-warm-200 ${dimmed ? 'opacity-50' : ''}`}>
+    <TableRow className={`border-warm-200 dark:border-charcoal-700 ${dimmed ? 'opacity-50' : ''}`}>
       <TableCell className="py-2">
         <div className="flex items-center gap-2">
           {canToggle ? (
@@ -529,9 +529,9 @@ function LineItemRow({
             <StatusDot status={item.effectiveStatus} />
           )}
           <div>
-            <span className="text-sm text-warm-800">{item.locationName}</span>
+            <span className="text-sm text-warm-800 dark:text-cream-200">{item.locationName}</span>
             {item.category && (
-              <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-warm-200 text-warm-500">
+              <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400">
                 {item.category}
               </Badge>
             )}
@@ -548,13 +548,13 @@ function LineItemRow({
           </div>
         </div>
       </TableCell>
-      <TableCell className="py-2 text-xs text-warm-600">
+      <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
         {item.effectiveStatus.replace('_', ' ')}
       </TableCell>
-      <TableCell className="py-2 text-xs text-warm-600">
+      <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
         {item.includedInTotal ? `${item.effectiveFrequency}x/wk · ${formatDays(item.effectiveDaysOfWeek)}` : '-'}
       </TableCell>
-      <TableCell className="py-2 text-right text-sm text-warm-800">
+      <TableCell className="py-2 text-right text-sm text-warm-800 dark:text-cream-200">
         {item.includedInTotal ? (
           <div>
             {formatCurrency(item.effectiveRate)}
@@ -569,11 +569,11 @@ function LineItemRow({
         )}
       </TableCell>
       {!hideTax && (
-        <TableCell className="py-2 text-right text-xs text-warm-600">
+        <TableCell className="py-2 text-right text-xs text-warm-600 dark:text-cream-400">
           {item.includedInTotal ? formatCurrency(item.lineItemTax) : '-'}
         </TableCell>
       )}
-      <TableCell className="py-2 text-right text-sm font-medium text-warm-800">
+      <TableCell className="py-2 text-right text-sm font-medium text-warm-800 dark:text-cream-200">
         {item.includedInTotal ? (
           <div>
             {formatCurrency(hideTax ? item.lineItemTotal : item.lineItemTotal)}
@@ -602,13 +602,13 @@ function ExplanationPanel({ preview }: { preview: BillingPreview }) {
   if (!hasContent) return null
 
   return (
-    <Card className="border-warm-200 bg-warm-50/50">
+    <Card className="border-warm-200 dark:border-charcoal-700 bg-warm-50/50 dark:bg-charcoal-800/50">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-display font-medium text-warm-800">
+        <CardTitle className="text-sm font-display font-medium text-warm-800 dark:text-cream-200">
           Billing Notes
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-xs text-warm-600">
+      <CardContent className="space-y-2 text-xs text-warm-600 dark:text-cream-400">
         {explanation.seasonallyPaused.length > 0 && (
           <div>
             <span className="font-medium text-orange-700">Seasonally paused:</span>{' '}
@@ -623,7 +623,7 @@ function ExplanationPanel({ preview }: { preview: BillingPreview }) {
         )}
         {explanation.pendingApproval.length > 0 && (
           <div>
-            <span className="font-medium text-warm-700">Pending approval:</span>{' '}
+            <span className="font-medium text-warm-700 dark:text-cream-300">Pending approval:</span>{' '}
             {explanation.pendingApproval.join(', ')}
           </div>
         )}
@@ -644,8 +644,8 @@ function ExplanationPanel({ preview }: { preview: BillingPreview }) {
           </div>
         )}
         {explanation.deltaReason && (
-          <div className="pt-1 border-t border-warm-200">
-            <span className="font-medium text-warm-700">Month-over-month:</span>{' '}
+          <div className="pt-1 border-t border-warm-200 dark:border-charcoal-700">
+            <span className="font-medium text-warm-700 dark:text-cream-300">Month-over-month:</span>{' '}
             {explanation.deltaReason}
           </div>
         )}
@@ -676,16 +676,16 @@ function ServiceItemsSection({
   const serviceTax = items.reduce((s, si) => s + si.lineItemTax, 0)
 
   return (
-    <Card className="border-warm-200">
+    <Card className="border-warm-200 dark:border-charcoal-700">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-warm-500" />
-            <CardTitle className="text-sm font-display font-medium text-warm-900">
+            <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
               Service Line Items
             </CardTitle>
             {items.length > 0 && (
-              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
+              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">
                 {items.length}
               </Badge>
             )}
@@ -697,7 +697,7 @@ function ServiceItemsSection({
             defaultMonth={month}
             onSuccess={onRefresh}
           >
-            <Button variant="outline" size="sm" className="rounded-sm border-warm-200 text-warm-700 h-7 text-xs">
+            <Button variant="outline" size="sm" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 h-7 text-xs">
               <Plus className="h-3 w-3 mr-1" />
               Add Service
             </Button>
@@ -708,10 +708,10 @@ function ServiceItemsSection({
         {items.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8 text-center px-4">
             <Wrench className="h-6 w-6 text-warm-300 mb-2" />
-            <p className="text-xs text-warm-500">
+            <p className="text-xs text-warm-500 dark:text-cream-400">
               No ad-hoc services for this month
             </p>
-            <p className="text-[10px] text-warm-400 mt-1">
+            <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
               Add one-time charges like deep cleaning, high dusting, etc.
             </p>
           </div>
@@ -719,40 +719,40 @@ function ServiceItemsSection({
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 hover:bg-transparent">
-                  <TableHead className="text-warm-600 text-xs font-medium">Description</TableHead>
-                  <TableHead className="text-warm-600 text-xs font-medium">Facility</TableHead>
-                  <TableHead className="text-warm-600 text-xs font-medium text-right">Qty</TableHead>
-                  <TableHead className="text-warm-600 text-xs font-medium text-right">Rate</TableHead>
-                  {!hideTax && <TableHead className="text-warm-600 text-xs font-medium text-right">Tax</TableHead>}
-                  <TableHead className="text-warm-600 text-xs font-medium text-right">Total</TableHead>
-                  <TableHead className="text-warm-600 text-xs font-medium w-8"></TableHead>
+                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Description</TableHead>
+                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Facility</TableHead>
+                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Qty</TableHead>
+                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Rate</TableHead>
+                  {!hideTax && <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Tax</TableHead>}
+                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Total</TableHead>
+                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium w-8"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((si) => (
-                  <TableRow key={si.id} className="border-warm-200">
+                  <TableRow key={si.id} className="border-warm-200 dark:border-charcoal-700">
                     <TableCell className="py-2">
-                      <span className="text-sm text-warm-800">{si.description}</span>
+                      <span className="text-sm text-warm-800 dark:text-cream-200">{si.description}</span>
                       {si.notes && (
                         <p className="text-[10px] text-warm-400 mt-0.5">{si.notes}</p>
                       )}
                     </TableCell>
-                    <TableCell className="py-2 text-xs text-warm-600">
+                    <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
                       {si.locationName || <span className="text-warm-400">-</span>}
                     </TableCell>
-                    <TableCell className="py-2 text-right text-xs text-warm-700">
+                    <TableCell className="py-2 text-right text-xs text-warm-700 dark:text-cream-300">
                       {si.quantity !== 1 ? si.quantity : '1'}
                     </TableCell>
-                    <TableCell className="py-2 text-right text-sm text-warm-800">
+                    <TableCell className="py-2 text-right text-sm text-warm-800 dark:text-cream-200">
                       {formatCurrency(si.unitRate)}
                     </TableCell>
                     {!hideTax && (
-                      <TableCell className="py-2 text-right text-xs text-warm-600">
+                      <TableCell className="py-2 text-right text-xs text-warm-600 dark:text-cream-400">
                         {formatCurrency(si.lineItemTax)}
                       </TableCell>
                     )}
-                    <TableCell className="py-2 text-right text-sm font-medium text-warm-800">
+                    <TableCell className="py-2 text-right text-sm font-medium text-warm-800 dark:text-cream-200">
                       {formatCurrency(si.lineItemTotal)}
                     </TableCell>
                     <TableCell className="py-2">
@@ -767,7 +767,7 @@ function ServiceItemsSection({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 rounded-sm text-warm-400 hover:text-warm-700"
+                          className="h-6 w-6 p-0 rounded-sm text-warm-400 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200"
                         >
                           <Edit className="h-3 w-3" />
                         </Button>
@@ -776,19 +776,19 @@ function ServiceItemsSection({
                   </TableRow>
                 ))}
                 {/* Service subtotal */}
-                <TableRow className="border-warm-200 bg-warm-50 font-medium">
-                  <TableCell colSpan={hideTax ? 3 : 4} className="text-sm text-warm-800">
+                <TableRow className="border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 font-medium">
+                  <TableCell colSpan={hideTax ? 3 : 4} className="text-sm text-warm-800 dark:text-cream-200">
                     Service Subtotal
                   </TableCell>
-                  <TableCell className="text-right text-sm text-warm-800">
+                  <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
                     {formatCurrency(serviceTotal)}
                   </TableCell>
                   {!hideTax && (
-                    <TableCell className="text-right text-sm text-warm-800">
+                    <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
                       {formatCurrency(serviceTax)}
                     </TableCell>
                   )}
-                  <TableCell className="text-right text-sm text-warm-900 font-semibold">
+                  <TableCell className="text-right text-sm text-warm-900 dark:text-cream-100 font-semibold">
                     {formatCurrency(hideTax ? serviceTotal : serviceTotal + serviceTax)}
                   </TableCell>
                   <TableCell />
@@ -816,7 +816,7 @@ function BillingPreviewSkeleton() {
       </div>
       <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
         {[1, 2, 3, 4].map(i => (
-          <Card key={i} className="border-warm-200">
+          <Card key={i} className="border-warm-200 dark:border-charcoal-700">
             <CardContent className="p-3">
               <Skeleton className="h-3 w-16 mb-2" />
               <Skeleton className="h-6 w-24" />
@@ -824,7 +824,7 @@ function BillingPreviewSkeleton() {
           </Card>
         ))}
       </div>
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardHeader className="pb-3">
           <Skeleton className="h-4 w-40" />
         </CardHeader>

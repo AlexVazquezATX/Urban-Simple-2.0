@@ -461,7 +461,7 @@ function TasksContent() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50">
+      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50 dark:bg-charcoal-950">
         <Loader2 className="w-6 h-6 animate-spin text-ocean-500" />
       </div>
     )
@@ -471,11 +471,11 @@ function TasksContent() {
     <div className="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
       {/* Left Sidebar - Projects (hidden on mobile by default) */}
       {showProjectSidebar && (
-        <div className="hidden md:flex w-64 border-r border-warm-200 bg-warm-100 flex-col">
+        <div className="hidden md:flex w-64 border-r border-warm-200 dark:border-charcoal-700 bg-warm-100 dark:bg-charcoal-800 flex-col">
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-warm-200">
+          <div className="p-4 border-b border-warm-200 dark:border-charcoal-700">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display text-lg font-medium text-warm-900">Projects</h2>
+              <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100">Projects</h2>
               <button
                 className="h-9 w-9 flex items-center justify-center rounded-sm text-ocean-600 hover:text-ocean-700 hover:bg-ocean-100 transition-colors"
                 onClick={() => setShowProjectForm(true)}
@@ -502,17 +502,17 @@ function TasksContent() {
                 'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors mt-1',
                 projectFilter === 'starred'
                   ? 'bg-lime-100 text-lime-700'
-                  : 'text-warm-600 hover:bg-warm-200'
+                  : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
               )}
             >
               <Star className="w-4 h-4" />
               <span className="flex-1 text-left">Starred</span>
-              <span className="text-xs text-warm-500">
+              <span className="text-xs text-warm-500 dark:text-cream-400">
                 {tasks.filter(t => t.isStarred && statusFilter.includes(t.status)).length}
               </span>
             </button>
 
-            <div className="border-t border-warm-200 my-3" />
+            <div className="border-t border-warm-200 dark:border-charcoal-700 my-3" />
 
             {/* All Tasks */}
             <button
@@ -520,13 +520,13 @@ function TasksContent() {
               className={cn(
                 'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
                 projectFilter === null
-                  ? 'bg-warm-200 text-warm-900'
-                  : 'text-warm-600 hover:bg-warm-200'
+                  ? 'bg-warm-200 dark:bg-charcoal-700 text-warm-900 dark:text-cream-100'
+                  : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
               )}
             >
               <LayoutList className="w-4 h-4" />
               <span className="flex-1 text-left">All Tasks</span>
-              <span className="text-xs text-warm-500">
+              <span className="text-xs text-warm-500 dark:text-cream-400">
                 {stats?.byStatus?.todo || 0}
               </span>
             </button>
@@ -542,8 +542,8 @@ function TasksContent() {
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
                     projectFilter === project.id
-                      ? 'bg-warm-200 text-warm-900'
-                      : 'text-warm-600 hover:bg-warm-200'
+                      ? 'bg-warm-200 dark:bg-charcoal-700 text-warm-900 dark:text-cream-100'
+                      : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
                   )}
                 >
                   <span
@@ -551,7 +551,7 @@ function TasksContent() {
                     style={{ backgroundColor: project.color }}
                   />
                   <span className="flex-1 text-left truncate">{project.name}</span>
-                  <span className="text-xs text-warm-500">
+                  <span className="text-xs text-warm-500 dark:text-cream-400">
                     {project.openTaskCount || 0}
                   </span>
                 </button>
@@ -563,8 +563,8 @@ function TasksContent() {
                 className={cn(
                   'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
                   projectFilter === 'null'
-                    ? 'bg-warm-200 text-warm-900'
-                    : 'text-warm-600 hover:bg-warm-200'
+                    ? 'bg-warm-200 dark:bg-charcoal-700 text-warm-900 dark:text-cream-100'
+                    : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
                 )}
               >
                 <span className="w-3 h-3 rounded-full shrink-0 border-2 border-dashed border-warm-300" />
@@ -577,9 +577,9 @@ function TasksContent() {
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-warm-50">
+      <div className="flex-1 flex flex-col overflow-hidden bg-warm-50 dark:bg-charcoal-950">
         {/* Header */}
-        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-warm-200 bg-white">
+        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
           {/* Title Row */}
           <div className="flex items-center justify-between mb-3 md:mb-4">
             <div className="flex items-center gap-2 md:gap-3">
@@ -594,7 +594,7 @@ function TasksContent() {
                 </Button>
               )}
               <div>
-                <h1 className="text-lg md:text-xl font-display font-medium tracking-tight text-warm-900">
+                <h1 className="text-lg md:text-xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
                   {projectFilter === null
                     ? 'All Tasks'
                     : projectFilter === 'null'
@@ -603,7 +603,7 @@ function TasksContent() {
                         ? 'Starred Tasks'
                         : projects.find(p => p.id === projectFilter)?.name || 'Tasks'}
                 </h1>
-                <p className="text-xs md:text-sm text-warm-500">
+                <p className="text-xs md:text-sm text-warm-500 dark:text-cream-400">
                   {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -613,10 +613,10 @@ function TasksContent() {
               {/* Quick Stats - Inline in header */}
               <div className="hidden md:flex items-center gap-3 text-sm">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-warm-900">
+                  <span className="font-semibold text-warm-900 dark:text-cream-100">
                     {(stats?.byStatus?.todo || 0) + (stats?.byStatus?.in_progress || 0)}
                   </span>
-                  <span className="text-warm-500">Open</span>
+                  <span className="text-warm-500 dark:text-cream-400">Open</span>
                 </div>
                 {(stats?.overdue || 0) > 0 && (
                   <div className="flex items-center gap-1.5">
@@ -629,12 +629,12 @@ function TasksContent() {
               </div>
 
               {/* View Mode Toggle - Hidden on mobile for list, shown for board toggle */}
-              <div className="hidden md:flex items-center bg-warm-100 rounded-sm p-1">
+              <div className="hidden md:flex items-center bg-warm-100 dark:bg-charcoal-800 rounded-sm p-1">
                 <button
                   onClick={() => setViewMode('list')}
                   className={cn(
                     'p-1.5 rounded-sm transition-colors',
-                    viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-warm-200'
+                    viewMode === 'list' ? 'bg-white dark:bg-charcoal-700 shadow-sm' : 'hover:bg-warm-200 dark:hover:bg-charcoal-700'
                   )}
                 >
                   <LayoutList className="w-4 h-4" />
@@ -643,7 +643,7 @@ function TasksContent() {
                   onClick={() => setViewMode('board')}
                   className={cn(
                     'p-1.5 rounded-sm transition-colors',
-                    viewMode === 'board' ? 'bg-white shadow-sm' : 'hover:bg-warm-200'
+                    viewMode === 'board' ? 'bg-white dark:bg-charcoal-700 shadow-sm' : 'hover:bg-warm-200 dark:hover:bg-charcoal-700'
                   )}
                 >
                   <Columns3 className="w-4 h-4" />
@@ -652,7 +652,7 @@ function TasksContent() {
                   onClick={() => setViewMode('calendar')}
                   className={cn(
                     'p-1.5 rounded-sm transition-colors',
-                    viewMode === 'calendar' ? 'bg-white shadow-sm' : 'hover:bg-warm-200'
+                    viewMode === 'calendar' ? 'bg-white dark:bg-charcoal-700 shadow-sm' : 'hover:bg-warm-200 dark:hover:bg-charcoal-700'
                   )}
                 >
                   <CalendarDays className="w-4 h-4" />
@@ -852,12 +852,12 @@ function TasksContent() {
           {viewMode === 'list' && (
             <div>
               {filteredTasks.length === 0 ? (
-                <div className="bg-white border border-warm-200 rounded-sm p-12 text-center">
-                  <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
+                <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm p-12 text-center">
+                  <div className="w-16 h-16 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-4">
                     <CheckSquare className="w-7 h-7 text-ocean-600" />
                   </div>
-                  <h3 className="text-lg font-display font-medium text-warm-900 mb-2">No tasks found</h3>
-                  <p className="text-warm-500 mb-6 max-w-sm mx-auto">
+                  <h3 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100 mb-2">No tasks found</h3>
+                  <p className="text-warm-500 dark:text-cream-400 mb-6 max-w-sm mx-auto">
                     {searchQuery
                       ? 'No tasks match your search'
                       : statusFilter.length === 0
@@ -876,7 +876,7 @@ function TasksContent() {
                       key={task.id}
                       onClick={() => setSelectedTask(task)}
                       className={cn(
-                        'bg-white border border-warm-200 rounded-sm px-3 md:px-4 py-3 md:py-3 flex items-start md:items-center gap-3 md:gap-4 hover:border-ocean-400 transition-colors group cursor-pointer',
+                        'bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm px-3 md:px-4 py-3 md:py-3 flex items-start md:items-center gap-3 md:gap-4 hover:border-ocean-400 transition-colors group cursor-pointer',
                         task.status === 'done' && 'opacity-60'
                       )}
                     >
@@ -916,8 +916,8 @@ function TasksContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start md:items-center gap-2 flex-wrap">
                           <span className={cn(
-                            'font-medium text-warm-900 text-sm md:text-base',
-                            task.status === 'done' && 'line-through text-warm-500'
+                            'font-medium text-warm-900 dark:text-cream-100 text-sm md:text-base',
+                            task.status === 'done' && 'line-through text-warm-500 dark:text-cream-400'
                           )}>
                             {task.title}
                           </span>
@@ -929,7 +929,7 @@ function TasksContent() {
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 md:gap-3 mt-1 text-xs text-warm-500 flex-wrap">
+                        <div className="flex items-center gap-2 md:gap-3 mt-1 text-xs text-warm-500 dark:text-cream-400 flex-wrap">
                           {/* Project */}
                           {task.project && (
                             <span className="flex items-center gap-1">
@@ -1032,11 +1032,11 @@ function TasksContent() {
           {viewMode === 'board' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-full">
               {/* To Do Column */}
-              <div className="bg-white border border-warm-200 rounded-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
+              <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm flex flex-col">
+                <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {STATUS_ICONS.todo}
-                    <span className="font-medium text-warm-900">To Do</span>
+                    <span className="font-medium text-warm-900 dark:text-cream-100">To Do</span>
                     <Badge variant="secondary" className="ml-1">{tasksByStatus.todo.length}</Badge>
                   </div>
                 </div>
@@ -1048,11 +1048,11 @@ function TasksContent() {
               </div>
 
               {/* In Progress Column */}
-              <div className="bg-white border border-warm-200 rounded-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
+              <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm flex flex-col">
+                <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {STATUS_ICONS.in_progress}
-                    <span className="font-medium text-warm-900">In Progress</span>
+                    <span className="font-medium text-warm-900 dark:text-cream-100">In Progress</span>
                     <Badge variant="secondary" className="ml-1">{tasksByStatus.in_progress.length}</Badge>
                   </div>
                 </div>
@@ -1064,11 +1064,11 @@ function TasksContent() {
               </div>
 
               {/* Done Column */}
-              <div className="bg-white border border-warm-200 rounded-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
+              <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm flex flex-col">
+                <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {STATUS_ICONS.done}
-                    <span className="font-medium text-warm-900">Done</span>
+                    <span className="font-medium text-warm-900 dark:text-cream-100">Done</span>
                     <Badge variant="secondary" className="ml-1">{tasksByStatus.done.length}</Badge>
                   </div>
                 </div>
@@ -1082,10 +1082,10 @@ function TasksContent() {
           )}
 
           {viewMode === 'calendar' && (
-            <div className="bg-white border border-warm-200 rounded-sm p-8 text-center">
+            <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm p-8 text-center">
               <CalendarDays className="w-12 h-12 text-warm-300 mx-auto mb-4" />
-              <h3 className="text-lg font-display font-medium text-warm-900 mb-2">Calendar View</h3>
-              <p className="text-warm-500">Calendar view coming soon</p>
+              <h3 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100 mb-2">Calendar View</h3>
+              <p className="text-warm-500 dark:text-cream-400">Calendar view coming soon</p>
             </div>
           )}
         </div>
@@ -1218,7 +1218,7 @@ function TaskCard({
   return (
     <div
       className={cn(
-        'p-3 bg-warm-50 hover:bg-warm-100 rounded-sm border border-warm-200 cursor-pointer group transition-colors',
+        'p-3 bg-warm-50 dark:bg-charcoal-800 hover:bg-warm-100 dark:hover:bg-charcoal-700 rounded-sm border border-warm-200 dark:border-charcoal-700 cursor-pointer group transition-colors',
         task.isStarred && 'bg-lime-50/50 border-lime-200'
       )}
       onClick={onEdit}
@@ -1247,8 +1247,8 @@ function TaskCard({
         </button>
         <div className="flex-1 min-w-0">
           <p className={cn(
-            'text-sm font-medium text-warm-900',
-            task.status === 'done' && 'line-through text-warm-500'
+            'text-sm font-medium text-warm-900 dark:text-cream-100',
+            task.status === 'done' && 'line-through text-warm-500 dark:text-cream-400'
           )}>
             {task.title}
           </p>

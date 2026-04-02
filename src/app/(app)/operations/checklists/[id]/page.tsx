@@ -61,12 +61,12 @@ async function ChecklistDetail({ id }: { id: string }) {
           </Button>
         </Link>
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">{template.name}</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">{template.name}</h1>
           {template.nameEs && (
-            <p className="text-sm text-warm-500">{template.nameEs}</p>
+            <p className="text-sm text-warm-500 dark:text-cream-400">{template.nameEs}</p>
           )}
           {template.description && (
-            <p className="text-sm text-warm-500 mt-1">{template.description}</p>
+            <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">{template.description}</p>
           )}
         </div>
       </div>

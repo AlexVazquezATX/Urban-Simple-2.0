@@ -172,33 +172,33 @@ export default function LocationReviewPage() {
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-xl font-display font-medium text-warm-900">{locationData.locationName}</h1>
-          <p className="text-xs text-warm-500">{locationData.clientName}</p>
+          <h1 className="text-xl font-display font-medium text-warm-900 dark:text-cream-100">{locationData.locationName}</h1>
+          <p className="text-xs text-warm-500 dark:text-cream-400">{locationData.clientName}</p>
         </div>
       </div>
 
       {/* Location Info */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardContent className="p-4 space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <MapPin className="h-3.5 w-3.5 text-warm-400" />
-            <span className="text-warm-700">{locationData.address}</span>
+            <span className="text-warm-700 dark:text-cream-300">{locationData.address}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-3.5 w-3.5 text-warm-400" />
-            <span className="text-warm-700">Scheduled: {locationData.scheduledTime}</span>
+            <span className="text-warm-700 dark:text-cream-300">Scheduled: {locationData.scheduledTime}</span>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <User className="h-3.5 w-3.5 text-warm-400" />
-            <span className="text-warm-700">Associate: {locationData.associateName}</span>
+            <span className="text-warm-700 dark:text-cream-300">Associate: {locationData.associateName}</span>
           </div>
         </CardContent>
       </Card>
 
       {/* Overall Rating */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base font-display font-medium text-warm-900">Overall Quality Rating</CardTitle>
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Overall Quality Rating</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <div className="flex gap-2 justify-center py-4">
@@ -220,7 +220,7 @@ export default function LocationReviewPage() {
             ))}
           </div>
           {overallRating > 0 && (
-            <p className="text-center text-xs text-warm-500">
+            <p className="text-center text-xs text-warm-500 dark:text-cream-400">
               {overallRating === 5 && 'Excellent work!'}
               {overallRating === 4 && 'Good job'}
               {overallRating === 3 && 'Acceptable'}
@@ -232,14 +232,14 @@ export default function LocationReviewPage() {
       </Card>
 
       {/* Checklist Verification */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base font-display font-medium text-warm-900">Checklist Verification</CardTitle>
-          <p className="text-xs text-warm-500">{locationData.checklistName}</p>
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Checklist Verification</CardTitle>
+          <p className="text-xs text-warm-500 dark:text-cream-400">{locationData.checklistName}</p>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-3">
           {checklistItems.map((item) => (
-            <div key={item.id} className="border border-warm-200 rounded-sm p-3 space-y-3">
+            <div key={item.id} className="border border-warm-200 dark:border-charcoal-700 rounded-sm p-3 space-y-3">
               <p className="font-medium text-sm text-warm-900">{item.name}</p>
               <div className="grid grid-cols-3 gap-2">
                 <Button
@@ -287,17 +287,17 @@ export default function LocationReviewPage() {
       {/* Pain Points */}
       <Card className="rounded-sm border-red-200">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base font-display font-medium text-warm-900 flex items-center gap-2">
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100 flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-red-600" />
             Pain Points & Issues
           </CardTitle>
-          <p className="text-xs text-warm-500">
+          <p className="text-xs text-warm-500 dark:text-cream-400">
             Critical - Report any issues found during inspection
           </p>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-3">
           {painPoints.length === 0 && (
-            <p className="text-center text-warm-500 text-sm py-4">
+            <p className="text-center text-warm-500 dark:text-cream-400 text-sm py-4">
               No issues reported - Tap a category below to add
             </p>
           )}
@@ -321,7 +321,7 @@ export default function LocationReviewPage() {
 
               {/* Severity selector */}
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-warm-700">Severity</Label>
+                <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Severity</Label>
                 <div className="grid grid-cols-4 gap-2">
                   {(['low', 'medium', 'high', 'critical'] as const).map((severity) => (
                     <Button
@@ -349,7 +349,7 @@ export default function LocationReviewPage() {
 
               {/* Description */}
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-warm-700">Description *</Label>
+                <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Description *</Label>
                 <Textarea
                   value={point.description}
                   onChange={(e) => {
@@ -358,13 +358,13 @@ export default function LocationReviewPage() {
                     setPainPoints(updated)
                   }}
                   placeholder="Describe the issue in detail..."
-                  className="min-h-[80px] rounded-sm border-warm-200"
+                  className="min-h-[80px] rounded-sm border-warm-200 dark:border-charcoal-700"
                 />
               </div>
 
               {/* Photo upload placeholder */}
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-warm-700">Photos (Optional)</Label>
+                <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Photos (Optional)</Label>
                 <Button
                   variant="outline"
                   size="sm"
@@ -375,7 +375,7 @@ export default function LocationReviewPage() {
                   Add Photos
                 </Button>
                 {point.photos.length > 0 && (
-                  <p className="text-xs text-warm-500">
+                  <p className="text-xs text-warm-500 dark:text-cream-400">
                     {point.photos.length} photo(s) attached
                   </p>
                 )}
@@ -440,22 +440,22 @@ export default function LocationReviewPage() {
       </Card>
 
       {/* Notes */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base font-display font-medium text-warm-900">Additional Notes</CardTitle>
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Additional Notes</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Any additional observations, comments, or feedback..."
-            className="min-h-[100px] rounded-sm border-warm-200"
+            className="min-h-[100px] rounded-sm border-warm-200 dark:border-charcoal-700"
           />
         </CardContent>
       </Card>
 
       {/* Submit Button - Fixed at bottom on mobile */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-warm-200 md:relative md:border-0">
+      <div className="fixed bottom-0 left-0 right-0 p-4 bg-white dark:bg-charcoal-900 border-t border-warm-200 dark:border-charcoal-700 md:relative md:border-0">
         <Button
           onClick={handleSubmitReview}
           disabled={isSaving}

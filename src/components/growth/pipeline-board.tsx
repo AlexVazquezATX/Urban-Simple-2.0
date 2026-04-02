@@ -134,8 +134,8 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                     isWon
                       ? 'bg-lime-100 border-lime-200'
                       : isLost
-                      ? 'bg-warm-200 border-warm-300'
-                      : 'bg-warm-100 border-warm-200'
+                      ? 'bg-warm-200 dark:bg-charcoal-700 border-warm-300 dark:border-charcoal-700'
+                      : 'bg-warm-100 dark:bg-charcoal-800 border-warm-200 dark:border-charcoal-700'
                   }
                 `}
               >
@@ -146,8 +146,8 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                       isWon
                         ? 'text-lime-700'
                         : isLost
-                        ? 'text-warm-600'
-                        : 'text-warm-700'
+                        ? 'text-warm-600 dark:text-cream-400'
+                        : 'text-warm-700 dark:text-cream-300'
                     }
                   `}
                 >
@@ -160,8 +160,8 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                       isWon
                         ? 'bg-lime-200 text-lime-700'
                         : isLost
-                        ? 'bg-warm-300 text-warm-600'
-                        : 'bg-warm-200 text-warm-700'
+                        ? 'bg-warm-300 dark:bg-charcoal-600 text-warm-600 dark:text-cream-400'
+                        : 'bg-warm-200 dark:bg-charcoal-700 text-warm-700 dark:text-cream-300'
                     }
                   `}
                 >
@@ -181,8 +181,8 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                         isWon
                           ? 'bg-lime-50/50 border-lime-200'
                           : isLost
-                          ? 'bg-warm-100/50 border-warm-300'
-                          : 'bg-warm-50 border-warm-200'
+                          ? 'bg-warm-100/50 dark:bg-charcoal-800/50 border-warm-300 dark:border-charcoal-700'
+                          : 'bg-warm-50 dark:bg-charcoal-800 border-warm-200 dark:border-charcoal-700'
                       }
                       ${snapshot.isDraggingOver ? 'bg-ocean-50' : ''}
                     `}
@@ -197,23 +197,23 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                           >
                             <Card
                               className={`
-                                transition-all duration-200 cursor-grab active:cursor-grabbing rounded-sm border-warm-200 hover:border-ocean-400 bg-white
+                                transition-all duration-200 cursor-grab active:cursor-grabbing rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 bg-white dark:bg-charcoal-900
                                 ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''}
                               `}
                             >
                               <CardContent className="p-2.5">
                                 <div className="flex items-start gap-2">
-                                  <div className="w-7 h-7 rounded-sm bg-warm-100 flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="h-3.5 w-3.5 text-warm-600" />
+                                  <div className="w-7 h-7 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center flex-shrink-0">
+                                    <Building2 className="h-3.5 w-3.5 text-warm-600 dark:text-cream-400" />
                                   </div>
                                   <div className="flex-1 min-w-0">
                                     <Link href={`/growth/prospects/${prospect.id}`}>
-                                      <h4 className="text-xs font-medium text-warm-900 truncate hover:text-ocean-600">
+                                      <h4 className="text-xs font-medium text-warm-900 dark:text-cream-100 truncate hover:text-ocean-600">
                                         {prospect.companyName}
                                       </h4>
                                     </Link>
                                     {prospect.contacts && prospect.contacts.length > 0 && (
-                                      <p className="text-[10px] text-warm-500 truncate mt-0.5">
+                                      <p className="text-[10px] text-warm-500 dark:text-cream-400 truncate mt-0.5">
                                         {prospect.contacts[0].firstName}{' '}
                                         {prospect.contacts[0].lastName}
                                       </p>
@@ -224,7 +224,7 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-5 w-5 p-0 text-warm-400 hover:text-warm-700"
+                                        className="h-5 w-5 p-0 text-warm-400 dark:text-cream-500 hover:text-warm-700 dark:hover:text-cream-300"
                                       >
                                         <MoreVertical className="h-3 w-3" />
                                       </Button>
@@ -249,9 +249,9 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                 </div>
 
                                 {(prospect.estimatedValue || prospect.priority) && (
-                                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-warm-100">
+                                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
                                     {prospect.estimatedValue && (
-                                      <span className="text-[10px] text-warm-600 flex items-center gap-0.5">
+                                      <span className="text-[10px] text-warm-600 dark:text-cream-400 flex items-center gap-0.5">
                                         <DollarSign className="h-2.5 w-2.5" />
                                         {Number(prospect.estimatedValue).toLocaleString()}
                                       </span>
@@ -263,7 +263,7 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                             ? 'bg-red-100 text-red-700'
                                             : prospect.priority === 'high'
                                             ? 'bg-plum-100 text-plum-700'
-                                            : 'bg-warm-100 text-warm-600'
+                                            : 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400'
                                         }`}
                                       >
                                         {prospect.priority}
@@ -280,9 +280,9 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                     {provided.placeholder}
 
                     {stageProspects.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-6 text-warm-400">
-                        <div className="w-8 h-8 rounded-sm bg-warm-100 flex items-center justify-center mb-1.5">
-                          <Building2 className="h-4 w-4 text-warm-300" />
+                      <div className="flex flex-col items-center justify-center py-6 text-warm-400 dark:text-cream-500">
+                        <div className="w-8 h-8 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mb-1.5">
+                          <Building2 className="h-4 w-4 text-warm-300 dark:text-charcoal-500" />
                         </div>
                         <span className="text-[10px]">No prospects</span>
                       </div>

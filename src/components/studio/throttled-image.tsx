@@ -84,11 +84,11 @@ export function ThrottledImage({
       {state === 'loaded' && blobUrl ? (
         <img src={blobUrl} alt={alt} className={className} />
       ) : state === 'error' ? (
-        <div className="w-full h-full flex items-center justify-center bg-warm-100">
-          <ImageIcon className="w-8 h-8 text-warm-300" />
+        <div className="w-full h-full flex items-center justify-center bg-warm-100 dark:bg-charcoal-800">
+          <ImageIcon className="w-8 h-8 text-warm-300 dark:text-charcoal-600" />
         </div>
       ) : (
-        <div className="w-full h-full bg-warm-100 animate-pulse" />
+        <div className="w-full h-full bg-warm-100 dark:bg-charcoal-800 animate-pulse" />
       )}
     </div>
   )

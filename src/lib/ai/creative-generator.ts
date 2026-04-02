@@ -183,7 +183,7 @@ function isCommunityfocusedStyle(imageStyle?: ImageStyleId): boolean {
 export async function generateContentIdeas(
   params: ContentGenerationParams
 ): Promise<ContentIdea[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
   const constraints = PLATFORM_CONSTRAINTS[params.platform]
   const serviceContext = SERVICE_CONTEXT[params.serviceHighlight]
 
@@ -316,7 +316,7 @@ export async function generateContent(
   params: ContentGenerationParams,
   selectedIdea: ContentIdea
 ): Promise<GeneratedContent> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
   const constraints = PLATFORM_CONSTRAINTS[params.platform]
   const serviceContext = SERVICE_CONTEXT[params.serviceHighlight]
 
@@ -514,7 +514,7 @@ export async function generateVariations(
   baseContent: GeneratedContent,
   variationCount: number = 3
 ): Promise<Array<GeneratedContent & { variationLabel: string }>> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
   const constraints = PLATFORM_CONSTRAINTS[params.platform]
 
   const prompt = `You are an expert marketing copywriter. Create ${variationCount} variations of this content for A/B testing.
@@ -570,7 +570,7 @@ export async function improveContent(
   platform: Platform,
   instructions: string
 ): Promise<string> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
   const constraints = PLATFORM_CONSTRAINTS[platform]
 
   const prompt = `Improve this ${constraints.name} content based on the instructions.
@@ -610,7 +610,7 @@ export async function generateHashtags(
   content: string,
   platform: Platform
 ): Promise<string[]> {
-  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
+  const model = getGenAI().getGenerativeModel({ model: 'gemini-2.5-flash' })
   const constraints = PLATFORM_CONSTRAINTS[platform]
 
   if (constraints.hashtagCount.max === 0) {

@@ -194,8 +194,8 @@ function GenerateContent() {
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
-              <h1 className="text-lg font-semibold text-warm-900">Generate</h1>
-              <p className="text-xs text-warm-500">
+              <h1 className="text-lg font-semibold text-warm-900 dark:text-cream-100">Generate</h1>
+              <p className="text-xs text-warm-500 dark:text-cream-400">
                 Create any type of visual — photorealistic, illustrated, animated, anything
               </p>
             </div>
@@ -252,11 +252,11 @@ function GenerateContent() {
           />
 
           {/* Brand Assets */}
-          <div className="bg-white rounded-sm border border-warm-200 p-5">
+          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <label className="text-sm font-medium text-warm-900">Brand Assets</label>
-                <p className="text-xs text-warm-400 mt-0.5">
+                <label className="text-sm font-medium text-warm-900 dark:text-cream-100">Brand Assets</label>
+                <p className="text-xs text-warm-400 dark:text-cream-400 mt-0.5">
                   Drop in logos, products, or objects to include in the image
                 </p>
               </div>
@@ -280,7 +280,7 @@ function GenerateContent() {
                 {selectedAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className="relative group w-16 h-16 rounded-sm overflow-hidden border border-warm-200"
+                    className="relative group w-16 h-16 rounded-sm overflow-hidden border border-warm-200 dark:border-charcoal-700"
                   >
                     {asset.imageUrl ? (
                       <img
@@ -306,7 +306,7 @@ function GenerateContent() {
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-warm-400 italic">
+              <p className="text-xs text-warm-400 dark:text-cream-400 italic">
                 No assets selected.{' '}
                 <Link href="/creative-hub/assets" className="text-ocean-600 hover:text-ocean-700 underline">
                   Upload assets

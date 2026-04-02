@@ -235,19 +235,19 @@ export default function ChatAnalyticsPage() {
 
   if (isLoading || !analytics) {
     return (
-      <div className="flex items-center justify-center h-screen bg-warm-50">
+      <div className="flex items-center justify-center h-screen bg-warm-50 dark:bg-charcoal-950">
         <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
       </div>
     )
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Chat Analytics</h1>
-          <p className="text-sm text-warm-500 mt-0.5">
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Chat Analytics</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
             Insights powered by <span className="font-medium text-ocean-600">Insight</span>, your AI analytics assistant
           </p>
         </div>
@@ -284,34 +284,34 @@ export default function ChatAnalyticsPage() {
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Total Messages</div>
-          <div className="text-2xl font-semibold text-warm-900">{analytics.overview.totalMessages.toLocaleString()}</div>
-          <p className="text-xs text-warm-500 mt-1">
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Messages</div>
+          <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{analytics.overview.totalMessages.toLocaleString()}</div>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
             {analytics.overview.userMessages.toLocaleString()} users · {analytics.overview.aiMessages.toLocaleString()} AI
           </p>
         </Card>
 
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Active Users</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Active Users</div>
           <div className="text-2xl font-semibold text-lime-600">{analytics.overview.activeUsers}</div>
-          <p className="text-xs text-warm-500 mt-1">
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
             {analytics.overview.last24h.users} in last 24h
           </p>
         </Card>
 
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">AI Interactions</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">AI Interactions</div>
           <div className="text-2xl font-semibold text-plum-600">{analytics.overview.aiMessages.toLocaleString()}</div>
-          <p className="text-xs text-warm-500 mt-1">
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
             {analytics.overview.aiChannels} assistants active
           </p>
         </Card>
 
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-warm-400">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Channels</div>
-          <div className="text-2xl font-semibold text-warm-900">{analytics.overview.totalChannels}</div>
-          <p className="text-xs text-warm-500 mt-1">
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-warm-400">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Channels</div>
+          <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{analytics.overview.totalChannels}</div>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
             {analytics.topChannels.length} with activity
           </p>
         </Card>
@@ -319,16 +319,16 @@ export default function ChatAnalyticsPage() {
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList className="rounded-sm bg-warm-100 p-1">
-          <TabsTrigger value="overview" className="rounded-sm text-sm data-[state=active]:bg-white data-[state=active]:text-warm-900">
+        <TabsList className="rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1">
+          <TabsTrigger value="overview" className="rounded-sm text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-700 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100">
             <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
             Overview
           </TabsTrigger>
-          <TabsTrigger value="chat" className="rounded-sm text-sm data-[state=active]:bg-white data-[state=active]:text-warm-900">
+          <TabsTrigger value="chat" className="rounded-sm text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-700 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100">
             <Sparkles className="h-3.5 w-3.5 mr-1.5" />
             Ask Insight
           </TabsTrigger>
-          <TabsTrigger value="digest" className="rounded-sm text-sm data-[state=active]:bg-white data-[state=active]:text-warm-900">
+          <TabsTrigger value="digest" className="rounded-sm text-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-700 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100">
             <Calendar className="h-3.5 w-3.5 mr-1.5" />
             Digest
           </TabsTrigger>
@@ -338,18 +338,18 @@ export default function ChatAnalyticsPage() {
         <TabsContent value="overview" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Top Channels */}
-            <Card className="rounded-sm border-warm-200">
+            <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
               <CardHeader className="p-4 pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900">
+                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
                   <MessageSquare className="h-4 w-4 text-ocean-600" />
                   Top Active Channels
                 </CardTitle>
-                <CardDescription className="text-xs text-warm-500">Most active channels by message count</CardDescription>
+                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Most active channels by message count</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="space-y-1.5">
                   {analytics.topChannels.slice(0, 5).map((channel, index) => (
-                    <div key={channel.id} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors">
+                    <div key={channel.id} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className={`w-6 h-6 rounded-sm flex items-center justify-center font-semibold text-xs ${
                           index === 0 ? 'bg-lime-100 text-lime-700' :
@@ -360,11 +360,11 @@ export default function ChatAnalyticsPage() {
                           {index + 1}
                         </div>
                         <div>
-                          <span className="font-medium text-sm text-warm-900 block">{channel.name}</span>
+                          <span className="font-medium text-sm text-warm-900 dark:text-cream-100 block">{channel.name}</span>
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 rounded-sm mt-0.5">{channel.type}</Badge>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold text-warm-500">
+                      <span className="text-xs font-semibold text-warm-500 dark:text-cream-400">
                         {channel.messageCount.toLocaleString()}
                       </span>
                     </div>
@@ -374,19 +374,19 @@ export default function ChatAnalyticsPage() {
             </Card>
 
             {/* AI Assistant Usage */}
-            <Card className="rounded-sm border-warm-200">
+            <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
               <CardHeader className="p-4 pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900">
+                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
                   <Bot className="h-4 w-4 text-plum-600" />
                   AI Assistant Usage
                 </CardTitle>
-                <CardDescription className="text-xs text-warm-500">Questions asked to each AI assistant</CardDescription>
+                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Questions asked to each AI assistant</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="space-y-1.5">
                   {analytics.aiUsage.length > 0 ? (
                     analytics.aiUsage.map((ai, index) => (
-                      <div key={index} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors">
+                      <div key={index} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="p-1.5 bg-plum-100 rounded-sm">
                             <Bot className="h-3.5 w-3.5 text-plum-600" />
@@ -395,12 +395,12 @@ export default function ChatAnalyticsPage() {
                         </div>
                         <div className="flex items-center gap-4 text-xs">
                           <div className="text-right">
-                            <div className="font-semibold text-warm-900">{ai.questions}</div>
-                            <div className="text-warm-500">questions</div>
+                            <div className="font-semibold text-warm-900 dark:text-cream-100">{ai.questions}</div>
+                            <div className="text-warm-500 dark:text-cream-400">questions</div>
                           </div>
                           <div className="text-right">
-                            <div className="font-semibold text-warm-900">{ai.uniqueUsers}</div>
-                            <div className="text-warm-500">users</div>
+                            <div className="font-semibold text-warm-900 dark:text-cream-100">{ai.uniqueUsers}</div>
+                            <div className="text-warm-500 dark:text-cream-400">users</div>
                           </div>
                         </div>
                       </div>
@@ -408,7 +408,7 @@ export default function ChatAnalyticsPage() {
                   ) : (
                     <div className="text-center py-8">
                       <Bot className="h-10 w-10 mx-auto text-warm-300 mb-2" />
-                      <p className="text-sm text-warm-500">
+                      <p className="text-sm text-warm-500 dark:text-cream-400">
                         No AI assistant usage in this period
                       </p>
                     </div>
@@ -418,18 +418,18 @@ export default function ChatAnalyticsPage() {
             </Card>
 
             {/* Top Contributors */}
-            <Card className="rounded-sm border-warm-200">
+            <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
               <CardHeader className="p-4 pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900">
+                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
                   <Users className="h-4 w-4 text-lime-600" />
                   Top Contributors
                 </CardTitle>
-                <CardDescription className="text-xs text-warm-500">Most active team members</CardDescription>
+                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Most active team members</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="space-y-1.5">
                   {analytics.topUsers.map((user, index) => (
-                    <div key={user.id} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors">
+                    <div key={user.id} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className={`w-6 h-6 rounded-sm flex items-center justify-center font-semibold text-xs ${
                           index === 0 ? 'bg-lime-100 text-lime-700' :
@@ -440,11 +440,11 @@ export default function ChatAnalyticsPage() {
                           {index + 1}
                         </div>
                         <div>
-                          <span className="font-medium text-sm text-warm-900 block">{user.name}</span>
+                          <span className="font-medium text-sm text-warm-900 dark:text-cream-100 block">{user.name}</span>
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 rounded-sm mt-0.5">{user.role}</Badge>
                         </div>
                       </div>
-                      <span className="text-xs font-semibold text-warm-500">
+                      <span className="text-xs font-semibold text-warm-500 dark:text-cream-400">
                         {user.messageCount.toLocaleString()}
                       </span>
                     </div>
@@ -454,19 +454,19 @@ export default function ChatAnalyticsPage() {
             </Card>
 
             {/* Daily Activity */}
-            <Card className="rounded-sm border-warm-200">
+            <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
               <CardHeader className="p-4 pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900">
+                <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
                   <TrendingUp className="h-4 w-4 text-ocean-600" />
                   Daily Activity
                 </CardTitle>
-                <CardDescription className="text-xs text-warm-500">Message activity over time</CardDescription>
+                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Message activity over time</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0">
                 <div className="space-y-1.5">
                   {analytics.dailyActivity.slice(-7).map((day) => (
-                    <div key={day.date} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 hover:border-ocean-400 transition-colors">
-                      <span className="text-sm font-medium text-warm-900">
+                    <div key={day.date} className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
+                      <span className="text-sm font-medium text-warm-900 dark:text-cream-100">
                         {new Date(day.date).toLocaleDateString('en-US', {
                           weekday: 'short',
                           month: 'short',
@@ -475,11 +475,11 @@ export default function ChatAnalyticsPage() {
                       </span>
                       <div className="flex items-center gap-4 text-xs">
                         <div className="text-right">
-                          <div className="font-semibold text-warm-900">{day.messages}</div>
-                          <div className="text-warm-500">msgs</div>
+                          <div className="font-semibold text-warm-900 dark:text-cream-100">{day.messages}</div>
+                          <div className="text-warm-500 dark:text-cream-400">msgs</div>
                         </div>
                         <div className="text-right">
-                          <div className="font-semibold text-warm-900">{day.users}</div>
+                          <div className="font-semibold text-warm-900 dark:text-cream-100">{day.users}</div>
                           <div className="text-warm-500">users</div>
                         </div>
                       </div>
@@ -493,15 +493,15 @@ export default function ChatAnalyticsPage() {
 
         {/* Ask Insight Tab */}
         <TabsContent value="chat">
-          <Card className="h-[600px] flex flex-col rounded-sm border-warm-200">
-            <CardHeader className="border-b border-warm-200 bg-warm-50 p-4">
-              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900">
+          <Card className="h-[600px] flex flex-col rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardHeader className="border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 p-4">
+              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
                 <div className="p-1.5 bg-ocean-600 rounded-sm">
                   <Sparkles className="h-4 w-4 text-white" />
                 </div>
                 Ask Insight
               </CardTitle>
-              <CardDescription className="text-xs text-warm-500">
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
                 Chat with Insight about team communication patterns
               </CardDescription>
             </CardHeader>
@@ -512,26 +512,26 @@ export default function ChatAnalyticsPage() {
                     <div className="p-3 bg-ocean-100 rounded-sm mb-3">
                       <Bot className="h-12 w-12 text-ocean-600" />
                     </div>
-                    <h3 className="font-display font-medium text-lg text-warm-900 mb-1">Hi! I'm Insight</h3>
-                    <p className="text-sm text-warm-500 mb-4 max-w-md">
+                    <h3 className="font-display font-medium text-lg text-warm-900 dark:text-cream-100 mb-1">Hi! I'm Insight</h3>
+                    <p className="text-sm text-warm-500 dark:text-cream-400 mb-4 max-w-md">
                       Ask me about your team's chat activity, engagement patterns, or AI assistant usage.
                     </p>
-                    <div className="text-left space-y-2 text-sm bg-warm-100 rounded-sm p-3 max-w-md">
-                      <p className="font-medium text-warm-900 text-xs uppercase tracking-wide">Try asking:</p>
+                    <div className="text-left space-y-2 text-sm bg-warm-100 dark:bg-charcoal-800 rounded-sm p-3 max-w-md">
+                      <p className="font-medium text-warm-900 dark:text-cream-100 text-xs uppercase tracking-wide">Try asking:</p>
                       <ul className="space-y-1.5">
-                        <li className="flex items-start gap-2 text-warm-700">
+                        <li className="flex items-start gap-2 text-warm-700 dark:text-cream-300">
                           <MessageSquare className="h-3.5 w-3.5 text-ocean-600 mt-0.5 flex-shrink-0" />
                           <span className="text-xs">"What are the most common questions employees ask?"</span>
                         </li>
-                        <li className="flex items-start gap-2 text-warm-700">
+                        <li className="flex items-start gap-2 text-warm-700 dark:text-cream-300">
                           <TrendingUp className="h-3.5 w-3.5 text-ocean-600 mt-0.5 flex-shrink-0" />
                           <span className="text-xs">"Which channels have the most engagement?"</span>
                         </li>
-                        <li className="flex items-start gap-2 text-warm-700">
+                        <li className="flex items-start gap-2 text-warm-700 dark:text-cream-300">
                           <Bot className="h-3.5 w-3.5 text-ocean-600 mt-0.5 flex-shrink-0" />
                           <span className="text-xs">"How are people using the AI assistants?"</span>
                         </li>
-                        <li className="flex items-start gap-2 text-warm-700">
+                        <li className="flex items-start gap-2 text-warm-700 dark:text-cream-300">
                           <Sparkles className="h-3.5 w-3.5 text-ocean-600 mt-0.5 flex-shrink-0" />
                           <span className="text-xs">"What topics are trending this week?"</span>
                         </li>
@@ -554,7 +554,7 @@ export default function ChatAnalyticsPage() {
                             className={`rounded-sm px-3 py-2 ${
                               msg.role === 'user'
                                 ? 'bg-ocean-600 text-white'
-                                : 'bg-warm-100 border border-warm-200'
+                                : 'bg-warm-100 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700'
                             }`}
                           >
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -570,9 +570,9 @@ export default function ChatAnalyticsPage() {
                 )}
               </ScrollArea>
 
-              <Separator className="bg-warm-200" />
+              <Separator className="bg-warm-200 dark:bg-charcoal-700" />
 
-              <div className="p-3 bg-warm-50">
+              <div className="p-3 bg-warm-50 dark:bg-charcoal-800">
                 <div className="flex gap-2">
                   <Textarea
                     value={chatInput}
@@ -584,7 +584,7 @@ export default function ChatAnalyticsPage() {
                       }
                     }}
                     placeholder="Ask Insight about your team's chat activity..."
-                    className="min-h-[50px] max-h-[100px] resize-none bg-white rounded-sm border-warm-200 text-sm"
+                    className="min-h-[50px] max-h-[100px] resize-none bg-white dark:bg-charcoal-900 rounded-sm border-warm-200 dark:border-charcoal-700 text-sm"
                     disabled={isChatting}
                   />
                   <Button
@@ -607,15 +607,15 @@ export default function ChatAnalyticsPage() {
 
         {/* Digest Tab */}
         <TabsContent value="digest">
-          <Card className="rounded-sm border-warm-200">
-            <CardHeader className="border-b border-warm-200 bg-warm-50 p-4">
-              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900">
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardHeader className="border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 p-4">
+              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
                 <div className="p-1.5 bg-plum-600 rounded-sm">
                   <Calendar className="h-4 w-4 text-white" />
                 </div>
                 Team Activity Digest
               </CardTitle>
-              <CardDescription className="text-xs text-warm-500">
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
                 AI-generated summary of team communication and activity
               </CardDescription>
             </CardHeader>
@@ -662,13 +662,13 @@ export default function ChatAnalyticsPage() {
 
               {digest && (
                 <div className="space-y-4">
-                  <div className="bg-warm-50 rounded-sm p-4 border border-warm-200">
+                  <div className="bg-warm-50 dark:bg-charcoal-800 rounded-sm p-4 border border-warm-200 dark:border-charcoal-700">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <h3 className="font-display font-medium text-warm-900">
+                        <h3 className="font-display font-medium text-warm-900 dark:text-cream-100">
                           {digest.type.charAt(0).toUpperCase() + digest.type.slice(1)} Digest
                         </h3>
-                        <p className="text-xs text-warm-500 mt-0.5">
+                        <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                           {new Date(digest.period.start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} -{' '}
                           {new Date(digest.period.end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
@@ -676,24 +676,24 @@ export default function ChatAnalyticsPage() {
                       <div className="flex gap-4">
                         <div className="text-center">
                           <div className="text-xl font-semibold text-plum-600">{digest.metrics.totalMessages.toLocaleString()}</div>
-                          <div className="text-xs text-warm-500">Messages</div>
+                          <div className="text-xs text-warm-500 dark:text-cream-400">Messages</div>
                         </div>
                         <div className="text-center">
                           <div className="text-xl font-semibold text-ocean-600">{digest.metrics.activeUsers}</div>
-                          <div className="text-xs text-warm-500">Users</div>
+                          <div className="text-xs text-warm-500 dark:text-cream-400">Users</div>
                         </div>
                         <div className="text-center">
                           <div className="text-xl font-semibold text-lime-600">{digest.metrics.activeChannels}</div>
-                          <div className="text-xs text-warm-500">Channels</div>
+                          <div className="text-xs text-warm-500 dark:text-cream-400">Channels</div>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <Separator className="bg-warm-200" />
+                  <Separator className="bg-warm-200 dark:bg-charcoal-700" />
 
-                  <div className="bg-white rounded-sm p-4 border border-warm-200">
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap text-warm-700">{digest.content}</div>
+                  <div className="bg-white dark:bg-charcoal-900 rounded-sm p-4 border border-warm-200 dark:border-charcoal-700">
+                    <div className="text-sm leading-relaxed whitespace-pre-wrap text-warm-700 dark:text-cream-300">{digest.content}</div>
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-warm-400">
@@ -718,8 +718,8 @@ export default function ChatAnalyticsPage() {
                   <div className="p-3 bg-plum-100 rounded-sm inline-block mb-3">
                     <Calendar className="h-10 w-10 text-plum-600" />
                   </div>
-                  <h3 className="font-display font-medium text-warm-900 mb-1">No Digest Generated Yet</h3>
-                  <p className="text-sm text-warm-500">
+                  <h3 className="font-display font-medium text-warm-900 dark:text-cream-100 mb-1">No Digest Generated Yet</h3>
+                  <p className="text-sm text-warm-500 dark:text-cream-400">
                     Click "Generate Digest" to create a summary of team activity
                   </p>
                 </div>

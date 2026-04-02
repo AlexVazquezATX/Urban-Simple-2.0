@@ -295,14 +295,14 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full max-w-md bg-white shadow-xl border-l border-warm-200 flex flex-col transition-transform duration-200 ease-out',
+          'relative w-full max-w-md bg-white dark:bg-charcoal-900 shadow-xl border-l border-warm-200 dark:border-charcoal-700 flex flex-col transition-transform duration-200 ease-out',
           isVisible ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 bg-warm-50">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
           <div className="flex items-center gap-3">
-            <h2 className="font-display text-lg font-medium text-warm-900">
+            <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100">
               {task && !isNew ? 'Edit Task' : 'New Task'}
             </h2>
             <button
@@ -312,7 +312,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                 'p-1.5 rounded-sm transition-all',
                 isStarred
                   ? 'text-lime-600 bg-lime-100 hover:bg-lime-200'
-                  : 'text-warm-400 hover:text-lime-500 hover:bg-warm-100'
+                  : 'text-warm-400 hover:text-lime-500 hover:bg-warm-100 dark:hover:bg-charcoal-800'
               )}
               title={isStarred ? 'Unstar task' : 'Star task'}
             >
@@ -321,9 +321,9 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-sm hover:bg-warm-200 transition-colors"
+            className="p-2 rounded-sm hover:bg-warm-200 dark:hover:bg-charcoal-700 transition-colors"
           >
-            <X className="w-5 h-5 text-warm-500" />
+            <X className="w-5 h-5 text-warm-500 dark:text-cream-400" />
           </button>
         </div>
 
@@ -446,7 +446,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                   {goals.length > 0 && (
                     <>
                       {goals.filter(g => g.period === 'weekly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-warm-500">
+                        <div className="px-2 py-1.5 text-xs font-medium text-warm-500 dark:text-cream-400">
                           This Week
                         </div>
                       )}
@@ -462,7 +462,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                         </SelectItem>
                       ))}
                       {goals.filter(g => g.period === 'monthly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-warm-500">
+                        <div className="px-2 py-1.5 text-xs font-medium text-warm-500 dark:text-cream-400">
                           This Month
                         </div>
                       )}
@@ -527,7 +527,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                     'px-3 py-1 rounded-sm text-sm border transition-colors',
                     selectedTagIds.includes(tag.id)
                       ? 'border-transparent'
-                      : 'border-warm-200 bg-white text-warm-600'
+                      : 'border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-warm-600 dark:text-cream-300'
                   )}
                   style={selectedTagIds.includes(tag.id) ? {
                     backgroundColor: `${tag.color}20`,
@@ -567,7 +567,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
         </form>
 
         {/* Footer Actions - Fixed */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 bg-white">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
           {task && !isNew && onDelete ? (
             <Button
               type="button"

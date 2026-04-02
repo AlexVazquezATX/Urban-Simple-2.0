@@ -93,19 +93,19 @@ export default function AdminFeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
+      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-100 rounded-sm">
               <MessageSquare className="w-5 h-5 text-amber-700" />
             </div>
             <div>
-              <h1 className="text-lg font-display font-medium text-warm-900">
+              <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
                 Customer Feedback
               </h1>
-              <p className="text-sm text-warm-500">
+              <p className="text-sm text-warm-500 dark:text-cream-400">
                 Review feedback from BackHaus users
               </p>
             </div>
@@ -117,23 +117,23 @@ export default function AdminFeedbackPage() {
       {stats && (
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <div className="flex items-center gap-2 text-warm-500 text-xs mb-1">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
                 <MessageSquare className="w-3.5 h-3.5" />
                 Total Feedback
               </div>
-              <p className="text-2xl font-display font-medium text-warm-900">
+              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
                 {stats.totalCount}
               </p>
             </div>
 
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
-              <div className="flex items-center gap-2 text-warm-500 text-xs mb-1">
+            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
+              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
                 <Star className="w-3.5 h-3.5" />
                 Avg Rating
               </div>
               <div className="flex items-center gap-2">
-                <p className="text-2xl font-display font-medium text-warm-900">
+                <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
                   {stats.averageRating}
                 </p>
                 <StarRating rating={Math.round(stats.averageRating)} />
@@ -150,7 +150,7 @@ export default function AdminFeedbackPage() {
           <select
             value={filterCategory}
             onChange={(e) => { setFilterCategory(e.target.value); setPage(1) }}
-            className="px-3 py-2 text-sm rounded-sm border border-warm-300 bg-white"
+            className="px-3 py-2 text-sm rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100"
           >
             <option value="">All Categories</option>
             <option value="general">General</option>
@@ -171,7 +171,7 @@ export default function AdminFeedbackPage() {
             {feedback.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-sm border border-warm-200 p-4"
+                className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
@@ -186,10 +186,10 @@ export default function AdminFeedbackPage() {
                         {CATEGORY_LABELS[item.category] || item.category}
                       </Badge>
                     </div>
-                    <p className="text-sm text-warm-900 whitespace-pre-wrap mb-3">
+                    <p className="text-sm text-warm-900 dark:text-cream-100 whitespace-pre-wrap mb-3">
                       {item.message}
                     </p>
-                    <div className="flex items-center gap-3 text-xs text-warm-500">
+                    <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
                       <span className="font-medium">
                         {item.user.firstName} {item.user.lastName}
                       </span>
@@ -220,7 +220,7 @@ export default function AdminFeedbackPage() {
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
-                <span className="text-sm text-warm-600">
+                <span className="text-sm text-warm-600 dark:text-cream-400">
                   Page {page} of {totalPages}
                 </span>
                 <Button
@@ -236,14 +236,14 @@ export default function AdminFeedbackPage() {
             )}
           </div>
         ) : (
-          <div className="text-center py-20 bg-white rounded-sm border border-warm-200">
+          <div className="text-center py-20 bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700">
             <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
               <MessageSquare className="w-7 h-7 text-warm-400" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">
+            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">
               No feedback yet
             </h3>
-            <p className="text-sm text-warm-500">
+            <p className="text-sm text-warm-500 dark:text-cream-400">
               Feedback from BackHaus users will appear here
             </p>
           </div>

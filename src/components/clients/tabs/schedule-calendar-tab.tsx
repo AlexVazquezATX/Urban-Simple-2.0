@@ -147,10 +147,10 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
 
   if (error) {
     return (
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
-          <p className="text-sm text-warm-600 mb-4">{error}</p>
+          <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">{error}</p>
           <Button variant="outline" size="sm" onClick={fetchSchedule} className="rounded-sm">Retry</Button>
         </CardContent>
       </Card>
@@ -164,12 +164,12 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
       {/* Month navigation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="rounded-sm border-warm-200 h-8 w-8">
+          <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">
             <Select value={String(month)} onValueChange={(v) => setMonth(parseInt(v))}>
-              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 h-8 text-sm">
+              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -179,7 +179,7 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
               </SelectContent>
             </Select>
             <Select value={String(year)} onValueChange={(v) => setYear(parseInt(v))}>
-              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 h-8 text-sm">
+              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -189,7 +189,7 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" size="icon" onClick={goToNextMonth} className="rounded-sm border-warm-200 h-8 w-8">
+          <Button variant="outline" size="icon" onClick={goToNextMonth} className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8">
             <ChevronRight className="h-4 w-4" />
           </Button>
           {!isCurrentMonth && (
@@ -199,14 +199,14 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-warm-500">
+          <span className="text-sm text-warm-500 dark:text-cream-400">
             {preview.activeFacilityCount} active facilities
           </span>
           <Button
             variant="outline"
             size="sm"
             onClick={() => window.open(`/clients/${clientId}/print-schedule?year=${year}&month=${month}`, '_blank')}
-            className="rounded-sm border-warm-200 text-warm-700 print:hidden"
+            className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 print:hidden"
           >
             <Printer className="h-3.5 w-3.5 mr-1.5" />
             Print
@@ -215,22 +215,22 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
       </div>
 
       {/* Calendar grid */}
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="p-2 sm:p-4">
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {DAY_HEADERS.map((day) => (
-              <div key={day} className="text-center text-xs font-medium text-warm-500 py-1.5">
+              <div key={day} className="text-center text-xs font-medium text-warm-500 dark:text-cream-400 py-1.5">
                 {day}
               </div>
             ))}
           </div>
 
           {/* Calendar cells */}
-          <div className="grid grid-cols-7 gap-px bg-warm-200 border border-warm-200 rounded-sm overflow-hidden">
+          <div className="grid grid-cols-7 gap-px bg-warm-200 dark:bg-charcoal-700 border border-warm-200 dark:border-charcoal-700 rounded-sm overflow-hidden">
             {monthCells.map((cell, idx) => {
               if (!cell.date) {
-                return <div key={idx} className="bg-warm-50 min-h-[72px]" />
+                return <div key={idx} className="bg-warm-50 dark:bg-charcoal-800 min-h-[72px]" />
               }
 
               const dow = cell.dayOfWeek
@@ -245,10 +245,10 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
                   key={idx}
                   onClick={() => setSelectedDay(isSelected ? null : cell.dayOfMonth)}
                   className={cn(
-                    'bg-white min-h-[72px] p-1.5 text-left transition-colors relative',
+                    'bg-white dark:bg-charcoal-900 min-h-[72px] p-1.5 text-left transition-colors relative',
                     'hover:bg-ocean-50/50 focus:outline-none focus:ring-1 focus:ring-ocean-400 focus:ring-inset',
                     isSelected && 'bg-ocean-50 ring-1 ring-ocean-400 ring-inset',
-                    isWeekend && !isSelected && 'bg-warm-50/50',
+                    isWeekend && !isSelected && 'bg-warm-50/50 dark:bg-charcoal-800/50',
                   )}
                 >
                   {/* Day number */}
@@ -256,7 +256,7 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
                     'text-xs font-medium',
                     isToday
                       ? 'bg-ocean-600 text-white rounded-full w-5 h-5 flex items-center justify-center'
-                      : 'text-warm-700',
+                      : 'text-warm-700 dark:text-cream-300',
                   )}>
                     {cell.dayOfMonth}
                   </span>
@@ -266,7 +266,7 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
                     <div className="mt-1">
                       <div className="flex items-center gap-1">
                         <div className="h-1.5 w-1.5 rounded-full bg-lime-500" />
-                        <span className="text-[10px] text-warm-600">{count}</span>
+                        <span className="text-[10px] text-warm-600 dark:text-cream-400">{count}</span>
                       </div>
                       {/* Tiny dots for individual facilities (max 6 shown) */}
                       <div className="flex flex-wrap gap-0.5 mt-0.5">
@@ -290,7 +290,7 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
                   {/* No service indicator */}
                   {count === 0 && (
                     <div className="mt-1">
-                      <span className="text-[10px] text-warm-300">No service</span>
+                      <span className="text-[10px] text-warm-300 dark:text-charcoal-600">No service</span>
                     </div>
                   )}
                 </button>
@@ -302,30 +302,30 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
 
       {/* Selected day detail */}
       {selectedDay !== null && selectedDayFacilities !== null && (
-        <Card className="border-warm-200 border-ocean-200 bg-ocean-50/30">
+        <Card className="border-warm-200 dark:border-charcoal-700 border-ocean-200 bg-ocean-50/30">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display font-medium text-warm-900">
+            <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
               {MONTH_NAMES[month - 1]} {selectedDay}, {year}
-              <span className="ml-2 text-warm-500 font-normal">
+              <span className="ml-2 text-warm-500 dark:text-cream-400 font-normal">
                 — {DAY_HEADERS[new Date(year, month - 1, selectedDay).getDay()]}
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {selectedDayFacilities.length === 0 ? (
-              <p className="text-sm text-warm-500">No facilities scheduled for this day.</p>
+              <p className="text-sm text-warm-500 dark:text-cream-400">No facilities scheduled for this day.</p>
             ) : (
               <div className="space-y-1.5">
                 {selectedDayFacilities.map((f) => (
-                  <div key={f.facilityProfileId} className="flex items-center justify-between py-1 px-2 rounded-sm bg-white border border-warm-100">
+                  <div key={f.facilityProfileId} className="flex items-center justify-between py-1 px-2 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-100 dark:border-charcoal-700">
                     <div className="flex items-center gap-2">
                       <div className={cn(
                         'h-2 w-2 rounded-full',
                         f.isOverridden ? 'bg-orange-400' : 'bg-lime-500',
                       )} />
-                      <span className="text-sm text-warm-800">{f.locationName}</span>
+                      <span className="text-sm text-warm-800 dark:text-cream-200">{f.locationName}</span>
                       {f.category && (
-                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-warm-200 text-warm-500">
+                        <Badge variant="outline" className="text-[9px] px-1 py-0 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400">
                           {f.category}
                         </Badge>
                       )}
@@ -335,10 +335,10 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-warm-500">{f.effectiveFrequency}x/wk</span>
+                    <span className="text-xs text-warm-500 dark:text-cream-400">{f.effectiveFrequency}x/wk</span>
                   </div>
                 ))}
-                <p className="text-xs text-warm-500 pt-1">
+                <p className="text-xs text-warm-500 dark:text-cream-400 pt-1">
                   {selectedDayFacilities.length} {selectedDayFacilities.length === 1 ? 'facility' : 'facilities'} scheduled
                 </p>
               </div>
@@ -349,9 +349,9 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
 
       {/* Legend / inactive facilities */}
       {inactiveFacilities.length > 0 && (
-        <Card className="border-warm-200 bg-warm-50/50">
+        <Card className="border-warm-200 dark:border-charcoal-700 bg-warm-50/50 dark:bg-charcoal-800/50">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-display font-medium text-warm-800">
+            <CardTitle className="text-sm font-display font-medium text-warm-800 dark:text-cream-200">
               Not Scheduled This Month
             </CardTitle>
           </CardHeader>
@@ -381,7 +381,7 @@ export function ScheduleCalendarTab({ clientId }: ScheduleCalendarTabProps) {
       )}
 
       {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-warm-500">
+      <div className="flex items-center gap-4 text-xs text-warm-500 dark:text-cream-400">
         <div className="flex items-center gap-1">
           <div className="h-2 w-2 rounded-full bg-lime-500" /> Active
         </div>
@@ -408,7 +408,7 @@ function CalendarSkeleton() {
         </div>
         <Skeleton className="h-4 w-28" />
       </div>
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="p-4">
           <div className="grid grid-cols-7 gap-1 mb-2">
             {DAY_HEADERS.map(d => <Skeleton key={d} className="h-4 w-full" />)}

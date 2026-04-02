@@ -82,7 +82,7 @@ export default function ProspectsPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+        <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
           {/* Header skeleton */}
           <div className="flex items-center justify-between mb-6">
             <div>

@@ -166,10 +166,10 @@ export function ServiceLineItemForm({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md rounded-sm border-warm-200">
         <DialogHeader>
-          <DialogTitle className="font-display font-medium text-warm-900">
+          <DialogTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
             {isEditing ? 'Edit Service Item' : 'Add Service Item'}
           </DialogTitle>
-          <DialogDescription className="text-warm-500">
+          <DialogDescription className="text-warm-500 dark:text-cream-400">
             One-time or ad-hoc charge for this billing period
           </DialogDescription>
         </DialogHeader>
@@ -183,13 +183,13 @@ export function ServiceLineItemForm({
                 name="month"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 text-xs">Month</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Month</FormLabel>
                     <Select
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(parseInt(v))}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -210,13 +210,13 @@ export function ServiceLineItemForm({
                 name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 text-xs">Year</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Year</FormLabel>
                     <Select
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(parseInt(v))}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
@@ -238,11 +238,11 @@ export function ServiceLineItemForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 text-xs">Description</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Description</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g. High dusting — all chandeliers"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       {...field}
                     />
                   </FormControl>
@@ -258,13 +258,13 @@ export function ServiceLineItemForm({
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 text-xs">Quantity</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Quantity</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0.01"
-                        className="rounded-sm border-warm-200"
+                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                         {...field}
                       />
                     </FormControl>
@@ -277,14 +277,14 @@ export function ServiceLineItemForm({
                 name="unitRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 text-xs">Unit Rate ($)</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Unit Rate ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
                         placeholder="0.00"
-                        className="rounded-sm border-warm-200"
+                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                         {...field}
                       />
                     </FormControl>
@@ -301,15 +301,15 @@ export function ServiceLineItemForm({
                 name="facilityProfileId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 text-xs">
-                      Facility <span className="text-warm-400">(optional)</span>
+                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">
+                      Facility <span className="text-warm-400 dark:text-cream-400">(optional)</span>
                     </FormLabel>
                     <Select
                       value={field.value || '_none'}
                       onValueChange={(v) => field.onChange(v === '_none' ? '' : v)}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue placeholder="Client-level (no facility)" />
                         </SelectTrigger>
                       </FormControl>
@@ -334,13 +334,13 @@ export function ServiceLineItemForm({
               name="taxBehavior"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 text-xs">Tax Behavior</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Tax Behavior</FormLabel>
                   <Select
                     value={field.value || 'INHERIT_CLIENT'}
                     onValueChange={field.onChange}
                   >
                     <FormControl>
-                      <SelectTrigger className="rounded-sm border-warm-200">
+                      <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
@@ -361,13 +361,13 @@ export function ServiceLineItemForm({
               name="performedDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 text-xs">
-                    Date Performed <span className="text-warm-400">(optional)</span>
+                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">
+                    Date Performed <span className="text-warm-400 dark:text-cream-400">(optional)</span>
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="date"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       {...field}
                     />
                   </FormControl>
@@ -382,14 +382,14 @@ export function ServiceLineItemForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 text-xs">
-                    Notes <span className="text-warm-400">(optional)</span>
+                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">
+                    Notes <span className="text-warm-400 dark:text-cream-400">(optional)</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       rows={2}
                       placeholder="Additional details..."
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       {...field}
                     />
                   </FormControl>
@@ -419,7 +419,7 @@ export function ServiceLineItemForm({
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
-                  className="rounded-sm border-warm-200 text-warm-700"
+                  className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
                 >
                   Cancel
                 </Button>

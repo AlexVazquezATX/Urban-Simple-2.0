@@ -43,7 +43,7 @@ export function ModeSelector({ value, onChange, disabled }: ModeSelectorProps) {
               'flex-1 p-4 rounded-sm border-2 transition-all text-left',
               isSelected
                 ? 'border-lime-500 bg-lime-50'
-                : 'border-warm-200 hover:border-warm-300 bg-white',
+                : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
@@ -53,7 +53,7 @@ export function ModeSelector({ value, onChange, disabled }: ModeSelectorProps) {
                   'w-10 h-10 rounded-sm flex items-center justify-center shrink-0',
                   isSelected
                     ? `bg-gradient-to-br ${mode.gradient} text-white`
-                    : 'bg-warm-100 text-warm-500'
+                    : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
                 )}
               >
                 <Icon className="w-5 h-5" />
@@ -62,12 +62,12 @@ export function ModeSelector({ value, onChange, disabled }: ModeSelectorProps) {
                 <h3
                   className={cn(
                     'text-sm font-medium',
-                    isSelected ? 'text-lime-700' : 'text-warm-900'
+                    isSelected ? 'text-lime-700' : 'text-warm-900 dark:text-cream-100'
                   )}
                 >
                   {mode.title}
                 </h3>
-                <p className="text-xs text-warm-500 mt-0.5">{mode.description}</p>
+                <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{mode.description}</p>
               </div>
             </div>
           </button>

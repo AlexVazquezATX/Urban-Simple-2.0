@@ -276,18 +276,18 @@ export default function CreativeDetailPage({
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2 text-xs text-warm-400 mb-1">
-              <Link href="/creative-hub" className="hover:text-warm-600 transition-colors">
+            <div className="flex items-center gap-2 text-xs text-warm-400 dark:text-cream-400 mb-1">
+              <Link href="/creative-hub" className="hover:text-warm-600 dark:hover:text-cream-300 transition-colors">
                 Content
               </Link>
               <span>/</span>
-              <Link href="/creative-hub/images" className="hover:text-warm-600 transition-colors">
+              <Link href="/creative-hub/images" className="hover:text-warm-600 dark:hover:text-cream-300 transition-colors">
                 Creatives
               </Link>
               <span>/</span>
-              <span className="text-warm-500 truncate max-w-50">{name}</span>
+              <span className="text-warm-500 dark:text-cream-400 truncate max-w-50">{name}</span>
             </div>
-            <h1 className="text-xl font-semibold text-warm-900">Edit Creative</h1>
+            <h1 className="text-xl font-semibold text-warm-900 dark:text-cream-100">Edit Creative</h1>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleDelete}>
@@ -313,7 +313,7 @@ export default function CreativeDetailPage({
       <div className="grid md:grid-cols-3 gap-6">
         {/* Left: Image Card */}
         <div className="md:col-span-1">
-          <div className="bg-white rounded-lg border border-warm-200 overflow-hidden">
+          <div className="bg-white dark:bg-charcoal-900 rounded-lg border border-warm-200 dark:border-charcoal-700 overflow-hidden">
             <div
               className="relative aspect-square cursor-pointer group"
               onClick={() => setLightboxOpen(true)}
@@ -330,12 +330,12 @@ export default function CreativeDetailPage({
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-3 py-2.5 border-t border-warm-100">
+            <div className="flex items-center justify-between px-3 py-2.5 border-t border-warm-100 dark:border-charcoal-700">
               <div className="flex items-center gap-2">
                 {image.isAiGenerated && (
                   <Badge className="bg-ocean-500 text-white text-[10px]">AI Generated</Badge>
                 )}
-                <span className="text-xs text-warm-500 capitalize">
+                <span className="text-xs text-warm-500 dark:text-cream-400 capitalize">
                   {image.imageType.replace('_', ' ')} &middot; {image.aspectRatio}
                 </span>
               </div>
@@ -347,10 +347,10 @@ export default function CreativeDetailPage({
           </div>
 
           {/* Status & Queue — moved below image on left side */}
-          <div className="bg-white rounded-lg border border-warm-200 p-5 mt-4">
+          <div className="bg-white dark:bg-charcoal-900 rounded-lg border border-warm-200 dark:border-charcoal-700 p-5 mt-4">
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-medium text-warm-600 mb-2 block">Status</label>
+                <label className="text-xs font-medium text-warm-600 dark:text-cream-400 mb-2 block">Status</label>
                 <div className="flex gap-1">
                   {['draft', 'approved', 'archived'].map((s) => (
                     <button
@@ -363,7 +363,7 @@ export default function CreativeDetailPage({
                             : s === 'approved'
                               ? 'bg-green-50 border-green-300 text-green-700'
                               : 'bg-warm-100 border-warm-300 text-warm-600'
-                          : 'bg-white border-warm-200 text-warm-400 hover:border-warm-300'
+                          : 'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700 text-warm-400 dark:text-cream-400 hover:border-warm-300'
                       }`}
                     >
                       {s}
@@ -373,8 +373,8 @@ export default function CreativeDetailPage({
               </div>
 
               <div>
-                <label className="text-xs font-medium text-warm-600 mb-2 block">Queue Status</label>
-                <p className="text-[10px] text-warm-400 mb-1.5">
+                <label className="text-xs font-medium text-warm-600 dark:text-cream-400 mb-2 block">Queue Status</label>
+                <p className="text-[10px] text-warm-400 dark:text-cream-400 mb-1.5">
                   Pending = ready to post, Passed = skip, Posted = done
                 </p>
                 <div className="flex gap-1">
@@ -389,7 +389,7 @@ export default function CreativeDetailPage({
                             : q === 'passed'
                               ? 'bg-warm-100 border-warm-300 text-warm-600'
                               : 'bg-green-50 border-green-300 text-green-700'
-                          : 'bg-white border-warm-200 text-warm-400 hover:border-warm-300'
+                          : 'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700 text-warm-400 dark:text-cream-400 hover:border-warm-300'
                       }`}
                     >
                       {q}
@@ -399,7 +399,7 @@ export default function CreativeDetailPage({
               </div>
 
               <div>
-                <label className="text-xs font-medium text-warm-600 mb-1 block">Priority Rank</label>
+                <label className="text-xs font-medium text-warm-600 dark:text-cream-400 mb-1 block">Priority Rank</label>
                 <div className="flex items-center gap-2">
                   <Input
                     type="number"
@@ -412,13 +412,13 @@ export default function CreativeDetailPage({
                   {priorityRank && (
                     <button
                       onClick={() => setPriorityRank('')}
-                      className="text-xs text-warm-400 hover:text-warm-600"
+                      className="text-xs text-warm-400 dark:text-cream-400 hover:text-warm-600 dark:hover:text-cream-300"
                     >
                       Clear
                     </button>
                   )}
                 </div>
-                <p className="text-[10px] text-warm-400 mt-1">
+                <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
                   Lower numbers = higher priority (1 is first)
                 </p>
               </div>
@@ -429,9 +429,9 @@ export default function CreativeDetailPage({
         {/* Right: Form */}
         <div className="md:col-span-2 space-y-5">
           {/* Social Media Copy */}
-          <div className="bg-white rounded-lg border border-warm-200 p-5">
+          <div className="bg-white dark:bg-charcoal-900 rounded-lg border border-warm-200 dark:border-charcoal-700 p-5">
             <div className="flex items-center justify-between mb-1">
-              <h2 className="text-base font-semibold text-warm-900">Social Media Copy</h2>
+              <h2 className="text-base font-semibold text-warm-900 dark:text-cream-100">Social Media Copy</h2>
               <Button
                 variant="outline"
                 size="sm"
@@ -446,12 +446,12 @@ export default function CreativeDetailPage({
                 Generate with AI
               </Button>
             </div>
-            <p className="text-xs text-warm-400 mb-4">
+            <p className="text-xs text-warm-400 dark:text-cream-400 mb-4">
               Add captions and messaging for each platform. Use the copy buttons to easily paste into scheduling tools.
             </p>
 
             {/* Platform tabs */}
-            <div className="flex gap-1 mb-3 border-b border-warm-100">
+            <div className="flex gap-1 mb-3 border-b border-warm-100 dark:border-charcoal-700">
               {platforms.map((p) => (
                 <button
                   key={p.id}
@@ -459,7 +459,7 @@ export default function CreativeDetailPage({
                   className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors ${
                     activePlatform === p.id
                       ? 'border-ocean-500 text-ocean-700'
-                      : 'border-transparent text-warm-400 hover:text-warm-600'
+                      : 'border-transparent text-warm-400 dark:text-cream-400 hover:text-warm-600 dark:hover:text-cream-300'
                   }`}
                 >
                   {p.label}
@@ -470,7 +470,7 @@ export default function CreativeDetailPage({
             {/* Caption */}
             <div className="mb-3">
               <div className="flex items-center justify-between mb-1">
-                <label className="text-xs font-medium text-warm-600">Caption</label>
+                <label className="text-xs font-medium text-warm-600 dark:text-cream-400">Caption</label>
                 <button
                   onClick={handleCopyAll}
                   className="text-xs text-ocean-600 hover:text-ocean-700 flex items-center gap-1"
@@ -483,10 +483,10 @@ export default function CreativeDetailPage({
                 value={getActiveCaption()}
                 onChange={(e) => setActiveCaption(e.target.value)}
                 rows={5}
-                className="w-full border border-warm-200 rounded-sm px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-ocean-300"
+                className="w-full border border-warm-200 dark:border-charcoal-700 rounded-sm px-3 py-2 text-sm bg-white dark:bg-charcoal-800 text-warm-900 dark:text-cream-100 resize-y focus:outline-none focus:ring-1 focus:ring-ocean-300"
                 placeholder={`Write your ${activePlatform} caption...`}
               />
-              <p className="text-xs text-warm-400 mt-1">
+              <p className="text-xs text-warm-400 dark:text-cream-400 mt-1">
                 {getActiveCaption().length} characters
               </p>
             </div>
@@ -516,7 +516,7 @@ export default function CreativeDetailPage({
                   {hashtags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-warm-100 text-warm-700 rounded-full text-xs"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 rounded-full text-xs"
                     >
                       #{tag}
                       <button
@@ -532,9 +532,9 @@ export default function CreativeDetailPage({
             </div>
 
             {/* Tips */}
-            <div className="mt-4 bg-warm-50 rounded-sm border border-warm-100 p-3">
-              <p className="text-xs font-medium text-warm-600 mb-1.5">Tips for great social copy</p>
-              <ul className="text-[11px] text-warm-500 space-y-0.5">
+            <div className="mt-4 bg-warm-50 dark:bg-charcoal-800 rounded-sm border border-warm-100 dark:border-charcoal-700 p-3">
+              <p className="text-xs font-medium text-warm-600 dark:text-cream-400 mb-1.5">Tips for great social copy</p>
+              <ul className="text-[11px] text-warm-500 dark:text-cream-400 space-y-0.5">
                 <li>&bull; Instagram: Use 3-5 relevant hashtags for discoverability</li>
                 <li>&bull; Facebook: Keep it conversational and include a call-to-action</li>
                 <li>&bull; X/Twitter: Short and punchy works best &mdash; use threads for longer content</li>
@@ -543,7 +543,7 @@ export default function CreativeDetailPage({
           </div>
 
           {/* Metadata */}
-          <div className="bg-white rounded-lg border border-warm-200 p-5 space-y-3">
+          <div className="bg-white dark:bg-charcoal-900 rounded-lg border border-warm-200 dark:border-charcoal-700 p-5 space-y-3">
             <div>
               <label className="text-xs font-medium text-warm-600 mb-1 block">Title</label>
               <Input
@@ -558,7 +558,7 @@ export default function CreativeDetailPage({
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={3}
-                className="w-full border border-warm-200 rounded-sm px-3 py-2 text-sm resize-y focus:outline-none focus:ring-1 focus:ring-ocean-300"
+                className="w-full border border-warm-200 dark:border-charcoal-700 rounded-sm px-3 py-2 text-sm bg-white dark:bg-charcoal-800 text-warm-900 dark:text-cream-100 resize-y focus:outline-none focus:ring-1 focus:ring-ocean-300"
                 placeholder="Add a description..."
               />
             </div>
@@ -584,9 +584,9 @@ export default function CreativeDetailPage({
 
           {/* Generation Prompt */}
           {image.aiPrompt && (
-            <div className="bg-white rounded-lg border border-warm-200 p-5">
+            <div className="bg-white dark:bg-charcoal-900 rounded-lg border border-warm-200 dark:border-charcoal-700 p-5">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs font-semibold text-warm-600">Generation Prompt</h3>
+                <h3 className="text-xs font-semibold text-warm-600 dark:text-cream-400">Generation Prompt</h3>
                 <Link
                   href={`/creative-hub/generate?prompt=${encodeURIComponent(image.aiPrompt)}`}
                 >
@@ -596,11 +596,11 @@ export default function CreativeDetailPage({
                   </Button>
                 </Link>
               </div>
-              <p className="text-sm text-warm-600 whitespace-pre-wrap bg-warm-50 rounded-sm p-3 border border-warm-100 max-h-40 overflow-y-auto">
+              <p className="text-sm text-warm-600 dark:text-cream-400 whitespace-pre-wrap bg-warm-50 dark:bg-charcoal-800 rounded-sm p-3 border border-warm-100 dark:border-charcoal-700 max-h-40 overflow-y-auto">
                 {image.aiPrompt}
               </p>
               {image.aiModel && (
-                <p className="text-[10px] text-warm-400 mt-1.5">
+                <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1.5">
                   Model: {image.aiModel}
                 </p>
               )}

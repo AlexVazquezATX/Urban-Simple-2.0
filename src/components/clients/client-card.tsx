@@ -17,8 +17,8 @@ export function ClientCard({ client }: ClientCardProps) {
     : null
 
   return (
-    <Card className="overflow-hidden rounded-sm border-warm-200 hover:border-ocean-400 hover:shadow-md transition-all p-0">
-      <div className="relative h-36 bg-gradient-to-br from-warm-100 to-warm-50 rounded-t-sm overflow-hidden">
+    <Card className="overflow-hidden rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 hover:shadow-md transition-all p-0 flex flex-col h-full">
+      <div className="relative h-36 bg-gradient-to-br from-warm-100 to-warm-50 dark:from-charcoal-800 dark:to-charcoal-900 rounded-t-sm overflow-hidden">
         {client.logoUrl ? (
           <Image
             src={client.logoUrl}
@@ -29,7 +29,7 @@ export function ClientCard({ client }: ClientCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
-            <Building2 className="h-24 w-24 text-warm-300" />
+            <Building2 className="h-24 w-24 text-warm-300 dark:text-charcoal-600" />
           </div>
         )}
         <div className="absolute top-2 right-2 z-10">
@@ -44,45 +44,45 @@ export function ClientCard({ client }: ClientCardProps) {
           </Badge>
         </div>
       </div>
-      <CardContent className="p-3">
-        <div className="space-y-2">
+      <CardContent className="p-3 flex flex-col flex-1">
+        <div className="flex flex-col flex-1">
           <div>
             <Link href={`/clients/${client.id}`}>
-              <h3 className="text-base font-display font-medium text-warm-900 hover:text-ocean-600 transition-colors leading-tight">
+              <h3 className="text-base font-display font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600 transition-colors leading-tight">
                 {client.name}
               </h3>
             </Link>
             {client.legalName && (
-              <p className="text-xs text-warm-500 mt-0.5">
+              <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
                 {client.legalName}
               </p>
             )}
           </div>
 
-          <div className="space-y-1.5 text-xs">
+          <div className="space-y-1.5 text-xs mt-2">
             {addressStr && (
-              <div className="flex items-start gap-1.5 text-warm-500">
+              <div className="flex items-start gap-1.5 text-warm-500 dark:text-cream-400">
                 <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span className="line-clamp-2">{addressStr}</span>
               </div>
             )}
             {client.billingEmail && (
-              <div className="flex items-center gap-1.5 text-warm-500">
+              <div className="flex items-center gap-1.5 text-warm-500 dark:text-cream-400">
                 <Mail className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{client.billingEmail}</span>
               </div>
             )}
             {client.phone && (
-              <div className="flex items-center gap-1.5 text-warm-500">
+              <div className="flex items-center gap-1.5 text-warm-500 dark:text-cream-400">
                 <Phone className="h-3 w-3 flex-shrink-0" />
                 <span>{client.phone}</span>
               </div>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-warm-300 text-warm-600">{client.branch.code}</Badge>
-            <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-warm-300 text-warm-600">{client.paymentTerms}</Badge>
+          <div className="flex items-center gap-1.5 flex-wrap mt-2">
+            <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">{client.branch.code}</Badge>
+            <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">{client.paymentTerms}</Badge>
             {client.locations.length > 0 && (
               <Badge className="rounded-sm text-[9px] px-1 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
                 {client.locations.length}{' '}
@@ -91,14 +91,17 @@ export function ClientCard({ client }: ClientCardProps) {
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 pt-2 border-t border-warm-200">
+          {/* Spacer pushes buttons to bottom */}
+          <div className="flex-1 min-h-2" />
+
+          <div className="flex items-center gap-1.5 pt-2 border-t border-warm-200 dark:border-charcoal-700 mt-2">
             <Link href={`/clients/${client.id}`} className="flex-1">
-              <Button variant="outline" size="sm" className="w-full h-7 text-xs rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400">
+              <Button variant="outline" size="sm" className="w-full h-7 text-xs rounded-sm border-ocean-400 dark:border-ocean-600 text-ocean-600 dark:text-ocean-400 hover:bg-ocean-50 dark:hover:bg-ocean-900/30 hover:border-ocean-500">
                 View Details
               </Button>
             </Link>
             <ClientForm client={client}>
-              <Button variant="ghost" size="sm" className="h-7 text-xs rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+              <Button variant="ghost" size="sm" className="h-7 text-xs rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                 Edit
               </Button>
             </ClientForm>

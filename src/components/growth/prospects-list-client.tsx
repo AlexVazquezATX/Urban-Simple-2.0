@@ -1115,7 +1115,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       case 'high':
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-500 text-white border-orange-600 font-bold uppercase tracking-wider">hot</Badge>
       case 'medium':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-700 border-warm-200">warm</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700">warm</Badge>
       default:
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">cold</Badge>
     }
@@ -1123,31 +1123,31 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, string> = {
-      prospect: 'bg-warm-100 text-warm-600 border-warm-200',
-      new: 'bg-warm-100 text-warm-700 border-warm-200',
+      prospect: 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700',
+      new: 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700',
       researching: 'bg-plum-100 text-plum-700 border-plum-200',
       contacted: 'bg-ocean-100 text-ocean-700 border-ocean-200',
       engaged: 'bg-ocean-100 text-ocean-700 border-ocean-200',
       qualified: 'bg-lime-100 text-lime-700 border-lime-200',
-      proposal_sent: 'bg-warm-200 text-warm-700 border-warm-300',
+      proposal_sent: 'bg-warm-200 dark:bg-charcoal-700 text-warm-700 dark:text-cream-300 border-warm-300 dark:border-charcoal-700',
       won: 'bg-lime-100 text-lime-700 border-lime-200',
       lost: 'bg-red-100 text-red-700 border-red-200',
       nurturing: 'bg-plum-100 text-plum-700 border-plum-200',
     }
     return (
-      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 text-warm-700 border-warm-200'}`}>
+      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700'}`}>
         {status.replace('_', ' ')}
       </Badge>
     )
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 min-h-screen">
+    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Leads</h1>
-          <p className="text-sm text-warm-500 mt-0.5">AI-Native Lead Intelligence & Outreach OS</p>
+          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Leads</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">AI-Native Lead Intelligence & Outreach OS</p>
         </div>
         <div className="flex items-center gap-2">
           <Link href="/growth/prospects/import">
@@ -1167,49 +1167,49 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Contact Today</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Contact Today</div>
           <div className="text-2xl font-semibold text-plum-600">{stats.contactToday}</div>
-          <p className="text-xs text-warm-500 mt-1">Need outreach</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Need outreach</p>
         </Card>
 
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-red-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Hot Leads</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-red-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Hot Leads</div>
           <div className="text-2xl font-semibold text-red-600">{stats.hotLeads}</div>
-          <p className="text-xs text-warm-500 mt-1">High priority</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">High priority</p>
         </Card>
 
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Follow-Up</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Follow-Up</div>
           <div className="text-2xl font-semibold text-ocean-600">{stats.followUp}</div>
-          <p className="text-xs text-warm-500 mt-1">Awaiting response</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Awaiting response</p>
         </Card>
 
-        <Card className="p-4 rounded-sm border-warm-200 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 uppercase tracking-wide mb-1">Total Leads</div>
+        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
+          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Leads</div>
           <div className="text-2xl font-semibold text-lime-600">{stats.total}</div>
-          <p className="text-xs text-warm-500 mt-1">In database</p>
+          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">In database</p>
         </Card>
       </div>
 
       {/* Filters Bar */}
-      <Card className="rounded-sm border-warm-200 mb-4">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 mb-4">
         <CardContent className="p-3">
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative flex-1 min-w-[180px] max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-warm-400" />
+              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-warm-400 dark:text-cream-500" />
               <Input
                 placeholder="Search leads..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-sm rounded-sm border-warm-200"
+                className="pl-8 h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700"
               />
             </div>
 
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
             >
               {statusOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1219,7 +1219,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
             >
               {priorityOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -1229,7 +1229,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={facilityFilter}
               onChange={(e) => setFacilityFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
             >
               <option value="all">All Facilities</option>
               {uniqueFacilities.map((f) => (
@@ -1240,7 +1240,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={priceLevelFilter}
               onChange={(e) => setPriceLevelFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
             >
               <option value="all">All Prices</option>
               <option value="$">$</option>
@@ -1252,7 +1252,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
             >
               <option value="all">All Sources</option>
               {uniqueSources.map((s) => (
@@ -1264,7 +1264,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               <select
                 value={sourceDetailFilter}
                 onChange={(e) => setSourceDetailFilter(e.target.value)}
-                className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+                className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
               >
                 <option value="all">All Import Lists</option>
                 {uniqueSourceDetails.map((sd) => (
@@ -1277,7 +1277,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               <select
                 value={tagFilter}
                 onChange={(e) => setTagFilter(e.target.value)}
-                className="h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs"
+                className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
               >
                 <option value="all">All Tags</option>
                 {uniqueTags.map((t) => (
@@ -1286,13 +1286,13 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               </select>
             )}
 
-            <label className="flex items-center gap-1.5 h-8 px-2 border border-warm-200 rounded-sm bg-white cursor-pointer">
+            <label className="flex items-center gap-1.5 h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 cursor-pointer">
               <Switch
                 checked={hasEmailOnly}
                 onCheckedChange={setHasEmailOnly}
                 className="scale-75"
               />
-              <span className="text-xs text-warm-700 whitespace-nowrap">Has email</span>
+              <span className="text-xs text-warm-700 dark:text-cream-300 whitespace-nowrap">Has email</span>
             </label>
           </div>
         </CardContent>
@@ -1301,18 +1301,18 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       {/* View Toggle & Tabs */}
       <div className="flex items-center justify-between mb-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="rounded-sm bg-warm-100 p-1">
-            <TabsTrigger value="all" className="text-xs rounded-sm data-[state=active]:bg-white">All ({stats.total})</TabsTrigger>
-            <TabsTrigger value="contact_today" className="text-xs rounded-sm data-[state=active]:bg-white">Contact Today ({stats.contactToday})</TabsTrigger>
-            <TabsTrigger value="hot_leads" className="text-xs rounded-sm data-[state=active]:bg-white">Hot ({stats.hotLeads})</TabsTrigger>
-            <TabsTrigger value="follow_up" className="text-xs rounded-sm data-[state=active]:bg-white">Follow-Up ({stats.followUp})</TabsTrigger>
+          <TabsList className="rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1">
+            <TabsTrigger value="all" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">All ({stats.total})</TabsTrigger>
+            <TabsTrigger value="contact_today" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Contact Today ({stats.contactToday})</TabsTrigger>
+            <TabsTrigger value="hot_leads" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Hot ({stats.hotLeads})</TabsTrigger>
+            <TabsTrigger value="follow_up" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Follow-Up ({stats.followUp})</TabsTrigger>
             {stats.withEmails > 0 && (
-              <TabsTrigger value="with_emails" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-green-700">Has Email ({stats.withEmails})</TabsTrigger>
+              <TabsTrigger value="with_emails" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-green-700">Has Email ({stats.withEmails})</TabsTrigger>
             )}
-            <TabsTrigger value="with_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-blue-700">Has Website ({stats.withWebsite})</TabsTrigger>
-            <TabsTrigger value="no_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-red-700">No Website ({stats.noWebsite})</TabsTrigger>
+            <TabsTrigger value="with_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-blue-700">Has Website ({stats.withWebsite})</TabsTrigger>
+            <TabsTrigger value="no_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-red-700">No Website ({stats.noWebsite})</TabsTrigger>
             {stats.queued > 0 && (
-              <TabsTrigger value="queued" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:text-purple-700">Queued ({stats.queued})</TabsTrigger>
+              <TabsTrigger value="queued" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-purple-700">Queued ({stats.queued})</TabsTrigger>
             )}
           </TabsList>
         </Tabs>
@@ -1367,7 +1367,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 variant="outline"
                 onClick={handleBulkEnrich}
                 disabled={isEnrichingBulk}
-                className="rounded-sm bg-white"
+                className="rounded-sm bg-white dark:bg-charcoal-900"
               >
                 {isEnrichingBulk ? (
                   <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
@@ -1381,7 +1381,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 variant="outline"
                 onClick={handleBulkDiscoverOwners}
                 disabled={isDiscoveringOwners}
-                className="rounded-sm bg-white"
+                className="rounded-sm bg-white dark:bg-charcoal-900"
                 title="Find owner names from Yelp & Google, then find their emails"
               >
                 {isDiscoveringOwners ? (
@@ -1396,7 +1396,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 variant="outline"
                 onClick={() => handleQueueForAgent('add')}
                 disabled={isQueueing}
-                className="rounded-sm bg-white border-purple-300 text-purple-700 hover:bg-purple-50"
+                className="rounded-sm bg-white dark:bg-charcoal-900 border-purple-300 text-purple-700 hover:bg-purple-50"
                 title="Add selected prospects to the Growth Agent processing queue"
               >
                 {isQueueing ? (
@@ -1424,7 +1424,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               {/* More actions dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="rounded-sm bg-white">
+                  <Button size="sm" variant="outline" className="rounded-sm bg-white dark:bg-charcoal-900">
                     <MoreHorizontal className="mr-1.5 h-3.5 w-3.5" />
                     More
                   </Button>
@@ -1497,11 +1497,11 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       )}
 
       {/* Spreadsheet Table */}
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
-              <thead className="bg-warm-100 border-b border-warm-200">
+              <thead className="bg-warm-100 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700">
                 <tr>
                   <th className="w-10 p-3 text-left">
                     <Checkbox
@@ -1512,7 +1512,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('companyName') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
                         onClick={() => handleSort('companyName')}
                       >
                         Business Name
@@ -1521,12 +1521,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('contact') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Contact</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Contact</th>
                   )}
                   {visibleColumns.includes('status') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
                         onClick={() => handleSort('status')}
                       >
                         Status
@@ -1535,15 +1535,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('businessType') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Facility</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Facility</th>
                   )}
                   {visibleColumns.includes('priceLevel') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Price</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Price</th>
                   )}
                   {visibleColumns.includes('priority') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
                         onClick={() => handleSort('priority')}
                       >
                         Interest
@@ -1552,21 +1552,21 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('address') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">City</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">City</th>
                   )}
                   {visibleColumns.includes('website') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Website</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Website</th>
                   )}
                   {visibleColumns.includes('email') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Email</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Email</th>
                   )}
                   {visibleColumns.includes('phone') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Phone</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Phone</th>
                   )}
                   {visibleColumns.includes('estimatedValue') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
                         onClick={() => handleSort('estimatedValue')}
                       >
                         Value
@@ -1575,21 +1575,21 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('source') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Source</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Source</th>
                   )}
                   {visibleColumns.includes('sourceDetail') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Import List</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Import List</th>
                   )}
                   {visibleColumns.includes('tags') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Tags</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Tags</th>
                   )}
                   {visibleColumns.includes('aiEnriched') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700">Enriched</th>
+                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Enriched</th>
                   )}
                   {visibleColumns.includes('lastContacted') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
                         onClick={() => handleSort('lastContactedAt')}
                       >
                         Last Contacted
@@ -1600,7 +1600,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                   {visibleColumns.includes('createdAt') && (
                     <th className="p-3 text-left">
                       <button
-                        className="flex items-center text-xs font-medium text-warm-700 hover:text-warm-900"
+                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
                         onClick={() => handleSort('createdAt')}
                       >
                         Date Added
@@ -1609,14 +1609,14 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     </th>
                   )}
                   {visibleColumns.includes('actions') && (
-                    <th className="w-16 p-3 text-left text-xs font-medium text-warm-700">Actions</th>
+                    <th className="w-16 p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Actions</th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-warm-100">
+              <tbody className="divide-y divide-warm-100 dark:divide-charcoal-700">
                 {paginatedProspects.length === 0 ? (
                   <tr>
-                    <td colSpan={visibleColumns.length + 1} className="p-8 text-center text-warm-500 text-sm">
+                    <td colSpan={visibleColumns.length + 1} className="p-8 text-center text-warm-500 dark:text-cream-400 text-sm">
                       No leads found matching your criteria
                     </td>
                   </tr>
@@ -1631,7 +1631,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                     return (
                       <tr
                         key={prospect.id}
-                        className={`hover:bg-warm-50 cursor-pointer transition-colors ${
+                        className={`hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer transition-colors ${
                           selectedIds.has(prospect.id) ? 'bg-lime-50'
                           : isNewWebsiteLead ? 'bg-ocean-50/60 border-l-2 border-l-ocean-500'
                           : ''
@@ -1647,7 +1647,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         {visibleColumns.includes('companyName') && (
                           <td className="p-3">
                             <div className="flex items-center gap-1.5">
-                              <span className="text-sm font-medium text-warm-900">{prospect.companyName}</span>
+                              <span className="text-sm font-medium text-warm-900 dark:text-cream-100">{prospect.companyName}</span>
                               {prospect.doNotContact && (
                                 <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-300 text-red-600 bg-red-50">
                                   <Ban className="h-2.5 w-2.5 mr-0.5" />DNC
@@ -1667,14 +1667,14 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           </td>
                         )}
                         {visibleColumns.includes('contact') && (
-                          <td className="p-3 text-xs text-warm-600">
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                             {primaryContact ? (
                               <div className="flex items-center gap-1.5">
                                 <span>{primaryContact.firstName} {primaryContact.lastName}</span>
                                 {prospect.contacts.length > 1 && (
                                   <Badge
                                     variant="outline"
-                                    className="rounded-sm text-[9px] px-1 py-0 h-4 bg-warm-100 text-warm-600 border-warm-200"
+                                    className="rounded-sm text-[9px] px-1 py-0 h-4 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700"
                                     title={`${prospect.contacts.length} contacts`}
                                   >
                                     +{prospect.contacts.length - 1}
@@ -1682,7 +1682,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                 )}
                               </div>
                             ) : (
-                              <span className="text-warm-400">-</span>
+                              <span className="text-warm-400 dark:text-cream-500">-</span>
                             )}
                           </td>
                         )}
@@ -1692,8 +1692,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           </td>
                         )}
                         {visibleColumns.includes('businessType') && (
-                          <td className="p-3 text-xs text-warm-600">
-                            {prospect.businessType || <span className="text-warm-400">-</span>}
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                            {prospect.businessType || <span className="text-warm-400 dark:text-cream-500">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('priceLevel') && (
@@ -1701,7 +1701,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                             {prospect.priceLevel ? (
                               <span className="font-medium text-lime-700">{prospect.priceLevel}</span>
                             ) : (
-                              <span className="text-warm-400">-</span>
+                              <span className="text-warm-400 dark:text-cream-500">-</span>
                             )}
                           </td>
                         )}
@@ -1711,12 +1711,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           </td>
                         )}
                         {visibleColumns.includes('address') && (
-                          <td className="p-3 text-xs text-warm-600">
-                            {address?.city || <span className="text-warm-400">-</span>}
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                            {address?.city || <span className="text-warm-400 dark:text-cream-500">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('website') && (
-                          <td className="p-3 text-xs text-warm-600">
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                             {prospect.website ? (
                               <a
                                 href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
@@ -1729,43 +1729,43 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                 {prospect.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                               </a>
                             ) : (
-                              <span className="text-warm-400">-</span>
+                              <span className="text-warm-400 dark:text-cream-500">-</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('email') && (
-                          <td className="p-3 text-xs text-warm-600">
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                             {primaryContact?.email ? (
                               <span className="truncate max-w-[160px] block" title={primaryContact.email}>
                                 {primaryContact.email}
                               </span>
                             ) : (
-                              <span className="text-warm-400">-</span>
+                              <span className="text-warm-400 dark:text-cream-500">-</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('phone') && (
-                          <td className="p-3 text-xs text-warm-600">
-                            {prospect.phone || primaryContact?.phone || <span className="text-warm-400">-</span>}
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                            {prospect.phone || primaryContact?.phone || <span className="text-warm-400 dark:text-cream-500">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('estimatedValue') && (
                           <td className="p-3 text-xs">
                             {prospect.estimatedValue ? (
-                              <span className="font-medium text-warm-900">${Number(prospect.estimatedValue).toLocaleString()}</span>
+                              <span className="font-medium text-warm-900 dark:text-cream-100">${Number(prospect.estimatedValue).toLocaleString()}</span>
                             ) : (
-                              <span className="text-warm-400">-</span>
+                              <span className="text-warm-400 dark:text-cream-500">-</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('source') && (
-                          <td className="p-3 text-xs text-warm-600 capitalize">
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400 capitalize">
                             {prospect.source.replace('_', ' ')}
                           </td>
                         )}
                         {visibleColumns.includes('sourceDetail') && (
-                          <td className="p-3 text-xs text-warm-600">
-                            {prospect.sourceDetail || <span className="text-warm-400">-</span>}
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                            {prospect.sourceDetail || <span className="text-warm-400 dark:text-cream-500">-</span>}
                           </td>
                         )}
                         {visibleColumns.includes('tags') && (
@@ -1778,13 +1778,13 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                   </Badge>
                                 ))}
                                 {prospect.tags.length > 3 && (
-                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1 py-0 border-warm-200 text-warm-500">
+                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1 py-0 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400">
                                     +{prospect.tags.length - 3}
                                   </Badge>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-warm-400 text-xs">-</span>
+                              <span className="text-warm-400 dark:text-cream-500 text-xs">-</span>
                             )}
                           </td>
                         )}
@@ -1796,12 +1796,12 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                 Yes
                               </Badge>
                             ) : (
-                              <span className="text-warm-400 text-xs">-</span>
+                              <span className="text-warm-400 dark:text-cream-500 text-xs">-</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('lastContacted') && (
-                          <td className="p-3 text-xs text-warm-600">
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                             {prospect.lastContactedAt ? (
                               <div className="flex flex-col">
                                 <span>
@@ -1813,18 +1813,18 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                   })()}
                                 </span>
                                 {(prospect._count?.outreachMessages ?? 0) > 0 && (
-                                  <span className="text-warm-400 text-[10px]">
+                                  <span className="text-warm-400 dark:text-cream-500 text-[10px]">
                                     {prospect._count!.outreachMessages} sent
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-warm-400">Never</span>
+                              <span className="text-warm-400 dark:text-cream-500">Never</span>
                             )}
                           </td>
                         )}
                         {visibleColumns.includes('createdAt') && (
-                          <td className="p-3 text-xs text-warm-600">
+                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
                             {new Date(prospect.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -1836,7 +1836,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           <td className="p-3" onClick={(e) => e.stopPropagation()}>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 hover:text-warm-900">
+                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100">
                                   <MoreHorizontal className="h-3.5 w-3.5" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -1895,7 +1895,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
       {/* Pagination */}
       <div className="flex items-center justify-between mt-4">
-        <p className="text-xs text-warm-500">
+        <p className="text-xs text-warm-500 dark:text-cream-400">
           Showing {filteredProspects.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredProspects.length)} of {filteredProspects.length} leads
           {filteredProspects.length !== prospects.length && ` (${prospects.length} total)`}
         </p>
@@ -1910,7 +1910,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-xs text-warm-600">
+            <span className="text-xs text-warm-600 dark:text-cream-400">
               Page {currentPage} of {totalPages}
             </span>
             <Button

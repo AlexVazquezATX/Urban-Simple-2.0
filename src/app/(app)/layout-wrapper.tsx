@@ -98,11 +98,11 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-cream-50">
+      <div className="flex min-h-screen w-full bg-cream-50 dark:bg-charcoal-950">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Mobile Header - Only visible on mobile */}
-          <header className="md:hidden sticky top-0 z-20 bg-white border-b border-cream-200 px-4 py-3">
+          <header className="md:hidden sticky top-0 z-20 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-4 py-3">
             <div className="flex items-center justify-between">
               {/* Left: Menu trigger + Logo */}
               <div className="flex items-center gap-3">
@@ -140,7 +140,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
           {/* Desktop Header with Role Switcher */}
           {userRole && isSuperAdmin && (
-            <div className="hidden md:flex sticky top-0 z-10 bg-white border-b border-cream-200 px-6 py-3 justify-end">
+            <div className="hidden md:flex sticky top-0 z-10 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-6 py-3 justify-end">
               <RoleSwitcher currentRole={userRole} isSuperAdmin={isSuperAdmin} />
             </div>
           )}
@@ -148,7 +148,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto pb-24 md:pb-8">{children}</main>
 
           {/* Mobile Bottom Navigation */}
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white border-t border-cream-200 px-2 py-2 safe-area-pb">
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white dark:bg-charcoal-900 border-t border-cream-200 dark:border-charcoal-700 px-2 py-2 safe-area-pb">
             <div className="flex items-center justify-around">
               <Link
                 href="/dashboard"

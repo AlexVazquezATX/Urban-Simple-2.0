@@ -102,8 +102,8 @@ async function LocationDetail({ id }: { id: string }) {
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">{location.name}</h1>
-            <p className="text-sm text-warm-500">
+            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">{location.name}</h1>
+            <p className="text-sm text-warm-500 dark:text-cream-400">
               {location.client.name} • {location.branch.name}
             </p>
           </div>
@@ -114,9 +114,9 @@ async function LocationDetail({ id }: { id: string }) {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900">Location Information</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Location Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {location.logoUrl && (
@@ -132,27 +132,27 @@ async function LocationDetail({ id }: { id: string }) {
             )}
             {addressStr && (
               <div>
-                <p className="text-sm text-warm-500">Address</p>
-                <p className="font-medium text-warm-900">{addressStr}</p>
+                <p className="text-sm text-warm-500 dark:text-cream-400">Address</p>
+                <p className="font-medium text-warm-900 dark:text-cream-100">{addressStr}</p>
               </div>
             )}
             {location.accessInstructions && (
               <div>
-                <p className="text-sm text-warm-500">
+                <p className="text-sm text-warm-500 dark:text-cream-400">
                   Access Instructions
                 </p>
-                <p className="text-sm text-warm-700">{location.accessInstructions}</p>
+                <p className="text-sm text-warm-700 dark:text-cream-300">{location.accessInstructions}</p>
               </div>
             )}
             {location.serviceNotes && (
               <div>
-                <p className="text-sm text-warm-500">Service Notes</p>
-                <p className="text-sm text-warm-700">{location.serviceNotes}</p>
+                <p className="text-sm text-warm-500 dark:text-cream-400">Service Notes</p>
+                <p className="text-sm text-warm-700 dark:text-cream-300">{location.serviceNotes}</p>
               </div>
             )}
             {location.painPoints && (
               <div>
-                <p className="text-sm text-warm-500">Pain Points</p>
+                <p className="text-sm text-warm-500 dark:text-cream-400">Pain Points</p>
                 <p className="text-sm text-red-600">{location.painPoints}</p>
               </div>
             )}
@@ -169,7 +169,7 @@ async function LocationDetail({ id }: { id: string }) {
                 </Badge>
               </div>
               {location.checklistTemplate ? (
-                <div className="p-3 border border-warm-200 rounded-sm bg-warm-50/50">
+                <div className="p-3 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <CheckSquare className="h-4 w-4 text-warm-500" />
@@ -188,8 +188,8 @@ async function LocationDetail({ id }: { id: string }) {
                   </div>
                 </div>
               ) : (
-                <div className="p-3 border border-warm-200 rounded-sm bg-warm-50/50">
-                  <p className="text-sm text-warm-500">
+                <div className="p-3 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50">
+                  <p className="text-sm text-warm-500 dark:text-cream-400">
                     No checklist assigned. Edit location to assign one.
                   </p>
                 </div>
@@ -198,21 +198,21 @@ async function LocationDetail({ id }: { id: string }) {
           </CardContent>
         </Card>
 
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900">Quick Stats</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Quick Stats</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-warm-500">
+              <span className="text-sm text-warm-500 dark:text-cream-400">
                 Service Logs
               </span>
-              <span className="font-medium text-warm-900">
+              <span className="font-medium text-warm-900 dark:text-cream-100">
                 {location._count.serviceLogs}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-warm-500">
+              <span className="text-sm text-warm-500 dark:text-cream-400">
                 Open Issues
               </span>
               <Badge
@@ -226,15 +226,15 @@ async function LocationDetail({ id }: { id: string }) {
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-warm-500">
+              <span className="text-sm text-warm-500 dark:text-cream-400">
                 Active Agreements
               </span>
-              <span className="font-medium text-warm-900">
+              <span className="font-medium text-warm-900 dark:text-cream-100">
                 {location._count.serviceAgreements}
               </span>
             </div>
             {location.assignments.length > 0 && (
-              <div className="pt-3 border-t border-warm-200">
+              <div className="pt-3 border-t border-warm-200 dark:border-charcoal-700">
                 <p className="text-sm text-warm-500 mb-2">
                   Assigned Associates
                 </p>
@@ -244,7 +244,7 @@ async function LocationDetail({ id }: { id: string }) {
                       key={assignment.id}
                       className="text-sm flex items-center justify-between"
                     >
-                      <span className="text-warm-700">
+                      <span className="text-warm-700 dark:text-cream-300">
                         {assignment.user.firstName} {assignment.user.lastName}
                       </span>
                       <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
@@ -260,19 +260,19 @@ async function LocationDetail({ id }: { id: string }) {
       </div>
 
       {equipmentInventory.length > 0 && (
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900">Equipment Inventory</CardTitle>
+            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Equipment Inventory</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {equipmentInventory.map((item: any, index: number) => (
                 <div
                   key={index}
-                  className="flex items-center gap-2 p-2 border border-warm-200 rounded-sm hover:border-ocean-400 transition-colors"
+                  className="flex items-center gap-2 p-2 border border-warm-200 dark:border-charcoal-700 rounded-sm hover:border-ocean-400 transition-colors"
                 >
                   <Wrench className="h-4 w-4 text-warm-500" />
-                  <span className="text-sm text-warm-700">
+                  <span className="text-sm text-warm-700 dark:text-cream-300">
                     {typeof item === 'string' ? item : item.name || 'Unknown'}
                   </span>
                 </div>

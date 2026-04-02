@@ -363,17 +363,17 @@ export default function BlogEditPage() {
   }
 
   return (
-    <div className="min-h-screen bg-cream-50">
+    <div className="min-h-screen bg-cream-50 dark:bg-charcoal-950">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-cream-200 px-6 py-4">
+      <div className="sticky top-0 z-10 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/blog')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <div className="h-6 w-px bg-cream-300" />
-            <h1 className="text-xl font-semibold text-charcoal-900 truncate max-w-md">
+            <div className="h-6 w-px bg-cream-300 dark:bg-charcoal-700" />
+            <h1 className="text-xl font-semibold text-charcoal-900 dark:text-cream-100 truncate max-w-md">
               {title || 'Untitled Post'}
             </h1>
             {hasChanges && (
@@ -489,7 +489,7 @@ export default function BlogEditPage() {
                               handleTitleChange(suggestion)
                               setShowTitleSuggestions(false)
                             }}
-                            className="w-full text-left p-3 rounded-lg hover:bg-cream-50 border border-cream-200 transition-colors"
+                            className="w-full text-left p-3 rounded-lg hover:bg-cream-50 dark:hover:bg-charcoal-800 border border-cream-200 dark:border-charcoal-700 transition-colors"
                           >
                             {suggestion}
                           </button>
@@ -502,7 +502,7 @@ export default function BlogEditPage() {
                 <div>
                   <Label>URL Slug</Label>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-charcoal-500">/blog/</span>
+                    <span className="text-sm text-charcoal-500 dark:text-cream-400">/blog/</span>
                     <Input
                       value={slug}
                       onChange={(e) => {
@@ -591,7 +591,7 @@ export default function BlogEditPage() {
 
               {showPreview ? (
                 <div
-                  className="prose prose-lg max-w-none p-4 bg-white rounded-lg border border-cream-200"
+                  className="prose prose-lg max-w-none p-4 bg-white dark:bg-charcoal-900 rounded-lg border border-cream-200 dark:border-charcoal-700"
                   dangerouslySetInnerHTML={{ __html: content }}
                 />
               ) : (
@@ -619,7 +619,7 @@ export default function BlogEditPage() {
                   className={`cursor-pointer ${
                     status === 'draft'
                       ? 'bg-bronze-500 text-white'
-                      : 'bg-cream-100 text-charcoal-600 hover:bg-cream-200'
+                      : 'bg-cream-100 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700'
                   }`}
                   onClick={() => {
                     setStatus('draft')
@@ -632,7 +632,7 @@ export default function BlogEditPage() {
                   className={`cursor-pointer ${
                     status === 'published'
                       ? 'bg-ocean-500 text-white'
-                      : 'bg-cream-100 text-charcoal-600 hover:bg-cream-200'
+                      : 'bg-cream-100 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700'
                   }`}
                   onClick={() => {
                     setStatus('published')
@@ -645,7 +645,7 @@ export default function BlogEditPage() {
                   className={`cursor-pointer ${
                     status === 'archived'
                       ? 'bg-charcoal-500 text-white'
-                      : 'bg-cream-100 text-charcoal-600 hover:bg-cream-200'
+                      : 'bg-cream-100 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700'
                   }`}
                   onClick={() => {
                     setStatus('archived')
@@ -686,8 +686,8 @@ export default function BlogEditPage() {
                   )}
                 </div>
               ) : (
-                <div className="aspect-video bg-cream-100 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-charcoal-400">
+                <div className="aspect-video bg-cream-100 dark:bg-charcoal-800 rounded-lg flex items-center justify-center">
+                  <div className="text-center text-charcoal-400 dark:text-cream-400">
                     <ImageIcon className="w-10 h-10 mx-auto mb-2" />
                     <p className="text-sm">No image selected</p>
                   </div>
@@ -696,8 +696,8 @@ export default function BlogEditPage() {
 
               {/* Image Options Panel */}
               {showImageOptions && (
-                <div className="mt-4 p-4 bg-cream-50 rounded-lg border border-cream-200 space-y-4">
-                  <h4 className="text-sm font-semibold text-charcoal-900">Change Image</h4>
+                <div className="mt-4 p-4 bg-cream-50 dark:bg-charcoal-800 rounded-lg border border-cream-200 dark:border-charcoal-700 space-y-4">
+                  <h4 className="text-sm font-semibold text-charcoal-900 dark:text-cream-100">Change Image</h4>
 
                   <Button
                     variant="outline"
@@ -752,7 +752,7 @@ export default function BlogEditPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full text-xs text-charcoal-500"
+                    className="w-full text-xs text-charcoal-500 dark:text-cream-400"
                     onClick={() => setShowImageOptions(false)}
                   >
                     Cancel
@@ -851,7 +851,7 @@ export default function BlogEditPage() {
 
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs text-charcoal-500">Meta Title</Label>
+                  <Label className="text-xs text-charcoal-500 dark:text-cream-400">Meta Title</Label>
                   <Input
                     value={metaTitle}
                     onChange={(e) => {
@@ -860,13 +860,13 @@ export default function BlogEditPage() {
                     }}
                     placeholder={title || 'Meta title (defaults to post title)'}
                   />
-                  <p className="text-xs text-charcoal-400 mt-1">
+                  <p className="text-xs text-charcoal-400 dark:text-cream-400 mt-1">
                     {(metaTitle || title).length}/60 characters
                   </p>
                 </div>
 
                 <div>
-                  <Label className="text-xs text-charcoal-500">Meta Description</Label>
+                  <Label className="text-xs text-charcoal-500 dark:text-cream-400">Meta Description</Label>
                   <Textarea
                     value={metaDescription}
                     onChange={(e) => {
@@ -876,7 +876,7 @@ export default function BlogEditPage() {
                     placeholder="SEO description for search results..."
                     rows={3}
                   />
-                  <p className="text-xs text-charcoal-400 mt-1">
+                  <p className="text-xs text-charcoal-400 dark:text-cream-400 mt-1">
                     {metaDescription.length}/160 characters
                   </p>
                 </div>
@@ -886,8 +886,8 @@ export default function BlogEditPage() {
             {/* Post Info */}
             {post && (
               <Card className="p-6">
-                <Label className="mb-3 block text-charcoal-500">Post Info</Label>
-                <div className="space-y-2 text-sm text-charcoal-600">
+                <Label className="mb-3 block text-charcoal-500 dark:text-cream-400">Post Info</Label>
+                <div className="space-y-2 text-sm text-charcoal-600 dark:text-cream-400">
                   <p>
                     <span className="font-medium">Created:</span>{' '}
                     {new Date(post.createdAt).toLocaleDateString()}

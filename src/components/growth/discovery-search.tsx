@@ -281,24 +281,24 @@ export function DiscoverySearch() {
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900 flex items-center gap-2">
+          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100 flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-lime-600" />
             AI Discovery
           </CardTitle>
-          <CardDescription className="text-xs text-warm-500">
+          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
             Find prospects using APIs or extract from web pages
           </CardDescription>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4 rounded-sm bg-warm-100 p-1">
-              <TabsTrigger value="api" className="flex items-center gap-1.5 text-xs rounded-sm data-[state=active]:bg-white">
+            <TabsList className="grid w-full grid-cols-2 mb-4 rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1">
+              <TabsTrigger value="api" className="flex items-center gap-1.5 text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">
                 <Globe className="h-3.5 w-3.5" />
                 API Search
               </TabsTrigger>
-              <TabsTrigger value="scraper" className="flex items-center gap-1.5 text-xs rounded-sm data-[state=active]:bg-white">
+              <TabsTrigger value="scraper" className="flex items-center gap-1.5 text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">
                 <Link2 className="h-3.5 w-3.5" />
                 URL Scraper
               </TabsTrigger>
@@ -308,31 +308,31 @@ export function DiscoverySearch() {
             <TabsContent value="api" className="space-y-4 mt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs text-warm-700">City *</Label>
+                  <Label className="text-xs text-warm-700 dark:text-cream-300">City *</Label>
                   <Input
                     placeholder="e.g., Austin"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="h-8 text-sm rounded-sm border-warm-200 mt-1"
+                    className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700">State</Label>
+                  <Label className="text-xs text-warm-700 dark:text-cream-300">State</Label>
                   <Input
                     placeholder="e.g., TX"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="h-8 text-sm rounded-sm border-warm-200 mt-1"
+                    className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700">Facility Type</Label>
+                  <Label className="text-xs text-warm-700 dark:text-cream-300">Facility Type</Label>
                   <select
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
-                    className="w-full h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs mt-1"
+                    className="w-full h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs mt-1"
                   >
                     {FACILITY_TYPES.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -343,11 +343,11 @@ export function DiscoverySearch() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs text-warm-700">Price Level</Label>
+                  <Label className="text-xs text-warm-700 dark:text-cream-300">Price Level</Label>
                   <select
                     value={priceLevel}
                     onChange={(e) => setPriceLevel(e.target.value)}
-                    className="w-full h-8 px-2 border border-warm-200 rounded-sm bg-white text-xs mt-1"
+                    className="w-full h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs mt-1"
                   >
                     {PRICE_LEVELS.map(level => (
                       <option key={level.value} value={level.value}>{level.label}</option>
@@ -355,7 +355,7 @@ export function DiscoverySearch() {
                   </select>
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700">Minimum Rating</Label>
+                  <Label className="text-xs text-warm-700 dark:text-cream-300">Minimum Rating</Label>
                   <Input
                     type="number"
                     min="0"
@@ -364,11 +364,11 @@ export function DiscoverySearch() {
                     placeholder="e.g., 4.0"
                     value={minRating}
                     onChange={(e) => setMinRating(e.target.value)}
-                    className="h-8 text-sm rounded-sm border-warm-200 mt-1"
+                    className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700">Data Sources</Label>
+                  <Label className="text-xs text-warm-700 dark:text-cream-300">Data Sources</Label>
                   <div className="flex gap-4 mt-2">
                     <div className="flex items-center gap-1.5">
                       <Checkbox
@@ -382,7 +382,7 @@ export function DiscoverySearch() {
                           }
                         }}
                       />
-                      <label htmlFor="google" className="text-xs text-warm-700">Google</label>
+                      <label htmlFor="google" className="text-xs text-warm-700 dark:text-cream-300">Google</label>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Checkbox
@@ -396,7 +396,7 @@ export function DiscoverySearch() {
                           }
                         }}
                       />
-                      <label htmlFor="yelp" className="text-xs text-warm-700">Yelp</label>
+                      <label htmlFor="yelp" className="text-xs text-warm-700 dark:text-cream-300">Yelp</label>
                     </div>
                   </div>
                 </div>
@@ -425,15 +425,15 @@ export function DiscoverySearch() {
             {/* URL Scraper Tab */}
             <TabsContent value="scraper" className="space-y-4 mt-0">
               <div className="space-y-1.5">
-                <Label className="text-xs text-warm-700">Article URL</Label>
+                <Label className="text-xs text-warm-700 dark:text-cream-300">Article URL</Label>
                 <Input
                   placeholder="e.g., https://austin.eater.com/maps/best-new-restaurants-austin"
                   value={scrapeUrl}
                   onChange={(e) => setScrapeUrl(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleScrape()}
-                  className="h-8 text-sm rounded-sm border-warm-200"
+                  className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700"
                 />
-                <p className="text-[10px] text-warm-500">
+                <p className="text-[10px] text-warm-500 dark:text-cream-400">
                   Paste a link to an article like &quot;Best Restaurants in Austin&quot; and we&apos;ll extract the business names
                 </p>
               </div>
@@ -463,12 +463,12 @@ export function DiscoverySearch() {
 
       {/* API Search Results */}
       {results.length > 0 && activeTab === 'api' && (
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900">Search Results</CardTitle>
-                <CardDescription className="text-xs text-warm-500">
+                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Search Results</CardTitle>
+                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
                   Found {results.length} prospects. Select the ones you want to import.
                 </CardDescription>
               </div>
@@ -488,23 +488,23 @@ export function DiscoverySearch() {
                   className={`rounded-sm border p-3 cursor-pointer transition-colors ${
                     selectedResults.has(index)
                       ? 'border-lime-400 bg-lime-50'
-                      : 'border-warm-200 hover:border-ocean-400'
+                      : 'border-warm-200 dark:border-charcoal-700 hover:border-ocean-400'
                   }`}
                   onClick={() => toggleResult(index)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <h3 className="text-sm font-medium text-warm-900">{result.name}</h3>
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
+                        <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">{result.name}</h3>
+                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
                           {result.source}
                         </Badge>
                         {result.rating && (
                           <div className="flex items-center gap-0.5 text-xs">
                             <Star className="h-3 w-3 fill-lime-500 text-lime-500" />
-                            <span className="text-warm-700">{result.rating}</span>
+                            <span className="text-warm-700 dark:text-cream-300">{result.rating}</span>
                             {result.reviewCount && (
-                              <span className="text-warm-500">
+                              <span className="text-warm-500 dark:text-cream-400">
                                 ({result.reviewCount})
                               </span>
                             )}
@@ -516,7 +516,7 @@ export function DiscoverySearch() {
                           </Badge>
                         )}
                       </div>
-                      <div className="space-y-0.5 text-xs text-warm-600">
+                      <div className="space-y-0.5 text-xs text-warm-600 dark:text-cream-400">
                         {result.address.street && (
                           <p>
                             {result.address.street}
@@ -541,7 +541,7 @@ export function DiscoverySearch() {
                         {(result.categories || result.types) && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {(result.categories || result.types || []).slice(0, 3).map((cat, i) => (
-                              <Badge key={i} className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">
+                              <Badge key={i} className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
                                 {cat}
                               </Badge>
                             ))}
@@ -566,12 +566,12 @@ export function DiscoverySearch() {
 
       {/* URL Scraper Results */}
       {scrapeResults.length > 0 && activeTab === 'scraper' && (
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900">Extracted Businesses</CardTitle>
-                <CardDescription className="text-xs text-warm-500">
+                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Extracted Businesses</CardTitle>
+                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
                   Found {scrapeResults.length} businesses. Select the ones you want to import.
                 </CardDescription>
               </div>
@@ -591,24 +591,24 @@ export function DiscoverySearch() {
                   className={`rounded-sm border p-3 cursor-pointer transition-colors ${
                     selectedScrapeResults.has(index)
                       ? 'border-lime-400 bg-lime-50'
-                      : 'border-warm-200 hover:border-ocean-400'
+                      : 'border-warm-200 dark:border-charcoal-700 hover:border-ocean-400'
                   }`}
                   onClick={() => toggleScrapeResult(index)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <h3 className="text-sm font-medium text-warm-900">{result.name}</h3>
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300">
+                        <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">{result.name}</h3>
+                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
                           web_scraper
                         </Badge>
                         {result.categories && result.categories.length > 0 && (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200">
+                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
                             {result.categories[0]}
                           </Badge>
                         )}
                       </div>
-                      <div className="space-y-0.5 text-xs text-warm-600">
+                      <div className="space-y-0.5 text-xs text-warm-600 dark:text-cream-400">
                         {result.address?.city && (
                           <p>
                             {result.address.street && `${result.address.street}, `}

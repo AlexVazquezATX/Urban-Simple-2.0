@@ -403,8 +403,8 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-display font-medium text-warm-900">Build Checklist</h2>
-          <p className="text-sm text-warm-500">
+          <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Build Checklist</h2>
+          <p className="text-sm text-warm-500 dark:text-cream-400">
             Add sections and items to create your checklist template
           </p>
         </div>
@@ -413,9 +413,9 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
             value={previewLanguage}
             onValueChange={(v) => setPreviewLanguage(v as 'en' | 'es')}
           >
-            <TabsList className="rounded-sm bg-warm-100">
-              <TabsTrigger value="en" className="rounded-sm data-[state=active]:bg-white">English</TabsTrigger>
-              <TabsTrigger value="es" className="rounded-sm data-[state=active]:bg-white">Español</TabsTrigger>
+            <TabsList className="rounded-sm bg-warm-100 dark:bg-charcoal-800">
+              <TabsTrigger value="en" className="rounded-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">English</TabsTrigger>
+              <TabsTrigger value="es" className="rounded-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">Español</TabsTrigger>
             </TabsList>
           </Tabs>
           <Button onClick={handleTranslateAll} disabled={translating} variant="outline" className="rounded-sm">
@@ -439,14 +439,14 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
         </DialogTrigger>
         <DialogContent className="rounded-sm">
           <DialogHeader>
-            <DialogTitle className="text-lg font-display font-medium text-warm-900">Add Section</DialogTitle>
-            <DialogDescription className="text-sm text-warm-500">
+            <DialogTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Add Section</DialogTitle>
+            <DialogDescription className="text-sm text-warm-500 dark:text-cream-400">
               Choose a section type from the library or create a custom section
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs font-medium text-warm-700">Section Type (Optional)</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Section Type (Optional)</Label>
               <Select
                 value={selectedSectionType}
                 onValueChange={(value) => {
@@ -455,7 +455,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 }}
                 disabled={loadingLibrary}
               >
-                <SelectTrigger className="rounded-sm border-warm-200 mt-1">
+                <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
                   <SelectValue
                     placeholder={
                       loadingLibrary
@@ -483,13 +483,13 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 </SelectContent>
               </Select>
               {sectionTypes.length === 0 && !loadingLibrary && (
-                <p className="text-xs text-warm-500 mt-1">
-                  Run: <code className="bg-warm-100 px-1 rounded-sm">npx tsx scripts/seed-checklist-library.ts</code>
+                <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
+                  Run: <code className="bg-warm-100 dark:bg-charcoal-800 px-1 rounded-sm">npx tsx scripts/seed-checklist-library.ts</code>
                 </p>
               )}
             </div>
             <div>
-              <Label className="text-xs font-medium text-warm-700">Or Custom Section Name</Label>
+              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Or Custom Section Name</Label>
               <Input
                 value={customSectionName}
                 onChange={(e) => {
@@ -497,7 +497,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                   setSelectedSectionType('')
                 }}
                 placeholder="e.g., Special Equipment"
-                className="rounded-sm border-warm-200 mt-1"
+                className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
               />
             </div>
             <div className="flex justify-end gap-2">
@@ -511,9 +511,9 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
       </Dialog>
 
       {sections.length === 0 ? (
-        <Card className="rounded-sm border-warm-200">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-warm-500 mb-4">No sections yet</p>
+            <p className="text-warm-500 dark:text-cream-400 mb-4">No sections yet</p>
             <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
               <DialogTrigger asChild>
                 <Button variant="lime" className="rounded-sm">
@@ -539,37 +539,37 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
             )
 
             return (
-              <Card key={section.id} className="rounded-sm border-warm-200">
+              <Card key={section.id} className="rounded-sm border-warm-200 dark:border-charcoal-700">
                 <CardHeader className="p-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-4">
                       <div className="flex items-center gap-2">
                         <GripVertical className="h-5 w-5 text-warm-400" />
-                        <span className="text-sm font-medium text-warm-500">
+                        <span className="text-sm font-medium text-warm-500 dark:text-cream-400">
                           Section {sectionIndex + 1}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-xs font-medium text-warm-700">Section Name (English) *</Label>
+                          <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Section Name (English) *</Label>
                           <Input
                             value={section.name}
                             onChange={(e) =>
                               updateSection(section.id, { name: e.target.value })
                             }
                             placeholder="e.g., Kitchen Equipment"
-                            className="rounded-sm border-warm-200 mt-1"
+                            className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs font-medium text-warm-700">Section Name (Spanish)</Label>
+                          <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Section Name (Spanish)</Label>
                           <Input
                             value={section.nameEs || ''}
                             onChange={(e) =>
                               updateSection(section.id, { nameEs: e.target.value })
                             }
                             placeholder="e.g., Equipamiento de Cocina"
-                            className="rounded-sm border-warm-200 mt-1"
+                            className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
                           />
                         </div>
                       </div>
@@ -587,7 +587,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 <CardContent className="p-4 pt-0 space-y-4">
                   {/* Quick-select panel for library items */}
                   {sectionType && libraryItems.length > 0 && (
-                    <div className="border border-warm-200 rounded-sm p-4 bg-warm-50">
+                    <div className="border border-warm-200 dark:border-charcoal-700 rounded-sm p-4 bg-warm-50 dark:bg-charcoal-800">
                       <div className="flex items-center justify-between mb-3">
                         <Label className="text-sm font-semibold">
                           Popular Items (click to add)

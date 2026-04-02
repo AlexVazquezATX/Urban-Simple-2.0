@@ -5,7 +5,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
 // Use Gemini 2.0 Flash - newest model with billing enabled
 const model = genAI.getGenerativeModel({
-  model: 'gemini-2.0-flash-exp'
+  model: 'gemini-2.5-flash'
 })
 
 export interface GeminiChatOptions {

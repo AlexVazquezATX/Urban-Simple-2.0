@@ -144,10 +144,10 @@ export function FacilityProfileForm({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-sm border-warm-200">
         <DialogHeader>
-          <DialogTitle className="font-display font-medium text-warm-900">
+          <DialogTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
             {isEditing ? 'Edit Facility' : 'Add Facility'}
           </DialogTitle>
-          <DialogDescription className="text-warm-500">
+          <DialogDescription className="text-warm-500 dark:text-cream-400">
             {isEditing
               ? 'Update facility profile settings'
               : 'Create a billing & scheduling profile for a location'}
@@ -162,18 +162,18 @@ export function FacilityProfileForm({
               name="locationId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Location</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Location</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
                     disabled={isEditing}
                   >
                     <FormControl>
-                      <SelectTrigger className="rounded-sm border-warm-200">
+                      <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         <SelectValue placeholder="Select a location" />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="rounded-sm border-warm-200">
+                    <SelectContent className="rounded-sm border-warm-200 dark:border-charcoal-700">
                       {locationOptions.map((loc: any) => (
                         <SelectItem key={loc.id} value={loc.id}>
                           {loc.name}
@@ -192,12 +192,12 @@ export function FacilityProfileForm({
               name="category"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Category</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Category</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       placeholder="e.g. restaurant, bar, pool"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -212,14 +212,14 @@ export function FacilityProfileForm({
                 name="defaultMonthlyRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700">Monthly Rate ($)</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300">Monthly Rate ($)</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
                         type="number"
                         step="0.01"
                         min="0"
-                        className="rounded-sm border-warm-200"
+                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       />
                     </FormControl>
                     <FormMessage />
@@ -231,14 +231,14 @@ export function FacilityProfileForm({
                 name="rateType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700">Rate Type</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300">Rate Type</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm border-warm-200">
+                      <SelectContent className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         <SelectItem value="FLAT_MONTHLY">Flat Monthly</SelectItem>
                         <SelectItem value="DERIVED">Derived</SelectItem>
                       </SelectContent>
@@ -256,14 +256,14 @@ export function FacilityProfileForm({
                 name="taxBehavior"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700">Tax Behavior</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300">Tax Behavior</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm border-warm-200">
+                      <SelectContent className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         <SelectItem value="INHERIT_CLIENT">Inherit from Client</SelectItem>
                         <SelectItem value="TAX_INCLUDED">Tax Included</SelectItem>
                         <SelectItem value="PRE_TAX">Pre-tax</SelectItem>
@@ -278,14 +278,14 @@ export function FacilityProfileForm({
                 name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700">Status</FormLabel>
+                    <FormLabel className="text-warm-700 dark:text-cream-300">Status</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200">
+                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm border-warm-200">
+                      <SelectContent className="rounded-sm border-warm-200 dark:border-charcoal-700">
                         <SelectItem value="ACTIVE">Active</SelectItem>
                         <SelectItem value="PAUSED">Paused</SelectItem>
                         <SelectItem value="SEASONAL_PAUSED">Seasonal Paused</SelectItem>
@@ -305,12 +305,12 @@ export function FacilityProfileForm({
               name="goLiveDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Go-live Date</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Go-live Date</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="date"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -324,14 +324,14 @@ export function FacilityProfileForm({
               name="normalFrequencyPerWeek"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Frequency per Week</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Frequency per Week</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       type="number"
                       min="0"
                       max="7"
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -345,7 +345,7 @@ export function FacilityProfileForm({
               name="normalDaysOfWeek"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Days of Week</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Days of Week</FormLabel>
                   <div className="flex gap-2 flex-wrap">
                     {DAY_OPTIONS.map((day) => {
                       const isChecked = field.value.includes(day.value)
@@ -355,7 +355,7 @@ export function FacilityProfileForm({
                           className={`flex items-center justify-center w-12 h-8 rounded-sm border text-xs font-medium cursor-pointer transition-colors ${
                             isChecked
                               ? 'bg-lime-100 border-lime-300 text-lime-700'
-                              : 'bg-white border-warm-200 text-warm-500 hover:border-warm-300'
+                              : 'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400 hover:border-warm-300'
                           }`}
                         >
                           <input
@@ -385,13 +385,13 @@ export function FacilityProfileForm({
               name="scopeOfWorkNotes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700">Scope of Work Notes</FormLabel>
+                  <FormLabel className="text-warm-700 dark:text-cream-300">Scope of Work Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       placeholder="Describe the scope of work for this facility..."
                       rows={3}
-                      className="rounded-sm border-warm-200"
+                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -404,7 +404,7 @@ export function FacilityProfileForm({
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
-                className="rounded-sm border-warm-200 text-warm-700"
+                className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
               >
                 Cancel
               </Button>

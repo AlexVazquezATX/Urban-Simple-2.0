@@ -136,10 +136,10 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
 
   if (error) {
     return (
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardContent className="flex flex-col items-center justify-center py-12">
           <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
-          <p className="text-sm text-warm-600 mb-4">{error}</p>
+          <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">{error}</p>
           <Button variant="outline" size="sm" onClick={fetchDelta} className="rounded-sm">Retry</Button>
         </CardContent>
       </Card>
@@ -159,12 +159,12 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
       {/* Month navigation */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="rounded-sm border-warm-200 h-8 w-8">
+          <Button variant="outline" size="icon" onClick={goToPreviousMonth} className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="flex items-center gap-2">
             <Select value={String(month)} onValueChange={(v) => setMonth(parseInt(v))}>
-              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 h-8 text-sm">
+              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -174,7 +174,7 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
               </SelectContent>
             </Select>
             <Select value={String(year)} onValueChange={(v) => setYear(parseInt(v))}>
-              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 h-8 text-sm">
+              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="rounded-sm">
@@ -184,7 +184,7 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
               </SelectContent>
             </Select>
           </div>
-          <Button variant="outline" size="icon" onClick={goToNextMonth} className="rounded-sm border-warm-200 h-8 w-8">
+          <Button variant="outline" size="icon" onClick={goToNextMonth} className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8">
             <ChevronRight className="h-4 w-4" />
           </Button>
           {!isCurrentMonth && (
@@ -193,35 +193,35 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
             </Button>
           )}
         </div>
-        <div className="text-xs text-warm-500">
+        <div className="text-xs text-warm-500 dark:text-cream-400">
           {report.previousMonth.monthLabel} vs {report.currentMonth.monthLabel}
         </div>
       </div>
 
       {/* Summary cards */}
       <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-        <Card className="border-warm-200">
+        <Card className="border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-3">
-            <p className="text-xs text-warm-500 mb-0.5">{report.previousMonth.monthLabel}</p>
-            <p className="text-lg font-display font-semibold text-warm-900">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">{report.previousMonth.monthLabel}</p>
+            <p className="text-lg font-display font-semibold text-warm-900 dark:text-cream-100">
               {formatCurrency(report.previousMonth.total)}
             </p>
           </CardContent>
         </Card>
-        <Card className="border-warm-200">
+        <Card className="border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-3">
-            <p className="text-xs text-warm-500 mb-0.5">{report.currentMonth.monthLabel}</p>
-            <p className="text-lg font-display font-semibold text-warm-900">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">{report.currentMonth.monthLabel}</p>
+            <p className="text-lg font-display font-semibold text-warm-900 dark:text-cream-100">
               {formatCurrency(report.currentMonth.total)}
             </p>
           </CardContent>
         </Card>
         <Card className={cn(
-          'border-warm-200',
+          'border-warm-200 dark:border-charcoal-700',
           isUp ? 'bg-red-50/50' : isDown ? 'bg-lime-50/50' : '',
         )}>
           <CardContent className="p-3">
-            <p className="text-xs text-warm-500 mb-0.5">Net Change</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">Net Change</p>
             <div className="flex items-center gap-1.5">
               {isUp && <TrendingUp className="h-4 w-4 text-red-500" />}
               {isDown && <TrendingDown className="h-4 w-4 text-lime-600" />}
@@ -235,10 +235,10 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
             </div>
           </CardContent>
         </Card>
-        <Card className="border-warm-200">
+        <Card className="border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-3">
-            <p className="text-xs text-warm-500 mb-0.5">Facilities Changed</p>
-            <p className="text-lg font-display font-semibold text-warm-900">
+            <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">Facilities Changed</p>
+            <p className="text-lg font-display font-semibold text-warm-900 dark:text-cream-100">
               {report.changedCount}
               <span className="text-sm font-normal text-warm-500 ml-1">
                 of {report.facilities.length}
@@ -250,9 +250,9 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
 
       {/* Changed facilities table */}
       {changed.length > 0 ? (
-        <Card className="border-warm-200">
+        <Card className="border-warm-200 dark:border-charcoal-700">
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-display font-medium text-warm-900">
+            <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
               Changes
             </CardTitle>
           </CardHeader>
@@ -260,18 +260,18 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-warm-200 hover:bg-transparent">
-                    <TableHead className="text-warm-600 text-xs font-medium">Facility</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium">Type</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium">Status</TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium text-right">
+                  <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Facility</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Type</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Status</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">
                       {report.previousMonth.monthLabel}
                     </TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium text-center w-8" />
-                    <TableHead className="text-warm-600 text-xs font-medium text-right">
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-center w-8" />
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">
                       {report.currentMonth.monthLabel}
                     </TableHead>
-                    <TableHead className="text-warm-600 text-xs font-medium text-right">Delta</TableHead>
+                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Delta</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -279,18 +279,18 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
                     <DeltaRow key={f.facilityProfileId} facility={f} />
                   ))}
                   {/* Totals row */}
-                  <TableRow className="border-warm-200 bg-warm-50 font-medium">
-                    <TableCell colSpan={2} className="text-sm text-warm-800">
+                  <TableRow className="border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 font-medium">
+                    <TableCell colSpan={2} className="text-sm text-warm-800 dark:text-cream-200">
                       Net Impact
                     </TableCell>
                     <TableCell />
-                    <TableCell className="text-right text-sm text-warm-800">
+                    <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
                       {formatCurrency(changed.reduce((s, f) => s + f.previousTotal, 0))}
                     </TableCell>
                     <TableCell className="text-center">
                       <ArrowRight className="h-3 w-3 text-warm-400 mx-auto" />
                     </TableCell>
-                    <TableCell className="text-right text-sm text-warm-800">
+                    <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
                       {formatCurrency(changed.reduce((s, f) => s + f.currentTotal, 0))}
                     </TableCell>
                     <TableCell className={cn(
@@ -307,11 +307,11 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-warm-200">
+        <Card className="border-warm-200 dark:border-charcoal-700">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Equal className="h-8 w-8 text-warm-300 mb-3" />
-            <p className="text-sm font-medium text-warm-700">No changes between months</p>
-            <p className="text-xs text-warm-500 mt-1">
+            <Equal className="h-8 w-8 text-warm-300 dark:text-charcoal-600 mb-3" />
+            <p className="text-sm font-medium text-warm-700 dark:text-cream-300">No changes between months</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
               All facilities have the same billing totals.
             </p>
           </CardContent>
@@ -323,21 +323,21 @@ export function DeltaReportTab({ clientId }: DeltaReportTabProps) {
         <div>
           <button
             onClick={() => setShowUnchanged(!showUnchanged)}
-            className="text-xs text-warm-500 hover:text-warm-700 transition-colors"
+            className="text-xs text-warm-500 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200 transition-colors"
           >
             {showUnchanged ? 'Hide' : 'Show'} {unchanged.length} unchanged {unchanged.length === 1 ? 'facility' : 'facilities'}
           </button>
           {showUnchanged && (
-            <Card className="border-warm-200 mt-2">
+            <Card className="border-warm-200 dark:border-charcoal-700 mt-2">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <Table>
                     <TableBody>
                       {unchanged.map((f) => (
-                        <TableRow key={f.facilityProfileId} className="border-warm-200 opacity-60">
-                          <TableCell className="py-2 text-sm text-warm-700">{f.locationName}</TableCell>
-                          <TableCell className="py-2 text-xs text-warm-500">{f.currentStatus.replace('_', ' ')}</TableCell>
-                          <TableCell className="py-2 text-right text-sm text-warm-700">
+                        <TableRow key={f.facilityProfileId} className="border-warm-200 dark:border-charcoal-700 opacity-60">
+                          <TableCell className="py-2 text-sm text-warm-700 dark:text-cream-300">{f.locationName}</TableCell>
+                          <TableCell className="py-2 text-xs text-warm-500 dark:text-cream-400">{f.currentStatus.replace('_', ' ')}</TableCell>
+                          <TableCell className="py-2 text-right text-sm text-warm-700 dark:text-cream-300">
                             {formatCurrency(f.currentTotal)}
                           </TableCell>
                         </TableRow>
@@ -359,7 +359,7 @@ function DeltaRow({ facility: f }: { facility: DeltaFacility }) {
     added: { label: 'Added', icon: Plus, color: 'bg-lime-100 text-lime-700 border-lime-200' },
     removed: { label: 'Removed', icon: X, color: 'bg-red-100 text-red-700 border-red-200' },
     changed: { label: 'Changed', icon: ArrowRight, color: 'bg-orange-100 text-orange-700 border-orange-200' },
-    unchanged: { label: 'Same', icon: Equal, color: 'bg-warm-100 text-warm-500 border-warm-200' },
+    unchanged: { label: 'Same', icon: Equal, color: 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400 border-warm-200 dark:border-charcoal-700' },
   }
 
   const config = typeConfig[f.changeType]
@@ -368,11 +368,11 @@ function DeltaRow({ facility: f }: { facility: DeltaFacility }) {
   const deltaNegative = f.totalDelta < 0
 
   return (
-    <TableRow className="border-warm-200">
+    <TableRow className="border-warm-200 dark:border-charcoal-700">
       <TableCell className="py-2">
-        <span className="text-sm text-warm-800">{f.locationName}</span>
+        <span className="text-sm text-warm-800 dark:text-cream-200">{f.locationName}</span>
         {f.category && (
-          <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-warm-200 text-warm-500">
+          <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400">
             {f.category}
           </Badge>
         )}
@@ -383,7 +383,7 @@ function DeltaRow({ facility: f }: { facility: DeltaFacility }) {
           {config.label}
         </Badge>
       </TableCell>
-      <TableCell className="py-2 text-xs text-warm-600">
+      <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
         {f.previousStatus !== '-' && f.currentStatus !== '-' && f.previousStatus !== f.currentStatus ? (
           <span>
             {f.previousStatus.replace('_', ' ')}
@@ -394,13 +394,13 @@ function DeltaRow({ facility: f }: { facility: DeltaFacility }) {
           <span>{(f.currentStatus !== '-' ? f.currentStatus : f.previousStatus).replace('_', ' ')}</span>
         )}
       </TableCell>
-      <TableCell className="py-2 text-right text-sm text-warm-700">
+      <TableCell className="py-2 text-right text-sm text-warm-700 dark:text-cream-300">
         {f.isNew ? '-' : formatCurrency(f.previousTotal)}
       </TableCell>
       <TableCell className="py-2 text-center">
         <ArrowRight className="h-3 w-3 text-warm-400 mx-auto" />
       </TableCell>
-      <TableCell className="py-2 text-right text-sm text-warm-700">
+      <TableCell className="py-2 text-right text-sm text-warm-700 dark:text-cream-300">
         {f.isRemoved ? '-' : formatCurrency(f.currentTotal)}
       </TableCell>
       <TableCell className={cn(
@@ -428,7 +428,7 @@ function DeltaSkeleton() {
       </div>
       <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
         {[1, 2, 3, 4].map(i => (
-          <Card key={i} className="border-warm-200">
+          <Card key={i} className="border-warm-200 dark:border-charcoal-700">
             <CardContent className="p-3">
               <Skeleton className="h-3 w-16 mb-2" />
               <Skeleton className="h-6 w-24" />
@@ -436,7 +436,7 @@ function DeltaSkeleton() {
           </Card>
         ))}
       </div>
-      <Card className="border-warm-200">
+      <Card className="border-warm-200 dark:border-charcoal-700">
         <CardHeader className="pb-3">
           <Skeleton className="h-4 w-24" />
         </CardHeader>

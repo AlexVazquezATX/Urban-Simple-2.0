@@ -206,7 +206,7 @@ Keep it concise but informative (300-500 words). Focus on actionable insights.
 
     // Generate digest using Gemini
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.0-flash-exp',
+      model: 'gemini-2.5-flash',
     })
 
     const result = await model.generateContent(digestPrompt)

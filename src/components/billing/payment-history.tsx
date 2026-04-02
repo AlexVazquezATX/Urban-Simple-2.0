@@ -19,13 +19,13 @@ interface PaymentHistoryProps {
 export function PaymentHistory({ payments }: PaymentHistoryProps) {
   if (payments.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200">
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900">Payment History</CardTitle>
-          <CardDescription className="text-warm-500">No payments recorded yet</CardDescription>
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Payment History</CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">No payments recorded yet</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-warm-500 text-center py-8">
+          <p className="text-warm-500 dark:text-cream-400 text-center py-8">
             Payments will appear here once recorded
           </p>
         </CardContent>
@@ -34,53 +34,53 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
   }
 
   return (
-    <Card className="rounded-sm border-warm-200">
+    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
       <CardHeader>
-        <CardTitle className="font-display font-medium text-warm-900">Payment History</CardTitle>
-        <CardDescription className="text-warm-500">
+        <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Payment History</CardTitle>
+        <CardDescription className="text-warm-500 dark:text-cream-400">
           {payments.length} {payments.length === 1 ? 'payment' : 'payments'} recorded
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow className="border-warm-200 hover:bg-transparent">
-              <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Date</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Amount</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Method</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Reference</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Invoice</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 uppercase tracking-wider">Status</TableHead>
+            <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
+              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Date</TableHead>
+              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Amount</TableHead>
+              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Method</TableHead>
+              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Reference</TableHead>
+              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Invoice</TableHead>
+              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {payments.map((payment) => (
-              <TableRow key={payment.id} className="border-warm-200 hover:bg-warm-50">
-                <TableCell className="text-warm-600">
+              <TableRow key={payment.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
+                <TableCell className="text-warm-600 dark:text-cream-400">
                   {new Date(payment.paymentDate).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="font-medium text-warm-900">
+                <TableCell className="font-medium text-warm-900 dark:text-cream-100">
                   ${Number(payment.amount).toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
                 </TableCell>
-                <TableCell className="capitalize text-warm-600">
+                <TableCell className="capitalize text-warm-600 dark:text-cream-400">
                   {payment.paymentMethod.replace('_', ' ')}
                 </TableCell>
-                <TableCell className="text-warm-500">
+                <TableCell className="text-warm-500 dark:text-cream-400">
                   {payment.referenceNumber || '-'}
                 </TableCell>
                 <TableCell>
                   {payment.invoice ? (
                     <Link
                       href={`/app/invoices/${payment.invoice.id}`}
-                      className="text-warm-900 hover:text-ocean-600 transition-colors"
+                      className="text-warm-900 dark:text-cream-100 hover:text-ocean-600 transition-colors"
                     >
                       {payment.invoice.invoiceNumber}
                     </Link>
                   ) : (
-                    <span className="text-warm-500">-</span>
+                    <span className="text-warm-500 dark:text-cream-400">-</span>
                   )}
                 </TableCell>
                 <TableCell>
@@ -90,7 +90,7 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
                         ? 'bg-lime-100 text-lime-700 border-lime-200'
                         : payment.status === 'failed'
                           ? 'bg-red-100 text-red-700 border-red-200'
-                          : 'bg-warm-100 text-warm-600 border-warm-200'
+                          : 'bg-warm-100 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700'
                     }`}
                   >
                     {payment.status}

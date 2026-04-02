@@ -23,6 +23,7 @@ function isBackhausDomain(host: string): boolean {
 const ADMIN_PREFIXES = [
   '/dashboard', '/app', '/clients', '/invoices',
   '/billing', '/admin', '/creative-studio', '/portal',
+  '/command',
 ]
 
 function isAdminRoute(pathname: string): boolean {
