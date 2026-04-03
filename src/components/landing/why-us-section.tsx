@@ -19,10 +19,6 @@ const icons = [
 // Photos for the rotating stack
 const STACK_PHOTOS = [
   {
-    src: '/images/Headers-1767818867/Urban-Simple-Team-Conference.jpg',
-    alt: 'Urban Simple team in a planning meeting',
-  },
-  {
     src: '/images/Team-1767818889/3C1A9195_02.jpg',
     alt: 'Urban Simple team member at work',
   },
