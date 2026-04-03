@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
       // Old WordPress URL redirects
       { source: '/cleaning-services', destination: '/landing#services', permanent: true },
       { source: '/cleaning-services/:path*', destination: '/landing#services', permanent: true },
-      { source: '/our-team', destination: '/our-team', permanent: false },
+      // /our-team is now a real page — no redirect needed
       { source: '/contact-us', destination: '/landing#contact', permanent: true },
       { source: '/why-us', destination: '/landing#why-us', permanent: true },
     ];

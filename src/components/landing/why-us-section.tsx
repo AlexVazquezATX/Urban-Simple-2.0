@@ -39,7 +39,7 @@ const STACK_PHOTOS = [
     alt: 'Urban Simple team in action',
   },
   {
-    src: '/images/Team-1767818889/3C1A9576.jpg',
+    src: '/images/Team-1767818889/Gemini_Generated_Image_bu5fbfbu5fbfbu5f.jpg',
     alt: 'Urban Simple professional crew',
   },
 ]

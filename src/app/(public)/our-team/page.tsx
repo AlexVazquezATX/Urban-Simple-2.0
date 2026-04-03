@@ -143,7 +143,7 @@ export default function TeamPage() {
         {/* Banner Image */}
         <div className="relative h-[50vh] min-h-[400px] max-h-[600px] rounded-2xl overflow-hidden mx-4 sm:mx-6 lg:mx-8 shadow-xl">
           <Image
-            src="/images/Headers-1767818867/Urban-Simple-Team-in-Front-of-HQ-Viviana-Replacement.jpg"
+            src="/images/Headers-1767818867/Urban-Simple-Team-in-Front-of-HQ-Viviana-Replacement.png"
             alt="Urban Simple Team"
             fill
             className="object-cover"

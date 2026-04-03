@@ -119,7 +119,7 @@ export default function LandingPage() {
         {/* Full-bleed Background Image with Parallax */}
         <motion.div className="absolute inset-0" style={{ y: heroImageY }}>
           <Image
-            src="/images/Headers-1767818867/Urban-Simple-Team-in-Front-of-HQ-Viviana-Replacement.jpg"
+            src="/images/Headers-1767818867/Urban-Simple-Team-in-Front-of-HQ-Viviana-Replacement.png"
             alt="Urban Simple team in front of headquarters"
             fill
             className="object-cover scale-110"
