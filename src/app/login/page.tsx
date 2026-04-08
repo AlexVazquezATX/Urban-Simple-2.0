@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,7 +64,7 @@ export default function LoginPage() {
 
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div className="flex items-center gap-1">
+          <Link href="/" className="flex items-center gap-1">
             <Image
               src="/images/Urban Simple Logos/Urban Simple Icon.png"
               alt=""
@@ -79,7 +80,7 @@ export default function LoginPage() {
                 Simple
               </span>
             </div>
-          </div>
+          </Link>
 
           <div className="space-y-6">
             <h1 className="text-4xl xl:text-5xl font-display font-semibold text-cream-100 leading-tight tracking-tight">

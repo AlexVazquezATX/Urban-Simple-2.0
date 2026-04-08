@@ -22,7 +22,7 @@ export function VideoBannerSection() {
         className="absolute inset-0 w-full h-full object-cover"
       >
         <source
-          src="/images/Headers-1767818867/Meet-Urban-Simple-Smaller-File.mp4"
+          src="/images/Headers-1767818867/Urban-Simple-Office-Team-2025.mp4"
           type="video/mp4"
         />
       </video>
