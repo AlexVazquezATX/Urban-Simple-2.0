@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.prospect.findMany({
       where: {
         companyId: user.companyId,
+        deletedAt: null,
         companyName: {
           in: companyNames.map((name: string) => name.trim()),
           mode: 'insensitive',

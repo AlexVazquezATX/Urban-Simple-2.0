@@ -36,7 +36,11 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { monthlyPay, startDate, endDate, isActive } = body
+    const {
+      monthlyPay, startDate, endDate, isActive,
+      estimatedHoursPerVisit, cleaningWindowStart, cleaningWindowEnd,
+      daysOfWeek, nightsPerWeek,
+    } = body
 
     const assignment = await prisma.locationAssignment.update({
       where: {
@@ -47,6 +51,11 @@ export async function PUT(
         ...(startDate !== undefined && { startDate: new Date(startDate) }),
         ...(endDate !== undefined && { endDate: endDate ? new Date(endDate) : null }),
         ...(isActive !== undefined && { isActive }),
+        ...(estimatedHoursPerVisit !== undefined && { estimatedHoursPerVisit: estimatedHoursPerVisit ? parseFloat(estimatedHoursPerVisit.toString()) : null }),
+        ...(cleaningWindowStart !== undefined && { cleaningWindowStart: cleaningWindowStart || null }),
+        ...(cleaningWindowEnd !== undefined && { cleaningWindowEnd: cleaningWindowEnd || null }),
+        ...(daysOfWeek !== undefined && { daysOfWeek }),
+        ...(nightsPerWeek !== undefined && { nightsPerWeek: nightsPerWeek ?? null }),
         updatedAt: new Date(),
       },
       include: {

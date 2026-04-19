@@ -17,6 +17,7 @@ async function PipelineContent() {
   const prospects = await prisma.prospect.findMany({
     where: {
       companyId: user.companyId,
+      deletedAt: null,
       status: {
         not: 'prospect', // Filter out prospects that haven't been moved to pipeline yet
       },

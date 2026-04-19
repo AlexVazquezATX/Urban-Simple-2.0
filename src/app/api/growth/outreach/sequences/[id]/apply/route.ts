@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { enrollProspectInSequence } from '@/lib/services/outreach-enroll'
 
 // POST /api/growth/outreach/sequences/[id]/apply — Apply a sequence to prospects
 export async function POST(
@@ -46,11 +47,36 @@ export async function POST(
       return NextResponse.json({ error: 'Sequence has no steps' }, { status: 400 })
     }
 
+    // Fetch company autopilot config once (only needed if template.autopilot=true)
+    const company = sequence.autopilot
+      ? await prisma.company.findUnique({
+          where: { id: user.companyId },
+          select: {
+            id: true,
+            autopilotSendHourStart: true,
+            autopilotSendHourEnd: true,
+            autopilotSendDaysOfWeek: true,
+            branches: { select: { timezone: true }, take: 1 },
+          },
+        })
+      : null
+
+    const companyAutopilot = company
+      ? {
+          id: company.id,
+          timezone: company.branches[0]?.timezone || 'America/Chicago',
+          autopilotSendHourStart: company.autopilotSendHourStart,
+          autopilotSendHourEnd: company.autopilotSendHourEnd,
+          autopilotSendDaysOfWeek: company.autopilotSendDaysOfWeek,
+        }
+      : null
+
     // Verify all prospects belong to the user's company (include contacts for merge tags)
     const prospects = await prisma.prospect.findMany({
       where: {
         id: { in: prospectIds },
         companyId: user.companyId,
+        deletedAt: null,
       },
       select: {
         id: true,
@@ -74,6 +100,21 @@ export async function POST(
     let skipped = 0
     const errors: string[] = []
 
+    const template = {
+      id: sequence.id,
+      name: sequence.name,
+      description: sequence.description,
+      autopilot: sequence.autopilot,
+      messages: sequence.messages.map(m => ({
+        step: m.step,
+        delayDays: m.delayDays,
+        channel: m.channel,
+        subject: m.subject,
+        body: m.body,
+        isAiGenerated: m.isAiGenerated,
+      })),
+    }
+
     for (const prospectId of prospectIds) {
       if (!validIds.has(prospectId)) {
         skipped++
@@ -81,107 +122,26 @@ export async function POST(
         continue
       }
 
-      // Check if prospect already has an active campaign from this sequence
-      const existing = await prisma.outreachCampaign.findFirst({
-        where: {
-          companyId: user.companyId,
-          prospectId,
-          name: sequence.name,
-          status: { in: ['active', 'draft'] },
-        },
-      })
-
-      if (existing) {
-        const prospect = prospects.find(p => p.id === prospectId)
-        skipped++
-        errors.push(`${prospect?.companyName || prospectId} already has this sequence active`)
-        continue
-      }
+      const prospect = prospects.find(p => p.id === prospectId)!
 
       try {
-        const now = new Date()
-
-        // Create a new campaign for this prospect
-        const campaign = await prisma.outreachCampaign.create({
-          data: {
-            companyId: user.companyId,
-            prospectId,
-            createdById: user.id,
-            name: sequence.name,
-            description: sequence.description,
-            status: 'active',
-          },
+        const result = await enrollProspectInSequence({
+          template,
+          prospect,
+          companyId: user.companyId,
+          userId: user.id,
+          company: companyAutopilot,
         })
 
-        // Resolve merge tags for this prospect
-        const prospectData = prospects.find(p => p.id === prospectId)!
-        const contact = prospectData.contacts?.[0]
-        const addr = prospectData.address as any || {}
-        const locationParts = [addr.city, addr.state].filter(Boolean)
-
-        const resolveTags = (text: string | null): string | null => {
-          if (!text) return text
-          const replacements: Record<string, string> = {
-            '{{company_name}}': prospectData.companyName,
-            '{{business_name}}': prospectData.companyName,
-            '{{contact_name}}': contact ? `${contact.firstName} ${contact.lastName}`.trim() : '',
-            '{{first_name}}': contact?.firstName || '',
-            '{{last_name}}': contact?.lastName || '',
-            '{{title}}': contact?.title || '',
-            '{{location}}': locationParts.join(', '),
-            '{{city}}': addr.city || '',
-            '{{state}}': addr.state || '',
-          }
-          let resolved = text
-          for (const [tag, value] of Object.entries(replacements)) {
-            resolved = resolved.replaceAll(tag, value)
-          }
-          return resolved
+        if ('skipped' in result) {
+          skipped++
+          errors.push(`${prospect.companyName}: ${result.reason}`)
+        } else {
+          applied++
         }
-
-        // Create message records for each step
-        let cumulativeDelayDays = 0
-        for (const step of sequence.messages) {
-          cumulativeDelayDays += step.delayDays
-
-          const scheduledAt = new Date(now)
-          scheduledAt.setDate(scheduledAt.getDate() + cumulativeDelayDays)
-
-          await prisma.outreachMessage.create({
-            data: {
-              campaignId: campaign.id,
-              prospectId,
-              step: step.step,
-              delayDays: step.delayDays,
-              channel: step.channel,
-              subject: resolveTags(step.subject),
-              body: resolveTags(step.body) || step.body,
-              isAiGenerated: step.isAiGenerated,
-              status: 'pending',
-              // Step 1 goes to approval queue; steps 2+ are pre-approved
-              approvalStatus: step.step === 1 ? 'pending' : 'approved',
-              scheduledAt: step.step === 1 ? null : scheduledAt,
-            },
-          })
-        }
-
-        // Log activity
-        await prisma.prospectActivity.create({
-          data: {
-            prospectId,
-            userId: user.id,
-            type: 'note',
-            channel: 'system',
-            title: `Sequence "${sequence.name}" applied`,
-            description: `${sequence.messages.length}-step sequence started. Step 1 queued for review.`,
-          },
-        })
-
-        applied++
       } catch (error: any) {
-        const prospect = prospects.find(p => p.id === prospectId)
         skipped++
-        errors.push(`${prospect?.companyName || prospectId}: ${error.message}`)
+        errors.push(`${prospect.companyName}: ${error.message}`)
       }
     }
 

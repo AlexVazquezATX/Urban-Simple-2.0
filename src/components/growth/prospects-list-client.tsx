@@ -1030,6 +1030,50 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   }
 
   // Bulk apply sequence handler
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) {
+      toast.error('Please select prospects')
+      return
+    }
+
+    const count = selectedIds.size
+    const confirmWord = count > 5 ? 'DELETE' : null
+
+    if (confirmWord) {
+      const typed = window.prompt(
+        `You are about to delete ${count} prospects. Type DELETE to confirm.`
+      )
+      if (typed !== confirmWord) {
+        toast.info('Delete cancelled')
+        return
+      }
+    } else {
+      const ok = window.confirm(
+        `Delete ${count} prospect${count === 1 ? '' : 's'}? They can be restored if needed.`
+      )
+      if (!ok) return
+    }
+
+    try {
+      const res = await fetch('/api/growth/prospects/bulk-delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(data.error || 'Failed to delete prospects')
+        return
+      }
+
+      setProspects(prev => prev.filter(p => !selectedIds.has(p.id)))
+      setSelectedIds(new Set())
+      toast.success(`Deleted ${data.deleted} prospect${data.deleted === 1 ? '' : 's'}`)
+    } catch {
+      toast.error('Failed to delete prospects')
+    }
+  }
+
   const handleBulkApplySequence = async (sequenceId: string) => {
     if (selectedIds.size === 0) {
       toast.error('Please select prospects')
@@ -1480,6 +1524,14 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                       {status.label}
                     </DropdownMenuItem>
                   ))}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={handleBulkDelete}
+                    className="text-red-600 focus:text-red-600"
+                  >
+                    <X className="mr-2 h-4 w-4" />
+                    Delete Prospects
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
 

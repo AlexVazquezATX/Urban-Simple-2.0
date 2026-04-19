@@ -23,6 +23,7 @@ export async function GET(request: NextRequest) {
     const prospects = await prisma.prospect.findMany({
       where: {
         companyId: user.companyId,
+        deletedAt: null,
       },
       include: {
         activities: {

@@ -24,6 +24,7 @@ async function DailyPlannerContent() {
   const prospectsToContact = await prisma.prospect.findMany({
     where: {
       companyId: user.companyId,
+      deletedAt: null,
       status: {
         in: ['new', 'researching', 'contacted', 'engaged', 'qualified'],
       },

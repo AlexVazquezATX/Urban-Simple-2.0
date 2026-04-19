@@ -11,7 +11,7 @@ async function PipelineData() {
 
   const [allProspects, pipelineProspects] = await Promise.all([
     prisma.prospect.findMany({
-      where: { companyId: user.companyId },
+      where: { companyId: user.companyId, deletedAt: null },
       select: {
         id: true,
         companyName: true,
@@ -50,6 +50,7 @@ async function PipelineData() {
     prisma.prospect.findMany({
       where: {
         companyId: user.companyId,
+        deletedAt: null,
         status: { not: 'prospect' },
       },
       select: {

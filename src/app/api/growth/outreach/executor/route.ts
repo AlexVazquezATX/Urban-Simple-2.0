@@ -3,6 +3,10 @@ import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { Resend } from 'resend'
 import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
+import {
+  getStartOfLocalDay,
+  isWithinSendWindow,
+} from '@/lib/services/autopilot-schedule'
 
 // Initialize Resend lazily
 let resend: Resend | null = null
@@ -14,8 +18,13 @@ function getResend() {
 }
 
 /**
- * Sequence Executor - Runs as a cron job to auto-send approved follow-up messages
- * This endpoint should be called periodically (e.g., every hour) to process pending sequence steps
+ * Sequence Executor - Runs as a cron job to send pending outreach messages.
+ *
+ * Two lanes:
+ *   1. Manual follow-ups — approvalStatus='approved', step > 1. No cap, no window.
+ *   2. Autopilot (campaign.autopilot=true) — all steps, auto-approved, gated by
+ *      the company's send window + daily cap. The first send of step 1 is how
+ *      prospects auto-imported via CSV get their initial cold email.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -31,36 +40,38 @@ export async function POST(request: NextRequest) {
 
     const now = new Date()
 
-    // Find all approved messages that are ready to send
-    // Conditions:
-    // 1. approvalStatus = 'approved'
-    // 2. status = 'pending'
-    // 3. scheduledAt <= now (or null for immediate send)
-    // 4. step > 1 (follow-ups only, first contacts need manual approval)
-    const readyMessages = await prisma.outreachMessage.findMany({
+    // Lane 1: manual follow-ups (legacy behavior, unchanged).
+    // Includes both ad-hoc sends (no campaign) and non-autopilot campaign steps 2+.
+    const manualReady = await prisma.outreachMessage.findMany({
       where: {
         approvalStatus: 'approved',
         status: 'pending',
-        step: { gt: 1 }, // Only follow-ups
-        OR: [
-          { scheduledAt: { lte: now } },
-          { scheduledAt: null },
+        step: { gt: 1 },
+        AND: [
+          {
+            OR: [
+              { campaignId: null },
+              { campaign: { autopilot: false } },
+            ],
+          },
+          {
+            OR: [
+              { scheduledAt: { lte: now } },
+              { scheduledAt: null },
+            ],
+          },
         ],
       },
       include: {
         prospect: {
           include: {
-            contacts: {
-              take: 1,
-            },
+            contacts: { take: 1 },
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
                 outcome: 'interested',
               },
-              orderBy: {
-                createdAt: 'desc',
-              },
+              orderBy: { createdAt: 'desc' },
               take: 1,
             },
           },
@@ -71,11 +82,114 @@ export async function POST(request: NextRequest) {
             name: true,
             status: true,
             createdById: true,
+            companyId: true,
+            autopilot: true,
           },
         },
       },
-      take: 50, // Process in batches
+      take: 50,
     })
+
+    // Lane 2: autopilot messages. Fetch candidates, then enforce per-company
+    // window + daily cap in app code (simpler than a monster SQL query).
+    const autopilotCandidates = await prisma.outreachMessage.findMany({
+      where: {
+        status: 'pending',
+        campaign: { autopilot: true, status: 'active' },
+        scheduledAt: { lte: now },
+      },
+      include: {
+        prospect: {
+          include: {
+            contacts: { take: 1 },
+            activities: {
+              where: {
+                type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
+                outcome: 'interested',
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
+        campaign: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            createdById: true,
+            companyId: true,
+            autopilot: true,
+          },
+        },
+      },
+      orderBy: { scheduledAt: 'asc' },
+      take: 200,
+    })
+
+    // Group autopilot candidates by companyId and apply send window + daily cap.
+    const byCompany = new Map<string, typeof autopilotCandidates>()
+    for (const msg of autopilotCandidates) {
+      const cid = msg.campaign?.companyId
+      if (!cid) continue
+      if (!byCompany.has(cid)) byCompany.set(cid, [])
+      byCompany.get(cid)!.push(msg)
+    }
+
+    const autopilotGated: typeof autopilotCandidates = []
+    const gatedReasons: Record<string, string> = {}
+
+    for (const [companyId, messages] of byCompany.entries()) {
+      const company = await prisma.company.findUnique({
+        where: { id: companyId },
+        select: {
+          id: true,
+          autopilotDailyCap: true,
+          autopilotSendHourStart: true,
+          autopilotSendHourEnd: true,
+          autopilotSendDaysOfWeek: true,
+          branches: { select: { timezone: true }, take: 1 },
+        },
+      })
+      if (!company) continue
+
+      const timezone = company.branches[0]?.timezone || 'America/Chicago'
+      const window = {
+        timezone,
+        hourStart: company.autopilotSendHourStart,
+        hourEnd: company.autopilotSendHourEnd,
+        daysOfWeek: company.autopilotSendDaysOfWeek,
+      }
+
+      if (!isWithinSendWindow(now, window)) {
+        for (const m of messages) gatedReasons[m.id] = 'outside_send_window'
+        continue
+      }
+
+      // Count autopilot messages sent since local-midnight.
+      const localMidnight = getStartOfLocalDay(now, timezone)
+      const sentToday = await prisma.outreachMessage.count({
+        where: {
+          status: 'sent',
+          sentAt: { gte: localMidnight },
+          campaign: { autopilot: true, companyId },
+        },
+      })
+
+      const remaining = Math.max(0, company.autopilotDailyCap - sentToday)
+      if (remaining === 0) {
+        for (const m of messages) gatedReasons[m.id] = 'daily_cap_reached'
+        continue
+      }
+
+      // Take up to `remaining` messages from the front of the (scheduledAt-ordered) list.
+      const toSend = messages.slice(0, remaining)
+      const deferred = messages.slice(remaining)
+      for (const m of deferred) gatedReasons[m.id] = 'daily_cap_reached'
+      autopilotGated.push(...toSend)
+    }
+
+    const readyMessages = [...manualReady, ...autopilotGated]
 
     const results = []
 
@@ -180,9 +294,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const gatedSummary = Object.entries(gatedReasons).reduce<Record<string, number>>(
+      (acc, [, reason]) => {
+        acc[reason] = (acc[reason] || 0) + 1
+        return acc
+      },
+      {}
+    )
+
     return NextResponse.json({
       success: true,
       processed: results.length,
+      manualReady: manualReady.length,
+      autopilotReady: autopilotGated.length,
+      autopilotGated: gatedSummary,
       results,
     })
   } catch (error) {

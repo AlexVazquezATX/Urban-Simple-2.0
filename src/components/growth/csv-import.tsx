@@ -65,6 +65,8 @@ export function CSVImport() {
   const [batchSourceDetail, setBatchSourceDetail] = useState('')
   const [batchTags, setBatchTags] = useState<string[]>([])
   const [tagInput, setTagInput] = useState('')
+  const [applyFreshTag, setApplyFreshTag] = useState(true)
+  const [autoEnroll, setAutoEnroll] = useState(true)
 
   const addBatchTag = () => {
     const tag = tagInput.trim()
@@ -312,7 +314,7 @@ export function CSVImport() {
       const response = await fetch('/api/growth/prospects/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prospects }),
+        body: JSON.stringify({ prospects, applyFreshTag, autoEnroll }),
       })
 
       if (!response.ok) {
@@ -324,6 +326,7 @@ export function CSVImport() {
       const parts = [`${result.created} prospects imported`]
       if (result.contactsAdded > 0) parts.push(`${result.contactsAdded} contacts added to existing`)
       if (result.skipped > 0) parts.push(`${result.skipped} duplicates`)
+      if (result.enrolled > 0) parts.push(`${result.enrolled} enrolled in autopilot`)
       toast.success(parts.join(', '))
       router.push('/growth/prospects')
       router.refresh()
@@ -434,6 +437,37 @@ export function CSVImport() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="space-y-3 rounded-md border p-4 bg-muted/30">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={applyFreshTag}
+                    onChange={(e) => setApplyFreshTag(e.target.checked)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Tag imported prospects as fresh</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Adds the <code className="text-[11px]">fresh</code> tag to every imported prospect so you can filter new leads in the prospects list.
+                    </div>
+                  </div>
+                </label>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={autoEnroll}
+                    onChange={(e) => setAutoEnroll(e.target.checked)}
+                    className="mt-1 h-4 w-4"
+                  />
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">Enroll in default autopilot sequence</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Automatically starts the default autopilot outreach sequence for every imported prospect that has a contact email. Respects the daily send cap and send window.
+                    </div>
+                  </div>
+                </label>
               </div>
 
               <div>

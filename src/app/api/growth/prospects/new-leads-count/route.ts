@@ -12,6 +12,7 @@ export async function GET() {
     const count = await prisma.prospect.count({
       where: {
         companyId: user.companyId,
+        deletedAt: null,
         status: 'new',
         source: 'website',
         tags: { has: 'Website Lead' },

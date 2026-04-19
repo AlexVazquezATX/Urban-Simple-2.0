@@ -29,6 +29,13 @@ model Company {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // Autopilot outreach settings (applies to any OutreachCampaign with autopilot=true)
+  defaultAutopilotCampaignId String? @map("default_autopilot_campaign_id")
+  autopilotDailyCap          Int     @default(12) @map("autopilot_daily_cap")
+  autopilotSendHourStart     Int     @default(9) @map("autopilot_send_hour_start")
+  autopilotSendHourEnd       Int     @default(16) @map("autopilot_send_hour_end")
+  autopilotSendDaysOfWeek    Int[]   @default([2, 3, 4, 5, 6]) @map("autopilot_send_days_of_week") // 0=Sun..6=Sat
+
   branches Branch[]
   users    User[]
 
@@ -181,6 +188,11 @@ model User {
   // API Keys
   apiKeys ApiKey[]
 
+  // Workforce / Time Tracking
+  timeEntries        TimeEntry[]          @relation("AssociateTimeEntries")
+  timeEntryEdits     TimeEntry[]          @relation("TimeEntryEditor")
+  weeklyHours        WeeklyHoursSummary[] @relation("WeeklyHours")
+
   @@map("users")
 }
 
@@ -324,6 +336,7 @@ model Location {
   issues            Issue[]
   serviceAgreements ServiceAgreement[]
   facilityProfile   FacilityProfile?
+  timeEntries       TimeEntry[]
 
   @@map("locations")
 }
@@ -336,11 +349,20 @@ model LocationAssignment {
   startDate  DateTime  @map("start_date")
   endDate    DateTime? @map("end_date")
   isActive   Boolean   @default(true) @map("is_active")
+
+  // Workforce scheduling fields
+  estimatedHoursPerVisit Decimal?  @map("estimated_hours_per_visit") @db.Decimal(4, 2) // e.g. 2.5 hours
+  cleaningWindowStart    String?   @map("cleaning_window_start") // e.g. "23:00"
+  cleaningWindowEnd      String?   @map("cleaning_window_end")   // e.g. "05:00"
+  daysOfWeek             Int[]     @default([]) @map("days_of_week") // 0=Sun, 1=Mon ... 6=Sat
+  nightsPerWeek          Int?      @map("nights_per_week") // explicit override if different from daysOfWeek.length
+
   createdAt  DateTime  @default(now()) @map("created_at")
   updatedAt  DateTime  @updatedAt @map("updated_at")
 
-  location Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
-  user     User     @relation(fields: [userId], references: [id])
+  location    Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+  timeEntries TimeEntry[]
 
   @@map("location_assignments")
 }
@@ -1044,6 +1066,10 @@ model Prospect {
   lostReason          String?  @map("lost_reason") @db.Text
   convertedToClientId String?  @unique @map("converted_to_client_id")
 
+  // Soft delete
+  deletedAt   DateTime? @map("deleted_at")
+  deletedById String?   @map("deleted_by_id")
+
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
   lastContactedAt DateTime? @map("last_contacted_at")
@@ -1146,6 +1172,11 @@ model OutreachCampaign {
   description String? @db.Text
   status      String  @default("draft") // draft, active, paused, completed, cancelled
 
+  // Autopilot: when true, messages created for this campaign are auto-approved,
+  // step 1 sends without manual approval, and sends are gated by Company-level
+  // autopilot daily cap + send window.
+  autopilot Boolean @default(false)
+
   // Campaign settings
   startDate DateTime? @map("start_date")
   endDate   DateTime? @map("end_date")
@@ -1163,6 +1194,7 @@ model OutreachCampaign {
   messages OutreachMessage[]
 
   @@index([companyId, status])
+  @@index([companyId, autopilot])
   @@index([prospectId])
   @@map("outreach_campaigns")
 }
@@ -2350,4 +2382,65 @@ model ServiceLineItem {
   @@index([clientId, year, month])
   @@index([facilityProfileId])
   @@map("service_line_items")
+}
+
+// ============================================
+// WORKFORCE MANAGEMENT & TIME TRACKING
+// ============================================
+
+model TimeEntry {
+  id              String    @id @default(cuid())
+  associateId     String    @map("associate_id")
+  locationId      String    @map("location_id")
+  assignmentId    String?   @map("assignment_id")
+
+  clockIn         DateTime  @map("clock_in")
+  clockOut        DateTime? @map("clock_out")
+
+  // Computed/stored
+  totalMinutes    Int?      @map("total_minutes")
+  isOvernight     Boolean   @default(false) @map("is_overnight")
+
+  // Audit trail
+  status          String    @default("active") // active, completed, flagged, voided, edited
+  editHistory     Json?     @default("[]") @map("edit_history") // [{editedBy, editedAt, field, oldValue, newValue, reason}]
+  editedById      String?   @map("edited_by_id")
+  editReason      String?   @map("edit_reason")
+  flagReason      String?   @map("flag_reason")
+  notes           String?
+
+  weekStartDate   DateTime  @map("week_start_date") @db.Date // denormalized for fast weekly queries
+
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  associate       User                @relation("AssociateTimeEntries", fields: [associateId], references: [id])
+  location        Location            @relation(fields: [locationId], references: [id])
+  assignment      LocationAssignment? @relation(fields: [assignmentId], references: [id])
+  editedBy        User?               @relation("TimeEntryEditor", fields: [editedById], references: [id])
+
+  @@index([associateId, weekStartDate])
+  @@index([locationId, clockIn])
+  @@index([status])
+  @@map("time_entries")
+}
+
+model WeeklyHoursSummary {
+  id              String   @id @default(cuid())
+  associateId     String   @map("associate_id")
+  weekStartDate   DateTime @map("week_start_date") @db.Date
+  totalMinutes    Int      @default(0) @map("total_minutes")
+  totalLocations  Int      @default(0) @map("total_locations")
+  overtimeMinutes Int      @default(0) @map("overtime_minutes")
+  status          String   @default("current") // current, finalized, disputed
+  calculatedAt    DateTime @default(now()) @map("calculated_at")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  associate       User     @relation("WeeklyHours", fields: [associateId], references: [id])
+
+  @@unique([associateId, weekStartDate])
+  @@index([weekStartDate])
+  @@map("weekly_hours_summaries")
 }

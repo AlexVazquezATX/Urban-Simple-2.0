@@ -34,6 +34,7 @@ import {
   ChevronRight,
   Moon,
   Rocket,
+  ShieldAlert,
   Search,
   Mail,
   TrendingUp,
@@ -149,6 +150,7 @@ export function AppSidebar() {
 
   const operationsItems = [
     { href: '/operations', icon: ClipboardList, label: 'Operations', exact: true, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+    { href: '/operations/workforce', icon: ShieldAlert, label: 'Workforce', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     { href: '/operations/nightly-reviews', icon: Moon, label: 'Nightly Reviews', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     { href: '/chat', icon: MessageSquare, label: 'Team Chat', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'] },
     { href: '/team', icon: UserCog, label: 'Team', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },

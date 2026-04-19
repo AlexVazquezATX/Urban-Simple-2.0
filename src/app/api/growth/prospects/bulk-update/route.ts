@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       where: {
         id: { in: ids },
         companyId: user.companyId,
+        deletedAt: null,
       },
       select: { id: true },
     })
