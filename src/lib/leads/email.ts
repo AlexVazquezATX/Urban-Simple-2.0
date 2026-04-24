@@ -47,14 +47,15 @@ export async function sendLeadEmails(payload: LeadPayload): Promise<void> {
   const startTimingLabel = labelFor(START_TIMING_OPTIONS, payload.start_timing)
   const submittedAtFormatted = formatSubmittedAt(payload.submitted_at)
 
+  const firstName = payload.name?.trim().split(/\s+/)[0] || ''
+
   const notification = resend.emails
     .send({
       from: FROM_NOTIFICATION,
       to,
       subject: `New walkthrough request: ${payload.business_name} (${businessTypeLabel})`,
       react: NotificationToAlex({
-        firstName: payload.first_name,
-        lastName: payload.last_name,
+        name: payload.name || '',
         businessName: payload.business_name,
         businessTypeLabel,
         location: payload.location,
@@ -83,7 +84,7 @@ export async function sendLeadEmails(payload: LeadPayload): Promise<void> {
       replyTo: REPLY_TO_AUTORESPONDER,
       subject: 'We got your walkthrough request — Urban Simple',
       react: AutoResponder({
-        firstName: payload.first_name,
+        firstName: firstName || 'there',
         businessName: payload.business_name,
       }),
     })

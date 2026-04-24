@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Check } from 'lucide-react'
+import { Check, ChevronDown, Loader2, Send } from 'lucide-react'
 import {
   BUSINESS_TYPES,
   CURRENT_CLEANING_OPTIONS,
@@ -74,12 +74,12 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    watch,
   } = useForm<LeadFormInput>({
     resolver: zodResolver(leadFormSchema),
     mode: 'onBlur',
     defaultValues: {
-      first_name: '',
-      last_name: '',
+      name: '',
       business_name: '',
       business_type: undefined,
       location: '',
@@ -130,225 +130,143 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
       <div
         role="status"
         aria-live="polite"
-        className="rounded-2xl border border-sage-200 bg-sage-50 p-8 text-center shadow-card"
+        className="rounded-2xl border border-sage-400/40 bg-sage-500/15 p-8 text-center backdrop-blur-xl"
       >
-        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-sage-500 text-white">
-          <Check className="h-6 w-6" aria-hidden />
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-sage-500 text-white shadow-lg">
+          <Check className="h-7 w-7" aria-hidden />
         </div>
-        <h3 className="font-display text-2xl font-semibold text-charcoal-900">Got it.</h3>
-        <p className="mt-2 text-charcoal-700">
+        <h3 className="font-display text-2xl font-semibold text-cream-50">Got it.</h3>
+        <p className="mt-2 text-cream-200">
           Check your email for confirmation. Alex will follow up with a phone call during business hours.
         </p>
       </div>
     )
   }
 
+  const submitLabel = variant === 'final' ? 'Book my free walkthrough' : 'Request my free walkthrough'
+
   return (
     <form
       id={formId}
       onSubmit={handleSubmit(onSubmit)}
       noValidate
-      className="relative rounded-2xl border border-cream-200 bg-white p-6 shadow-card sm:p-8"
+      className="relative rounded-2xl border border-cream-50/15 bg-charcoal-950/60 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-7"
     >
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field
-          label="First name"
-          id={`${fieldIdBase}-first_name`}
-          error={errors.first_name?.message}
-          required
-        >
-          <input
-            id={`${fieldIdBase}-first_name`}
-            type="text"
-            autoComplete="given-name"
-            className={inputClass(!!errors.first_name)}
-            {...register('first_name')}
-          />
-        </Field>
+      <div className="mb-5 flex items-center gap-2">
+        <span className="h-1.5 w-1.5 rounded-full bg-bronze-400" aria-hidden />
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cream-200">
+          Tell us about your space
+        </p>
+      </div>
 
-        <Field
-          label="Last name"
-          id={`${fieldIdBase}-last_name`}
-          error={errors.last_name?.message}
-          required
-        >
-          <input
-            id={`${fieldIdBase}-last_name`}
-            type="text"
-            autoComplete="family-name"
-            className={inputClass(!!errors.last_name)}
-            {...register('last_name')}
-          />
-        </Field>
+      <div className="space-y-3.5">
+        <GlassInput
+          id={`${fieldIdBase}-name`}
+          label="Name"
+          placeholder="Your name (optional)"
+          autoComplete="name"
+          error={errors.name?.message}
+          register={register('name')}
+        />
 
-        <Field
-          label="Business name"
+        <GlassInput
           id={`${fieldIdBase}-business_name`}
+          label="Business name"
+          placeholder="Business name *"
+          autoComplete="organization"
           error={errors.business_name?.message}
+          register={register('business_name')}
           required
-          className="sm:col-span-2"
-        >
-          <input
-            id={`${fieldIdBase}-business_name`}
-            type="text"
-            autoComplete="organization"
-            className={inputClass(!!errors.business_name)}
-            {...register('business_name')}
-          />
-        </Field>
+        />
 
-        <Field
-          label="Business type"
-          id={`${fieldIdBase}-business_type`}
-          error={errors.business_type?.message}
-          required
-        >
-          <select
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <GlassSelect
             id={`${fieldIdBase}-business_type`}
-            defaultValue=""
-            className={inputClass(!!errors.business_type)}
-            {...register('business_type')}
-          >
-            <option value="" disabled>
-              Select one
-            </option>
-            {BUSINESS_TYPES.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field
-          label="Location (neighborhood or ZIP)"
-          id={`${fieldIdBase}-location`}
-          error={errors.location?.message}
-          required
-        >
-          <input
-            id={`${fieldIdBase}-location`}
-            type="text"
-            autoComplete="address-level2"
-            className={inputClass(!!errors.location)}
-            {...register('location')}
+            label="Business type"
+            placeholder="Business type *"
+            error={errors.business_type?.message}
+            options={BUSINESS_TYPES}
+            value={watch('business_type')}
+            register={register('business_type')}
+            required
           />
-        </Field>
+          <GlassInput
+            id={`${fieldIdBase}-location`}
+            label="Location"
+            placeholder="Neighborhood or ZIP *"
+            autoComplete="address-level2"
+            error={errors.location?.message}
+            register={register('location')}
+            required
+          />
+        </div>
 
-        <Field
-          label="Approximate square footage"
-          id={`${fieldIdBase}-square_footage_bucket`}
-          error={errors.square_footage_bucket?.message}
-          required
-        >
-          <select
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <GlassSelect
             id={`${fieldIdBase}-square_footage_bucket`}
-            defaultValue=""
-            className={inputClass(!!errors.square_footage_bucket)}
-            {...register('square_footage_bucket')}
-          >
-            <option value="" disabled>
-              Select one
-            </option>
-            {SQUARE_FOOTAGE_BUCKETS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </Field>
-
-        <Field
-          label="Current cleaning situation"
-          id={`${fieldIdBase}-current_cleaning`}
-          error={errors.current_cleaning?.message}
-          required
-        >
-          <select
+            label="Approximate square footage"
+            placeholder="Square footage *"
+            error={errors.square_footage_bucket?.message}
+            options={SQUARE_FOOTAGE_BUCKETS}
+            value={watch('square_footage_bucket')}
+            register={register('square_footage_bucket')}
+            required
+          />
+          <GlassSelect
             id={`${fieldIdBase}-current_cleaning`}
-            defaultValue=""
-            className={inputClass(!!errors.current_cleaning)}
-            {...register('current_cleaning')}
-          >
-            <option value="" disabled>
-              Select one
-            </option>
-            {CURRENT_CLEANING_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+            label="Current cleaning situation"
+            placeholder="Current cleaning *"
+            error={errors.current_cleaning?.message}
+            options={CURRENT_CLEANING_OPTIONS}
+            value={watch('current_cleaning')}
+            register={register('current_cleaning')}
+            required
+          />
+        </div>
 
-        <Field
-          label="When do you want to start?"
+        <GlassSelect
           id={`${fieldIdBase}-start_timing`}
+          label="When do you want to start?"
+          placeholder="When do you want to start? *"
           error={errors.start_timing?.message}
+          options={START_TIMING_OPTIONS}
+          value={watch('start_timing')}
+          register={register('start_timing')}
           required
-        >
-          <select
-            id={`${fieldIdBase}-start_timing`}
-            defaultValue=""
-            className={inputClass(!!errors.start_timing)}
-            {...register('start_timing')}
-          >
-            <option value="" disabled>
-              Select one
-            </option>
-            {START_TIMING_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-        </Field>
+        />
 
-        <Field
-          label="Email"
-          id={`${fieldIdBase}-email`}
-          error={errors.email?.message}
-          required
-        >
-          <input
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <GlassInput
             id={`${fieldIdBase}-email`}
+            label="Email"
+            placeholder="Email *"
             type="email"
             autoComplete="email"
             inputMode="email"
-            className={inputClass(!!errors.email)}
-            {...register('email')}
+            error={errors.email?.message}
+            register={register('email')}
+            required
           />
-        </Field>
-
-        <Field
-          label="Phone"
-          id={`${fieldIdBase}-phone`}
-          error={errors.phone?.message}
-          required
-        >
-          <input
+          <GlassInput
             id={`${fieldIdBase}-phone`}
+            label="Phone"
+            placeholder="Phone *"
             type="tel"
             autoComplete="tel"
             inputMode="tel"
-            className={inputClass(!!errors.phone)}
-            {...register('phone')}
+            error={errors.phone?.message}
+            register={register('phone')}
+            required
           />
-        </Field>
+        </div>
 
-        <Field
-          label="Anything we should know?"
+        <GlassTextarea
           id={`${fieldIdBase}-notes`}
+          label="Anything we should know?"
+          placeholder="Anything we should know? (optional)"
           error={errors.notes?.message}
-          className="sm:col-span-2"
-        >
-          <textarea
-            id={`${fieldIdBase}-notes`}
-            rows={4}
-            className={inputClass(!!errors.notes)}
-            {...register('notes')}
-          />
-        </Field>
+          register={register('notes')}
+        />
 
         <div
           aria-hidden="true"
@@ -374,48 +292,75 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
       <button
         type="submit"
         disabled={isSubmitting}
-        className="mt-6 flex w-full min-h-[48px] items-center justify-center rounded-lg bg-charcoal-900 px-6 py-3 text-base font-semibold text-cream-50 shadow-card transition-colors hover:bg-charcoal-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bronze-500 disabled:cursor-not-allowed disabled:opacity-70"
+        className="group mt-5 flex w-full min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:from-ocean-600 hover:to-ocean-800 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-300 disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isSubmitting
-          ? 'Submitting...'
-          : variant === 'final'
-            ? 'Book my free walkthrough'
-            : 'Request my free walkthrough'}
+        {isSubmitting ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            Sending...
+          </>
+        ) : (
+          <>
+            <Send className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
+            {submitLabel}
+          </>
+        )}
       </button>
 
-      <p className="mt-3 text-center text-xs text-charcoal-500">
+      <p className="mt-3 text-center text-xs text-cream-300/80">
         By submitting, you agree to be contacted by Urban Simple LLC about your request.
       </p>
     </form>
   )
 }
 
-function Field({
+type RegisterReturn = ReturnType<ReturnType<typeof useForm<LeadFormInput>>['register']>
+
+const inputBaseClass =
+  'block w-full rounded-xl border bg-cream-50/10 px-4 py-3 text-base text-cream-50 placeholder:text-cream-200/60 transition-all focus:outline-none focus:bg-cream-50/15 min-h-[48px]'
+
+function stateClasses(hasError: boolean) {
+  return hasError
+    ? 'border-status-error/60 focus:border-status-error focus:ring-2 focus:ring-status-error/30'
+    : 'border-cream-50/20 focus:border-ocean-400 focus:ring-2 focus:ring-ocean-400/30'
+}
+
+function GlassInput({
   id,
   label,
+  placeholder,
+  type = 'text',
+  autoComplete,
+  inputMode,
   error,
+  register,
   required,
-  className,
-  children,
 }: {
   id: string
   label: string
+  placeholder: string
+  type?: string
+  autoComplete?: string
+  inputMode?: 'email' | 'tel' | 'text' | 'numeric' | 'decimal' | 'search' | 'url' | 'none'
   error?: string
+  register: RegisterReturn
   required?: boolean
-  className?: string
-  children: React.ReactNode
 }) {
   return (
-    <div className={className}>
-      <label
-        htmlFor={id}
-        className="mb-1.5 block text-sm font-medium text-charcoal-800"
-      >
+    <div>
+      <label htmlFor={id} className="sr-only">
         {label}
-        {required && <span className="ml-0.5 text-terracotta-600" aria-hidden>*</span>}
-        {required && <span className="sr-only"> required</span>}
+        {required ? ' (required)' : ''}
       </label>
-      {children}
+      <input
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        inputMode={inputMode}
+        className={`${inputBaseClass} ${stateClasses(!!error)}`}
+        {...register}
+      />
       {error && (
         <p role="alert" className="mt-1 text-xs text-status-error">
           {error}
@@ -425,11 +370,94 @@ function Field({
   )
 }
 
-function inputClass(hasError: boolean) {
-  return [
-    'block w-full rounded-lg border bg-white px-3 py-2.5 text-base text-charcoal-900 placeholder:text-charcoal-400 shadow-soft focus:outline-none focus:ring-2 focus:ring-offset-0 transition-colors min-h-[44px]',
-    hasError
-      ? 'border-status-error focus:border-status-error focus:ring-status-error/30'
-      : 'border-cream-300 focus:border-bronze-400 focus:ring-bronze-400/30',
-  ].join(' ')
+function GlassTextarea({
+  id,
+  label,
+  placeholder,
+  error,
+  register,
+}: {
+  id: string
+  label: string
+  placeholder: string
+  error?: string
+  register: RegisterReturn
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        {label}
+      </label>
+      <textarea
+        id={id}
+        rows={3}
+        placeholder={placeholder}
+        className={`${inputBaseClass} resize-none ${stateClasses(!!error)}`}
+        {...register}
+      />
+      {error && (
+        <p role="alert" className="mt-1 text-xs text-status-error">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function GlassSelect({
+  id,
+  label,
+  placeholder,
+  options,
+  value,
+  register,
+  error,
+  required,
+}: {
+  id: string
+  label: string
+  placeholder: string
+  options: readonly { value: string; label: string }[]
+  value: string | undefined
+  register: RegisterReturn
+  error?: string
+  required?: boolean
+}) {
+  const hasValue = typeof value === 'string' && value.length > 0
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        {label}
+        {required ? ' (required)' : ''}
+      </label>
+      <div className="relative">
+        <select
+          id={id}
+          defaultValue=""
+          className={`${inputBaseClass} appearance-none pr-10 ${stateClasses(!!error)} ${
+            hasValue ? 'text-cream-50' : 'text-cream-200/60'
+          }`}
+          {...register}
+        >
+          <option value="" disabled className="bg-charcoal-900 text-cream-300">
+            {placeholder}
+          </option>
+          {options.map((o) => (
+            <option key={o.value} value={o.value} className="bg-charcoal-900 text-cream-50">
+              {o.label}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-cream-200/70"
+          aria-hidden
+        />
+      </div>
+      {error && (
+        <p role="alert" className="mt-1 text-xs text-status-error">
+          {error}
+        </p>
+      )}
+    </div>
+  )
 }

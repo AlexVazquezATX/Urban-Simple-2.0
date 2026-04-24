@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "urbansimple-dev",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", ".claude\\start-dev.cmd"],
+      "port": 3000
+    }
+  ]
+}

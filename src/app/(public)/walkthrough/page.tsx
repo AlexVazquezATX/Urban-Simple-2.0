@@ -2,7 +2,6 @@ import { Hero } from '@/components/landing/walkthrough/Hero'
 import { TrustBar } from '@/components/landing/walkthrough/TrustBar'
 import { WhyUrbanSimple } from '@/components/landing/walkthrough/WhyUrbanSimple'
 import { HowItWorks } from '@/components/landing/walkthrough/HowItWorks'
-import { ServicesGrid } from '@/components/landing/walkthrough/ServicesGrid'
 import { TestimonialBand } from '@/components/landing/walkthrough/TestimonialBand'
 import { FAQ } from '@/components/landing/walkthrough/FAQ'
 import { FinalCTA } from '@/components/landing/walkthrough/FinalCTA'
@@ -68,7 +67,6 @@ export default function WalkthroughPage() {
       <WhyUrbanSimple />
       <HowItWorks />
       <TestimonialBand />
-      <ServicesGrid />
       <FAQ />
       <FinalCTA />
       <Footer />

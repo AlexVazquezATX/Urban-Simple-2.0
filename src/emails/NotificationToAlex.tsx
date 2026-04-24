@@ -13,8 +13,7 @@ import {
 import * as React from 'react'
 
 interface NotificationToAlexProps {
-  firstName: string
-  lastName: string
+  name: string
   businessName: string
   businessTypeLabel: string
   location: string
@@ -32,8 +31,7 @@ interface NotificationToAlexProps {
 }
 
 export const NotificationToAlex = ({
-  firstName = '',
-  lastName = '',
+  name = '',
   businessName = '',
   businessTypeLabel = '',
   location = '',
@@ -50,6 +48,7 @@ export const NotificationToAlex = ({
   submittedAtFormatted = '',
 }: NotificationToAlexProps) => {
   const utmLine = `${utmSource || '-'}/${utmMedium || '-'}/${utmCampaign || '-'}`
+  const displayName = name && name.trim().length > 0 ? name : 'Not provided'
 
   return (
     <Html>
@@ -63,9 +62,7 @@ export const NotificationToAlex = ({
 
           <Section style={section}>
             <Text style={lead}>
-              <strong>
-                {firstName} {lastName}
-              </strong>
+              <strong>{displayName}</strong>
             </Text>
             <Text style={line}>
               {businessName} — {businessTypeLabel}

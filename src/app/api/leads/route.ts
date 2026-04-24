@@ -31,8 +31,7 @@ export async function POST(request: NextRequest) {
   const payload: LeadPayload = {
     source: 'urbansimple.net/walkthrough',
     submitted_at: new Date().toISOString(),
-    first_name: data.first_name,
-    last_name: data.last_name,
+    name: data.name && data.name.trim().length > 0 ? data.name.trim() : undefined,
     business_name: data.business_name,
     business_type: data.business_type,
     location: data.location,

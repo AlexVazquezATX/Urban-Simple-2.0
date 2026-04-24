@@ -65,8 +65,7 @@ const startTimingEnum = z.enum([
 ])
 
 export const leadFormSchema = z.object({
-  first_name: z.string().trim().min(1, 'First name is required').max(80),
-  last_name: z.string().trim().min(1, 'Last name is required').max(80),
+  name: z.string().trim().max(160).optional().or(z.literal('')),
   business_name: z.string().trim().min(1, 'Business name is required').max(160),
   business_type: businessTypeEnum,
   location: z.string().trim().min(1, 'Location is required').max(120),
@@ -93,8 +92,7 @@ export type StartTiming = z.infer<typeof startTimingEnum>
 export type LeadPayload = {
   source: 'urbansimple.net/walkthrough'
   submitted_at: string
-  first_name: string
-  last_name: string
+  name?: string
   business_name: string
   business_type: BusinessType
   location: string
