@@ -42,8 +42,12 @@ export async function sendLeadEmails(payload: LeadPayload): Promise<void> {
   const to = process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'
 
   const businessTypeLabel = labelFor(BUSINESS_TYPES, payload.business_type)
-  const squareFootageLabel = labelFor(SQUARE_FOOTAGE_BUCKETS, payload.square_footage_bucket)
-  const currentCleaningLabel = labelFor(CURRENT_CLEANING_OPTIONS, payload.current_cleaning)
+  const squareFootageLabel = payload.square_footage_bucket
+    ? labelFor(SQUARE_FOOTAGE_BUCKETS, payload.square_footage_bucket)
+    : 'Not provided'
+  const currentCleaningLabel = payload.current_cleaning
+    ? labelFor(CURRENT_CLEANING_OPTIONS, payload.current_cleaning)
+    : 'Not provided'
   const startTimingLabel = labelFor(START_TIMING_OPTIONS, payload.start_timing)
   const submittedAtFormatted = formatSubmittedAt(payload.submitted_at)
 

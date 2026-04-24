@@ -163,10 +163,11 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
         <GlassInput
           id={`${fieldIdBase}-name`}
           label="Name"
-          placeholder="Your name (optional)"
+          placeholder="Your name *"
           autoComplete="name"
           error={errors.name?.message}
           register={register('name')}
+          required
         />
 
         <GlassInput
@@ -205,22 +206,20 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
           <GlassSelect
             id={`${fieldIdBase}-square_footage_bucket`}
             label="Approximate square footage"
-            placeholder="Square footage *"
+            placeholder="Square footage (optional)"
             error={errors.square_footage_bucket?.message}
             options={SQUARE_FOOTAGE_BUCKETS}
             value={watch('square_footage_bucket')}
             register={register('square_footage_bucket')}
-            required
           />
           <GlassSelect
             id={`${fieldIdBase}-current_cleaning`}
             label="Current cleaning situation"
-            placeholder="Current cleaning *"
+            placeholder="Current cleaning (optional)"
             error={errors.current_cleaning?.message}
             options={CURRENT_CLEANING_OPTIONS}
             value={watch('current_cleaning')}
             register={register('current_cleaning')}
-            required
           />
         </div>
 
