@@ -2,8 +2,7 @@
 
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
-import { ArrowUpRight, Award, Phone, ShieldCheck } from 'lucide-react'
-import { CONTACT } from '@/components/landing/landing-data'
+import { ArrowUpRight, Award, ShieldCheck } from 'lucide-react'
 import { fadeInUp } from '@/components/landing/landing-animations'
 
 export function FinalCTA() {
@@ -59,7 +58,7 @@ export function FinalCTA() {
                 Free walkthrough, written quote within 48 hours, no pitch. Alex calls you back the same business day.
               </p>
 
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <div className="mt-8">
                 <a
                   href="#walkthrough-form"
                   onClick={handleScrollToForm}
@@ -67,13 +66,6 @@ export function FinalCTA() {
                 >
                   Book my free walkthrough
                   <ArrowUpRight className="h-4 w-4" aria-hidden />
-                </a>
-                <a
-                  href={CONTACT.phoneHref}
-                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-lg border border-cream-50/20 bg-cream-50/10 px-6 py-3 text-base font-semibold text-cream-50 backdrop-blur transition-colors hover:bg-cream-50/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bronze-300"
-                >
-                  <Phone className="h-4 w-4" aria-hidden />
-                  Or call {CONTACT.phone}
                 </a>
               </div>
             </div>
