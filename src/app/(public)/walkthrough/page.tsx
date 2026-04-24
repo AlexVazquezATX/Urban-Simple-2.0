@@ -5,6 +5,7 @@ import { HowItWorks } from '@/components/landing/walkthrough/HowItWorks'
 import { TestimonialBand } from '@/components/landing/walkthrough/TestimonialBand'
 import { FAQ } from '@/components/landing/walkthrough/FAQ'
 import { FinalCTA } from '@/components/landing/walkthrough/FinalCTA'
+import { InlineCTA } from '@/components/landing/walkthrough/InlineCTA'
 import { StickyMobileCTA } from '@/components/landing/walkthrough/StickyMobileCTA'
 import { Footer } from '@/components/landing/walkthrough/Footer'
 import { CONTACT } from '@/components/landing/landing-data'
@@ -65,8 +66,11 @@ export default function WalkthroughPage() {
       <Hero />
       <TrustBar />
       <WhyUrbanSimple />
+      <InlineCTA headline="Ready to see what a clean handoff looks like?" />
       <HowItWorks />
+      <InlineCTA headline="Start with step one." tone="cream" />
       <TestimonialBand />
+      <InlineCTA headline="Join the venues that made the switch." />
       <FAQ />
       <FinalCTA />
       <Footer />

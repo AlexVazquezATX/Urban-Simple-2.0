@@ -11,7 +11,8 @@
       "mcp__Claude_in_Chrome__resize_window",
       "mcp__Claude_in_Chrome__computer",
       "Bash(rm \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple/.claude/launch.json\")",
-      "Bash(git -C \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple\" cherry-pick 25b2734)"
+      "Bash(git -C \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple\" cherry-pick 25b2734)",
+      "mcp__Claude_in_Chrome__read_page"
     ]
   }
 }
