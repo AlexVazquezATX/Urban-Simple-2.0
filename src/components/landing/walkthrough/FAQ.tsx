@@ -24,7 +24,7 @@ const faqs = [
   },
   {
     q: 'How do you handle staffing issues?',
-    a: 'Every location has a backup. Julio or Yoifranger is the escalation point.',
+    a: 'Every location has a backup. Your dedicated operations manager is the escalation point.',
   },
 ]
 

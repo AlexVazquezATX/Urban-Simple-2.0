@@ -20,7 +20,7 @@ const cards = [
   {
     icon: Users,
     title: 'Managers on the ground.',
-    body: 'Julio and Yoifranger walk every location. You get one escalation point and it is not a call center.',
+    body: 'Our operations managers walk every location. You get one escalation point and it is not a call center.',
     accent: 'ocean' as const,
   },
   {
