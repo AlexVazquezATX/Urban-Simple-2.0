@@ -53,7 +53,7 @@ export function InlineCTA({
           <a
             href="#walkthrough-form"
             onClick={scrollToForm}
-            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl bg-bronze-500 px-5 py-3 text-sm font-semibold text-cream-50 shadow-card transition-all hover:bg-bronze-600 hover:shadow-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bronze-400 sm:text-base"
+            className="inline-flex min-h-[48px] shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 px-5 py-3 text-sm font-semibold text-white shadow-card transition-all hover:from-ocean-600 hover:to-ocean-800 hover:shadow-elevated focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-400 sm:text-base"
           >
             {label}
             <ArrowUpRight className="h-4 w-4" aria-hidden />

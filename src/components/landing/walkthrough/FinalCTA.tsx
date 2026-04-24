@@ -63,7 +63,7 @@ export function FinalCTA() {
                 <a
                   href="#walkthrough-form"
                   onClick={handleScrollToForm}
-                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-lg bg-bronze-500 px-6 py-3 text-base font-semibold text-cream-50 shadow-card transition-colors hover:bg-bronze-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bronze-300"
+                  className="inline-flex min-h-[52px] items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 px-6 py-3 text-base font-semibold text-white shadow-lg transition-all hover:from-ocean-600 hover:to-ocean-800 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-300"
                 >
                   Book my free walkthrough
                   <ArrowUpRight className="h-4 w-4" aria-hidden />
