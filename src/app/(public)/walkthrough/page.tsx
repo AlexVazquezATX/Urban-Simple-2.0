@@ -1,7 +1,9 @@
 import { Hero } from '@/components/landing/walkthrough/Hero'
+import { TrustBar } from '@/components/landing/walkthrough/TrustBar'
 import { WhyUrbanSimple } from '@/components/landing/walkthrough/WhyUrbanSimple'
 import { HowItWorks } from '@/components/landing/walkthrough/HowItWorks'
 import { ServicesGrid } from '@/components/landing/walkthrough/ServicesGrid'
+import { TestimonialBand } from '@/components/landing/walkthrough/TestimonialBand'
 import { FAQ } from '@/components/landing/walkthrough/FAQ'
 import { FinalCTA } from '@/components/landing/walkthrough/FinalCTA'
 import { StickyMobileCTA } from '@/components/landing/walkthrough/StickyMobileCTA'
@@ -62,8 +64,10 @@ export default function WalkthroughPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(localBusinessJsonLd) }}
       />
       <Hero />
+      <TrustBar />
       <WhyUrbanSimple />
       <HowItWorks />
+      <TestimonialBand />
       <ServicesGrid />
       <FAQ />
       <FinalCTA />

@@ -1,32 +1,67 @@
-import {
-  Utensils,
-  ChefHat,
-  Moon,
-  Droplets,
-  Wind,
-  Bath,
-  BedDouble,
-  Sparkles,
-  type LucideIcon,
-} from 'lucide-react'
+'use client'
 
-const services: { label: string; icon: LucideIcon }[] = [
-  { label: 'Dishwashing and pot wash', icon: Utensils },
-  { label: 'Kitchen deep clean', icon: ChefHat },
-  { label: 'Front of house nightly', icon: Moon },
-  { label: 'Floor care (tile, grout, concrete)', icon: Droplets },
-  { label: 'Hood and vent (through licensed partner)', icon: Wind },
-  { label: 'Restroom program', icon: Bath },
-  { label: 'Hotel housekeeping support', icon: BedDouble },
-  { label: 'Back-of-house sanitization', icon: Sparkles },
+import Image from 'next/image'
+import { useRef } from 'react'
+import { motion, useInView } from 'framer-motion'
+import {
+  fadeInUp,
+  staggerContainer,
+} from '@/components/landing/landing-animations'
+
+const services = [
+  {
+    label: 'Dishwashing and pot wash',
+    image: '/images/Services-1767818882/service-4.jpg',
+  },
+  {
+    label: 'Kitchen deep clean',
+    image: '/images/Services-1767818882/service-1.jpg',
+  },
+  {
+    label: 'Front of house nightly',
+    image: '/images/Services-1767818882/service-2.jpg',
+  },
+  {
+    label: 'Floor care (tile, grout, concrete)',
+    image: '/images/Services-1767818882/service-3.jpg',
+  },
+  {
+    label: 'Hood and vent (through licensed partner)',
+    image: '/images/Services-1767818882/service-6.jpg',
+  },
+  {
+    label: 'Restroom program',
+    image: '/images/Services-1767818882/service-8.jpg',
+  },
+  {
+    label: 'Hotel housekeeping support',
+    image: '/images/Services-1767818882/service-9.jpg',
+  },
+  {
+    label: 'Back-of-house sanitization',
+    image: '/images/Services-1767818882/service-10.jpg',
+  },
 ]
 
 export function ServicesGrid() {
+  const ref = useRef<HTMLElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-100px' })
+
   return (
-    <section aria-labelledby="services-heading" className="bg-white py-16 lg:py-20">
+    <section
+      ref={ref}
+      aria-labelledby="services-heading"
+      className="bg-white py-20 lg:py-28"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 max-w-2xl">
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-bronze-600">
+        <motion.div
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          variants={fadeInUp}
+          transition={{ duration: 0.5 }}
+          className="mb-12 max-w-2xl"
+        >
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.2em] text-bronze-600">
             What we clean
           </p>
           <h2
@@ -35,21 +70,37 @@ export function ServicesGrid() {
           >
             Full-program coverage for the venues we serve.
           </h2>
-        </div>
+        </motion.div>
 
-        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {services.map(({ label, icon: Icon }) => (
-            <li
+        <motion.ul
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          variants={staggerContainer}
+          className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4"
+        >
+          {services.map(({ label, image }) => (
+            <motion.li
               key={label}
-              className="flex items-start gap-3 rounded-xl border border-cream-200 bg-cream-50 p-4 shadow-soft"
+              variants={fadeInUp}
+              transition={{ duration: 0.5, ease: 'easeOut' }}
+              className="group relative overflow-hidden rounded-xl bg-charcoal-900 shadow-soft"
             >
-              <span className="mt-0.5 flex h-9 w-9 flex-none items-center justify-center rounded-lg bg-bronze-100 text-bronze-700">
-                <Icon className="h-4 w-4" aria-hidden />
-              </span>
-              <span className="text-sm font-medium text-charcoal-800">{label}</span>
-            </li>
+              <div className="relative aspect-[4/3]">
+                <Image
+                  src={image}
+                  alt={label}
+                  fill
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                  className="object-cover opacity-85 transition-all duration-700 group-hover:scale-110 group-hover:opacity-95"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-charcoal-950 via-charcoal-950/40 to-transparent" />
+                <span className="absolute inset-x-0 bottom-0 p-4 text-sm font-semibold text-cream-50 sm:text-base">
+                  {label}
+                </span>
+              </div>
+            </motion.li>
           ))}
-        </ul>
+        </motion.ul>
       </div>
     </section>
   )
