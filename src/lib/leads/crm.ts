@@ -101,6 +101,13 @@ export function buildCrmPayload(payload: LeadPayload) {
 }
 
 export async function postLeadToCrm(payload: LeadPayload): Promise<void> {
+  console.log('[leads/crm] start', {
+    apiKeyPresent: !!process.env.US_CRM_API_KEY,
+    apiKeyPrefix: process.env.US_CRM_API_KEY?.slice(0, 12) ?? null,
+    endpoint: CRM_ENDPOINT,
+    business: payload.business_name,
+  })
+
   const apiKey = process.env.US_CRM_API_KEY
   if (!apiKey) {
     console.error('[leads/crm] US_CRM_API_KEY is not set; skipping CRM post')
@@ -119,8 +126,14 @@ export async function postLeadToCrm(payload: LeadPayload): Promise<void> {
       body: JSON.stringify(body),
     })
 
+    const text = await res.text().catch(() => '')
+    console.log('[leads/crm] response', {
+      status: res.status,
+      ok: res.ok,
+      bodyPreview: text.slice(0, 500),
+    })
+
     if (!res.ok) {
-      const text = await res.text().catch(() => '')
       console.error('[leads/crm] CRM post failed', {
         status: res.status,
         body: text,
