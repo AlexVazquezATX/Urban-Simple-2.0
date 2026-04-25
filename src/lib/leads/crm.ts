@@ -7,7 +7,8 @@ import {
   type LeadPayload,
 } from './schema'
 
-const CRM_ENDPOINT = 'https://www.krew42.com/api/growth/prospects'
+const CRM_ENDPOINT =
+  process.env.CRM_PROSPECTS_URL || 'https://www.urbansimple.net/api/growth/prospects'
 
 function splitName(fullName: string): { firstName: string; lastName: string } {
   const trimmed = fullName.trim()
