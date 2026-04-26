@@ -24,17 +24,17 @@ export const AutoResponder = ({
     <Html>
       <Head />
       <Preview>
-        Thanks — I got your walkthrough request. A phone call from Alex follows during business hours.
+        Thanks — we got your walkthrough request and will follow up shortly.
       </Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={section}>
             <Text style={greeting}>Hey {firstName},</Text>
             <Text style={paragraph}>
-              Thanks for reaching out. I got your request for {businessName} and I will follow up with a phone call during business hours so we can find a time for your walkthrough.
+              Thanks for reaching out. We got your request for {businessName} and will follow up shortly to find a time for your walkthrough.
             </Text>
             <Text style={paragraph}>
-              A quick note on who you are dealing with. Urban Simple is operator-run. My co-founder Demian and I both ran venues before we started the company. If something is broken in your cleaning program, we want to see it in person, not over email. That is why the walkthrough is free and there is no pitch.
+              A quick note on who you are dealing with. Urban Simple is operator-run. Both of our co-founders came up running venues, so we look at your space through the same eyes you do. If something is broken in your cleaning program, we want to see it in person, not over email. That is why the walkthrough is free and there is no pitch.
             </Text>
             <Text style={paragraph}>Talk soon,</Text>
             <Text style={signature}>
