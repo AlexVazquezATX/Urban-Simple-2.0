@@ -250,6 +250,32 @@ export async function PATCH(
           description: `Status updated from ${existing.status} to ${status}`,
         },
       })
+
+      // Auto-cancel pending messages when the prospect transitions to a
+      // status that means we are actively engaged or the deal is decided.
+      // Stops outreach sequences from continuing to fire after a lead is
+      // already in conversation, won, or lost.
+      const STOP_OUTREACH_STATUSES = new Set([
+        'engaged',
+        'qualified',
+        'proposal_sent',
+        'won',
+        'lost',
+      ])
+      if (STOP_OUTREACH_STATUSES.has(status)) {
+        const cancelled = await cancelPendingMessagesForProspect(id, `status_${status}`, user.id)
+        if (cancelled > 0) {
+          await prisma.prospectActivity.create({
+            data: {
+              prospectId: id,
+              userId: user.id,
+              type: 'status_change',
+              title: `${cancelled} pending message(s) auto-cancelled`,
+              description: `Status moved to ${status}; outreach stopped`,
+            },
+          })
+        }
+      }
     }
 
     // Auto-cancel pending messages when Do Not Contact is toggled on

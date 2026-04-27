@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { leadFormSchema, type LeadPayload } from '@/lib/leads/schema'
 import { postLeadToCrm } from '@/lib/leads/crm'
+import { enrollLeadInSequence } from '@/lib/leads/enroll'
 import { sendLeadEmails } from '@/lib/leads/email'
 
 export const runtime = 'nodejs'
@@ -47,7 +48,19 @@ export async function POST(request: NextRequest) {
     referrer: data.referrer || undefined,
   }
 
-  await Promise.allSettled([postLeadToCrm(payload), sendLeadEmails(payload)])
+  // Kick off both Resend emails immediately (parallel) — they don't depend on the CRM.
+  const emailsPromise = sendLeadEmails(payload)
+
+  // CRM post comes back with a prospect id (or null if the post failed).
+  // If we have an id, drop the lead into the walkthrough outreach sequence.
+  const crmAndEnroll = (async () => {
+    const prospectId = await postLeadToCrm(payload)
+    if (prospectId) {
+      await enrollLeadInSequence(prospectId)
+    }
+  })()
+
+  await Promise.allSettled([emailsPromise, crmAndEnroll])
 
   return NextResponse.json({ ok: true })
 }
