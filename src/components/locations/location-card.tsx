@@ -5,17 +5,51 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LocationForm } from '@/components/forms/location-form'
+import { getReviewFreshness } from '@/lib/operations/review-freshness'
 
 interface LocationCardProps {
-  location: any
+  location: LocationCardItem
   clientId: string
 }
 
+type AddressLike = {
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+}
+
+type LocationCardItem = {
+  id: string
+  name: string
+  logoUrl?: string | null
+  isActive: boolean
+  address?: unknown
+  client?: {
+    id: string
+    name: string
+  } | null
+  checklistTemplate?: {
+    name: string
+  } | null
+  accessInstructions?: string | null
+  reviews?: Array<{
+    id: string
+    reviewDate?: Date | string | null
+    createdAt?: Date | string | null
+    photos?: string[] | null
+  }>
+}
+
 export function LocationCard({ location, clientId }: LocationCardProps) {
-  const address = location.address as any
-  const addressStr = address
-    ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
-    : null
+  const address = location.address
+  const reviewFreshness = getReviewFreshness(location.reviews?.[0])
+  const addressStr =
+    typeof address === 'string'
+      ? address
+      : isAddressLike(address)
+        ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
+        : null
 
   return (
     <Card className="overflow-hidden rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 hover:shadow-md transition-all p-0 flex flex-col h-full">
@@ -86,6 +120,23 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
             </div>
           )}
 
+          <div className="mt-2 flex items-center justify-between gap-2 rounded-sm border border-warm-200 bg-warm-50/60 px-2 py-1.5 dark:border-charcoal-700 dark:bg-charcoal-800/60">
+            <span className="text-[10px] uppercase tracking-wide text-warm-500 dark:text-cream-400">
+              Review
+            </span>
+            <div className="text-right">
+              <Badge
+                className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                  reviewFreshness.isStale
+                    ? 'bg-red-100 text-red-700 border-red-200'
+                    : 'bg-lime-100 text-lime-700 border-lime-200'
+                }`}
+              >
+                {reviewFreshness.shortLabel}
+              </Badge>
+            </div>
+          </div>
+
           {/* Spacer pushes buttons to bottom */}
           <div className="flex-1 min-h-2" />
 
@@ -105,5 +156,9 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
       </CardContent>
     </Card>
   )
+}
+
+function isAddressLike(value: unknown): value is AddressLike {
+  return typeof value === 'object' && value !== null
 }
 

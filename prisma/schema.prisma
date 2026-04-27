@@ -55,6 +55,9 @@ model Company {
   // Growth Agent
   growthAgentConfig GrowthAgentConfig?
 
+  // QuickBooks Online
+  qboConnection QBOConnection?
+
   @@map("companies")
 }
 
@@ -148,6 +151,7 @@ model User {
 
   // Relationships
   assignedLocations LocationAssignment[]
+  managedServiceProfiles LocationServiceProfile[] @relation("LocationServiceProfileManager")
   shiftsAsAssociate Shift[]              @relation("ShiftAssociate")
   shiftsAsManager   Shift[]              @relation("ShiftManager")
   serviceLogs       ServiceLog[]
@@ -329,6 +333,7 @@ model Location {
   checklistTemplate ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
 
   assignments       LocationAssignment[]
+  serviceProfile    LocationServiceProfile?
   shifts            Shift[]
   shiftLocations    ShiftLocation[]
   serviceLogs       ServiceLog[]
@@ -339,6 +344,28 @@ model Location {
   timeEntries       TimeEntry[]
 
   @@map("locations")
+}
+
+model LocationServiceProfile {
+  id                    String   @id @default(cuid())
+  locationId            String   @unique @map("location_id")
+  cadence               String   @default("weekly")
+  serviceDays           Json     @default("[]") @map("service_days")
+  preferredStartTime    String?  @map("preferred_start_time")
+  preferredEndTime      String?  @map("preferred_end_time")
+  estimatedDurationMins Int      @default(120) @map("estimated_duration_mins")
+  defaultManagerId      String?  @map("default_manager_id")
+  routePriority         Int      @default(50) @map("route_priority")
+  autoSchedule          Boolean  @default(false) @map("auto_schedule")
+  reviewRequired        Boolean  @default(true) @map("review_required")
+  dispatchNotes         String?  @map("dispatch_notes")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  defaultManager User?    @relation("LocationServiceProfileManager", fields: [defaultManagerId], references: [id])
+
+  @@map("location_service_profiles")
 }
 
 model LocationAssignment {
@@ -2389,35 +2416,35 @@ model ServiceLineItem {
 // ============================================
 
 model TimeEntry {
-  id              String    @id @default(cuid())
-  associateId     String    @map("associate_id")
-  locationId      String    @map("location_id")
-  assignmentId    String?   @map("assignment_id")
+  id            String    @id @default(cuid())
+  associateId   String    @map("associate_id")
+  locationId    String    @map("location_id")
+  assignmentId  String?   @map("assignment_id")
 
-  clockIn         DateTime  @map("clock_in")
-  clockOut        DateTime? @map("clock_out")
+  clockIn       DateTime  @map("clock_in")
+  clockOut      DateTime? @map("clock_out")
 
   // Computed/stored
-  totalMinutes    Int?      @map("total_minutes")
-  isOvernight     Boolean   @default(false) @map("is_overnight")
+  totalMinutes  Int?      @map("total_minutes")
+  isOvernight   Boolean   @default(false) @map("is_overnight")
 
   // Audit trail
-  status          String    @default("active") // active, completed, flagged, voided, edited
-  editHistory     Json?     @default("[]") @map("edit_history") // [{editedBy, editedAt, field, oldValue, newValue, reason}]
-  editedById      String?   @map("edited_by_id")
-  editReason      String?   @map("edit_reason")
-  flagReason      String?   @map("flag_reason")
-  notes           String?
+  status        String    @default("active") // active, completed, flagged, voided, edited
+  editHistory   Json?     @default("[]") @map("edit_history") // [{editedBy, editedAt, field, oldValue, newValue, reason}]
+  editedById    String?   @map("edited_by_id")
+  editReason    String?   @map("edit_reason")
+  flagReason    String?   @map("flag_reason")
+  notes         String?
 
-  weekStartDate   DateTime  @map("week_start_date") @db.Date // denormalized for fast weekly queries
+  weekStartDate DateTime  @map("week_start_date") @db.Date // denormalized for fast weekly queries
 
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  associate       User                @relation("AssociateTimeEntries", fields: [associateId], references: [id])
-  location        Location            @relation(fields: [locationId], references: [id])
-  assignment      LocationAssignment? @relation(fields: [assignmentId], references: [id])
-  editedBy        User?               @relation("TimeEntryEditor", fields: [editedById], references: [id])
+  associate     User                @relation("AssociateTimeEntries", fields: [associateId], references: [id])
+  location      Location            @relation(fields: [locationId], references: [id])
+  assignment    LocationAssignment? @relation(fields: [assignmentId], references: [id])
+  editedBy      User?               @relation("TimeEntryEditor", fields: [editedById], references: [id])
 
   @@index([associateId, weekStartDate])
   @@index([locationId, clockIn])
@@ -2443,4 +2470,26 @@ model WeeklyHoursSummary {
   @@unique([associateId, weekStartDate])
   @@index([weekStartDate])
   @@map("weekly_hours_summaries")
+}
+
+// ============================================
+// QUICKBOOKS ONLINE INTEGRATION
+// ============================================
+
+model QBOConnection {
+  id                    String   @id @default(cuid())
+  companyId             String   @unique @map("company_id")
+  realmId               String   @map("realm_id")
+  accessToken           String   @map("access_token") @db.Text
+  refreshToken          String   @map("refresh_token") @db.Text
+  accessTokenExpiresAt  DateTime @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime @map("refresh_token_expires_at")
+  isActive              Boolean  @default(true) @map("is_active")
+  lastSyncAt            DateTime? @map("last_sync_at")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("qbo_connections")
 }

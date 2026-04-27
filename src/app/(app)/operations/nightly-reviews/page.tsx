@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -10,7 +10,6 @@ import {
   MapPin,
   Clock,
   Building2,
-  Phone,
   Navigation,
   Loader2,
   CheckCircle2,
@@ -22,6 +21,7 @@ import { cn } from '@/lib/utils'
 
 interface TonightLocation {
   id: string
+  shiftId: string
   locationId: string
   locationName: string
   clientName: string
@@ -30,6 +30,8 @@ interface TonightLocation {
   checklistName: string
   status: 'pending' | 'in_progress' | 'completed'
   reviewId?: string
+  serviceLogId?: string | null
+  associateName?: string
 }
 
 export default function NightlyReviewsPage() {
@@ -55,9 +57,11 @@ export default function NightlyReviewsPage() {
       } else {
         throw new Error("Failed to fetch tonight's locations")
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Fetch error:', error)
-      toast.error(error.message || "Failed to load tonight's route")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to load tonight's route"
+      )
     } finally {
       setIsLoading(false)
     }
@@ -115,10 +119,10 @@ export default function NightlyReviewsPage() {
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Tonight's Route</h1>
-        <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
-          Review locations scheduled for tonight's service
-        </p>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Tonight&apos;s Route</h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
+            Review locations scheduled for tonight&apos;s service
+          </p>
       </div>
 
       {/* Progress Summary */}
@@ -137,12 +141,14 @@ export default function NightlyReviewsPage() {
             </div>
             <div className="hidden sm:block w-32">
               <div className="w-full bg-warm-200 dark:bg-charcoal-700 rounded-sm h-2">
-                <div
-                  className="bg-ocean-600 h-2 rounded-sm transition-all duration-300"
-                  style={{ width: `${(completedCount / locations.length) * 100}%` }}
-                />
-              </div>
-            </div>
+                 <div
+                   className="bg-ocean-600 h-2 rounded-sm transition-all duration-300"
+                   style={{
+                     width: `${locations.length === 0 ? 0 : (completedCount / locations.length) * 100}%`,
+                   }}
+                 />
+               </div>
+             </div>
           </div>
         </CardContent>
       </Card>
@@ -228,7 +234,6 @@ export default function NightlyReviewsPage() {
                         onClick={() => handleStartReview(location)}
                         variant="lime"
                         className="flex-1 sm:flex-none rounded-sm"
-                        disabled={location.status === 'completed'}
                       >
                         {location.status === 'completed' ? (
                           <>

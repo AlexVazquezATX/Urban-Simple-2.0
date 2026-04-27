@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { normalizeServiceProfile } from '@/lib/operations/dispatch'
 
 // GET /api/locations/[id] - Get location by ID
 export async function GET(
@@ -33,6 +34,18 @@ export async function GET(
           select: {
             name: true,
             code: true,
+          },
+        },
+        serviceProfile: {
+          include: {
+            defaultManager: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
@@ -91,6 +104,7 @@ export async function PATCH(
       equipmentInventory,
       isActive,
       clientId,
+      serviceProfile,
     } = body
 
     // If clientId is being changed, verify the new client belongs to user's company
@@ -127,6 +141,18 @@ export async function PATCH(
         ...(clientId !== undefined && clientId !== existingLocation.clientId && {
           clientId,
         }),
+        ...(serviceProfile !== undefined && {
+          serviceProfile: serviceProfile
+            ? {
+                upsert: {
+                  create: normalizeServiceProfile(serviceProfile),
+                  update: normalizeServiceProfile(serviceProfile),
+                },
+              }
+            : {
+                delete: true,
+              },
+        }),
       },
       include: {
         client: {
@@ -139,6 +165,18 @@ export async function PATCH(
           select: {
             name: true,
             code: true,
+          },
+        },
+        serviceProfile: {
+          include: {
+            defaultManager: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
@@ -198,6 +236,5 @@ export async function DELETE(
     )
   }
 }
-
 
 

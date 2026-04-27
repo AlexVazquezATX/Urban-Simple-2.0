@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { normalizeServiceProfile } from '@/lib/operations/dispatch'
 
 // POST /api/clients/[id]/locations - Create location for client
 export async function POST(
@@ -38,6 +39,7 @@ export async function POST(
       checklistTemplateId,
       equipmentInventory,
       branchId,
+      serviceProfile,
     } = body
 
     // Use client's branch or specified branch
@@ -56,12 +58,29 @@ export async function POST(
         checklistTemplateId: checklistTemplateId || null,
         equipmentInventory: equipmentInventory || [],
         isActive: true,
+        ...(serviceProfile && {
+          serviceProfile: {
+            create: normalizeServiceProfile(serviceProfile),
+          },
+        }),
       },
       include: {
         branch: {
           select: {
             name: true,
             code: true,
+          },
+        },
+        serviceProfile: {
+          include: {
+            defaultManager: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                displayName: true,
+              },
+            },
           },
         },
       },
@@ -76,6 +95,5 @@ export async function POST(
     )
   }
 }
-
 
 

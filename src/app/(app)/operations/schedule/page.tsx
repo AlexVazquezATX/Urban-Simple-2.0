@@ -1,10 +1,14 @@
 import { Suspense } from 'react'
-import { Plus, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarX, UserX } from 'lucide-react'
+import type { Prisma } from '@prisma/client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ShiftForm } from '@/components/operations/shift-form'
+import { DispatchGenerateButton } from '@/components/operations/dispatch-generate-button'
+import { DispatchCreateRouteButton } from '@/components/operations/dispatch-create-route-button'
+import { ManagerAssignmentDialog } from '@/components/operations/manager-assignment-dialog'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import {
@@ -14,9 +18,87 @@ import {
   eachDayOfInterval,
   isSameDay,
   addWeeks,
-  subWeeks,
 } from 'date-fns'
 import Link from 'next/link'
+import { isServiceDay, normalizeServiceProfile } from '@/lib/operations/dispatch'
+import {
+  findCoverageGaps,
+  findCapacityWarnings,
+  findRouteConflicts,
+  findUnassignedRoutes,
+} from '@/lib/operations/dispatch-exceptions'
+
+type ScheduleShift = Prisma.ShiftGetPayload<{
+  include: {
+    location: {
+      select: {
+        id: true
+        name: true
+        client: {
+          select: {
+            id: true
+            name: true
+          }
+        }
+      }
+    }
+    shiftLocations: {
+      include: {
+        location: {
+          select: {
+            id: true
+            name: true
+            client: {
+              select: {
+                id: true
+                name: true
+              }
+            }
+          }
+        }
+      }
+    }
+    associate: {
+      select: {
+        id: true
+        firstName: true
+        lastName: true
+      }
+    }
+    manager: {
+      select: {
+        id: true
+        firstName: true
+        lastName: true
+      }
+    }
+  }
+}>
+
+type ScheduleAssignment = Prisma.LocationAssignmentGetPayload<{
+  include: {
+    location: {
+      select: {
+        id: true
+        name: true
+        client: {
+          select: {
+            id: true
+            name: true
+          }
+        }
+      }
+    }
+    user: {
+      select: {
+        id: true
+        firstName: true
+        lastName: true
+        role: true
+      }
+    }
+  }
+}>
 
 interface SchedulePageProps {
   searchParams: Promise<{ week?: string }>
@@ -34,8 +116,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
   const weekStart = startOfWeek(targetDate, { weekStartsOn: 0 })
   const weekEnd = endOfWeek(targetDate, { weekStartsOn: 0 })
 
-  // Get manager shifts (for reviews/oversight)
-  const managerShifts = await prisma.shift.findMany({
+  const shifts = await prisma.shift.findMany({
     where: {
       branch: {
         companyId: user.companyId,
@@ -45,7 +126,6 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
         gte: weekStart,
         lte: weekEnd,
       },
-      managerId: { not: null }, // Only manager shifts
     },
     include: {
       location: {
@@ -100,6 +180,8 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
     ],
   })
 
+  const managerShifts = shifts.filter((shift) => shift.managerId)
+
   // Get active location assignments to show who's working where
   const assignments = await prisma.locationAssignment.findMany({
     where: {
@@ -139,8 +221,39 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
     },
   })
 
+  const dispatchLocations = await prisma.location.findMany({
+    where: {
+      isActive: true,
+      client: {
+        companyId: user.companyId,
+        ...(user.branchId && { branchId: user.branchId }),
+      },
+    },
+    include: {
+      serviceProfile: {
+        include: {
+          defaultManager: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              displayName: true,
+            },
+          },
+        },
+      },
+      client: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: [{ client: { name: 'asc' } }, { name: 'asc' }],
+  })
+
   // Group manager shifts by date
-  const shiftsByDate = managerShifts.reduce((acc: any, shift: any) => {
+  const shiftsByDate = managerShifts.reduce<Record<string, ScheduleShift[]>>((acc, shift) => {
     const dateKey = new Date(shift.date).toISOString().split('T')[0]
     if (!acc[dateKey]) {
       acc[dateKey] = []
@@ -149,19 +262,32 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
     return acc
   }, {})
 
-  // Group assignments by location for easy lookup
-  const assignmentsByLocation = assignments.reduce((acc: any, assignment: any) => {
-    if (!acc[assignment.locationId]) {
-      acc[assignment.locationId] = []
-    }
-    acc[assignment.locationId].push(assignment)
-    return acc
-  }, {})
-
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd })
-  const prevWeek = subWeeks(weekStart, 1)
-  const nextWeek = addWeeks(weekStart, 1)
   const currentWeekOffset = weekOffset
+  const autoRouteLocations = dispatchLocations.filter(
+    (location) => location.serviceProfile?.autoSchedule
+  )
+  const dispatchReadyLocations = autoRouteLocations.filter(
+    (location) =>
+      location.serviceProfile?.defaultManagerId &&
+      normalizeServiceProfile(location.serviceProfile).serviceDays.length > 0
+  )
+  const dispatchNeedsSetup = autoRouteLocations.filter(
+    (location) =>
+      !location.serviceProfile?.defaultManagerId ||
+      normalizeServiceProfile(location.serviceProfile).serviceDays.length === 0
+  )
+  const dueThisWeekCount = autoRouteLocations.filter((location) =>
+    weekDays.some((day) =>
+      isServiceDay(normalizeServiceProfile(location.serviceProfile).serviceDays, day)
+    )
+  ).length
+  const coverageGaps = findCoverageGaps(dispatchLocations, shifts, weekDays)
+  const unassignedRoutes = findUnassignedRoutes(shifts)
+  const routeConflicts = findRouteConflicts(managerShifts)
+  const capacityWarnings = findCapacityWarnings(dispatchLocations, managerShifts)
+  const exceptionCount =
+    coverageGaps.length + unassignedRoutes.length + routeConflicts.length + capacityWarnings.length
 
   return (
     <div className="space-y-4">
@@ -172,13 +298,264 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
             View manager schedules and associate assignments
           </p>
         </div>
-        <ShiftForm defaultDate={today.toISOString().split('T')[0]}>
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="mr-2 h-4 w-4" />
-            Schedule Manager
-          </Button>
-        </ShiftForm>
+        <div className="flex items-center gap-2">
+          <DispatchGenerateButton rangeStart={weekStart.toISOString().split('T')[0]} />
+          <ShiftForm defaultDate={today.toISOString().split('T')[0]}>
+            <Button variant="lime" className="rounded-sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Schedule Manager
+            </Button>
+          </ShiftForm>
+        </div>
       </div>
+
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400">Dispatch Ready</p>
+            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+              {dispatchReadyLocations.length}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              {dueThisWeekCount} auto-route location{dueThisWeekCount === 1 ? '' : 's'} due this week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400">Needs Dispatch Setup</p>
+            <p className="mt-1 text-2xl font-bold text-orange-600">
+              {dispatchNeedsSetup.length}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              Missing default manager or service days
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400">Manager Routes</p>
+            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+              {managerShifts.length}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              Generated and manual manager review shifts this week
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400">Dispatch Exceptions</p>
+            <p className="mt-1 text-2xl font-bold text-red-600">
+              {exceptionCount}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              {coverageGaps.length} uncovered, {unassignedRoutes.length} unassigned, {routeConflicts.length} conflicting, {capacityWarnings.length} capacity
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {dispatchNeedsSetup.length > 0 && (
+        <Card className="rounded-sm border-orange-200 bg-orange-50/60 dark:border-orange-900 dark:bg-orange-950/20">
+          <CardHeader className="p-4 pb-2">
+            <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">
+              Dispatch Setup Needed
+            </CardTitle>
+            <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+              These locations are marked for auto-routing but still need dispatch inputs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-4 pt-0">
+            <div className="flex flex-wrap gap-2">
+              {dispatchNeedsSetup.slice(0, 8).map((location) => (
+                <Link key={location.id} href={`/locations/${location.id}`}>
+                  <Badge variant="outline" className="rounded-sm border-orange-200 text-orange-700">
+                    {location.client.name} - {location.name}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {exceptionCount > 0 && (
+        <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
+          <Card className="rounded-sm border-red-200 bg-red-50/60 dark:border-red-900 dark:bg-red-950/20">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
+                <CalendarX className="h-4 w-4 text-red-600" />
+                Uncovered Stops
+              </CardTitle>
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                Auto-route locations due this week with no manager route scheduled.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 p-4 pt-0">
+              {coverageGaps.length === 0 ? (
+                <p className="text-xs text-warm-500 dark:text-cream-400">No uncovered stops this week.</p>
+              ) : (
+                coverageGaps.slice(0, 6).map((gap) => (
+                  <div
+                    key={`${gap.dateKey}-${gap.locationId}`}
+                    className="rounded-sm border border-red-200 bg-white/80 p-2 text-xs text-warm-700 dark:border-red-950 dark:bg-charcoal-900"
+                  >
+                    <Link
+                      href={`/locations/${gap.locationId}`}
+                      className="block transition-colors hover:text-warm-900 dark:hover:text-cream-100"
+                    >
+                      <div className="font-medium text-warm-900 dark:text-cream-100">
+                        {gap.clientName} - {gap.locationName}
+                      </div>
+                      <div className="mt-1 text-warm-500 dark:text-cream-400">
+                        {format(new Date(`${gap.dateKey}T12:00:00`), 'EEE, MMM d')} - {gap.managerName}
+                      </div>
+                    </Link>
+                    <DispatchCreateRouteButton
+                      locationId={gap.locationId}
+                      date={gap.dateKey}
+                      locationLabel={`${gap.clientName} - ${gap.locationName}`}
+                    />
+                    <ManagerAssignmentDialog
+                      mode="route"
+                      locationId={gap.locationId}
+                      date={gap.dateKey}
+                      locationLabel={`${gap.clientName} - ${gap.locationName}`}
+                      currentManagerId={gap.defaultManagerId}
+                      buttonLabel="Assign Alt Manager"
+                    />
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-sm border-amber-200 bg-amber-50/60 dark:border-amber-900 dark:bg-amber-950/20">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
+                <UserX className="h-4 w-4 text-amber-600" />
+                Unassigned Routes
+              </CardTitle>
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                Shift records without a manager assignment.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 p-4 pt-0">
+              {unassignedRoutes.length === 0 ? (
+                <p className="text-xs text-warm-500 dark:text-cream-400">No unassigned routes this week.</p>
+              ) : (
+                unassignedRoutes.slice(0, 6).map((route) => {
+                  const shift = shifts.find((entry) => entry.id === route.shiftId)
+                  if (!shift) {
+                    return null
+                  }
+
+                  return (
+                    <div
+                      key={route.shiftId}
+                      className="rounded-sm border border-amber-200 bg-white/80 p-2 text-xs dark:border-amber-950 dark:bg-charcoal-900"
+                    >
+                      <div className="font-medium text-warm-900 dark:text-cream-100">
+                        {format(new Date(`${route.dateKey}T12:00:00`), 'EEE, MMM d')} - {route.timeRange}
+                      </div>
+                      <div className="mt-1 text-warm-500 dark:text-cream-400">{route.locationSummary}</div>
+                      <ShiftForm shift={shift}>
+                        <Button variant="ghost" size="sm" className="mt-2 h-7 rounded-sm px-2 text-xs">
+                          Assign Manager
+                        </Button>
+                      </ShiftForm>
+                      <ManagerAssignmentDialog
+                        mode="shift"
+                        shiftId={route.shiftId}
+                        locationLabel={route.locationSummary}
+                        buttonLabel="Quick Assign"
+                      />
+                    </div>
+                  )
+                })
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-sm border-orange-200 bg-orange-50/60 dark:border-orange-900 dark:bg-orange-950/20">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
+                <AlertTriangle className="h-4 w-4 text-orange-600" />
+                Route Conflicts
+              </CardTitle>
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                Managers with overlapping route windows on the same day.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 p-4 pt-0">
+              {routeConflicts.length === 0 ? (
+                <p className="text-xs text-warm-500 dark:text-cream-400">No manager conflicts this week.</p>
+              ) : (
+                routeConflicts.slice(0, 6).map((conflict) => (
+                  <div
+                    key={`${conflict.dateKey}-${conflict.shiftIds.join('-')}`}
+                    className="rounded-sm border border-orange-200 bg-white/80 p-2 text-xs dark:border-orange-950 dark:bg-charcoal-900"
+                  >
+                    <div className="font-medium text-warm-900 dark:text-cream-100">{conflict.managerName}</div>
+                    <div className="mt-1 text-warm-500 dark:text-cream-400">
+                      {format(new Date(`${conflict.dateKey}T12:00:00`), 'EEE, MMM d')}
+                    </div>
+                    <div className="mt-1 text-warm-500 dark:text-cream-400">{conflict.timeRange}</div>
+                    <ManagerAssignmentDialog
+                      mode="shift"
+                      shiftId={conflict.reassignShiftId}
+                      locationLabel={conflict.summary}
+                      currentManagerId={conflict.managerId}
+                      buttonLabel="Reassign Shift"
+                    />
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-sm border-blue-200 bg-blue-50/60 dark:border-blue-900 dark:bg-blue-950/20">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="flex items-center gap-2 text-base font-display font-medium text-warm-900 dark:text-cream-100">
+                <AlertTriangle className="h-4 w-4 text-blue-600" />
+                Capacity & Window
+              </CardTitle>
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                Routes that look overloaded or outside preferred service windows.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 p-4 pt-0">
+              {capacityWarnings.length === 0 ? (
+                <p className="text-xs text-warm-500 dark:text-cream-400">No capacity warnings this week.</p>
+              ) : (
+                capacityWarnings.slice(0, 6).map((warning) => (
+                  <div
+                    key={`${warning.shiftId}-${warning.category}`}
+                    className="rounded-sm border border-blue-200 bg-white/80 p-2 text-xs dark:border-blue-950 dark:bg-charcoal-900"
+                  >
+                    <div className="font-medium text-warm-900 dark:text-cream-100">{warning.managerName}</div>
+                    <div className="mt-1 text-warm-500 dark:text-cream-400">
+                      {format(new Date(`${warning.dateKey}T12:00:00`), 'EEE, MMM d')}
+                    </div>
+                    <div className="mt-1 text-warm-500 dark:text-cream-400">{warning.message}</div>
+                    <ManagerAssignmentDialog
+                      mode="shift"
+                      shiftId={warning.shiftId}
+                      locationLabel={warning.message}
+                      currentManagerId={warning.managerId}
+                      buttonLabel="Reassign Route"
+                    />
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader className="p-4">
@@ -269,11 +646,11 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                       </div>
                     ) : (
                       <>
-                        {dayShifts.map((shift: any) => {
+                        {dayShifts.map((shift) => {
                           // Get locations from shiftLocations if available, otherwise fall back to single location
                           const locations =
                             shift.shiftLocations && shift.shiftLocations.length > 0
-                              ? shift.shiftLocations.map((sl: any) => sl.location)
+                              ? shift.shiftLocations.map((sl) => sl.location)
                               : shift.location
                                 ? [shift.location]
                                 : []
@@ -284,16 +661,16 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                               className="p-2 bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm hover:border-ocean-400 transition-colors text-xs"
                             >
                               <div className="font-medium text-sm text-warm-900 dark:text-cream-100 mb-1">
-                                {shift.manager.firstName} {shift.manager.lastName}
+                                {shift.manager ? `${shift.manager.firstName} ${shift.manager.lastName}` : 'Unassigned manager'}
                               </div>
                               <div className="text-warm-500 dark:text-cream-400 mb-1">
                                 {shift.startTime} - {shift.endTime}
                               </div>
                               {locations.length > 0 && (
                                 <div className="text-warm-500 dark:text-cream-400 space-y-0.5">
-                                  {locations.map((loc: any) => (
+                                  {locations.map((loc) => (
                                     <div key={loc.id} className="truncate" title={`${loc.client.name} - ${loc.name}`}>
-                                      • {loc.name}
+                                      - {loc.name}
                                     </div>
                                   ))}
                                 </div>
@@ -313,6 +690,11 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                                 {locations.length > 1 && (
                                   <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
                                     {locations.length} stops
+                                  </Badge>
+                                )}
+                                {!shift.managerId && (
+                                  <Badge className="rounded-sm bg-amber-100 px-1.5 py-0 text-[10px] text-amber-700 border-amber-200">
+                                    Unassigned
                                   </Badge>
                                 )}
                               </div>
@@ -349,7 +731,7 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                 Associate Assignments (Recurring)
               </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                {assignments.map((assignment: any) => (
+                {assignments.map((assignment: ScheduleAssignment) => (
                   <div
                     key={assignment.id}
                     className="text-sm p-2 bg-warm-50 dark:bg-charcoal-800 rounded-sm border border-warm-200 dark:border-charcoal-700"
@@ -411,3 +793,4 @@ export default async function SchedulePage({
     </Suspense>
   )
 }
+

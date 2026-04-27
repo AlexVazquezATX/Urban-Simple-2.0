@@ -1,14 +1,25 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, MapPin, Building2, CheckSquare, Wrench } from 'lucide-react'
+import { ArrowLeft, CheckSquare, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LocationForm } from '@/components/forms/location-form'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
+import { getReviewFreshness } from '@/lib/operations/review-freshness'
+
+type AddressLike = {
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+}
+
+type EquipmentItem = string | { name?: string | null }
 
 async function LocationDetail({ id }: { id: string }) {
   const user = await getCurrentUser()
@@ -43,6 +54,18 @@ async function LocationDetail({ id }: { id: string }) {
           name: true,
         },
       },
+      serviceProfile: {
+        include: {
+          defaultManager: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              displayName: true,
+            },
+          },
+        },
+      },
       assignments: {
         where: {
           isActive: true,
@@ -56,6 +79,29 @@ async function LocationDetail({ id }: { id: string }) {
               email: true,
             },
           },
+        },
+      },
+      reviews: {
+        where: {
+          reviewer: {
+            role: {
+              in: ['MANAGER', 'ADMIN', 'SUPER_ADMIN'],
+            },
+          },
+          photos: {
+            isEmpty: false,
+          },
+        },
+        orderBy: [
+          { reviewDate: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 1,
+        select: {
+          id: true,
+          reviewDate: true,
+          createdAt: true,
+          photos: true,
         },
       },
       _count: {
@@ -86,11 +132,13 @@ async function LocationDetail({ id }: { id: string }) {
     )
   }
 
-  const address = location.address as any
+  const address = location.address as AddressLike | null
   const addressStr = address
     ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
     : null
-  const equipmentInventory = (location.equipmentInventory as any[]) || []
+  const equipmentInventory = (location.equipmentInventory as EquipmentItem[]) || []
+  const serviceProfile = normalizeServiceProfile(location.serviceProfile)
+  const reviewFreshness = getReviewFreshness(location.reviews[0])
 
   return (
     <div className="space-y-6">
@@ -194,6 +242,35 @@ async function LocationDetail({ id }: { id: string }) {
                   </p>
                 </div>
               )}
+              <div className="p-3 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-warm-900">Dispatch Profile</p>
+                  <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
+                    {serviceProfile.cadence}
+                  </Badge>
+                </div>
+                <p className="text-xs text-warm-500 dark:text-cream-400">
+                  Service days: {formatServiceDays(serviceProfile.serviceDays)}
+                </p>
+                <p className="text-xs text-warm-500 dark:text-cream-400">
+                  Window: {serviceProfile.preferredStartTime || '--'} - {serviceProfile.preferredEndTime || '--'}
+                </p>
+                <p className="text-xs text-warm-500 dark:text-cream-400">
+                  Default manager:{' '}
+                  {location.serviceProfile?.defaultManager
+                    ? location.serviceProfile.defaultManager.displayName ||
+                      `${location.serviceProfile.defaultManager.firstName} ${location.serviceProfile.defaultManager.lastName}`
+                    : 'Unassigned'}
+                </p>
+                <p className="text-xs text-warm-500 dark:text-cream-400">
+                  Route priority: {serviceProfile.routePriority} • Duration: {serviceProfile.estimatedDurationMins} mins
+                </p>
+                {serviceProfile.dispatchNotes && (
+                  <p className="text-xs text-warm-600 dark:text-cream-300">
+                    {serviceProfile.dispatchNotes}
+                  </p>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -233,6 +310,25 @@ async function LocationDetail({ id }: { id: string }) {
                 {location._count.serviceAgreements}
               </span>
             </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-warm-500 dark:text-cream-400">
+                Last Reviewed
+              </span>
+              <div className="text-right">
+                <Badge
+                  className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                    reviewFreshness.isStale
+                      ? 'bg-red-100 text-red-700 border-red-200'
+                      : 'bg-lime-100 text-lime-700 border-lime-200'
+                  }`}
+                >
+                  {reviewFreshness.shortLabel}
+                </Badge>
+                <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+                  {reviewFreshness.reviewedOnLabel || 'Manager review with photos required'}
+                </p>
+              </div>
+            </div>
             {location.assignments.length > 0 && (
               <div className="pt-3 border-t border-warm-200 dark:border-charcoal-700">
                 <p className="text-sm text-warm-500 mb-2">
@@ -266,7 +362,7 @@ async function LocationDetail({ id }: { id: string }) {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {equipmentInventory.map((item: any, index: number) => (
+              {equipmentInventory.map((item, index: number) => (
                 <div
                   key={index}
                   className="flex items-center gap-2 p-2 border border-warm-200 dark:border-charcoal-700 rounded-sm hover:border-ocean-400 transition-colors"

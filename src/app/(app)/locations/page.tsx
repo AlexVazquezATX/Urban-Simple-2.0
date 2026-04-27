@@ -40,6 +40,41 @@ async function LocationsList() {
           name: true,
         },
       },
+      serviceProfile: {
+        include: {
+          defaultManager: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              displayName: true,
+            },
+          },
+        },
+      },
+      reviews: {
+        where: {
+          reviewer: {
+            role: {
+              in: ['MANAGER', 'ADMIN', 'SUPER_ADMIN'],
+            },
+          },
+          photos: {
+            isEmpty: false,
+          },
+        },
+        orderBy: [
+          { reviewDate: 'desc' },
+          { createdAt: 'desc' },
+        ],
+        take: 1,
+        select: {
+          id: true,
+          reviewDate: true,
+          createdAt: true,
+          photos: true,
+        },
+      },
       _count: {
         select: {
           serviceLogs: true,
@@ -96,5 +131,4 @@ export default function LocationsPage() {
     </Suspense>
   )
 }
-
 

@@ -38,6 +38,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { getApiUrl } from '@/lib/api'
+import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
 
 const shiftSchema = z
   .object({
@@ -149,6 +150,27 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
   const locationIds = form.watch('locationIds') || []
   const managerId = form.watch('managerId')
   const associateId = form.watch('associateId')
+
+  useEffect(() => {
+    if (locationIds.length !== 1 || managerId || associateId) {
+      return
+    }
+
+    const selectedLocation = locations.find((location) => location.id === locationIds[0])
+    if (!selectedLocation?.serviceProfile?.defaultManagerId) {
+      return
+    }
+
+    form.setValue('managerId', selectedLocation.serviceProfile.defaultManagerId)
+
+    if (selectedLocation.serviceProfile.preferredStartTime) {
+      form.setValue('startTime', selectedLocation.serviceProfile.preferredStartTime)
+    }
+
+    if (selectedLocation.serviceProfile.preferredEndTime) {
+      form.setValue('endTime', selectedLocation.serviceProfile.preferredEndTime)
+    }
+  }, [associateId, form, locationIds, locations, managerId])
 
   // Get associates assigned to selected locations
   const availableAssociates = associates
@@ -277,7 +299,14 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                             htmlFor={`location-${location.id}`}
                             className="text-sm font-normal cursor-pointer flex-1"
                           >
-                            {location.client?.name} - {location.name}
+                            <div className="flex flex-col gap-1">
+                              <span>{location.client?.name} - {location.name}</span>
+                              {location.serviceProfile && (
+                                <span className="text-xs text-warm-500 dark:text-cream-400">
+                                  {location.serviceProfile.autoSchedule ? 'Auto route' : 'Manual'} • {formatServiceDays(normalizeServiceProfile(location.serviceProfile).serviceDays)}
+                                </span>
+                              )}
+                            </div>
                           </Label>
                         </div>
                       ))

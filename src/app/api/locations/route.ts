@@ -31,6 +31,18 @@ export async function GET(request: NextRequest) {
             code: true,
           },
         },
+        serviceProfile: {
+          include: {
+            defaultManager: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                displayName: true,
+              },
+            },
+          },
+        },
       },
       orderBy: [
         { client: { name: 'asc' } },
@@ -47,5 +59,4 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 

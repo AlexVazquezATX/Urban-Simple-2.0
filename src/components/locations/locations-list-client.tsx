@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { MapPin, Building2, Plus } from 'lucide-react'
+import { Building2, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -18,21 +18,60 @@ import { Badge } from '@/components/ui/badge'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { LocationCard } from './location-card'
 import { LocationForm } from '@/components/forms/location-form'
+import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
+import { getReviewFreshness } from '@/lib/operations/review-freshness'
 
 interface LocationsListClientProps {
-  locations: any[]
+  locations: LocationListItem[]
+}
+
+type AddressLike = {
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+}
+
+type NormalizableServiceProfile = Parameters<typeof normalizeServiceProfile>[0]
+
+type LocationListItem = {
+  id: string
+  name: string
+  logoUrl?: string | null
+  isActive: boolean
+  address?: unknown
+  client: {
+    id: string
+    name: string
+  }
+  branch: {
+    code: string
+  }
+  checklistTemplate?: {
+    id: string
+    name: string
+  } | null
+  serviceProfile?: NormalizableServiceProfile
+  reviews?: Array<{
+    id: string
+    reviewDate?: Date | string | null
+    createdAt?: Date | string | null
+    photos?: string[] | null
+  }>
+  _count: {
+    issues: number
+  }
 }
 
 export function LocationsListClient({ locations }: LocationsListClientProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('table')
-
-  // Load view preference from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('locations-view-mode') as ViewMode
-    if (saved && (saved === 'table' || saved === 'card')) {
-      setViewMode(saved)
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window === 'undefined') {
+      return 'table'
     }
-  }, [])
+
+    const saved = localStorage.getItem('locations-view-mode')
+    return saved === 'card' ? 'card' : 'table'
+  })
 
   // Save view preference to localStorage
   const handleViewChange = (mode: ViewMode) => {
@@ -111,16 +150,23 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Branch</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Address</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Checklist</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Dispatch</TableHead>
+                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Review Status</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Issues</TableHead>
                   <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {locations.map((location: any) => {
-                  const address = location.address as any
-                  const addressStr = address
-                    ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
-                    : '-'
+                {locations.map((location) => {
+                  const address = location.address
+                  const serviceProfile = normalizeServiceProfile(location.serviceProfile)
+                  const reviewFreshness = getReviewFreshness(location.reviews?.[0])
+                  const addressStr =
+                    typeof address === 'string'
+                      ? address
+                      : isAddressLike(address)
+                        ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
+                        : '-'
                   return (
                     <TableRow key={location.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50">
                       <TableCell>
@@ -172,6 +218,35 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                         )}
                       </TableCell>
                       <TableCell>
+                        <div className="space-y-1">
+                          <Badge
+                            variant="outline"
+                            className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600"
+                          >
+                            {serviceProfile.autoSchedule ? 'Auto Route' : 'Manual'}
+                          </Badge>
+                          <p className="text-xs text-warm-500 dark:text-cream-400">
+                            {formatServiceDays(serviceProfile.serviceDays)}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge
+                            className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                              reviewFreshness.isStale
+                                ? 'bg-red-100 text-red-700 border-red-200'
+                                : 'bg-lime-100 text-lime-700 border-lime-200'
+                            }`}
+                          >
+                            {reviewFreshness.shortLabel}
+                          </Badge>
+                          <p className="text-xs text-warm-500 dark:text-cream-400">
+                            {reviewFreshness.reviewedOnLabel || 'Needs manager review photos'}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
                         <Badge
                           className={`rounded-sm text-[10px] px-1.5 py-0 ${
                             location._count.issues > 0
@@ -209,5 +284,9 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
       </Card>
     </div>
   )
+}
+
+function isAddressLike(value: unknown): value is AddressLike {
+  return typeof value === 'object' && value !== null
 }
 

@@ -42,26 +42,25 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        // shiftLocations will be available after Prisma client regeneration
-        // shiftLocations: {
-        //   include: {
-        //     location: {
-        //       select: {
-        //         id: true,
-        //         name: true,
-        //         client: {
-        //           select: {
-        //             id: true,
-        //             name: true,
-        //           },
-        //         },
-        //       },
-        //     },
-        //   },
-        //   orderBy: {
-        //     sortOrder: 'asc',
-        //   },
-        // },
+        shiftLocations: {
+          include: {
+            location: {
+              select: {
+                id: true,
+                name: true,
+                client: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
         associate: {
           select: {
             id: true,
@@ -255,21 +254,28 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json(shift, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const details =
+      error && typeof error === 'object'
+        ? {
+            message: 'message' in error ? error.message : undefined,
+            code: 'code' in error ? error.code : undefined,
+            meta: 'meta' in error ? error.meta : undefined,
+          }
+        : {
+            message: undefined,
+            code: undefined,
+            meta: undefined,
+          }
     console.error('Error creating shift:', error)
-    console.error('Error details:', {
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
-    })
+    console.error('Error details:', details)
     return NextResponse.json(
       {
         error: 'Failed to create shift',
-        details: error.message,
-        code: error.code,
+        details: details.message,
+        code: details.code,
       },
       { status: 500 }
     )
   }
 }
-

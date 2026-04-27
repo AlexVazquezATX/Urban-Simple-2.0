@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import {
+  buildNightlyReviewId,
+  formatAddress,
+} from '@/lib/operations/nightly-reviews'
 
-/**
- * GET /api/operations/tonight-route
- * Get locations scheduled for tonight's service (for manager reviews)
- */
 export async function GET() {
   try {
     const user = await getCurrentUser()
@@ -14,7 +14,6 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only MANAGER and above can access
     if (!['MANAGER', 'ADMIN', 'SUPER_ADMIN'].includes(user.role)) {
       return NextResponse.json(
         { error: 'Access denied. Manager privileges required.' },
@@ -22,13 +21,11 @@ export async function GET() {
       )
     }
 
-    // Get today's date (start and end of day)
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const tomorrow = new Date(today)
     tomorrow.setDate(tomorrow.getDate() + 1)
 
-    // Get tonight's shifts for this manager
     const shifts = await prisma.shift.findMany({
       where: {
         managerId: user.id,
@@ -38,11 +35,38 @@ export async function GET() {
         },
       },
       include: {
+        location: {
+          select: {
+            id: true,
+            name: true,
+            address: true,
+            client: {
+              select: {
+                name: true,
+              },
+            },
+            checklistTemplate: {
+              select: {
+                name: true,
+              },
+            },
+          },
+        },
         shiftLocations: {
+          orderBy: {
+            sortOrder: 'asc',
+          },
           include: {
             location: {
-              include: {
-                client: true,
+              select: {
+                id: true,
+                name: true,
+                address: true,
+                client: {
+                  select: {
+                    name: true,
+                  },
+                },
                 checklistTemplate: {
                   select: {
                     name: true,
@@ -56,6 +80,26 @@ export async function GET() {
           select: {
             firstName: true,
             lastName: true,
+            displayName: true,
+          },
+        },
+        serviceLogs: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            id: true,
+            locationId: true,
+            status: true,
+            reviews: {
+              where: {
+                reviewerId: user.id,
+              },
+              select: {
+                id: true,
+              },
+              take: 1,
+            },
           },
         },
       },
@@ -64,75 +108,66 @@ export async function GET() {
       },
     })
 
-    // Get existing reviews for these shifts
-    const shiftIds = shifts.map((s) => s.id)
-    const existingReviews = await prisma.serviceReview.findMany({
-      where: {
-        serviceLog: {
-          shiftId: {
-            in: shiftIds,
-          },
-        },
-        reviewerId: user.id,
-      },
-      include: {
-        serviceLog: true,
-      },
-    })
+    const locations = shifts.flatMap((shift) => {
+      const routeStops =
+        shift.shiftLocations.length > 0
+          ? shift.shiftLocations.map((stop) => ({
+              locationId: stop.locationId,
+              location: stop.location,
+            }))
+          : shift.location
+            ? [
+                {
+                  locationId: shift.location.id,
+                  location: shift.location,
+                },
+              ]
+            : []
 
-    // Build location list with review status
-    const locations = shifts.flatMap((shift) =>
-      shift.shiftLocations.map((sl) => {
-        const review = existingReviews.find(
-          (r) => r.serviceLog && r.serviceLog.locationId === sl.locationId
+      return routeStops.map((stop) => {
+        const matchingServiceLog = shift.serviceLogs.find(
+          (log) => log.locationId === stop.locationId
         )
+        const matchingReview = matchingServiceLog?.reviews[0]
+        const status = matchingReview
+          ? 'completed'
+          : matchingServiceLog
+            ? 'in_progress'
+            : 'pending'
 
         return {
-          id: `${shift.id}-${sl.locationId}`,
+          id: buildNightlyReviewId(shift.id, stop.locationId),
           shiftId: shift.id,
-          locationId: sl.locationId,
-          locationName: sl.location.name,
-          clientName: sl.location.client.name,
-          address: formatAddress(sl.location.address),
-          scheduledTime: shift.startTime, // Already formatted as "21:00"
-          checklistName: sl.location.checklistTemplate?.name || 'Standard Checklist',
-          status: review ? 'completed' : 'pending',
-          reviewId: review?.id,
-          associateName: shift.associate
-            ? `${shift.associate.firstName} ${shift.associate.lastName}`
-            : 'Unassigned',
+          locationId: stop.locationId,
+          locationName: stop.location.name,
+          clientName: stop.location.client?.name || '',
+          address: formatAddress(stop.location.address),
+          scheduledTime: shift.startTime,
+          checklistName:
+            stop.location.checklistTemplate?.name || 'No checklist assigned',
+          status,
+          reviewId: matchingReview?.id,
+          serviceLogId: matchingServiceLog?.id ?? null,
+          associateName:
+            shift.associate?.displayName ||
+            `${shift.associate?.firstName || ''} ${shift.associate?.lastName || ''}`.trim() ||
+            'Unassigned',
         }
       })
-    )
+    })
 
     return NextResponse.json({
       success: true,
       date: today.toISOString(),
       locations,
       totalCount: locations.length,
-      completedCount: locations.filter((l) => l.status === 'completed').length,
+      completedCount: locations.filter((location) => location.status === 'completed').length,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Tonight route fetch error:', error)
     return NextResponse.json(
-      { error: "Failed to fetch tonight's route", details: error.message },
+      { error: "Failed to fetch tonight's route" },
       { status: 500 }
     )
   }
-}
-
-// Helper function to format address from JSON
-function formatAddress(addressJson: any): string {
-  if (!addressJson) return 'Address not available'
-
-  const addr = typeof addressJson === 'string' ? JSON.parse(addressJson) : addressJson
-
-  const parts = [
-    addr.street || addr.address1,
-    addr.city,
-    addr.state,
-    addr.zip || addr.postalCode,
-  ].filter(Boolean)
-
-  return parts.join(', ')
 }

@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    if (!folder || !['clients', 'locations', 'blog', 'signatures'].includes(folder)) {
+    if (!folder || !['clients', 'locations', 'blog', 'signatures', 'reviews'].includes(folder)) {
       return NextResponse.json(
-        { error: 'Invalid folder. Must be "clients", "locations", "blog", or "signatures"' },
+        { error: 'Invalid folder. Must be "clients", "locations", "blog", "reviews", or "signatures"' },
         { status: 400 }
       )
     }
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     const filePath = `${folder}/${user.companyId}/${fileName}`
 
     // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
+    const { error } = await supabase.storage
       .from('images')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -99,4 +99,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

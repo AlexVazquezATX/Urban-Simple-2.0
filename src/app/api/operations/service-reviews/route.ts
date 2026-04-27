@@ -1,11 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import {
+  buildNightlyReviewId,
+  getManagerNightlyReviewContext,
+} from '@/lib/operations/nightly-reviews'
 
-/**
- * POST /api/operations/service-reviews
- * Submit a service review for a location
- */
+const checklistItemSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().optional(),
+  labelEs: z.string().optional(),
+  sectionId: z.string().optional(),
+  sectionName: z.string().optional(),
+  sectionNameEs: z.string().optional(),
+  status: z.enum(['good', 'needs_work', 'not_done', 'pending']),
+  notes: z.string().optional().default(''),
+  photos: z.array(z.string()).optional().default([]),
+  requiresPhoto: z.boolean().optional().default(false),
+  priority: z.string().optional().default('normal'),
+  frequency: z.string().optional().default('daily'),
+})
+
+const painPointSchema = z.object({
+  category: z.string().min(1),
+  severity: z.enum(['low', 'medium', 'high', 'critical']),
+  description: z.string().min(1),
+  photos: z.array(z.string()).optional().default([]),
+})
+
+const serviceReviewSchema = z
+  .object({
+    reviewId: z.string().optional(),
+    shiftId: z.string().optional(),
+    locationId: z.string().optional(),
+    overallRating: z.number().min(1).max(5),
+    checklistItems: z.array(checklistItemSchema).default([]),
+    painPoints: z.array(painPointSchema).default([]),
+    notes: z.string().nullable().optional(),
+    photos: z.array(z.string()).default([]),
+  })
+  .superRefine((value, ctx) => {
+    if (!value.reviewId && (!value.shiftId || !value.locationId)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Provide reviewId or both shiftId and locationId',
+      })
+    }
+  })
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
@@ -14,127 +57,196 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Only managers can submit service reviews
-    if (user.role !== 'MANAGER' && user.role !== 'SUPER_ADMIN') {
+    if (!['MANAGER', 'SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    const body = await request.json()
-    const { reviewId, overallRating, checklistItems, painPoints, notes, photos } = body
+    const rawBody = await request.json()
+    const parsedBody = serviceReviewSchema.safeParse(rawBody)
 
-    // Validate required fields
-    if (!reviewId || !overallRating) {
+    if (!parsedBody.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
-    }
-
-    // Parse the reviewId to get location and shift info
-    // Format expected: "shift-{shiftId}-location-{locationId}"
-    const reviewIdParts = reviewId.split('-')
-    const shiftId = reviewIdParts[1]
-    const locationId = reviewIdParts[3]
-
-    if (!shiftId || !locationId) {
-      return NextResponse.json(
-        { error: 'Invalid review ID format' },
-        { status: 400 }
-      )
-    }
-
-    // Verify the shift exists and belongs to this manager
-    const shift = await prisma.shift.findFirst({
-      where: {
-        id: shiftId,
-        managerId: user.id,
-      },
-      include: {
-        shiftLocations: {
-          where: { locationId },
+        {
+          error: 'Invalid review submission',
+          issues: parsedBody.error.flatten(),
         },
-      },
-    })
-
-    if (!shift || shift.shiftLocations.length === 0) {
-      return NextResponse.json(
-        { error: 'Shift or location not found' },
-        { status: 404 }
+        { status: 400 }
       )
     }
 
-    const shiftLocation = shift.shiftLocations[0]
+    const body = parsedBody.data
+    const reviewId =
+      body.reviewId || buildNightlyReviewId(body.shiftId as string, body.locationId as string)
 
-    // Create the service review
-    const serviceReview = await prisma.serviceReview.create({
-      data: {
-        locationId: shiftLocation.locationId,
-        associateId: shift.associateId || '',
-        reviewerId: user.id,
-        reviewDate: new Date(),
-        overallRating,
-        ratingItems: checklistItems && checklistItems.length > 0 
-          ? checklistItems.map((item: any) => ({
-              id: item.id,
-              status: item.status.toUpperCase(),
-              notes: item.notes || null,
-              photos: item.photos || [],
-            }))
-          : [],
-        notes,
-        photos: photos || [],
-      },
+    const reviewContext = await getManagerNightlyReviewContext({
+      companyId: user.companyId,
+      managerId: user.id,
+      reviewId,
     })
 
-    // Create issues from pain points
-    if (painPoints && painPoints.length > 0) {
-      const criticalPainPoints = painPoints.filter(
-        (p: any) => p.severity === 'critical' || p.severity === 'high'
-      )
+    if (!reviewContext) {
+      return NextResponse.json({ error: 'Shift stop not found' }, { status: 404 })
+    }
 
-      // Get location and client info for creating issues
-      const location = await prisma.location.findUnique({
-        where: { id: locationId },
-        include: { client: true },
+    if (reviewContext.review) {
+      return NextResponse.json(
+        { error: 'This review has already been submitted' },
+        { status: 409 }
+      )
+    }
+
+    const associateId =
+      reviewContext.shift.associateId || reviewContext.shift.managerId || null
+
+    if (!associateId) {
+      return NextResponse.json(
+        {
+          error: 'This shift needs an assigned associate or manager before it can be reviewed',
+        },
+        { status: 400 }
+      )
+    }
+
+    const reviewDate = new Date(reviewContext.shift.date)
+    reviewDate.setHours(0, 0, 0, 0)
+
+    const hasIncompleteWork = body.checklistItems.some(
+      (item) => item.status === 'needs_work' || item.status === 'not_done'
+    )
+    const hasSeriousIssue = body.painPoints.some(
+      (point) => point.severity === 'high' || point.severity === 'critical'
+    )
+    const nextServiceLogStatus = hasIncompleteWork || hasSeriousIssue ? 'partial' : 'completed'
+
+    const result = await prisma.$transaction(async (tx) => {
+      const serviceLog = reviewContext.serviceLog
+        ? await tx.serviceLog.update({
+            where: {
+              id: reviewContext.serviceLog.id,
+            },
+            data: {
+              status: nextServiceLogStatus,
+              checklistTemplateId:
+                reviewContext.location.checklistTemplate?.id ||
+                reviewContext.serviceLog.checklistTemplateId ||
+                null,
+              photos:
+                body.photos.length > 0
+                  ? Array.from(new Set([...(reviewContext.serviceLog.photos || []), ...body.photos]))
+                  : reviewContext.serviceLog.photos,
+            },
+          })
+        : await tx.serviceLog.create({
+            data: {
+              shiftId: reviewContext.shift.id,
+              locationId: reviewContext.location.id,
+              associateId,
+              checklistTemplateId: reviewContext.location.checklistTemplate?.id || null,
+              serviceDate: reviewDate,
+              status: nextServiceLogStatus,
+              photos: body.photos,
+            },
+          })
+
+      const serviceReview = await tx.serviceReview.create({
+        data: {
+          serviceLogId: serviceLog.id,
+          locationId: reviewContext.location.id,
+          associateId,
+          reviewerId: user.id,
+          reviewDate,
+          overallRating: body.overallRating,
+          ratingItems: body.checklistItems.map((item) => ({
+            id: item.id,
+            label: item.label || item.id,
+            labelEs: item.labelEs,
+            sectionId: item.sectionId,
+            sectionName: item.sectionName,
+            sectionNameEs: item.sectionNameEs,
+            status: item.status,
+            notes: item.notes || '',
+            photos: item.photos || [],
+            requiresPhoto: item.requiresPhoto,
+            priority: item.priority,
+            frequency: item.frequency,
+          })),
+          notes: body.notes?.trim() || null,
+          photos: body.photos,
+          issuesFound: body.painPoints.length > 0,
+        },
       })
 
-      if (location) {
-        await prisma.issue.createMany({
-          data: painPoints.map((point: any) => ({
-            locationId: locationId,
-            clientId: location.clientId,
+      if (body.painPoints.length > 0) {
+        await tx.issue.createMany({
+          data: body.painPoints.map((point) => ({
+            locationId: reviewContext.location.id,
+            clientId: reviewContext.location.clientId,
             reportedById: user.id,
-            serviceLogId: null, // Could link to service log if available
-            category: point.category.toLowerCase(), // quality, equipment, communication, safety, other
-            severity: point.severity.toLowerCase(), // low, medium, high, critical
-            title: point.description.substring(0, 100) || 'Issue reported',
-            description: point.description,
+            serviceLogId: serviceLog.id,
+            category: point.category.toLowerCase(),
+            severity: point.severity,
+            title:
+              point.description.trim().slice(0, 100) ||
+              `${point.category.replace(/_/g, ' ')} issue`,
+            description: point.description.trim(),
             photos: point.photos || [],
             status: 'open',
+            implicatedAssociateIds: reviewContext.shift.associateId
+              ? [reviewContext.shift.associateId]
+              : [],
           })),
         })
-
-        // TODO: Send notification to client if there are critical issues
-        if (criticalPainPoints.length > 0) {
-          console.log(
-            `[NOTIFICATION] Critical issues found at ${location.name}:`,
-            criticalPainPoints.map((p: any) => p.description)
-          )
-
-          // TODO: Implement actual notification system (email, SMS, in-app)
-        }
       }
-    }
+
+      const reviewedLocations = await tx.serviceLog.findMany({
+        where: {
+          shiftId: reviewContext.shift.id,
+        },
+        select: {
+          locationId: true,
+          reviews: {
+            select: {
+              id: true,
+            },
+            take: 1,
+          },
+        },
+      })
+
+      const completedLocationIds = new Set(
+        reviewedLocations
+          .filter((log) => log.reviews.length > 0)
+          .map((log) => log.locationId)
+      )
+
+      const totalRouteStops = Math.max(reviewContext.shift.routeStopCount, 1)
+      const nextShiftStatus =
+        completedLocationIds.size >= totalRouteStops ? 'completed' : 'in_progress'
+
+      await tx.shift.update({
+        where: {
+          id: reviewContext.shift.id,
+        },
+        data: {
+          status: nextShiftStatus,
+        },
+      })
+
+      return {
+        serviceLogId: serviceLog.id,
+        serviceReviewId: serviceReview.id,
+        shiftStatus: nextShiftStatus,
+      }
+    })
 
     return NextResponse.json({
       success: true,
-      reviewId: serviceReview.id,
+      reviewId: result.serviceReviewId,
+      serviceLogId: result.serviceLogId,
+      shiftStatus: result.shiftStatus,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Service review submission error:', error)
-    return NextResponse.json(
-      { error: 'Failed to submit review', details: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to submit review' }, { status: 500 })
   }
 }

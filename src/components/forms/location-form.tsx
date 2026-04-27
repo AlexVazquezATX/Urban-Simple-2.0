@@ -33,8 +33,17 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ImageUpload } from '@/components/ui/image-upload'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
+import {
+  DEFAULT_SERVICE_PROFILE,
+  SERVICE_CADENCE_OPTIONS,
+  SERVICE_DAY_OPTIONS,
+  formatServiceDays,
+  normalizeServiceProfile,
+} from '@/lib/operations/dispatch'
 
 // Schema for creating new location (requires clientId)
 const createLocationSchema = z.object({
@@ -50,6 +59,16 @@ const createLocationSchema = z.object({
   painPoints: z.string().optional(),
   checklistTemplateId: z.string().optional().or(z.literal('')),
   equipmentInventory: z.string().optional(), // JSON string for now
+  cadence: z.string().default(DEFAULT_SERVICE_PROFILE.cadence),
+  serviceDays: z.array(z.number()).default([]),
+  preferredStartTime: z.string().optional(),
+  preferredEndTime: z.string().optional(),
+  estimatedDurationMins: z.coerce.number().min(15).max(720).default(120),
+  defaultManagerId: z.string().optional().or(z.literal('')),
+  routePriority: z.coerce.number().min(1).max(100).default(50),
+  autoSchedule: z.boolean().default(false),
+  reviewRequired: z.boolean().default(true),
+  dispatchNotes: z.string().optional(),
 })
 
 // Schema for editing location (clientId required to allow reassignment)
@@ -66,6 +85,16 @@ const editLocationSchema = z.object({
   painPoints: z.string().optional(),
   checklistTemplateId: z.string().optional().or(z.literal('')),
   equipmentInventory: z.string().optional(), // JSON string for now
+  cadence: z.string().default(DEFAULT_SERVICE_PROFILE.cadence),
+  serviceDays: z.array(z.number()).default([]),
+  preferredStartTime: z.string().optional(),
+  preferredEndTime: z.string().optional(),
+  estimatedDurationMins: z.coerce.number().min(15).max(720).default(120),
+  defaultManagerId: z.string().optional().or(z.literal('')),
+  routePriority: z.coerce.number().min(1).max(100).default(50),
+  autoSchedule: z.boolean().default(false),
+  reviewRequired: z.boolean().default(true),
+  dispatchNotes: z.string().optional(),
 })
 
 type LocationFormValues = z.infer<typeof createLocationSchema> | z.infer<typeof editLocationSchema>
@@ -81,10 +110,12 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
   const [loading, setLoading] = useState(false)
   const [checklistTemplates, setChecklistTemplates] = useState<any[]>([])
   const [clients, setClients] = useState<any[]>([])
+  const [managers, setManagers] = useState<any[]>([])
   const router = useRouter()
 
   const address = (location?.address as any) || {}
   const equipmentInventory = location?.equipmentInventory as any[]
+  const serviceProfile = normalizeServiceProfile(location?.serviceProfile)
   const equipmentStr = Array.isArray(equipmentInventory)
     ? equipmentInventory.map((item: any) => 
         typeof item === 'string' ? item : item.name || JSON.stringify(item)
@@ -106,6 +137,16 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
       painPoints: location?.painPoints || '',
       checklistTemplateId: location?.checklistTemplateId || '',
       equipmentInventory: equipmentStr,
+      cadence: serviceProfile.cadence,
+      serviceDays: serviceProfile.serviceDays,
+      preferredStartTime: serviceProfile.preferredStartTime || '',
+      preferredEndTime: serviceProfile.preferredEndTime || '',
+      estimatedDurationMins: serviceProfile.estimatedDurationMins,
+      defaultManagerId: serviceProfile.defaultManagerId || '',
+      routePriority: serviceProfile.routePriority,
+      autoSchedule: serviceProfile.autoSchedule,
+      reviewRequired: serviceProfile.reviewRequired,
+      dispatchNotes: serviceProfile.dispatchNotes || '',
     },
   })
 
@@ -137,6 +178,16 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
             // Silently fail
           })
       }
+
+      fetch('/api/users?role=MANAGER')
+        .then((res) => res.json())
+        .then((data) => {
+          const users = Array.isArray(data) ? data : data.users || []
+          setManagers(users.filter((manager: any) => manager.isActive))
+        })
+        .catch(() => {
+          // Silently fail
+        })
     }
   }, [open, propClientId, location])
 
@@ -168,6 +219,18 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
         painPoints: data.painPoints,
         checklistTemplateId: data.checklistTemplateId || null,
         equipmentInventory,
+        serviceProfile: {
+          cadence: data.cadence,
+          serviceDays: data.serviceDays,
+          preferredStartTime: data.preferredStartTime || null,
+          preferredEndTime: data.preferredEndTime || null,
+          estimatedDurationMins: data.estimatedDurationMins,
+          defaultManagerId: data.defaultManagerId || null,
+          routePriority: data.routePriority,
+          autoSchedule: data.autoSchedule,
+          reviewRequired: data.reviewRequired,
+          dispatchNotes: data.dispatchNotes || null,
+        },
       }
 
       if (location) {
@@ -474,8 +537,232 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
-              )}
-            />
+                )}
+              />
+
+            <div className="space-y-4 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4 bg-warm-50/60 dark:bg-charcoal-800/60">
+              <div>
+                <FormLabel>Dispatch Profile</FormLabel>
+                <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
+                  Configure cadence, preferred window, and route ownership for manager dispatch.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="cadence"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Service Cadence</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select cadence" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {SERVICE_CADENCE_OPTIONS.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="defaultManagerId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Default Review Manager</FormLabel>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === '__none__' ? '' : value)
+                        }
+                        value={field.value || '__none__'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select manager" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none__">Unassigned</SelectItem>
+                          {managers.map((manager) => (
+                            <SelectItem key={manager.id} value={manager.id}>
+                              {manager.displayName || `${manager.firstName} ${manager.lastName}`}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="serviceDays"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Service Days</FormLabel>
+                    <div className="grid grid-cols-4 gap-2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 p-3">
+                      {SERVICE_DAY_OPTIONS.map((day) => (
+                        <div key={day.value} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`service-day-${day.value}`}
+                            checked={field.value?.includes(day.value)}
+                            onCheckedChange={(checked) => {
+                              const current = field.value || []
+                              field.onChange(
+                                checked
+                                  ? [...current, day.value].sort((a, b) => a - b)
+                                  : current.filter((value) => value !== day.value)
+                              )
+                            }}
+                          />
+                          <Label
+                            htmlFor={`service-day-${day.value}`}
+                            className="text-sm font-normal cursor-pointer"
+                          >
+                            {day.shortLabel}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <FormDescription>
+                      Current route days: {formatServiceDays(field.value || [])}
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="preferredStartTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preferred Window Start</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="preferredEndTime"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preferred Window End</FormLabel>
+                      <FormControl>
+                        <Input type="time" {...field} value={field.value || ''} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="estimatedDurationMins"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Estimated Visit Duration (mins)</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={15} max={720} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="routePriority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Route Priority</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={1} max={100} {...field} />
+                      </FormControl>
+                      <FormDescription>
+                        Lower numbers appear earlier in generated routes.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="autoSchedule"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 p-3">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Auto-schedule manager route</FormLabel>
+                        <FormDescription>
+                          Include this location in generated nightly review routes.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="reviewRequired"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 p-3">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel>Require manager review</FormLabel>
+                        <FormDescription>
+                          Keep this stop in the nightly review workflow.
+                        </FormDescription>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="dispatchNotes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Dispatch Notes</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Preferred visit order, parking notes, route constraints, escalation context..."
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <DialogFooter>
               <Button
@@ -500,6 +787,3 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
     </Dialog>
   )
 }
-
-
-
