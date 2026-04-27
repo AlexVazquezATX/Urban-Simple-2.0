@@ -137,7 +137,7 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
         </div>
         <h3 className="font-display text-2xl font-semibold text-cream-50">Got it.</h3>
         <p className="mt-2 text-cream-200">
-          Check your email for confirmation. Alex will follow up with a phone call during business hours.
+          A confirmation is on its way to your inbox. We will reach out by email or text shortly to lock in a time for your walkthrough.
         </p>
       </div>
     )
