@@ -26,6 +26,10 @@ function getResend() {
  *      the company's send window + daily cap. The first send of step 1 is how
  *      prospects auto-imported via CSV get their initial cold email.
  */
+export async function GET(request: NextRequest) {
+  return POST(request)
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verify auth: cron secret OR API key
