@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "db:check": "tsx scripts/db-check.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-demo": "tsx scripts/seed-demo-data.ts",
     "db:seed-agreements": "tsx scripts/seed-service-agreements.ts",

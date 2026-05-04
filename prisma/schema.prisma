@@ -375,6 +375,8 @@ model LocationServiceProfile {
   location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
   defaultManager User?    @relation("LocationServiceProfileManager", fields: [defaultManagerId], references: [id])
 
+  @@index([defaultManagerId])
+  @@index([autoSchedule])
   @@map("location_service_profiles")
 }
 
