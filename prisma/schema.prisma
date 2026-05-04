@@ -347,20 +347,30 @@ model Location {
 }
 
 model LocationServiceProfile {
-  id                    String   @id @default(cuid())
-  locationId            String   @unique @map("location_id")
-  cadence               String   @default("weekly")
-  serviceDays           Json     @default("[]") @map("service_days")
-  preferredStartTime    String?  @map("preferred_start_time")
-  preferredEndTime      String?  @map("preferred_end_time")
-  estimatedDurationMins Int      @default(120) @map("estimated_duration_mins")
-  defaultManagerId      String?  @map("default_manager_id")
-  routePriority         Int      @default(50) @map("route_priority")
-  autoSchedule          Boolean  @default(false) @map("auto_schedule")
-  reviewRequired        Boolean  @default(true) @map("review_required")
-  dispatchNotes         String?  @map("dispatch_notes")
-  createdAt             DateTime @default(now()) @map("created_at")
-  updatedAt             DateTime @updatedAt @map("updated_at")
+  id                    String    @id @default(cuid())
+  locationId            String    @unique @map("location_id")
+  // Cadence drives when the dispatch generator schedules this location:
+  //   weekly   - every configured service day
+  //   biweekly - every other week from anchor (week 0, 2, 4, ...)
+  //   monthly  - first occurrence of each service day in the month
+  //   custom   - currently identical to weekly; reserved for future custom rules
+  cadence               String    @default("weekly")
+  serviceDays           Json      @default("[]") @map("service_days")
+  preferredStartTime    String?   @map("preferred_start_time")
+  preferredEndTime      String?   @map("preferred_end_time")
+  estimatedDurationMins Int       @default(120) @map("estimated_duration_mins")
+  defaultManagerId      String?   @map("default_manager_id")
+  routePriority         Int       @default(50) @map("route_priority")
+  autoSchedule          Boolean   @default(false) @map("auto_schedule")
+  reviewRequired        Boolean   @default(true) @map("review_required")
+  dispatchNotes         String?   @map("dispatch_notes")
+  // Optional explicit anchor date for biweekly/monthly cadences. When unset,
+  // the dispatch generator falls back to createdAt (legacy behavior). Setting
+  // this lets admins control which "week" the biweekly cycle starts on without
+  // recreating the profile.
+  serviceAnchorDate     DateTime? @map("service_anchor_date") @db.Date
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   location       Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
   defaultManager User?    @relation("LocationServiceProfileManager", fields: [defaultManagerId], references: [id])

@@ -148,6 +148,24 @@ export function isServiceDay(serviceDays: number[], date: Date) {
   return normalizeServiceDays(serviceDays).includes(date.getDay())
 }
 
+/**
+ * Decide whether a location should be auto-scheduled for service on a given
+ * target date. Two-step check: target must be a configured service day AND
+ * fall on the cadence cycle from the anchor.
+ *
+ * Cadence semantics:
+ *   weekly   - every configured service day, no cycle gating
+ *   biweekly - every other week from anchor (week 0, 2, 4, ...)
+ *   monthly  - first occurrence of each configured service day in the month
+ *              (e.g. "monthly Tuesday" = first Tuesday of the month)
+ *   custom   - currently equivalent to weekly; reserved as an opt-out so the
+ *              UI can label it differently. Treat as weekly until/unless
+ *              custom rules are wired up.
+ *
+ * The caller is responsible for passing the right anchor — normally
+ * `serviceProfile.serviceAnchorDate ?? serviceProfile.createdAt ?? location.createdAt`.
+ * Anchor is only consulted for biweekly cadence; weekly/monthly/custom ignore it.
+ */
 export function shouldScheduleOnDate(
   profile: DispatchServiceProfileInput,
   anchorDate: Date | string,
@@ -165,10 +183,47 @@ export function shouldScheduleOnDate(
     case 'biweekly':
       return diffDays >= 0 && Math.floor(diffDays / 7) % 2 === 0
     case 'monthly':
+      // First occurrence of any weekday in a month always lands in days 1-7.
       return target.getDate() <= 7
     case 'custom':
+      // No special rule yet; behave like weekly until custom logic is added.
       return true
     default:
       return true
   }
+}
+
+/**
+ * Resolve the cadence anchor for a service profile. Prefers an explicitly-set
+ * serviceAnchorDate, then falls back to the profile's createdAt, then the
+ * location's createdAt as a last resort.
+ */
+export function getCadenceAnchor(args: {
+  serviceAnchorDate?: Date | string | null
+  serviceProfileCreatedAt?: Date | string | null
+  locationCreatedAt: Date | string
+}): Date | string {
+  return (
+    args.serviceAnchorDate ??
+    args.serviceProfileCreatedAt ??
+    args.locationCreatedAt
+  )
+}
+
+/**
+ * Parse a calendar date string (YYYY-MM-DD) as UTC midnight rather than the
+ * server's local timezone. Critical because Vercel runs UTC, dev runs CT, and
+ * the existing `new Date('2026-04-28')` pattern can drift the date by a day at
+ * timezone boundaries. Returns an invalid Date if the input doesn't match the
+ * YYYY-MM-DD shape.
+ */
+export function parseDateOnly(value: string): Date {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim())
+  if (!match) {
+    return new Date(NaN)
+  }
+  const [, year, month, day] = match
+  return new Date(
+    Date.UTC(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10))
+  )
 }

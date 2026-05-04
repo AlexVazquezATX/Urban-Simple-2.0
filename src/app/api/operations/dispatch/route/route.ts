@@ -3,8 +3,10 @@ import { startOfDay } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import {
+  getCadenceAnchor,
   getDefaultDispatchWindow,
   normalizeServiceProfile,
+  parseDateOnly,
   shouldScheduleOnDate,
 } from '@/lib/operations/dispatch'
 
@@ -20,6 +22,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
+    const isAdmin = ['ADMIN', 'SUPER_ADMIN'].includes(user.role)
+
     const body = await request.json().catch(() => ({}))
     const locationId =
       typeof body.locationId === 'string' && body.locationId.trim() !== ''
@@ -29,7 +33,14 @@ export async function POST(request: NextRequest) {
       typeof body.managerId === 'string' && body.managerId.trim() !== ''
         ? body.managerId
         : null
-    const routeDate = body.date ? startOfDay(new Date(body.date)) : null
+    // Accept either a YYYY-MM-DD calendar date (timezone-safe) or a full ISO
+    // string. The button passes YYYY-MM-DD; legacy callers may pass ISO.
+    const rawDate = typeof body.date === 'string' ? body.date.trim() : ''
+    const routeDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
+      ? parseDateOnly(rawDate)
+      : rawDate
+        ? startOfDay(new Date(rawDate))
+        : null
 
     if (!locationId || !routeDate || Number.isNaN(routeDate.getTime())) {
       return NextResponse.json(
@@ -90,10 +101,24 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Non-admins can only create routes that they will run themselves (or where
+    // they're already the location's default manager). Prevents one manager
+    // from reassigning another manager's route.
+    if (!isAdmin && managerId !== user.id && profile.defaultManagerId !== user.id) {
+      return NextResponse.json(
+        { error: 'You can only create routes for locations you manage' },
+        { status: 403 }
+      )
+    }
+
     if (
       !shouldScheduleOnDate(
         profile,
-        location.serviceProfile?.createdAt || location.createdAt,
+        getCadenceAnchor({
+          serviceAnchorDate: location.serviceProfile?.serviceAnchorDate,
+          serviceProfileCreatedAt: location.serviceProfile?.createdAt,
+          locationCreatedAt: location.createdAt,
+        }),
         routeDate
       )
     ) {

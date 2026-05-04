@@ -44,8 +44,13 @@ export function DispatchGenerateButton({ rangeStart }: DispatchGenerateButtonPro
           ? ` ${payload.skippedLocations.length} location${payload.skippedLocations.length === 1 ? '' : 's'} still need setup.`
           : ''
 
+      const prunedSummary =
+        payload.prunedStops > 0 || payload.prunedShifts > 0
+          ? ` Pruned ${payload.prunedStops} stale stop${payload.prunedStops === 1 ? '' : 's'}${payload.prunedShifts > 0 ? ` and ${payload.prunedShifts} empty shift${payload.prunedShifts === 1 ? '' : 's'}` : ''}.`
+          : ''
+
       toast.success(
-        `Dispatch updated for ${format(start, 'MMM d')} - ${format(end, 'MMM d')}. ${payload.createdRoutes} route${payload.createdRoutes === 1 ? '' : 's'} created, ${payload.updatedRoutes} updated.${skippedSummary}`
+        `Dispatch updated for ${format(start, 'MMM d')} - ${format(end, 'MMM d')}. ${payload.createdRoutes} route${payload.createdRoutes === 1 ? '' : 's'} created, ${payload.updatedRoutes} updated.${prunedSummary}${skippedSummary}`
       )
       router.refresh()
     } catch (error: unknown) {
