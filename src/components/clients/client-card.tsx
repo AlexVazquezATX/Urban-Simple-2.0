@@ -92,6 +92,18 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
                 {client.locations.length === 1 ? 'location' : 'locations'}
               </Badge>
             )}
+            {client.parentClient && (
+              <Link href={`/clients/${client.parentClient.id}`}>
+                <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-plum-200 text-plum-600">
+                  ↑ {client.parentClient.name}
+                </Badge>
+              </Link>
+            )}
+            {client._count?.childClients > 0 && (
+              <Badge className="rounded-sm text-[9px] px-1 py-0 bg-plum-100 text-plum-700 border-plum-200">
+                {client._count.childClients} {client._count.childClients === 1 ? 'child' : 'children'}
+              </Badge>
+            )}
           </div>
 
           {showFinancials && client.financials && client.financials.agreementCount > 0 && (

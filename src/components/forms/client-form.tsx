@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -48,6 +48,7 @@ const clientSchema = z.object({
   taxExempt: z.boolean().default(false),
   notes: z.string().optional(),
   status: z.enum(['active', 'inactive', 'churned']).default('active'),
+  parentClientId: z.string().optional().or(z.literal('')),
 })
 
 type ClientFormValues = z.infer<typeof clientSchema>
@@ -75,8 +76,22 @@ export function ClientForm({ client, children }: ClientFormProps) {
       taxExempt: client?.taxExempt || false,
       notes: client?.notes || '',
       status: client?.status || 'active',
+      parentClientId: client?.parentClientId || '',
     },
   })
+
+  // Load all clients for the parent picker (excluding self).
+  const [parentCandidates, setParentCandidates] = useState<Array<{ id: string; name: string }>>([])
+  useEffect(() => {
+    if (!open) return
+    fetch('/api/clients')
+      .then(r => r.ok ? r.json() : [])
+      .then(rows => {
+        const filtered = (Array.isArray(rows) ? rows : []).filter((c: any) => c.id !== client?.id)
+        setParentCandidates(filtered.map((c: any) => ({ id: c.id, name: c.name })))
+      })
+      .catch(() => setParentCandidates([]))
+  }, [open, client?.id])
 
   const onSubmit = async (data: ClientFormValues) => {
     setLoading(true)
@@ -91,7 +106,11 @@ export function ClientForm({ client, children }: ClientFormProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          // Send null when "no parent" is selected so we explicitly clear the FK.
+          parentClientId: data.parentClientId === '' || data.parentClientId === undefined ? null : data.parentClientId,
+        }),
       })
 
       if (!response.ok) {
@@ -303,6 +322,38 @@ export function ClientForm({ client, children }: ClientFormProps) {
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="parentClientId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Parent Organization</FormLabel>
+                  <Select
+                    onValueChange={(val) => field.onChange(val === '__none__' ? '' : val)}
+                    value={field.value || '__none__'}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="None — standalone client" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="__none__">None — standalone client</SelectItem>
+                      {parentCandidates.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormDescription>
+                    Set this if this client belongs to a corporate parent (e.g. White Lodging owns Caroline). Financial totals will roll up to the parent.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

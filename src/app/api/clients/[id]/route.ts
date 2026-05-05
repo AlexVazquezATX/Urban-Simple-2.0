@@ -126,7 +126,18 @@ export async function PATCH(
       taxExempt,
       notes,
       status,
+      parentClientId,
     } = body
+
+    // Block self-parenting and trivial cycles. Cycle detection beyond 1 hop
+    // would need a recursive walk; today we only allow one level of nesting,
+    // so this guard is sufficient.
+    if (parentClientId !== undefined && parentClientId !== null && parentClientId === id) {
+      return NextResponse.json(
+        { error: 'A client cannot be its own parent' },
+        { status: 400 }
+      )
+    }
 
     const client = await prisma.client.update({
       where: { id },
@@ -143,6 +154,7 @@ export async function PATCH(
         ...(taxExempt !== undefined && { taxExempt }),
         ...(notes !== undefined && { notes }),
         ...(status !== undefined && { status }),
+        ...(parentClientId !== undefined && { parentClientId: parentClientId || null }),
       },
       include: {
         branch: {

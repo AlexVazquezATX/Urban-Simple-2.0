@@ -205,7 +205,21 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
                       </Link>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">{client.branch.code}</Badge>
+                      <div className="flex flex-wrap items-center gap-1">
+                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">{client.branch.code}</Badge>
+                        {client.parentClient && (
+                          <Link href={`/clients/${client.parentClient.id}`}>
+                            <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-plum-200 text-plum-600 hover:bg-plum-50 dark:hover:bg-plum-950/30">
+                              ↑ {client.parentClient.name}
+                            </Badge>
+                          </Link>
+                        )}
+                        {client._count?.childClients > 0 && (
+                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">
+                            {client._count.childClients} {client._count.childClients === 1 ? 'child' : 'children'}
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-warm-600 dark:text-cream-400">{client.billingEmail || '-'}</TableCell>
                     <TableCell className="text-warm-600 dark:text-cream-400">{client.locations.length}</TableCell>

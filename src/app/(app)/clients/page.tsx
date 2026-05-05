@@ -29,6 +29,12 @@ async function ClientsList() {
           deletedAt: null,
         },
       },
+      parentClient: {
+        select: { id: true, name: true },
+      },
+      _count: {
+        select: { childClients: { where: { deletedAt: null } } },
+      },
     },
     orderBy: {
       name: 'asc',
