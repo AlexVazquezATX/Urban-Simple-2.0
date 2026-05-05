@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { ClientsListClient } from '@/components/clients/clients-list-client'
+import { canSeeFinancials, summarizeAgreements, type FinancialSummary } from '@/lib/financials'
 
 async function ClientsList() {
   const user = await getCurrentUser()
@@ -11,6 +12,8 @@ async function ClientsList() {
   if (!user) {
     return <div>Please log in</div>
   }
+
+  const showFinancials = canSeeFinancials(user.role)
 
   const clients = await prisma.client.findMany({
     where: {
@@ -30,13 +33,62 @@ async function ClientsList() {
     },
   })
 
-  // Convert Decimal fields to plain numbers for client component serialization
-  const serializedClients = clients.map((c) => ({
-    ...c,
-    taxRate: c.taxRate ? Number(c.taxRate) : null,
-  }))
+  // Fetch agreements for financial rollup separately, gated to SUPER_ADMIN, so
+  // financial data never reaches the client bundle for anyone else.
+  const agreementsByClient = new Map<string, Array<{
+    monthlyAmount: unknown
+    monthlyLaborCost: unknown
+    monthlyMaterialCost: unknown
+    monthlyOtherCost: unknown
+    isActive: boolean
+  }>>()
 
-  return <ClientsListClient clients={serializedClients} />
+  if (showFinancials && clients.length > 0) {
+    const agreements = await prisma.serviceAgreement.findMany({
+      where: {
+        clientId: { in: clients.map(c => c.id) },
+        isActive: true,
+      },
+      select: {
+        clientId: true,
+        monthlyAmount: true,
+        monthlyLaborCost: true,
+        monthlyMaterialCost: true,
+        monthlyOtherCost: true,
+        isActive: true,
+      },
+    })
+    for (const a of agreements) {
+      const list = agreementsByClient.get(a.clientId) ?? []
+      list.push(a)
+      agreementsByClient.set(a.clientId, list)
+    }
+  }
+
+  // Convert Decimal fields to plain numbers for client component serialization,
+  // and compute the per-client financial summary up here on the server.
+  const serializedClients = clients.map((c) => {
+    const agreements = agreementsByClient.get(c.id) ?? []
+    const financials: FinancialSummary | null = showFinancials
+      ? summarizeAgreements(
+          agreements.map(a => ({
+            monthlyAmount: a.monthlyAmount as unknown as string,
+            monthlyLaborCost: a.monthlyLaborCost as unknown as string | null,
+            monthlyMaterialCost: a.monthlyMaterialCost as unknown as string | null,
+            monthlyOtherCost: a.monthlyOtherCost as unknown as string | null,
+            isActive: a.isActive,
+          }))
+        )
+      : null
+
+    return {
+      ...c,
+      taxRate: c.taxRate ? Number(c.taxRate) : null,
+      financials,
+    }
+  })
+
+  return <ClientsListClient clients={serializedClients} showFinancials={showFinancials} />
 }
 
 function ClientsListSkeleton() {

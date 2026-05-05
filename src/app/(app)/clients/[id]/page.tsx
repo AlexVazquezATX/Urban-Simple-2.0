@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ClientForm } from '@/components/forms/client-form'
 import { ClientDetailTabs } from '@/components/clients/client-detail-tabs'
+import { ClientFinancialsBlock } from '@/components/clients/client-financials-block'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { canSeeFinancials, summarizeAgreements } from '@/lib/financials'
 
 async function ClientDetail({ id }: { id: string }) {
   const user = await getCurrentUser()
@@ -15,6 +17,8 @@ async function ClientDetail({ id }: { id: string }) {
   if (!user) {
     return <div>Please log in</div>
   }
+
+  const showFinancials = canSeeFinancials(user.role)
 
   const client = await prisma.client.findFirst({
     where: {
@@ -121,6 +125,37 @@ async function ClientDetail({ id }: { id: string }) {
     })),
   }
 
+  // Per-location financials are fetched separately and only when the user is
+  // a SUPER_ADMIN, so the data never reaches the client bundle for anyone else.
+  const agreementsForFinancials = showFinancials
+    ? await prisma.serviceAgreement.findMany({
+        where: { clientId: id, isActive: true },
+        select: {
+          id: true,
+          description: true,
+          monthlyAmount: true,
+          monthlyLaborCost: true,
+          monthlyMaterialCost: true,
+          monthlyOtherCost: true,
+          isActive: true,
+          location: { select: { id: true, name: true } },
+        },
+        orderBy: { location: { name: 'asc' } },
+      })
+    : []
+
+  const overallSummary = showFinancials
+    ? summarizeAgreements(
+        agreementsForFinancials.map(a => ({
+          monthlyAmount: a.monthlyAmount as unknown as string,
+          monthlyLaborCost: a.monthlyLaborCost as unknown as string | null,
+          monthlyMaterialCost: a.monthlyMaterialCost as unknown as string | null,
+          monthlyOtherCost: a.monthlyOtherCost as unknown as string | null,
+          isActive: a.isActive,
+        }))
+      )
+    : null
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -148,6 +183,21 @@ async function ClientDetail({ id }: { id: string }) {
           <Button variant="outline" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">Edit Client</Button>
         </ClientForm>
       </div>
+
+      {showFinancials && overallSummary && (
+        <ClientFinancialsBlock
+          summary={overallSummary}
+          agreements={agreementsForFinancials.map(a => ({
+            id: a.id,
+            description: a.description,
+            locationName: a.location.name,
+            monthlyAmount: Number(a.monthlyAmount),
+            monthlyLaborCost: a.monthlyLaborCost === null ? null : Number(a.monthlyLaborCost),
+            monthlyMaterialCost: a.monthlyMaterialCost === null ? null : Number(a.monthlyMaterialCost),
+            monthlyOtherCost: a.monthlyOtherCost === null ? null : Number(a.monthlyOtherCost),
+          }))}
+        />
+      )}
 
       <ClientDetailTabs client={serializedClient} />
     </div>

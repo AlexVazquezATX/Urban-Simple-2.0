@@ -5,12 +5,14 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ClientForm } from '@/components/forms/client-form'
+import { formatCurrency, formatMargin, marginToneClass } from '@/lib/financials'
 
 interface ClientCardProps {
   client: any
+  showFinancials?: boolean
 }
 
-export function ClientCard({ client }: ClientCardProps) {
+export function ClientCard({ client, showFinancials = false }: ClientCardProps) {
   const address = client.address as any
   const addressStr = address
     ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
@@ -90,6 +92,29 @@ export function ClientCard({ client }: ClientCardProps) {
               </Badge>
             )}
           </div>
+
+          {showFinancials && client.financials && client.financials.agreementCount > 0 && (
+            <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50/50 dark:bg-charcoal-900/40 p-2 text-[10px]">
+              <div>
+                <p className="text-warm-500 dark:text-cream-400 uppercase tracking-wider">MRR</p>
+                <p className="font-mono font-medium text-warm-900 dark:text-cream-100">
+                  {formatCurrency(client.financials.monthlyRevenue)}
+                </p>
+              </div>
+              <div>
+                <p className="text-warm-500 dark:text-cream-400 uppercase tracking-wider">Profit</p>
+                <p className={`font-mono font-medium ${marginToneClass(client.financials.marginPct)}`}>
+                  {formatCurrency(client.financials.monthlyProfit)}
+                </p>
+              </div>
+              <div>
+                <p className="text-warm-500 dark:text-cream-400 uppercase tracking-wider">Margin</p>
+                <p className={`font-mono font-medium ${marginToneClass(client.financials.marginPct)}`}>
+                  {formatMargin(client.financials.marginPct)}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Spacer pushes buttons to bottom */}
           <div className="flex-1 min-h-2" />

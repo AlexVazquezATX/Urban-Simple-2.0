@@ -636,6 +636,12 @@ model ServiceAgreement {
   contractId    String?   @map("contract_id")
   description   String
   monthlyAmount Decimal   @map("monthly_amount") @db.Decimal(10, 2)
+  // Operational P&L per agreement. Profit and margin% are derived in app
+  // code from monthlyAmount minus the sum of these costs (avoid storing
+  // computed values that drift).
+  monthlyLaborCost    Decimal? @map("monthly_labor_cost") @db.Decimal(10, 2)
+  monthlyMaterialCost Decimal? @map("monthly_material_cost") @db.Decimal(10, 2)
+  monthlyOtherCost    Decimal? @map("monthly_other_cost") @db.Decimal(10, 2)
   billingDay    Int       @default(1) @map("billing_day") // 1-28
   paymentTerms  String    @default("NET_30") @map("payment_terms")
   startDate     DateTime  @map("start_date")

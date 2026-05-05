@@ -18,12 +18,14 @@ import { Badge } from '@/components/ui/badge'
 import { ClientForm } from '@/components/forms/client-form'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { ClientCardGrid } from './client-card-grid'
+import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
 
 interface ClientsListClientProps {
   clients: any[]
+  showFinancials?: boolean
 }
 
-export function ClientsListClient({ clients }: ClientsListClientProps) {
+export function ClientsListClient({ clients, showFinancials = false }: ClientsListClientProps) {
   const [viewMode, setViewMode] = useState<ViewMode>('table')
 
   // Load view preference from localStorage
@@ -56,6 +58,25 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
     )
   }
 
+  // Roll up financials across all clients so we can show a single header total.
+  const portfolioTotals = showFinancials
+    ? clients.reduce(
+        (acc, c) => {
+          const f: FinancialSummary | null = c.financials
+          if (!f) return acc
+          acc.revenue += f.monthlyRevenue
+          acc.cost += f.monthlyCost
+          acc.profit += f.monthlyProfit
+          return acc
+        },
+        { revenue: 0, cost: 0, profit: 0 }
+      )
+    : null
+  const portfolioMargin =
+    portfolioTotals && portfolioTotals.revenue > 0
+      ? (portfolioTotals.profit / portfolioTotals.revenue) * 100
+      : null
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -75,6 +96,49 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
           </ClientForm>
         </div>
       </div>
+
+      {showFinancials && portfolioTotals && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardContent className="p-4">
+              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Revenue</p>
+              <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+                {formatCurrency(portfolioTotals.revenue)}
+              </p>
+              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+                {formatCurrency(portfolioTotals.revenue * 12)} annualized
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardContent className="p-4">
+              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Cost</p>
+              <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+                {formatCurrency(portfolioTotals.cost)}
+              </p>
+              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">labor + materials + other</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardContent className="p-4">
+              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Profit</p>
+              <p className={`mt-1 text-2xl font-bold ${marginToneClass(portfolioMargin)}`}>
+                {formatCurrency(portfolioTotals.profit)}
+              </p>
+              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">across all clients</p>
+            </CardContent>
+          </Card>
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardContent className="p-4">
+              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Portfolio Margin</p>
+              <p className={`mt-1 text-2xl font-bold ${marginToneClass(portfolioMargin)}`}>
+                {formatMargin(portfolioMargin)}
+              </p>
+              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">weighted across all locations</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
@@ -97,6 +161,13 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Branch</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Billing Email</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Locations</TableHead>
+                  {showFinancials && (
+                    <>
+                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">MRR</TableHead>
+                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Profit</TableHead>
+                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Margin</TableHead>
+                    </>
+                  )}
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Payment Terms</TableHead>
                   <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
@@ -137,6 +208,19 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
                     </TableCell>
                     <TableCell className="text-warm-600 dark:text-cream-400">{client.billingEmail || '-'}</TableCell>
                     <TableCell className="text-warm-600 dark:text-cream-400">{client.locations.length}</TableCell>
+                    {showFinancials && (
+                      <>
+                        <TableCell className="text-right font-mono text-warm-700 dark:text-cream-300">
+                          {client.financials ? formatCurrency(client.financials.monthlyRevenue) : '—'}
+                        </TableCell>
+                        <TableCell className={`text-right font-mono ${client.financials ? marginToneClass(client.financials.marginPct) : ''}`}>
+                          {client.financials ? formatCurrency(client.financials.monthlyProfit) : '—'}
+                        </TableCell>
+                        <TableCell className={`text-right font-mono ${client.financials ? marginToneClass(client.financials.marginPct) : ''}`}>
+                          {client.financials ? formatMargin(client.financials.marginPct) : '—'}
+                        </TableCell>
+                      </>
+                    )}
                     <TableCell>
                       <Badge
                         variant={client.status === 'active' ? 'default' : 'secondary'}
@@ -162,7 +246,7 @@ export function ClientsListClient({ clients }: ClientsListClientProps) {
               </TableBody>
             </Table>
           ) : (
-            <ClientCardGrid clients={clients} />
+            <ClientCardGrid clients={clients} showFinancials={showFinancials} />
           )}
         </CardContent>
       </Card>

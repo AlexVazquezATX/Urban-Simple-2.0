@@ -2,9 +2,10 @@ import { ClientCard } from './client-card'
 
 interface ClientCardGridProps {
   clients: any[]
+  showFinancials?: boolean
 }
 
-export function ClientCardGrid({ clients }: ClientCardGridProps) {
+export function ClientCardGrid({ clients, showFinancials = false }: ClientCardGridProps) {
   if (clients.length === 0) {
     return (
       <div className="text-center py-12 text-warm-500 dark:text-cream-400">
@@ -16,7 +17,7 @@ export function ClientCardGrid({ clients }: ClientCardGridProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {clients.map((client) => (
-        <ClientCard key={client.id} client={client} />
+        <ClientCard key={client.id} client={client} showFinancials={showFinancials} />
       ))}
     </div>
   )
