@@ -54,8 +54,10 @@ export async function generateDispatchForCompany(
   const locations = await prisma.location.findMany({
     where: {
       isActive: true,
+      deletedAt: null,
       client: {
         companyId,
+        deletedAt: null,
         ...(branchId && { branchId }),
       },
       serviceProfile: {

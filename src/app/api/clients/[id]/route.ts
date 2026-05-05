@@ -164,7 +164,10 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/clients/[id] - Delete client
+// DELETE /api/clients/[id] - Soft-delete client.
+// Cascades soft-delete to the client's locations and deactivates active
+// service agreements so financial rollups don't keep including them.
+// History (invoices, payments, contracts) is preserved.
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -176,23 +179,29 @@ export async function DELETE(
     }
 
     const { id } = await params
+    const now = new Date()
 
-    // Verify client belongs to user's company
     const existingClient = await prisma.client.findFirst({
-      where: {
-        id,
-        companyId: user.companyId,
-      },
+      where: { id, companyId: user.companyId, deletedAt: null },
     })
-
     if (!existingClient) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 })
     }
 
-    // Delete client (cascade will handle related records)
-    await prisma.client.delete({
-      where: { id },
-    })
+    await prisma.$transaction([
+      prisma.client.update({
+        where: { id },
+        data: { deletedAt: now, deletedById: user.id },
+      }),
+      prisma.location.updateMany({
+        where: { clientId: id, deletedAt: null },
+        data: { deletedAt: now, deletedById: user.id },
+      }),
+      prisma.serviceAgreement.updateMany({
+        where: { clientId: id, isActive: true },
+        data: { isActive: false, endDate: now },
+      }),
+    ])
 
     return NextResponse.json({ success: true })
   } catch (error) {

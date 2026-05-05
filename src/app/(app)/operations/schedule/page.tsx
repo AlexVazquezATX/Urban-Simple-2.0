@@ -224,8 +224,10 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
   const dispatchLocations = await prisma.location.findMany({
     where: {
       isActive: true,
+      deletedAt: null,
       client: {
         companyId: user.companyId,
+        deletedAt: null,
         ...(user.branchId && { branchId: user.branchId }),
       },
     },

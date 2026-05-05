@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { LocationForm } from '@/components/forms/location-form'
+import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
 
 interface LocationCardProps {
@@ -151,6 +152,11 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
                 Edit
               </Button>
             </LocationForm>
+            <ConfirmDeleteButton
+              endpoint={`/api/locations/${location.id}`}
+              entityLabel={location.name}
+              entityKind="location"
+            />
           </div>
         </div>
       </CardContent>

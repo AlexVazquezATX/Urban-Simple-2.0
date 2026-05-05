@@ -272,10 +272,24 @@ model Client {
   loyaltyPoints          Int      @default(0) @map("loyalty_points")
   loyaltyTier            String   @default("bronze") @map("loyalty_tier") // bronze, silver, gold, platinum
   qbCustomerId           String?  @map("qb_customer_id") // QuickBooks sync
+
+  // Soft delete (recoverable). All user-facing list queries filter on
+  // deletedAt: null. Hard cascades (invoices, payments, contracts) stay
+  // intact for audit/historical purposes.
+  deletedAt   DateTime? @map("deleted_at")
+  deletedById String?   @map("deleted_by_id")
+
+  // Parent organization. White Lodging is parent to Caroline; null for
+  // standalone clients. Self-referential, both rows live in this table.
+  parentClientId String? @map("parent_client_id")
+
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
 
   branch Branch @relation(fields: [branchId], references: [id])
+
+  parentClient   Client?  @relation("ClientHierarchy", fields: [parentClientId], references: [id])
+  childClients   Client[] @relation("ClientHierarchy")
 
   locations             Location[]
   contacts              ClientContact[]
@@ -289,6 +303,7 @@ model Client {
   facilityProfiles      FacilityProfile[]
   serviceLineItems      ServiceLineItem[]
 
+  @@index([parentClientId])
   @@map("clients")
 }
 
@@ -325,6 +340,11 @@ model Location {
   painPoints          String?  @map("pain_points")
   photos              String[] @default([])
   isActive            Boolean  @default(true) @map("is_active")
+
+  // Soft delete (recoverable).
+  deletedAt   DateTime? @map("deleted_at")
+  deletedById String?   @map("deleted_by_id")
+
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
 

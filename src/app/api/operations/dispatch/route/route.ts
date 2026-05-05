@@ -53,8 +53,10 @@ export async function POST(request: NextRequest) {
       where: {
         id: locationId,
         isActive: true,
+        deletedAt: null,
         client: {
           companyId: user.companyId,
+          deletedAt: null,
           ...(user.branchId && { branchId: user.branchId }),
         },
       },

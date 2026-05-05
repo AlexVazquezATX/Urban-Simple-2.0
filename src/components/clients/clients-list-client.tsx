@@ -16,6 +16,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ClientForm } from '@/components/forms/client-form'
+import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { ClientCardGrid } from './client-card-grid'
 import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
@@ -235,11 +236,18 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
                     </TableCell>
                     <TableCell className="text-warm-600 dark:text-cream-400">{client.paymentTerms}</TableCell>
                     <TableCell className="text-right">
-                      <Link href={`/clients/${client.id}`}>
-                        <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                          View
-                        </Button>
-                      </Link>
+                      <div className="flex items-center justify-end gap-1">
+                        <Link href={`/clients/${client.id}`}>
+                          <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
+                            View
+                          </Button>
+                        </Link>
+                        <ConfirmDeleteButton
+                          endpoint={`/api/clients/${client.id}`}
+                          entityLabel={client.name}
+                          entityKind="client"
+                        />
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

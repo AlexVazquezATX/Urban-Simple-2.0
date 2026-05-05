@@ -16,9 +16,11 @@ async function LocationsList() {
     where: {
       client: {
         companyId: user.companyId,
+        deletedAt: null,
         ...(user.branchId && { branchId: user.branchId }),
       },
       isActive: true,
+      deletedAt: null,
     },
     include: {
       client: {

@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { LocationCard } from './location-card'
 import { LocationForm } from '@/components/forms/location-form'
+import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
 
@@ -258,11 +259,18 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/locations/${location.id}`}>
-                          <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
-                            View
-                          </Button>
-                        </Link>
+                        <div className="flex items-center justify-end gap-1">
+                          <Link href={`/locations/${location.id}`}>
+                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
+                              View
+                            </Button>
+                          </Link>
+                          <ConfirmDeleteButton
+                            endpoint={`/api/locations/${location.id}`}
+                            entityLabel={`${location.client.name} - ${location.name}`}
+                            entityKind="location"
+                          />
+                        </div>
                       </TableCell>
                     </TableRow>
                   )

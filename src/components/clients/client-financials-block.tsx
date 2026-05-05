@@ -6,6 +6,7 @@ import {
   marginToneClass,
   type FinancialSummary,
 } from '@/lib/financials'
+import { FinancialsQuickEditDialog } from './financials-quick-edit-dialog'
 
 interface AgreementRow {
   id: string
@@ -85,7 +86,8 @@ export function ClientFinancialsBlock({ summary, agreements }: ClientFinancialsB
                 <th className="py-2 px-3 text-right">Materials</th>
                 <th className="py-2 px-3 text-right">Other</th>
                 <th className="py-2 px-3 text-right">Profit</th>
-                <th className="py-2 pl-3 text-right">Margin</th>
+                <th className="py-2 px-3 text-right">Margin</th>
+                <th className="py-2 pl-3 text-right" />
               </tr>
             </thead>
             <tbody>
@@ -111,8 +113,20 @@ export function ClientFinancialsBlock({ summary, agreements }: ClientFinancialsB
                     <td className={`py-2 px-3 text-right font-mono ${marginToneClass(margin)}`}>
                       {formatCurrency(profit)}
                     </td>
-                    <td className={`py-2 pl-3 text-right font-mono ${marginToneClass(margin)}`}>
+                    <td className={`py-2 px-3 text-right font-mono ${marginToneClass(margin)}`}>
                       {formatMargin(margin)}
+                    </td>
+                    <td className="py-1 pl-3 text-right">
+                      <FinancialsQuickEditDialog
+                        agreementId={a.id}
+                        locationName={a.locationName}
+                        initial={{
+                          monthlyAmount: a.monthlyAmount,
+                          monthlyLaborCost: a.monthlyLaborCost,
+                          monthlyMaterialCost: a.monthlyMaterialCost,
+                          monthlyOtherCost: a.monthlyOtherCost,
+                        }}
+                      />
                     </td>
                   </tr>
                 )

@@ -24,6 +24,7 @@ async function CommandCenterData() {
     prisma.client.findMany({
       where: {
         companyId: user.companyId,
+        deletedAt: null,
         ...(user.branchId && { branchId: user.branchId }),
       },
       select: { id: true },

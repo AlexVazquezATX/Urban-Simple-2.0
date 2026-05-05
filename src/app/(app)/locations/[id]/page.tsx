@@ -7,10 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { LocationForm } from '@/components/forms/location-form'
+import { LocationFinancialsBlock } from '@/components/locations/location-financials-block'
+import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
+import { canSeeFinancials, summarizeAgreements } from '@/lib/financials'
 
 type AddressLike = {
   street?: string
@@ -31,8 +34,10 @@ async function LocationDetail({ id }: { id: string }) {
   const location = await prisma.location.findFirst({
     where: {
       id,
+      deletedAt: null,
       client: {
         companyId: user.companyId,
+        deletedAt: null,
       },
     },
     include: {
@@ -140,6 +145,37 @@ async function LocationDetail({ id }: { id: string }) {
   const serviceProfile = normalizeServiceProfile(location.serviceProfile)
   const reviewFreshness = getReviewFreshness(location.reviews[0])
 
+  // Per-location financials (SUPER_ADMIN only).
+  const showFinancials = canSeeFinancials(user.role)
+  const agreement = showFinancials
+    ? await prisma.serviceAgreement.findFirst({
+        where: { locationId: location.id, isActive: true },
+        select: {
+          id: true,
+          description: true,
+          monthlyAmount: true,
+          monthlyLaborCost: true,
+          monthlyMaterialCost: true,
+          monthlyOtherCost: true,
+          isActive: true,
+          startDate: true,
+          paymentTerms: true,
+          billingDay: true,
+        },
+      })
+    : null
+  const locationSummary = agreement
+    ? summarizeAgreements([
+        {
+          monthlyAmount: agreement.monthlyAmount as unknown as string,
+          monthlyLaborCost: agreement.monthlyLaborCost as unknown as string | null,
+          monthlyMaterialCost: agreement.monthlyMaterialCost as unknown as string | null,
+          monthlyOtherCost: agreement.monthlyOtherCost as unknown as string | null,
+          isActive: agreement.isActive,
+        },
+      ])
+    : null
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -156,10 +192,48 @@ async function LocationDetail({ id }: { id: string }) {
             </p>
           </div>
         </div>
-        <LocationForm clientId={location.client.id} location={location}>
-          <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">Edit Location</Button>
-        </LocationForm>
+        <div className="flex items-center gap-2">
+          <LocationForm clientId={location.client.id} location={location}>
+            <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">Edit Location</Button>
+          </LocationForm>
+          <ConfirmDeleteButton
+            endpoint={`/api/locations/${location.id}`}
+            entityLabel={`${location.client.name} - ${location.name}`}
+            entityKind="location"
+            redirectTo={`/clients/${location.client.id}`}
+            buttonLabel="Delete"
+            variant="outline"
+            size="default"
+            className="rounded-sm border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+          />
+        </div>
       </div>
+
+      {showFinancials && agreement && locationSummary && (
+        <LocationFinancialsBlock
+          summary={locationSummary}
+          agreement={{
+            id: agreement.id,
+            description: agreement.description,
+            monthlyAmount: Number(agreement.monthlyAmount),
+            monthlyLaborCost: agreement.monthlyLaborCost === null ? null : Number(agreement.monthlyLaborCost),
+            monthlyMaterialCost: agreement.monthlyMaterialCost === null ? null : Number(agreement.monthlyMaterialCost),
+            monthlyOtherCost: agreement.monthlyOtherCost === null ? null : Number(agreement.monthlyOtherCost),
+            startDate: agreement.startDate.toISOString(),
+            paymentTerms: agreement.paymentTerms,
+            billingDay: agreement.billingDay,
+          }}
+          locationName={location.name}
+        />
+      )}
+
+      {showFinancials && !agreement && (
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4 text-sm text-warm-500 dark:text-cream-400">
+            No active service agreement on this location yet. Create one from the client&apos;s detail page or directly from the Service Agreements area.
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">

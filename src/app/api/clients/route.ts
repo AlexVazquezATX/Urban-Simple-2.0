@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     const clients = await prisma.client.findMany({
       where: {
         companyId: user.companyId,
+        deletedAt: null,
         branchId: user.branchId || undefined, // Filter by branch if user has one
       },
       include: {
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
         locations: {
           where: {
             isActive: true,
+            deletedAt: null,
           },
           select: {
             id: true,

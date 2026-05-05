@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ClientForm } from '@/components/forms/client-form'
+import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { formatCurrency, formatMargin, marginToneClass } from '@/lib/financials'
 
 interface ClientCardProps {
@@ -130,6 +131,11 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
                 Edit
               </Button>
             </ClientForm>
+            <ConfirmDeleteButton
+              endpoint={`/api/clients/${client.id}`}
+              entityLabel={client.name}
+              entityKind="client"
+            />
           </div>
         </div>
       </CardContent>

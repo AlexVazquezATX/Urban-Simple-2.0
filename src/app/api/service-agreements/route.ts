@@ -71,6 +71,9 @@ export async function POST(request: NextRequest) {
       locationId,
       description,
       monthlyAmount,
+      monthlyLaborCost,
+      monthlyMaterialCost,
+      monthlyOtherCost,
       billingDay = 1,
       paymentTerms = 'NET_30',
       startDate,
@@ -116,6 +119,18 @@ export async function POST(request: NextRequest) {
         locationId,
         description,
         monthlyAmount: parseFloat(monthlyAmount),
+        monthlyLaborCost:
+          monthlyLaborCost !== undefined && monthlyLaborCost !== null && monthlyLaborCost !== ''
+            ? parseFloat(monthlyLaborCost)
+            : null,
+        monthlyMaterialCost:
+          monthlyMaterialCost !== undefined && monthlyMaterialCost !== null && monthlyMaterialCost !== ''
+            ? parseFloat(monthlyMaterialCost)
+            : null,
+        monthlyOtherCost:
+          monthlyOtherCost !== undefined && monthlyOtherCost !== null && monthlyOtherCost !== ''
+            ? parseFloat(monthlyOtherCost)
+            : null,
         billingDay: day,
         paymentTerms,
         startDate: new Date(startDate),

@@ -192,7 +192,10 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/locations/[id] - Delete location (soft delete by setting isActive=false)
+// DELETE /api/locations/[id] - Soft-delete location.
+// Records deletedAt + deletedById, sets isActive=false, deactivates active
+// service agreements for this location so financial rollups stop counting it.
+// History (invoices, service logs, reviews) is preserved.
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -204,30 +207,31 @@ export async function DELETE(
     }
 
     const { id } = await params
+    const now = new Date()
 
-    // Verify location belongs to user's company
     const existingLocation = await prisma.location.findFirst({
       where: {
         id,
-        client: {
-          companyId: user.companyId,
-        },
+        deletedAt: null,
+        client: { companyId: user.companyId },
       },
     })
-
     if (!existingLocation) {
       return NextResponse.json({ error: 'Location not found' }, { status: 404 })
     }
 
-    // Soft delete by setting isActive=false
-    const location = await prisma.location.update({
-      where: { id },
-      data: {
-        isActive: false,
-      },
-    })
+    await prisma.$transaction([
+      prisma.location.update({
+        where: { id },
+        data: { deletedAt: now, deletedById: user.id, isActive: false },
+      }),
+      prisma.serviceAgreement.updateMany({
+        where: { locationId: id, isActive: true },
+        data: { isActive: false, endDate: now },
+      }),
+    ])
 
-    return NextResponse.json(location)
+    return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error deleting location:', error)
     return NextResponse.json(

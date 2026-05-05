@@ -34,9 +34,11 @@ export default async function ReviewFlagsPage() {
     where: {
       client: {
         companyId: user.companyId,
+        deletedAt: null,
         ...(user.branchId && { branchId: user.branchId }),
       },
       isActive: true,
+      deletedAt: null,
     },
     include: {
       client: {

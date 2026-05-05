@@ -107,6 +107,9 @@ export async function PATCH(
     const {
       description,
       monthlyAmount,
+      monthlyLaborCost,
+      monthlyMaterialCost,
+      monthlyOtherCost,
       billingDay,
       paymentTerms,
       startDate,
@@ -118,6 +121,13 @@ export async function PATCH(
     if (description !== undefined) updateData.description = description
     if (monthlyAmount !== undefined)
       updateData.monthlyAmount = parseFloat(monthlyAmount)
+    // Cost fields explicitly accept null to clear a value.
+    if (monthlyLaborCost !== undefined)
+      updateData.monthlyLaborCost = monthlyLaborCost === null ? null : parseFloat(monthlyLaborCost)
+    if (monthlyMaterialCost !== undefined)
+      updateData.monthlyMaterialCost = monthlyMaterialCost === null ? null : parseFloat(monthlyMaterialCost)
+    if (monthlyOtherCost !== undefined)
+      updateData.monthlyOtherCost = monthlyOtherCost === null ? null : parseFloat(monthlyOtherCost)
     if (billingDay !== undefined) {
       const day = parseInt(billingDay)
       if (day < 1 || day > 28) {

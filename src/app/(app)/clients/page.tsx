@@ -18,6 +18,7 @@ async function ClientsList() {
   const clients = await prisma.client.findMany({
     where: {
       companyId: user.companyId,
+      deletedAt: null,
       ...(user.branchId && { branchId: user.branchId }),
     },
     include: {
@@ -25,6 +26,7 @@ async function ClientsList() {
       locations: {
         where: {
           isActive: true,
+          deletedAt: null,
         },
       },
     },

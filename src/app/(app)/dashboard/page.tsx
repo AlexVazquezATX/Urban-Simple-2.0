@@ -24,6 +24,7 @@ async function DashboardStats() {
   const clients = await prisma.client.findMany({
     where: {
       companyId: user.companyId,
+      deletedAt: null,
       ...(user.branchId && { branchId: user.branchId }),
     },
   })

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ClientForm } from '@/components/forms/client-form'
 import { ClientDetailTabs } from '@/components/clients/client-detail-tabs'
 import { ClientFinancialsBlock } from '@/components/clients/client-financials-block'
+import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { canSeeFinancials, summarizeAgreements } from '@/lib/financials'
@@ -24,6 +25,7 @@ async function ClientDetail({ id }: { id: string }) {
     where: {
       id,
       companyId: user.companyId,
+      deletedAt: null,
     },
     include: {
       branch: {
@@ -33,6 +35,7 @@ async function ClientDetail({ id }: { id: string }) {
         },
       },
       locations: {
+        where: { deletedAt: null },
         include: {
           branch: {
             select: {
@@ -179,9 +182,21 @@ async function ClientDetail({ id }: { id: string }) {
             </p>
           </div>
         </div>
-        <ClientForm client={serializedClient}>
-          <Button variant="outline" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">Edit Client</Button>
-        </ClientForm>
+        <div className="flex items-center gap-2">
+          <ClientForm client={serializedClient}>
+            <Button variant="outline" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">Edit Client</Button>
+          </ClientForm>
+          <ConfirmDeleteButton
+            endpoint={`/api/clients/${id}`}
+            entityLabel={serializedClient.name}
+            entityKind="client"
+            redirectTo="/clients"
+            buttonLabel="Delete"
+            variant="outline"
+            size="default"
+            className="rounded-sm border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+          />
+        </div>
       </div>
 
       {showFinancials && overallSummary && (
