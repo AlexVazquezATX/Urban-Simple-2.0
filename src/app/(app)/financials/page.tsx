@@ -4,6 +4,7 @@ import { ArrowRight, Lock, TrendingUp, TrendingDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { SnapshotNowButton } from '@/components/financials/snapshot-now-button'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import {
@@ -24,7 +25,7 @@ export default async function FinancialsDashboardPage() {
   }
 
   // Fetch everything we need to render the dashboard.
-  const [agreementsRaw, expensesRaw, clients] = await Promise.all([
+  const [agreementsRaw, expensesRaw, clients, snapshots] = await Promise.all([
     prisma.serviceAgreement.findMany({
       where: {
         client: { companyId: user.companyId, deletedAt: null },
@@ -65,6 +66,12 @@ export default async function FinancialsDashboardPage() {
         parentClient: { select: { id: true, name: true } },
       },
       orderBy: { name: 'asc' },
+    }),
+    // Last 12 months of snapshots for the trend chart.
+    prisma.monthlyFinancialSnapshot.findMany({
+      where: { companyId: user.companyId },
+      orderBy: [{ periodYear: 'desc' }, { periodMonth: 'desc' }],
+      take: 12,
     }),
   ])
 
@@ -204,12 +211,15 @@ export default async function FinancialsDashboardPage() {
             Cash flow at a glance. Client P&amp;L on the revenue side, recurring overhead on the cost side.
           </p>
         </div>
-        <Link href="/financials/expenses">
-          <Button variant="outline" className="rounded-sm">
-            Manage Recurring Expenses
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <SnapshotNowButton />
+          <Link href="/financials/expenses">
+            <Button variant="outline" className="rounded-sm">
+              Manage Recurring Expenses
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Top KPI tiles */}
@@ -264,6 +274,69 @@ export default async function FinancialsDashboardPage() {
           </CardContent>
         </Card>
       </div>
+
+      {snapshots.length > 0 && (() => {
+        // Reverse to chronological order for the chart.
+        const sorted = [...snapshots].reverse()
+        const maxRev = Math.max(...sorted.map(s => Number(s.monthlyRevenue)))
+        const maxAbs = Math.max(maxRev, ...sorted.map(s => Math.abs(Number(s.netCashFlow))))
+        const monthLabel = (s: typeof sorted[number]) => {
+          const d = new Date(s.periodYear, s.periodMonth - 1, 1)
+          return d.toLocaleString('en-US', { month: 'short', year: '2-digit' })
+        }
+        return (
+          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+            <CardHeader className="p-4 pb-2">
+              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+                Trend (last {sorted.length} {sorted.length === 1 ? 'month' : 'months'})
+              </CardTitle>
+              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                Captured monthly. Use the Snapshot now button to record the current month at any time.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              <div className="grid grid-cols-12 gap-1.5">
+                {sorted.map(s => {
+                  const rev = Number(s.monthlyRevenue)
+                  const cost = Number(s.monthlyClientCost) + Number(s.monthlyOverhead)
+                  const net = Number(s.netCashFlow)
+                  const revH = maxAbs > 0 ? (rev / maxAbs) * 80 : 0
+                  const costH = maxAbs > 0 ? (cost / maxAbs) * 80 : 0
+                  return (
+                    <div key={s.id} className="flex flex-col items-center gap-1">
+                      <div className="relative flex h-24 w-full items-end justify-center gap-0.5">
+                        <div
+                          title={`Revenue ${formatCurrency(rev)}`}
+                          className="w-2 rounded-sm bg-ocean-400 dark:bg-ocean-500 transition-all"
+                          style={{ height: `${revH}%` }}
+                        />
+                        <div
+                          title={`All costs ${formatCurrency(cost)}`}
+                          className="w-2 rounded-sm bg-plum-400 dark:bg-plum-500 transition-all"
+                          style={{ height: `${costH}%` }}
+                        />
+                      </div>
+                      <p className="text-[9px] text-warm-500 dark:text-cream-400">{monthLabel(s)}</p>
+                      <p className={`text-[10px] font-mono ${net < 0 ? 'text-red-600' : 'text-lime-700'}`}>
+                        {formatCurrency(net)}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="mt-3 flex items-center gap-4 text-[11px] text-warm-500 dark:text-cream-400">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm bg-ocean-400" /> Revenue
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-sm bg-plum-400" /> All costs
+                </span>
+                <span className="text-warm-400">Bottom line below = net cash flow</span>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })()}
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Revenue by client */}

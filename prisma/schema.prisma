@@ -61,6 +61,10 @@ model Company {
   // Operating overhead (rent, software, insurance, etc.)
   recurringExpenses RecurringExpense[]
 
+  // Historical financial snapshots (monthly cron-generated rows that power
+  // the trend charts on the financials dashboard).
+  financialSnapshots MonthlyFinancialSnapshot[]
+
   @@map("companies")
 }
 
@@ -680,6 +684,37 @@ model ServiceAgreement {
   invoiceLineItems InvoiceLineItem[]
 
   @@map("service_agreements")
+}
+
+// Monthly snapshot of company-wide financials. Written by the cron once
+// per month (or on-demand from the dashboard for backfills). Powers the
+// trend charts so users can see "how is our margin trending over time?"
+// without recomputing from raw data each time.
+//
+// One row per (companyId, periodYear, periodMonth). We don't store
+// per-client breakdowns here — that level of fidelity would balloon the
+// table for marginal analytical value. If we later need per-client trends,
+// add a separate ClientMonthlyFinancialSnapshot model.
+model MonthlyFinancialSnapshot {
+  id          String @id @default(cuid())
+  companyId   String @map("company_id")
+  periodYear  Int    @map("period_year")
+  periodMonth Int    @map("period_month") // 1-12
+
+  monthlyRevenue       Decimal @map("monthly_revenue") @db.Decimal(12, 2)
+  monthlyClientCost    Decimal @map("monthly_client_cost") @db.Decimal(12, 2)
+  monthlyOverhead      Decimal @map("monthly_overhead") @db.Decimal(12, 2)
+  netCashFlow          Decimal @map("net_cash_flow") @db.Decimal(12, 2)
+  activeAgreementCount Int     @map("active_agreement_count")
+  activeExpenseCount   Int     @map("active_expense_count")
+
+  capturedAt DateTime @default(now()) @map("captured_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, periodYear, periodMonth])
+  @@index([companyId, periodYear, periodMonth])
+  @@map("monthly_financial_snapshots")
 }
 
 // Operating overhead the company pays out (rent, software, insurance,
