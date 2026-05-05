@@ -58,6 +58,9 @@ model Company {
   // QuickBooks Online
   qboConnection QBOConnection?
 
+  // Operating overhead (rent, software, insurance, etc.)
+  recurringExpenses RecurringExpense[]
+
   @@map("companies")
 }
 
@@ -677,6 +680,36 @@ model ServiceAgreement {
   invoiceLineItems InvoiceLineItem[]
 
   @@map("service_agreements")
+}
+
+// Operating overhead the company pays out (rent, software, insurance,
+// vehicles, marketing, payroll, etc.). Feeds the financials dashboard's
+// cash-flow view alongside the per-client P&L.
+model RecurringExpense {
+  id            String    @id @default(cuid())
+  companyId     String    @map("company_id")
+  name          String
+  // Free-form-ish category. Common values used by the dashboard for grouping:
+  //   rent, software, insurance, vehicles, marketing, payroll, utilities,
+  //   subscriptions, professional_services, equipment, supplies, other
+  category      String    @default("other")
+  monthlyAmount Decimal   @map("monthly_amount") @db.Decimal(10, 2)
+  vendor        String?
+  paymentMethod String?   @map("payment_method") // ach, credit_card, check, autopay, etc.
+  billingDay    Int       @default(1) @map("billing_day") // 1-31
+  startDate     DateTime  @map("start_date")
+  endDate       DateTime? @map("end_date")
+  isActive      Boolean   @default(true) @map("is_active")
+  notes         String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, isActive])
+  @@index([companyId, category])
+  @@map("recurring_expenses")
 }
 
 // ============================================

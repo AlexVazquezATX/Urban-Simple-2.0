@@ -86,3 +86,44 @@ export function marginToneClass(marginPct: number | null): string {
 export function canSeeFinancials(role: string | null | undefined): boolean {
   return role === 'SUPER_ADMIN'
 }
+
+// Recurring expense categories used by the dashboard for grouping. Keep the
+// list short and meaningful — too many buckets dilutes the breakdown chart.
+// Free-form strings are still accepted at the DB level; this just provides
+// a curated list for the form picker and predictable grouping.
+export const EXPENSE_CATEGORIES = [
+  { value: 'rent', label: 'Rent' },
+  { value: 'software', label: 'Software & Subscriptions' },
+  { value: 'insurance', label: 'Insurance' },
+  { value: 'vehicles', label: 'Vehicles' },
+  { value: 'marketing', label: 'Marketing & Advertising' },
+  { value: 'payroll', label: 'Payroll & Benefits' },
+  { value: 'utilities', label: 'Utilities' },
+  { value: 'professional_services', label: 'Professional Services' },
+  { value: 'equipment', label: 'Equipment' },
+  { value: 'supplies', label: 'Supplies' },
+  { value: 'other', label: 'Other' },
+] as const
+
+export function expenseCategoryLabel(value: string): string {
+  return EXPENSE_CATEGORIES.find(c => c.value === value)?.label ?? value
+}
+
+// Aggregate monthly amounts on a list of recurring expenses (active ones only).
+export interface RecurringExpenseLike {
+  monthlyAmount: Decimalish
+  isActive: boolean
+  category: string
+}
+
+export function summarizeRecurringExpenses(rows: RecurringExpenseLike[]) {
+  let total = 0
+  const byCategory = new Map<string, number>()
+  for (const r of rows) {
+    if (!r.isActive) continue
+    const v = toNumber(r.monthlyAmount)
+    total += v
+    byCategory.set(r.category, (byCategory.get(r.category) ?? 0) + v)
+  }
+  return { total, byCategory }
+}
