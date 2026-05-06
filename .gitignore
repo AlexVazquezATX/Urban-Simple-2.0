@@ -45,3 +45,6 @@ nul
 
 .vercel
 .env*.local
+
+# local-only data drops (CSV exports from other platforms, etc.)
+/scripts/data/

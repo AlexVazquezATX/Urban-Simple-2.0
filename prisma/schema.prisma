@@ -286,6 +286,17 @@ model Client {
   loyaltyTier            String   @default("bronze") @map("loyalty_tier") // bronze, silver, gold, platinum
   qbCustomerId           String?  @map("qb_customer_id") // QuickBooks sync
 
+  // Portal subscription state (Phase 4). Connected accounts (cleaning clients)
+  // get the portal free as a perk; self-serve accounts (paid SaaS for non-Austin
+  // hospitality businesses) carry these fields. Stripe integration to follow;
+  // portalSubscriptionId is reserved for the future Stripe customer/subscription id.
+  isSelfServe          Boolean   @default(false) @map("is_self_serve")
+  portalPlan           String?   @map("portal_plan") // 'trial' | 'starter' | 'pro'
+  portalStatus         String?   @map("portal_status") // 'trial' | 'active' | 'past_due' | 'cancelled'
+  portalTrialEndsAt    DateTime? @map("portal_trial_ends_at")
+  portalSubscriptionId String?   @map("portal_subscription_id")
+  portalSignupOrigin   String?   @map("portal_signup_origin") // 'admin_invite' | 'self_serve'
+
   // Soft delete (recoverable). All user-facing list queries filter on
   // deletedAt: null. Hard cascades (invoices, payments, contracts) stay
   // intact for audit/historical purposes.

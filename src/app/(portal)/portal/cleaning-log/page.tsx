@@ -8,6 +8,26 @@ export default async function CleaningLogPage() {
   const ctx = await requirePortalContext()
   const locationIds = ctx.locations.map(l => l.id)
 
+  // Self-serve clients aren't UR cleaning customers — the cleaning log would
+  // always be empty. Send them to the walkthrough history, which is the
+  // equivalent surface for them.
+  if (ctx.client.isSelfServe) {
+    return (
+      <div className="rounded-sm border border-warm-200 bg-white p-6 text-center">
+        <p className="text-sm font-medium text-warm-900">Cleaning log is for Urban Simple cleaning clients.</p>
+        <p className="mt-1 text-xs text-warm-500">
+          You can browse your team&apos;s walkthroughs and inspection trail instead.
+        </p>
+        <Link
+          href="/portal/walkthroughs"
+          className="mt-3 inline-flex items-center gap-1 text-xs text-ocean-600 hover:underline"
+        >
+          See walkthrough history
+        </Link>
+      </div>
+    )
+  }
+
   if (locationIds.length === 0) {
     return (
       <div className="rounded-sm border border-warm-200 bg-white p-6 text-center">

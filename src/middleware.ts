@@ -222,13 +222,18 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect /portal routes - require login
+  // Protect /portal routes - require login (except public auth pages).
+  // /portal/signup is public so non-Austin restaurants can self-onboard.
   if (pathname.startsWith('/portal')) {
+    const isPortalPublic =
+      pathname.startsWith('/portal/login') ||
+      pathname.startsWith('/portal/signup')
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user && !pathname.startsWith('/portal/login')) {
+    if (!user && !isPortalPublic) {
       return NextResponse.redirect(new URL('/portal/login', request.url))
     }
   }

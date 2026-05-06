@@ -22,6 +22,13 @@ export interface PortalContext {
     id: string
     name: string
     logoUrl: string | null
+    // Subscription state (Phase 4). isSelfServe=true means the client signed
+    // up via the public /portal/signup flow and isn't an Urban Simple cleaning
+    // customer — UI should hide cleaning-log/visits and swap copy accordingly.
+    isSelfServe: boolean
+    portalPlan: string | null
+    portalStatus: string | null
+    portalTrialEndsAt: Date | null
   }
   // The client's active locations. Their data scope is the union of these.
   locations: Array<{
@@ -68,6 +75,10 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
           name: true,
           logoUrl: true,
           deletedAt: true,
+          isSelfServe: true,
+          portalPlan: true,
+          portalStatus: true,
+          portalTrialEndsAt: true,
           locations: {
             where: { isActive: true, deletedAt: null },
             select: { id: true, name: true },
@@ -90,6 +101,10 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
       id: contact.client.id,
       name: contact.client.name,
       logoUrl: contact.client.logoUrl,
+      isSelfServe: contact.client.isSelfServe,
+      portalPlan: contact.client.portalPlan,
+      portalStatus: contact.client.portalStatus,
+      portalTrialEndsAt: contact.client.portalTrialEndsAt,
     },
     locations: contact.client.locations,
   }
