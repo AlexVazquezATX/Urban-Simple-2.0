@@ -151,9 +151,11 @@ export async function middleware(request: NextRequest) {
     if (user) {
       const role = await getUserRole(user.id)
 
-      // CLIENT_USER cannot access admin routes — redirect to studio
+      // CLIENT_USER cannot access admin routes — redirect to /portal (the
+      // Urban Simple client portal) which is now the default landing for
+      // cleaning customers. (BackHaus/Studio is a separate product surface.)
       if (role === 'CLIENT_USER') {
-        return NextResponse.redirect(new URL('/studio', request.url))
+        return NextResponse.redirect(new URL('/portal', request.url))
       }
 
       // Admin routes require SUPER_ADMIN role
@@ -173,7 +175,7 @@ export async function middleware(request: NextRequest) {
       const role = await getUserRole(user.id)
 
       if (role === 'CLIENT_USER') {
-        return NextResponse.redirect(new URL('/studio', request.url))
+        return NextResponse.redirect(new URL('/portal', request.url))
       }
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }
@@ -189,7 +191,7 @@ export async function middleware(request: NextRequest) {
       const role = await getUserRole(user.id)
 
       if (role === 'CLIENT_USER') {
-        return NextResponse.redirect(new URL('/studio', request.url))
+        return NextResponse.redirect(new URL('/portal', request.url))
       }
       return NextResponse.redirect(new URL('/dashboard', request.url))
     }

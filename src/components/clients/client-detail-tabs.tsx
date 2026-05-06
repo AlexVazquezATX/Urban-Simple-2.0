@@ -12,6 +12,7 @@ import { LocationForm } from '@/components/forms/location-form'
 import { ContactForm } from '@/components/forms/contact-form'
 import { LocationCard } from '@/components/locations/location-card'
 import { DeleteContactButton } from '@/components/clients/delete-contact-button'
+import { PortalInviteButton } from '@/components/clients/portal-invite-button'
 import { FacilitiesTab } from '@/components/clients/tabs/facilities-tab'
 import { BillingPreviewTab } from '@/components/clients/tabs/billing-preview-tab'
 import { ScheduleCalendarTab } from '@/components/clients/tabs/schedule-calendar-tab'
@@ -221,6 +222,12 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        <PortalInviteButton
+                          clientId={client.id}
+                          contactId={contact.id}
+                          contactEmail={contact.email}
+                          isPortalUser={!!contact.isPortalUser}
+                        />
                         <ContactForm clientId={client.id} contact={contact}>
                           <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                             <Edit className="h-4 w-4" />
