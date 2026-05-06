@@ -13,6 +13,7 @@ import { ContactForm } from '@/components/forms/contact-form'
 import { LocationCard } from '@/components/locations/location-card'
 import { DeleteContactButton } from '@/components/clients/delete-contact-button'
 import { PortalInviteButton } from '@/components/clients/portal-invite-button'
+import { DocumentsTab } from '@/components/clients/tabs/documents-tab'
 import { FacilitiesTab } from '@/components/clients/tabs/facilities-tab'
 import { BillingPreviewTab } from '@/components/clients/tabs/billing-preview-tab'
 import { ScheduleCalendarTab } from '@/components/clients/tabs/schedule-calendar-tab'
@@ -51,6 +52,9 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
         </TabsTrigger>
         <TabsTrigger value="changelog" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
           Change Log
+        </TabsTrigger>
+        <TabsTrigger value="documents" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
+          Documents
         </TabsTrigger>
       </TabsList>
 
@@ -356,6 +360,10 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
 
       <TabsContent value="changelog" className="mt-4">
         <ChangelogTab clientId={client.id} />
+      </TabsContent>
+
+      <TabsContent value="documents" className="mt-4">
+        <DocumentsTab clientId={client.id} />
       </TabsContent>
     </Tabs>
   )

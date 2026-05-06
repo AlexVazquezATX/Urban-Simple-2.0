@@ -744,3 +744,16 @@ input[type="checkbox"] {
   animation: blob-reverse 25s ease-in-out infinite;
 }
 
+/* Print styles for the portal inspection packet. Tailwind's `print:` variants
+   handle most things; these @page defaults tighten margins and force clean
+   white-on-black for compliance documents. */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  @page {
+    margin: 0.75in;
+  }
+}
+

@@ -204,6 +204,9 @@ model User {
   timeEntryEdits     TimeEntry[]          @relation("TimeEntryEditor")
   weeklyHours        WeeklyHoursSummary[] @relation("WeeklyHours")
 
+  // Portal documents the user has uploaded (admin or client side).
+  portalDocumentsUploaded PortalDocument[] @relation("PortalDocUploader")
+
   @@map("users")
 }
 
@@ -309,6 +312,7 @@ model Client {
   convertedFromProspect Prospect?            @relation("ProspectToClient")
   facilityProfiles      FacilityProfile[]
   serviceLineItems      ServiceLineItem[]
+  portalDocuments       PortalDocument[]
 
   @@index([parentClientId])
   @@map("clients")
@@ -745,6 +749,39 @@ model RecurringExpense {
   @@index([companyId, isActive])
   @@index([companyId, category])
   @@map("recurring_expenses")
+}
+
+// Portal-side compliance binder. Each PortalDocument is one file scoped to a
+// Client. Both Urban Simple admins and authorized portal users can upload.
+// Common categories: coi (insurance certificate), sds, training, contract,
+// permit (health, business license), pest_log, other.
+model PortalDocument {
+  id           String   @id @default(cuid())
+  clientId     String   @map("client_id")
+  uploadedById String?  @map("uploaded_by_id")
+  category     String   @default("other")
+  name         String
+  description  String?
+  fileUrl      String   @map("file_url")
+  filePath     String   @map("file_path") // Supabase storage path for delete
+  fileSize     Int?     @map("file_size")
+  mimeType     String?  @map("mime_type")
+  // Optional expiration date (e.g., COI expires Dec 2026). The portal surfaces
+  // a warning badge when expiresAt is within 30 days.
+  expiresAt    DateTime? @map("expires_at")
+  // Distinguishes admin-uploaded (true means uploaded via the client portal,
+  // not the admin /clients UI). Useful for audit / display.
+  uploadedFromPortal Boolean @default(false) @map("uploaded_from_portal")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  client     Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  uploadedBy User?  @relation("PortalDocUploader", fields: [uploadedById], references: [id])
+
+  @@index([clientId, category])
+  @@index([clientId, expiresAt])
+  @@map("portal_documents")
 }
 
 // ============================================
