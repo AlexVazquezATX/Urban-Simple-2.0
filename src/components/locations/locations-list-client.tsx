@@ -19,11 +19,13 @@ import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { LocationCard } from './location-card'
 import { LocationForm } from '@/components/forms/location-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
+import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
 import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
 
 interface LocationsListClientProps {
   locations: LocationListItem[]
+  showFinancials?: boolean
 }
 
 type AddressLike = {
@@ -62,9 +64,10 @@ type LocationListItem = {
   _count: {
     issues: number
   }
+  financials?: FinancialSummary | null
 }
 
-export function LocationsListClient({ locations }: LocationsListClientProps) {
+export function LocationsListClient({ locations, showFinancials = false }: LocationsListClientProps) {
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
     if (typeof window === 'undefined') {
       return 'table'
@@ -154,6 +157,13 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Dispatch</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Review Status</TableHead>
                   <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Issues</TableHead>
+                  {showFinancials && (
+                    <>
+                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">MRR</TableHead>
+                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Profit</TableHead>
+                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Margin</TableHead>
+                    </>
+                  )}
                   <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -258,6 +268,19 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                           {location._count.issues}
                         </Badge>
                       </TableCell>
+                      {showFinancials && (
+                        <>
+                          <TableCell className="text-right font-mono text-warm-700 dark:text-cream-300">
+                            {location.financials ? formatCurrency(location.financials.monthlyRevenue) : '—'}
+                          </TableCell>
+                          <TableCell className={`text-right font-mono ${location.financials ? marginToneClass(location.financials.marginPct) : ''}`}>
+                            {location.financials ? formatCurrency(location.financials.monthlyProfit) : '—'}
+                          </TableCell>
+                          <TableCell className={`text-right font-mono ${location.financials ? marginToneClass(location.financials.marginPct) : ''}`}>
+                            {location.financials ? formatMargin(location.financials.marginPct) : '—'}
+                          </TableCell>
+                        </>
+                      )}
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
                           <Link href={`/locations/${location.id}`}>
@@ -284,6 +307,7 @@ export function LocationsListClient({ locations }: LocationsListClientProps) {
                   key={location.id}
                   location={location}
                   clientId={location.client.id}
+                  showFinancials={showFinancials}
                 />
               ))}
             </div>

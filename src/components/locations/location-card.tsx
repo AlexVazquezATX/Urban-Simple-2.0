@@ -7,10 +7,12 @@ import { Button } from '@/components/ui/button'
 import { LocationForm } from '@/components/forms/location-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
+import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
 
 interface LocationCardProps {
-  location: LocationCardItem
+  location: LocationCardItem & { financials?: FinancialSummary | null }
   clientId: string
+  showFinancials?: boolean
 }
 
 type AddressLike = {
@@ -42,7 +44,7 @@ type LocationCardItem = {
   }>
 }
 
-export function LocationCard({ location, clientId }: LocationCardProps) {
+export function LocationCard({ location, clientId, showFinancials = false }: LocationCardProps) {
   const address = location.address
   const reviewFreshness = getReviewFreshness(location.reviews?.[0])
   const addressStr =
@@ -137,6 +139,29 @@ export function LocationCard({ location, clientId }: LocationCardProps) {
               </Badge>
             </div>
           </div>
+
+          {showFinancials && location.financials && location.financials.agreementCount > 0 && (
+            <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50/50 dark:bg-charcoal-900/40 p-2 text-[10px]">
+              <div>
+                <p className="text-warm-500 dark:text-cream-400 uppercase tracking-wider">MRR</p>
+                <p className="font-mono font-medium text-warm-900 dark:text-cream-100">
+                  {formatCurrency(location.financials.monthlyRevenue)}
+                </p>
+              </div>
+              <div>
+                <p className="text-warm-500 dark:text-cream-400 uppercase tracking-wider">Profit</p>
+                <p className={`font-mono font-medium ${marginToneClass(location.financials.marginPct)}`}>
+                  {formatCurrency(location.financials.monthlyProfit)}
+                </p>
+              </div>
+              <div>
+                <p className="text-warm-500 dark:text-cream-400 uppercase tracking-wider">Margin</p>
+                <p className={`font-mono font-medium ${marginToneClass(location.financials.marginPct)}`}>
+                  {formatMargin(location.financials.marginPct)}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Spacer pushes buttons to bottom */}
           <div className="flex-1 min-h-2" />
