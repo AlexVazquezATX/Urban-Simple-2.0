@@ -176,6 +176,8 @@ export function AppSidebar() {
   ]
 
   const administrativeItems = [
+    { href: '/financials', icon: BarChart3, label: 'Financials', roles: ['SUPER_ADMIN'] },
+    { href: '/financials/expenses', icon: TrendingUp, label: 'Recurring Expenses', roles: ['SUPER_ADMIN'] },
     { href: '/billing', icon: DollarSign, label: 'Billing & AR', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/invoices', icon: FileText, label: 'Invoices', roles: ['SUPER_ADMIN', 'ADMIN'] },
   ]
