@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { Home, ClipboardList, AlertCircle, FileText, LogOut } from 'lucide-react'
+import { Home, Camera, AlertCircle, FileText, Users } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { LogoutButton } from '@/components/portal/logout-button'
 
@@ -32,8 +32,11 @@ export default async function PortalLayout({ children }: { children: React.React
           {/* Desktop nav (hidden on mobile; bottom bar takes over) */}
           <nav className="hidden md:flex items-center gap-4 text-sm">
             <Link href="/portal" className="text-warm-600 hover:text-ocean-600">Home</Link>
+            <Link href="/portal/walkthrough/new" className="text-warm-600 hover:text-ocean-600">Walkthrough</Link>
             <Link href="/portal/cleaning-log" className="text-warm-600 hover:text-ocean-600">Cleaning Log</Link>
             <Link href="/portal/issues" className="text-warm-600 hover:text-ocean-600">Issues</Link>
+            <Link href="/portal/documents" className="text-warm-600 hover:text-ocean-600">Documents</Link>
+            <Link href="/portal/team" className="text-warm-600 hover:text-ocean-600">Team</Link>
             <LogoutButton />
           </nav>
 
@@ -51,24 +54,33 @@ export default async function PortalLayout({ children }: { children: React.React
         {children}
       </main>
 
-      {/* Mobile bottom nav */}
+      {/* Mobile bottom nav — featured walkthrough is the centered call-to-action */}
       <nav className="md:hidden fixed inset-x-0 bottom-0 z-30 border-t border-warm-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto grid max-w-3xl grid-cols-4 text-[10px] uppercase tracking-wider">
+        <div className="mx-auto grid max-w-3xl grid-cols-5 text-[10px] uppercase tracking-wider">
           <Link href="/portal" className="flex flex-col items-center gap-1 py-2.5 text-warm-600">
             <Home className="h-5 w-5" />
             Home
-          </Link>
-          <Link href="/portal/cleaning-log" className="flex flex-col items-center gap-1 py-2.5 text-warm-600">
-            <ClipboardList className="h-5 w-5" />
-            Log
           </Link>
           <Link href="/portal/issues" className="flex flex-col items-center gap-1 py-2.5 text-warm-600">
             <AlertCircle className="h-5 w-5" />
             Issues
           </Link>
+          <Link
+            href="/portal/walkthrough/new"
+            className="flex flex-col items-center gap-1 py-2 text-lime-700 font-medium"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-lime-100">
+              <Camera className="h-5 w-5" />
+            </span>
+            Walk
+          </Link>
           <Link href="/portal/documents" className="flex flex-col items-center gap-1 py-2.5 text-warm-600">
             <FileText className="h-5 w-5" />
             Docs
+          </Link>
+          <Link href="/portal/team" className="flex flex-col items-center gap-1 py-2.5 text-warm-600">
+            <Users className="h-5 w-5" />
+            Team
           </Link>
         </div>
       </nav>

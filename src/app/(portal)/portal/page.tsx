@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ClipboardList, AlertCircle, FileText, Sparkles, ArrowRight, Camera } from 'lucide-react'
+import { ClipboardList, AlertCircle, FileText, Sparkles, ArrowRight, Camera, Users, ShieldCheck, ThumbsUp } from 'lucide-react'
 import { format } from 'date-fns'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
@@ -8,6 +8,25 @@ export default async function PortalHomePage() {
   const ctx = await requirePortalContext()
 
   const locationIds = ctx.locations.map(l => l.id)
+
+  // Most recent walkthrough by this user's team.
+  const lastWalkthrough = await prisma.portalWalkthrough.findFirst({
+    where: { clientId: ctx.client.id },
+    orderBy: [{ capturedAt: 'desc' }],
+    select: {
+      id: true,
+      capturedAt: true,
+      photoCount: true,
+      overallRating: true,
+      location: { select: { name: true } },
+    },
+  })
+
+  // Compliance flags: doc count + expiring count.
+  const [docCount, teamSize] = await Promise.all([
+    prisma.portalDocument.count({ where: { clientId: ctx.client.id } }),
+    prisma.clientContact.count({ where: { clientId: ctx.client.id, isPortalUser: true } }),
+  ])
 
   // Last service review (with photos) per the user's locations.
   const lastReview = locationIds.length > 0
@@ -112,6 +131,32 @@ export default async function PortalHomePage() {
         </div>
       </div>
 
+      {/* Walkthrough hero — promote daily walkthrough as the featured action */}
+      <Link
+        href="/portal/walkthrough/new"
+        className="block rounded-sm border-2 border-lime-200 bg-gradient-to-br from-lime-50 to-cream-50 p-4 hover:border-lime-400 transition-colors"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-lime-100 text-lime-700">
+            <Camera className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <p className="text-base font-medium text-warm-900">Start a walkthrough</p>
+            {lastWalkthrough ? (
+              <p className="mt-0.5 text-xs text-warm-600">
+                Last one at {lastWalkthrough.location.name} · {format(lastWalkthrough.capturedAt, 'EEE, MMM d')} · {lastWalkthrough.photoCount} photos
+                {lastWalkthrough.overallRating === 'issue' && ' · issue flagged'}
+              </p>
+            ) : (
+              <p className="mt-0.5 text-xs text-warm-600">
+                Quick photo + note capture by zone. Builds your inspection trail.
+              </p>
+            )}
+          </div>
+          <ArrowRight className="h-4 w-4 text-warm-400 mt-1" />
+        </div>
+      </Link>
+
       {/* Tools */}
       <div className="space-y-2">
         <p className="text-[10px] uppercase tracking-wider text-warm-500">Tools</p>
@@ -146,31 +191,55 @@ export default async function PortalHomePage() {
             </div>
             <div>
               <p className="text-sm font-medium text-warm-900">Documents</p>
-              <p className="text-xs text-warm-500">Coming soon — your contracts, COIs, inspection prep</p>
+              <p className="text-xs text-warm-500">{docCount} on file · inspection prep</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-warm-400" />
+        </Link>
+        <Link href="/portal/walkthroughs" className="flex items-center justify-between rounded-sm border border-warm-200 bg-white p-3 hover:border-ocean-400 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-lime-50 text-lime-700">
+              <ThumbsUp className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-warm-900">Walkthrough history</p>
+              <p className="text-xs text-warm-500">All your past walkthroughs</p>
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-warm-400" />
+        </Link>
+        <Link href="/portal/team" className="flex items-center justify-between rounded-sm border border-warm-200 bg-white p-3 hover:border-ocean-400 transition-colors">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-plum-50 text-plum-700">
+              <Users className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-warm-900">Team</p>
+              <p className="text-xs text-warm-500">{teamSize} member{teamSize === 1 ? '' : 's'} · invite teammates</p>
             </div>
           </div>
           <ArrowRight className="h-4 w-4 text-warm-400" />
         </Link>
       </div>
 
-      {/* Backhaus teaser */}
-      <div className="rounded-sm border border-plum-200 bg-gradient-to-br from-plum-50 to-cream-50 p-4">
+      {/* Backhaus teaser — strengthened CTA */}
+      <div className="rounded-sm border-2 border-plum-200 bg-gradient-to-br from-plum-50 to-cream-50 p-4">
         <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-plum-100 text-plum-700">
-            <Sparkles className="h-4 w-4" />
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-plum-100 text-plum-700">
+            <Sparkles className="h-5 w-5" />
           </div>
-          <div>
-            <p className="text-sm font-medium text-warm-900">BackHaus food photography</p>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-warm-900">Free perk: BackHaus food photography</p>
             <p className="mt-1 text-xs text-warm-600">
-              You get free credits as a portal member. Turn your phone-snapped dish photos into menu-ready images.
+              Turn phone-snapped dish photos into menu-ready images. As an Urban Simple cleaning client, you get an introductory pack of credits on us.
             </p>
             <a
-              href="https://backhaus.ai"
+              href={`https://backhaus.ai/studio/signup?ref=urban-simple-portal&client=${encodeURIComponent(ctx.client.name)}`}
               target="_blank"
               rel="noreferrer"
-              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-plum-700 hover:underline"
+              className="mt-2 inline-flex items-center gap-1 rounded-sm bg-plum-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-plum-700"
             >
-              Open BackHaus
+              Claim your credits
               <ArrowRight className="h-3 w-3" />
             </a>
           </div>

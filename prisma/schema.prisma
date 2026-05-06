@@ -207,6 +207,9 @@ model User {
   // Portal documents the user has uploaded (admin or client side).
   portalDocumentsUploaded PortalDocument[] @relation("PortalDocUploader")
 
+  // Portal walkthroughs the user has completed (CLIENT_USER side).
+  portalWalkthroughsCompleted PortalWalkthrough[] @relation("PortalWalkthroughCompletedBy")
+
   @@map("users")
 }
 
@@ -313,6 +316,7 @@ model Client {
   facilityProfiles      FacilityProfile[]
   serviceLineItems      ServiceLineItem[]
   portalDocuments       PortalDocument[]
+  portalWalkthroughs    PortalWalkthrough[]
 
   @@index([parentClientId])
   @@map("clients")
@@ -373,6 +377,7 @@ model Location {
   serviceAgreements ServiceAgreement[]
   facilityProfile   FacilityProfile?
   timeEntries       TimeEntry[]
+  portalWalkthroughs PortalWalkthrough[]
 
   @@map("locations")
 }
@@ -782,6 +787,46 @@ model PortalDocument {
   @@index([clientId, category])
   @@index([clientId, expiresAt])
   @@map("portal_documents")
+}
+
+// Portal-side daily walkthrough record. The GM (or owner / kitchen manager)
+// captures photos + notes per zone (kitchen line, dish pit, dining,
+// restrooms, BOH, walk-in, patio). Builds a dated history that lives next to
+// Urban Simple's manager-led ServiceReviews. Used for both daily ops habit
+// AND health-inspection compliance documentation.
+model PortalWalkthrough {
+  id          String  @id @default(cuid())
+  clientId    String  @map("client_id")
+  locationId  String  @map("location_id")
+  // The portal user who captured this walkthrough.
+  completedById String @map("completed_by_id")
+
+  // Per-zone capture. Schema:
+  //   [
+  //     { zone: "Kitchen Line", photos: ["url1", "url2"], notes: "...", rating: "ok" | "issue" | null },
+  //     ...
+  //   ]
+  // We don't enforce zone names — clients can customize per location later.
+  zones Json @default("[]")
+
+  // Overall walkthrough notes (one box at the end).
+  notes String?
+
+  // Convenience: pre-computed photo count and overall rating for fast list rendering.
+  photoCount   Int     @default(0) @map("photo_count")
+  overallRating String? @map("overall_rating") // "ok" | "issue" | null
+
+  capturedAt DateTime @default(now()) @map("captured_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  location    Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  completedBy User     @relation("PortalWalkthroughCompletedBy", fields: [completedById], references: [id])
+
+  @@index([clientId, capturedAt])
+  @@index([locationId, capturedAt])
+  @@map("portal_walkthroughs")
 }
 
 // ============================================
