@@ -25,7 +25,10 @@ export async function GET() {
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      role: user.role,
+      role: user.role, // effective role (after any impersonation override)
+      realRole: user.realRole, // actual DB role — used to gate the role-switcher UI
+      impersonating: user.impersonating,
+      impersonatedClientId: user.impersonatedClientId,
       companyId: user.companyId,
       branchId: user.branchId,
       emailSignature: user.emailSignature,

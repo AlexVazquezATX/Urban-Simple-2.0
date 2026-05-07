@@ -9,6 +9,10 @@ import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import {
+  getImpersonationCookies,
+  IMPERSONATION_GATE_EMAIL,
+} from '@/lib/impersonation'
 
 export interface PortalContext {
   userId: string
@@ -35,6 +39,10 @@ export interface PortalContext {
     id: string
     name: string
   }>
+  // True when the current user is a SUPER_ADMIN viewing the portal as a
+  // CLIENT_USER for the chosen client. Pages can use this to render an
+  // "exit impersonation" affordance and to soften destructive actions.
+  impersonating?: boolean
 }
 
 /**
@@ -63,7 +71,56 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
       isActive: true,
     },
   })
-  if (!user || user.role !== 'CLIENT_USER' || !user.isActive) return null
+  if (!user || !user.isActive) return null
+
+  // Impersonation path: a gated SUPER_ADMIN can view the portal as a chosen
+  // client without being linked to any ClientContact. We synthesize a
+  // PortalContext from the chosen client's data instead of looking it up via
+  // the ClientContact link the way real CLIENT_USERs do.
+  if (user.role === 'SUPER_ADMIN' && user.email === IMPERSONATION_GATE_EMAIL) {
+    const { role: impRole, clientId: impClientId } = await getImpersonationCookies()
+    if (impRole === 'CLIENT_USER' && impClientId) {
+      const client = await prisma.client.findFirst({
+        where: { id: impClientId, deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          logoUrl: true,
+          isSelfServe: true,
+          portalPlan: true,
+          portalStatus: true,
+          portalTrialEndsAt: true,
+          locations: {
+            where: { isActive: true, deletedAt: null },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' },
+          },
+        },
+      })
+      if (!client) return null
+      return {
+        userId: user.id,
+        authId: user.authId!,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        displayName: user.displayName,
+        client: {
+          id: client.id,
+          name: client.name,
+          logoUrl: client.logoUrl,
+          isSelfServe: client.isSelfServe,
+          portalPlan: client.portalPlan,
+          portalStatus: client.portalStatus,
+          portalTrialEndsAt: client.portalTrialEndsAt,
+        },
+        locations: client.locations,
+        impersonating: true,
+      }
+    }
+  }
+
+  if (user.role !== 'CLIENT_USER') return null
 
   // Find the ClientContact this user is linked to (and through it, the Client).
   const contact = await prisma.clientContact.findFirst({

@@ -58,6 +58,17 @@ async function getUserRole(authId: string): Promise<string | null> {
   return rows?.[0]?.role || null
 }
 
+// Apply the impersonation cookie on top of the real DB role. Only honored
+// when the real role is SUPER_ADMIN — everyone else gets their actual role
+// regardless of cookie state.
+const IMPERSONABLE = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE', 'CLIENT_USER']
+function applyImpersonation(realRole: string | null, request: NextRequest): string | null {
+  if (realRole !== 'SUPER_ADMIN') return realRole
+  const impRole = request.cookies.get('us_impersonate_role')?.value
+  if (impRole && IMPERSONABLE.includes(impRole)) return impRole
+  return realRole
+}
+
 // ============================================
 // MIDDLEWARE
 // ============================================
@@ -149,7 +160,8 @@ export async function middleware(request: NextRequest) {
     }
 
     if (user) {
-      const role = await getUserRole(user.id)
+      const realRole = await getUserRole(user.id)
+      const role = applyImpersonation(realRole, request)
 
       // CLIENT_USER cannot access admin routes — redirect to /portal (the
       // Urban Simple client portal) which is now the default landing for
@@ -172,7 +184,8 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (user) {
-      const role = await getUserRole(user.id)
+      const realRole = await getUserRole(user.id)
+      const role = applyImpersonation(realRole, request)
 
       if (role === 'CLIENT_USER') {
         return NextResponse.redirect(new URL('/portal', request.url))
@@ -188,7 +201,8 @@ export async function middleware(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     if (user) {
-      const role = await getUserRole(user.id)
+      const realRole = await getUserRole(user.id)
+      const role = applyImpersonation(realRole, request)
 
       if (role === 'CLIENT_USER') {
         return NextResponse.redirect(new URL('/portal', request.url))

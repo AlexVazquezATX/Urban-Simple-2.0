@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { Home, Camera, AlertCircle, FileText, Users } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { LogoutButton } from '@/components/portal/logout-button'
+import { ImpersonationExitPill } from '@/components/portal/impersonation-exit-pill'
 
 // Portal shell: top header + bottom mobile nav + max-width content area.
 // Mobile-first; on desktop, the same nav floats top-right.
@@ -84,6 +85,8 @@ export default async function PortalLayout({ children }: { children: React.React
           </Link>
         </div>
       </nav>
+
+      {ctx.impersonating && <ImpersonationExitPill clientName={ctx.client.name} />}
     </div>
   )
 }

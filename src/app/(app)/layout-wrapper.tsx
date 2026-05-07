@@ -24,12 +24,17 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     }
     return null
   })
-  const [isSuperAdmin, setIsSuperAdmin] = useState(() => {
+  // realRole gates the role-switcher: only the actual SUPER_ADMIN account
+  // gets the dev tool, even while they're impersonating a different role.
+  const [realRole, setRealRole] = useState<string | null>(() => {
     if (typeof window !== 'undefined') {
-      return sessionStorage.getItem('user-role') === 'SUPER_ADMIN'
+      return sessionStorage.getItem('user-real-role')
     }
-    return false
+    return null
   })
+  const [impersonating, setImpersonating] = useState(false)
+  const [impersonatedClientId, setImpersonatedClientId] = useState<string | null>(null)
+  const isSuperAdmin = realRole === 'SUPER_ADMIN'
   
   // Track if initial auth check has completed
   const hasCheckedAuth = useRef(false)
@@ -61,18 +66,21 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           return
         }
 
-        // Only fetch role if not cached
-        if (!userRole) {
-          const response = await fetch('/api/users/me', { credentials: 'include' })
-          if (response.ok) {
-            const userData = await response.json()
-            setUserRole(userData.role)
-            setIsSuperAdmin(userData.role === 'SUPER_ADMIN')
-            // Cache in sessionStorage
-            sessionStorage.setItem('user-role', userData.role)
-          }
+        // Always fetch /api/users/me on mount so impersonation state stays
+        // fresh after a switch. Cheap (server-side cached per request) and
+        // avoids stale-cache UI bugs that the previous sessionStorage-only
+        // gate suffered from.
+        const response = await fetch('/api/users/me', { credentials: 'include' })
+        if (response.ok) {
+          const userData = await response.json()
+          setUserRole(userData.role)
+          setRealRole(userData.realRole || userData.role)
+          setImpersonating(!!userData.impersonating)
+          setImpersonatedClientId(userData.impersonatedClientId || null)
+          sessionStorage.setItem('user-role', userData.role)
+          sessionStorage.setItem('user-real-role', userData.realRole || userData.role)
         }
-        
+
         hasCheckedAuth.current = true
       } catch (error) {
         console.error('Auth check failed:', error)
@@ -138,10 +146,16 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
-          {/* Desktop Header with Role Switcher */}
+          {/* Desktop Header with Role Switcher — gated on REAL role so the
+              dev tool stays visible even while impersonating a non-admin role. */}
           {userRole && isSuperAdmin && (
             <div className="hidden md:flex sticky top-0 z-10 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-6 py-3 justify-end">
-              <RoleSwitcher currentRole={userRole} isSuperAdmin={isSuperAdmin} />
+              <RoleSwitcher
+                currentRole={userRole}
+                realRole={realRole || 'SUPER_ADMIN'}
+                impersonating={impersonating}
+                impersonatedClientId={impersonatedClientId}
+              />
             </div>
           )}
           {/* Main content with bottom padding on mobile for nav bar */}
