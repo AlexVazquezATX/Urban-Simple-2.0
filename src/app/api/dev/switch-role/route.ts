@@ -99,15 +99,14 @@ export async function POST(req: NextRequest) {
 
 /**
  * DELETE /api/dev/switch-role
- * Clear impersonation. Available to any user whose real role is SUPER_ADMIN —
- * if someone got into a stuck state we want them to be able to recover.
+ * Clear impersonation cookies. Permissive on purpose — any authenticated
+ * user can clear their own impersonation state. Worst case: a non-admin who
+ * somehow has stale cookies clears them and is restored to their real role.
+ * That's exactly the recovery path we want anyone in a stuck state to have.
  */
 export async function DELETE() {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  if (user.realRole !== 'SUPER_ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
 
   const c = await cookies()
   c.delete(IMPERSONATE_ROLE_COOKIE)
