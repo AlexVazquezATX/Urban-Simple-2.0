@@ -25,7 +25,7 @@ export function Hero() {
 
       <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-20 pt-10 sm:px-6 sm:pt-14 lg:grid-cols-[1.05fr_1fr] lg:gap-14 lg:px-8 lg:pb-28 lg:pt-16">
         <motion.div
-          initial="hidden"
+          initial={false}
           animate="visible"
           variants={fadeInUp}
           transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -73,7 +73,7 @@ export function Hero() {
         </motion.div>
 
         <motion.div
-          initial="hidden"
+          initial={false}
           animate="visible"
           variants={fadeInRight}
           transition={{ duration: 0.6, ease: 'easeOut', delay: 0.1 }}

@@ -49,12 +49,20 @@ export const NotificationToAlex = ({
 }: NotificationToAlexProps) => {
   const utmLine = `${utmSource || '-'}/${utmMedium || '-'}/${utmCampaign || '-'}`
   const displayName = name && name.trim().length > 0 ? name : 'Not provided'
+  const businessLine = businessTypeLabel
+    ? `${businessName} — ${businessTypeLabel}`
+    : businessName
+  const locationLine = squareFootageLabel
+    ? `${location} | ${squareFootageLabel}`
+    : location
+  const previewType = businessTypeLabel ? ` (${businessTypeLabel})` : ''
+  const hasPhone = phone && phone.trim().length > 0
 
   return (
     <Html>
       <Head />
       <Preview>
-        New walkthrough request: {businessName} ({businessTypeLabel})
+        New walkthrough request: {businessName}{previewType}
       </Preview>
       <Body style={main}>
         <Container style={container}>
@@ -64,17 +72,13 @@ export const NotificationToAlex = ({
             <Text style={lead}>
               <strong>{displayName}</strong>
             </Text>
+            <Text style={line}>{businessLine}</Text>
+            <Text style={line}>{locationLine}</Text>
             <Text style={line}>
-              {businessName} — {businessTypeLabel}
+              Current cleaning: {currentCleaningLabel || 'Not specified'}
             </Text>
             <Text style={line}>
-              {location} | {squareFootageLabel}
-            </Text>
-            <Text style={line}>
-              Current cleaning: {currentCleaningLabel}
-            </Text>
-            <Text style={line}>
-              Wants to start: {startTimingLabel}
+              Wants to start: {startTimingLabel || 'Not specified'}
             </Text>
           </Section>
 
@@ -83,11 +87,13 @@ export const NotificationToAlex = ({
           <Section style={section}>
             <Text style={groupHeading}>Contact</Text>
             <Text style={line}>
-              Phone: <Link href={`tel:${phone}`} style={link}>{phone}</Link>
-            </Text>
-            <Text style={line}>
               Email: <Link href={`mailto:${email}`} style={link}>{email}</Link>
             </Text>
+            {hasPhone && (
+              <Text style={line}>
+                Phone: <Link href={`tel:${phone}`} style={link}>{phone}</Link>
+              </Text>
+            )}
           </Section>
 
           <Hr style={divider} />

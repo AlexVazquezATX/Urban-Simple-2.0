@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Check, ChevronDown, Loader2, Send } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { Check, ChevronDown, Loader2, Plus, Send } from 'lucide-react'
 import {
   BUSINESS_TYPES,
   CURRENT_CLEANING_OPTIONS,
@@ -65,6 +66,11 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
   const [submitted, setSubmitted] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [utm, setUtm] = useState<UtmState>({})
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [firstNameError, setFirstNameError] = useState<string | null>(null)
+  const [lastNameError, setLastNameError] = useState<string | null>(null)
+  const [optionalOpen, setOptionalOpen] = useState(false)
 
   useEffect(() => {
     setUtm(readUtms())
@@ -75,17 +81,18 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
     handleSubmit,
     formState: { errors, isSubmitting },
     watch,
+    setValue,
   } = useForm<LeadFormInput>({
     resolver: zodResolver(leadFormSchema),
     mode: 'onBlur',
     defaultValues: {
       name: '',
       business_name: '',
-      business_type: undefined,
+      business_type: '',
       location: '',
-      square_footage_bucket: undefined,
-      current_cleaning: undefined,
-      start_timing: undefined,
+      square_footage_bucket: '',
+      current_cleaning: '',
+      start_timing: '',
       email: '',
       phone: '',
       notes: '',
@@ -93,10 +100,36 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
     },
   })
 
+  useEffect(() => {
+    const combined = [firstName.trim(), lastName.trim()].filter(Boolean).join(' ')
+    setValue('name', combined, { shouldValidate: false })
+  }, [firstName, lastName, setValue])
+
+  const validateNames = (): boolean => {
+    let ok = true
+    if (!firstName.trim()) {
+      setFirstNameError('We need this to find you.')
+      ok = false
+    } else {
+      setFirstNameError(null)
+    }
+    if (!lastName.trim()) {
+      setLastNameError('We need this to find you.')
+      ok = false
+    } else {
+      setLastNameError(null)
+    }
+    return ok
+  }
+
   const onSubmit = async (values: LeadFormInput) => {
     setServerError(null)
+    if (!validateNames()) return
+
+    const combinedName = [firstName.trim(), lastName.trim()].join(' ')
     const payload = {
       ...values,
+      name: combinedName,
       utm_source: utm.utm_source,
       utm_medium: utm.utm_medium,
       utm_campaign: utm.utm_campaign,
@@ -160,15 +193,34 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
       </div>
 
       <div className="space-y-3.5">
-        <GlassInput
-          id={`${fieldIdBase}-name`}
-          label="Name"
-          placeholder="Your name *"
-          autoComplete="name"
-          error={errors.name?.message}
-          register={register('name')}
-          required
-        />
+        <div className="grid gap-3.5 sm:grid-cols-2">
+          <GlassPlainInput
+            id={`${fieldIdBase}-first_name`}
+            label="First name"
+            placeholder="First name *"
+            autoComplete="given-name"
+            value={firstName}
+            onChange={(v) => {
+              setFirstName(v)
+              if (firstNameError) setFirstNameError(null)
+            }}
+            error={firstNameError}
+            required
+          />
+          <GlassPlainInput
+            id={`${fieldIdBase}-last_name`}
+            label="Last name"
+            placeholder="Last name *"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(v) => {
+              setLastName(v)
+              if (lastNameError) setLastNameError(null)
+            }}
+            error={lastNameError}
+            required
+          />
+        </div>
 
         <GlassInput
           id={`${fieldIdBase}-business_name`}
@@ -180,57 +232,13 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
           required
         />
 
-        <div className="grid gap-3.5 sm:grid-cols-2">
-          <GlassSelect
-            id={`${fieldIdBase}-business_type`}
-            label="Business type"
-            placeholder="Business type *"
-            error={errors.business_type?.message}
-            options={BUSINESS_TYPES}
-            value={watch('business_type')}
-            register={register('business_type')}
-            required
-          />
-          <GlassInput
-            id={`${fieldIdBase}-location`}
-            label="Location"
-            placeholder="Neighborhood or ZIP *"
-            autoComplete="address-level2"
-            error={errors.location?.message}
-            register={register('location')}
-            required
-          />
-        </div>
-
-        <div className="grid gap-3.5 sm:grid-cols-2">
-          <GlassSelect
-            id={`${fieldIdBase}-square_footage_bucket`}
-            label="Approximate square footage"
-            placeholder="Square footage (optional)"
-            error={errors.square_footage_bucket?.message}
-            options={SQUARE_FOOTAGE_BUCKETS}
-            value={watch('square_footage_bucket')}
-            register={register('square_footage_bucket')}
-          />
-          <GlassSelect
-            id={`${fieldIdBase}-current_cleaning`}
-            label="Current cleaning situation"
-            placeholder="Current cleaning (optional)"
-            error={errors.current_cleaning?.message}
-            options={CURRENT_CLEANING_OPTIONS}
-            value={watch('current_cleaning')}
-            register={register('current_cleaning')}
-          />
-        </div>
-
-        <GlassSelect
-          id={`${fieldIdBase}-start_timing`}
-          label="When do you want to start?"
-          placeholder="When do you want to start? *"
-          error={errors.start_timing?.message}
-          options={START_TIMING_OPTIONS}
-          value={watch('start_timing')}
-          register={register('start_timing')}
+        <GlassInput
+          id={`${fieldIdBase}-location`}
+          label="Location"
+          placeholder="Neighborhood or ZIP *"
+          autoComplete="address-level2"
+          error={errors.location?.message}
+          register={register('location')}
           required
         />
 
@@ -249,13 +257,12 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
           <GlassInput
             id={`${fieldIdBase}-phone`}
             label="Phone"
-            placeholder="Phone *"
+            placeholder="Phone (optional)"
             type="tel"
             autoComplete="tel"
             inputMode="tel"
             error={errors.phone?.message}
             register={register('phone')}
-            required
           />
         </div>
 
@@ -266,6 +273,86 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
           error={errors.notes?.message}
           register={register('notes')}
         />
+
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={() => setOptionalOpen((v) => !v)}
+            aria-expanded={optionalOpen}
+            aria-controls={`${fieldIdBase}-optional-section`}
+            className="group flex w-full items-center justify-between rounded-xl border border-cream-50/15 bg-cream-50/5 px-4 py-3 text-sm font-medium text-cream-100 transition-all hover:bg-cream-50/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ocean-300"
+          >
+            <span className="flex items-center gap-2">
+              <Plus
+                className={`h-4 w-4 transition-transform ${
+                  optionalOpen ? 'rotate-45' : ''
+                }`}
+                aria-hidden
+              />
+              Tell us more (optional)
+            </span>
+            <span className="text-xs uppercase tracking-[0.14em] text-cream-300/70">
+              {optionalOpen ? 'Hide' : 'Show'}
+            </span>
+          </button>
+
+          <AnimatePresence initial={false}>
+            {optionalOpen && (
+              <motion.div
+                id={`${fieldIdBase}-optional-section`}
+                key="optional"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="overflow-hidden"
+              >
+                <div className="space-y-3.5 pt-3.5">
+                  <GlassSelect
+                    id={`${fieldIdBase}-business_type`}
+                    label="Business type"
+                    placeholder="Business type (optional)"
+                    error={errors.business_type?.message}
+                    options={BUSINESS_TYPES}
+                    value={watch('business_type')}
+                    register={register('business_type')}
+                  />
+
+                  <div className="grid gap-3.5 sm:grid-cols-2">
+                    <GlassSelect
+                      id={`${fieldIdBase}-square_footage_bucket`}
+                      label="Approximate square footage"
+                      placeholder="Square footage (optional)"
+                      error={errors.square_footage_bucket?.message}
+                      options={SQUARE_FOOTAGE_BUCKETS}
+                      value={watch('square_footage_bucket')}
+                      register={register('square_footage_bucket')}
+                    />
+                    <GlassSelect
+                      id={`${fieldIdBase}-current_cleaning`}
+                      label="Current cleaning situation"
+                      placeholder="Current cleaning (optional)"
+                      error={errors.current_cleaning?.message}
+                      options={CURRENT_CLEANING_OPTIONS}
+                      value={watch('current_cleaning')}
+                      register={register('current_cleaning')}
+                    />
+                  </div>
+
+                  <GlassSelect
+                    id={`${fieldIdBase}-start_timing`}
+                    label="When do you want to start?"
+                    placeholder="When do you want to start? (optional)"
+                    error={errors.start_timing?.message}
+                    options={START_TIMING_OPTIONS}
+                    value={watch('start_timing')}
+                    register={register('start_timing')}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
 
         <div
           aria-hidden="true"
@@ -359,6 +446,49 @@ function GlassInput({
         inputMode={inputMode}
         className={`${inputBaseClass} ${stateClasses(!!error)}`}
         {...register}
+      />
+      {error && (
+        <p role="alert" className="mt-1 text-xs text-status-error">
+          {error}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function GlassPlainInput({
+  id,
+  label,
+  placeholder,
+  autoComplete,
+  value,
+  onChange,
+  error,
+  required,
+}: {
+  id: string
+  label: string
+  placeholder: string
+  autoComplete?: string
+  value: string
+  onChange: (v: string) => void
+  error?: string | null
+  required?: boolean
+}) {
+  return (
+    <div>
+      <label htmlFor={id} className="sr-only">
+        {label}
+        {required ? ' (required)' : ''}
+      </label>
+      <input
+        id={id}
+        type="text"
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className={`${inputBaseClass} ${stateClasses(!!error)}`}
       />
       {error && (
         <p role="alert" className="mt-1 text-xs text-status-error">

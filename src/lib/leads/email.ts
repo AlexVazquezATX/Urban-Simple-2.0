@@ -41,23 +41,29 @@ export async function sendLeadEmails(payload: LeadPayload): Promise<void> {
 
   const to = process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'
 
-  const businessTypeLabel = labelFor(BUSINESS_TYPES, payload.business_type)
+  const businessTypeLabel = payload.business_type
+    ? labelFor(BUSINESS_TYPES, payload.business_type)
+    : ''
   const squareFootageLabel = payload.square_footage_bucket
     ? labelFor(SQUARE_FOOTAGE_BUCKETS, payload.square_footage_bucket)
-    : 'Not provided'
+    : ''
   const currentCleaningLabel = payload.current_cleaning
     ? labelFor(CURRENT_CLEANING_OPTIONS, payload.current_cleaning)
-    : 'Not provided'
-  const startTimingLabel = labelFor(START_TIMING_OPTIONS, payload.start_timing)
+    : ''
+  const startTimingLabel = payload.start_timing
+    ? labelFor(START_TIMING_OPTIONS, payload.start_timing)
+    : ''
   const submittedAtFormatted = formatSubmittedAt(payload.submitted_at)
 
   const firstName = payload.name?.trim().split(/\s+/)[0] || ''
+
+  const subjectType = businessTypeLabel ? ` (${businessTypeLabel})` : ''
 
   const notification = resend.emails
     .send({
       from: FROM_NOTIFICATION,
       to,
-      subject: `New walkthrough request: ${payload.business_name} (${businessTypeLabel})`,
+      subject: `New walkthrough request: ${payload.business_name}${subjectType}`,
       react: NotificationToAlex({
         name: payload.name || '',
         businessName: payload.business_name,
@@ -66,7 +72,7 @@ export async function sendLeadEmails(payload: LeadPayload): Promise<void> {
         squareFootageLabel,
         currentCleaningLabel,
         startTimingLabel,
-        phone: payload.phone,
+        phone: payload.phone || '',
         email: payload.email,
         notes: payload.notes,
         utmSource: payload.utm_source,

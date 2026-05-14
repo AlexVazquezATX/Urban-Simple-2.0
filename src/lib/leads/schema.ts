@@ -65,15 +65,29 @@ const startTimingEnum = z.enum([
 ])
 
 export const leadFormSchema = z.object({
-  name: z.string().trim().min(1, 'Name is required').max(160),
-  business_name: z.string().trim().min(1, 'Business name is required').max(160),
-  business_type: businessTypeEnum,
-  location: z.string().trim().min(1, 'Location is required').max(120),
+  name: z.string().trim().min(1, 'We need this to find you.').max(160),
+  business_name: z
+    .string()
+    .trim()
+    .min(1, 'We need this to find you.')
+    .max(160),
+  business_type: businessTypeEnum.optional().or(z.literal('')),
+  location: z.string().trim().min(1, 'We need this to find you.').max(120),
   square_footage_bucket: squareFootageEnum.optional().or(z.literal('')),
   current_cleaning: currentCleaningEnum.optional().or(z.literal('')),
-  start_timing: startTimingEnum,
-  email: z.string().trim().email('Enter a valid email').max(160),
-  phone: z.string().trim().min(7, 'Enter a valid phone number').max(40),
+  start_timing: startTimingEnum.optional().or(z.literal('')),
+  email: z
+    .string()
+    .trim()
+    .min(1, 'We need this to find you.')
+    .email('Enter a valid email')
+    .max(160),
+  phone: z
+    .union([
+      z.string().trim().min(7, 'Enter a valid phone number').max(40),
+      z.literal(''),
+    ])
+    .optional(),
   notes: z.string().trim().max(2000).optional().or(z.literal('')),
   website: z.string().max(200).optional().or(z.literal('')),
   utm_source: z.string().max(200).optional().or(z.literal('')),
@@ -94,13 +108,13 @@ export type LeadPayload = {
   submitted_at: string
   name: string
   business_name: string
-  business_type: BusinessType
+  business_type?: BusinessType
   location: string
   square_footage_bucket?: SquareFootageBucket
   current_cleaning?: CurrentCleaning
-  start_timing: StartTiming
+  start_timing?: StartTiming
   email: string
-  phone: string
+  phone?: string
   notes?: string
   utm_source?: string
   utm_medium?: string

@@ -40,18 +40,22 @@ function estimatedSizeFromBucket(bucket?: string): string | undefined {
 export function buildCrmPayload(payload: LeadPayload) {
   const { firstName, lastName } = splitName(payload.name)
 
-  const businessTypeLabel = labelFor(BUSINESS_TYPES, payload.business_type)
+  const businessTypeLabel = payload.business_type
+    ? labelFor(BUSINESS_TYPES, payload.business_type)
+    : undefined
   const squareFootageLabel = payload.square_footage_bucket
     ? labelFor(SQUARE_FOOTAGE_BUCKETS, payload.square_footage_bucket)
     : undefined
   const currentCleaningLabel = payload.current_cleaning
     ? labelFor(CURRENT_CLEANING_OPTIONS, payload.current_cleaning)
     : undefined
-  const startTimingLabel = labelFor(START_TIMING_OPTIONS, payload.start_timing)
+  const startTimingLabel = payload.start_timing
+    ? labelFor(START_TIMING_OPTIONS, payload.start_timing)
+    : undefined
 
   const noteLines = [
     `Location: ${payload.location}`,
-    `Wants to start: ${startTimingLabel}`,
+    startTimingLabel ? `Wants to start: ${startTimingLabel}` : null,
     squareFootageLabel ? `Approx. square footage: ${squareFootageLabel}` : null,
     currentCleaningLabel ? `Current cleaning: ${currentCleaningLabel}` : null,
     payload.notes ? `\nLead notes:\n${payload.notes}` : null,
@@ -59,9 +63,9 @@ export function buildCrmPayload(payload: LeadPayload) {
 
   return {
     companyName: payload.business_name,
-    businessType: payload.business_type,
+    businessType: payload.business_type ?? undefined,
     industry: 'hospitality',
-    phone: payload.phone,
+    phone: payload.phone || undefined,
     address: {
       description: payload.location,
     },
@@ -76,22 +80,22 @@ export function buildCrmPayload(payload: LeadPayload) {
         firstName: firstName || payload.business_name,
         lastName: lastName || '',
         email: payload.email,
-        phone: payload.phone,
+        phone: payload.phone || undefined,
         role: 'primary',
         isDecisionMaker: true,
       },
     ],
     discoveryData: {
       submitted_at: payload.submitted_at,
-      business_type: payload.business_type,
-      business_type_label: businessTypeLabel,
+      business_type: payload.business_type ?? null,
+      business_type_label: businessTypeLabel ?? null,
       location: payload.location,
       square_footage_bucket: payload.square_footage_bucket ?? null,
       square_footage_label: squareFootageLabel ?? null,
       current_cleaning: payload.current_cleaning ?? null,
       current_cleaning_label: currentCleaningLabel ?? null,
-      start_timing: payload.start_timing,
-      start_timing_label: startTimingLabel,
+      start_timing: payload.start_timing ?? null,
+      start_timing_label: startTimingLabel ?? null,
       utm_source: payload.utm_source ?? null,
       utm_medium: payload.utm_medium ?? null,
       utm_campaign: payload.utm_campaign ?? null,
