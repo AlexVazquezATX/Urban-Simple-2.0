@@ -14,6 +14,8 @@ interface EditableCardProps {
   saving: boolean
   // When false, the Edit affordance is hidden (read-only section).
   canEdit?: boolean
+  // Label for the view-mode action button (e.g. "Add financial details").
+  editLabel?: string
   children: React.ReactNode
 }
 
@@ -30,6 +32,7 @@ export function EditableCard({
   onSave,
   saving,
   canEdit = true,
+  editLabel = 'Edit',
   children,
 }: EditableCardProps) {
   return (
@@ -78,7 +81,7 @@ export function EditableCard({
               className="rounded-sm text-warm-600 hover:bg-warm-50 hover:text-ocean-600 dark:text-cream-400 dark:hover:bg-charcoal-800"
             >
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
-              Edit
+              {editLabel}
             </Button>
           ))}
       </CardHeader>

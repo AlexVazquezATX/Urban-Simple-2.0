@@ -3,15 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { LocationFinancialsBlock } from '@/components/locations/location-financials-block'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { EditableLocationInfo } from '@/components/locations/editable-location-info'
 import { EditableDispatchProfile } from '@/components/locations/editable-dispatch-profile'
 import { EditableEquipment } from '@/components/locations/editable-equipment'
+import { EditableServiceAgreement } from '@/components/locations/editable-service-agreement'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
-import { canSeeFinancials, summarizeAgreements } from '@/lib/financials'
+import { canSeeFinancials } from '@/lib/financials'
 
 async function LocationDetail({ id }: { id: string }) {
   const user = await getCurrentUser()
@@ -105,6 +105,7 @@ async function LocationDetail({ id }: { id: string }) {
             monthlyOtherCost: true,
             isActive: true,
             startDate: true,
+            endDate: true,
             paymentTerms: true,
             billingDay: true,
           },
@@ -121,18 +122,6 @@ async function LocationDetail({ id }: { id: string }) {
   }
 
   const reviewFreshness = getReviewFreshness(location.reviews[0])
-
-  const locationSummary = agreement
-    ? summarizeAgreements([
-        {
-          monthlyAmount: agreement.monthlyAmount as unknown as string,
-          monthlyLaborCost: agreement.monthlyLaborCost as unknown as string | null,
-          monthlyMaterialCost: agreement.monthlyMaterialCost as unknown as string | null,
-          monthlyOtherCost: agreement.monthlyOtherCost as unknown as string | null,
-          isActive: agreement.isActive,
-        },
-      ])
-    : null
 
   return (
     <div className="space-y-6">
@@ -166,30 +155,30 @@ async function LocationDetail({ id }: { id: string }) {
         </div>
       </div>
 
-      {showFinancials && agreement && locationSummary && (
-        <LocationFinancialsBlock
-          summary={locationSummary}
-          agreement={{
-            id: agreement.id,
-            description: agreement.description,
-            monthlyAmount: Number(agreement.monthlyAmount),
-            monthlyLaborCost: agreement.monthlyLaborCost === null ? null : Number(agreement.monthlyLaborCost),
-            monthlyMaterialCost: agreement.monthlyMaterialCost === null ? null : Number(agreement.monthlyMaterialCost),
-            monthlyOtherCost: agreement.monthlyOtherCost === null ? null : Number(agreement.monthlyOtherCost),
-            startDate: agreement.startDate.toISOString(),
-            paymentTerms: agreement.paymentTerms,
-            billingDay: agreement.billingDay,
-          }}
-          locationName={location.name}
+      {showFinancials && (
+        <EditableServiceAgreement
+          locationId={location.id}
+          clientId={location.client.id}
+          agreement={
+            agreement
+              ? {
+                  id: agreement.id,
+                  description: agreement.description,
+                  monthlyAmount: Number(agreement.monthlyAmount),
+                  monthlyLaborCost:
+                    agreement.monthlyLaborCost === null ? null : Number(agreement.monthlyLaborCost),
+                  monthlyMaterialCost:
+                    agreement.monthlyMaterialCost === null ? null : Number(agreement.monthlyMaterialCost),
+                  monthlyOtherCost:
+                    agreement.monthlyOtherCost === null ? null : Number(agreement.monthlyOtherCost),
+                  billingDay: agreement.billingDay,
+                  paymentTerms: agreement.paymentTerms,
+                  startDate: agreement.startDate.toISOString(),
+                  endDate: agreement.endDate ? agreement.endDate.toISOString() : null,
+                }
+              : null
+          }
         />
-      )}
-
-      {showFinancials && !agreement && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4 text-sm text-warm-500 dark:text-cream-400">
-            No active service agreement on this location yet. Create one from the client&apos;s detail page or directly from the Service Agreements area.
-          </CardContent>
-        </Card>
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
