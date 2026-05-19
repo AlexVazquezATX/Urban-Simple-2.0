@@ -1,6 +1,4 @@
-import { Button } from '@/components/ui/button'
 import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { ClientForm } from '@/components/forms/client-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -25,12 +23,6 @@ export async function ClientHeader({ id }: { id: string }) {
     },
   })
   if (!client) return null
-
-  // ClientForm edits the full client — convert the Decimal taxRate first.
-  const serializedClient = {
-    ...client,
-    taxRate: client.taxRate ? Number(client.taxRate) : null,
-  }
 
   const breadcrumbItems = client.parentClient
     ? [
@@ -66,14 +58,6 @@ export async function ClientHeader({ id }: { id: string }) {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <ClientForm client={serializedClient}>
-            <Button
-              variant="outline"
-              className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50 dark:border-charcoal-700 dark:text-cream-300 dark:hover:bg-charcoal-800"
-            >
-              Edit Client
-            </Button>
-          </ClientForm>
           <ConfirmDeleteButton
             endpoint={`/api/clients/${id}`}
             entityLabel={client.name}

@@ -1,18 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, MapPin, Mail, Phone, User, Edit, Building2 } from 'lucide-react'
-import { ClientForm } from '@/components/forms/client-form'
+import { Plus, MapPin, Mail, Phone, User, Edit } from 'lucide-react'
 import { LocationForm } from '@/components/forms/location-form'
 import { ContactForm } from '@/components/forms/contact-form'
 import { LocationCard } from '@/components/locations/location-card'
 import { DeleteContactButton } from '@/components/clients/delete-contact-button'
 import { PortalInviteButton } from '@/components/clients/portal-invite-button'
+import { EditableClientInfo } from '@/components/clients/editable-client-info'
 import { DocumentsTab } from '@/components/clients/tabs/documents-tab'
 import { FacilitiesTab } from '@/components/clients/tabs/facilities-tab'
 import { BillingPreviewTab } from '@/components/clients/tabs/billing-preview-tab'
@@ -61,103 +60,8 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
       {/* Overview Tab — existing client detail content */}
       <TabsContent value="overview" className="space-y-6 mt-4">
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Client Information Card */}
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardHeader>
-              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Client Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {client.logoUrl && (
-                <div className="relative h-32 w-full rounded-sm overflow-hidden border border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
-                  <Image
-                    src={client.logoUrl}
-                    alt={client.name}
-                    fill
-                    className="object-contain p-2"
-                    unoptimized
-                  />
-                </div>
-              )}
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Billing Email</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">{client.billingEmail || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Phone</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">{client.phone || '-'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Payment Terms</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">{client.paymentTerms}</p>
-              </div>
-              {client.preferredPaymentMethod && (
-                <div>
-                  <p className="text-sm text-warm-500 dark:text-cream-400">Preferred Payment Method</p>
-                  <p className="font-medium capitalize text-warm-900 dark:text-cream-100">
-                    {client.preferredPaymentMethod.replace('_', ' ')}
-                  </p>
-                </div>
-              )}
-              <div className="flex items-center gap-4">
-                <div>
-                  <p className="text-sm text-warm-500 dark:text-cream-400">Status</p>
-                  <Badge
-                    className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                      client.status === 'active'
-                        ? 'bg-lime-100 text-lime-700 border-lime-200'
-                        : 'bg-warm-100 text-warm-600 border-warm-200'
-                    }`}
-                  >
-                    {client.status}
-                  </Badge>
-                </div>
-                {client.taxExempt && (
-                  <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">Tax Exempt</Badge>
-                )}
-              </div>
-              {client.healthScore !== null && (
-                <div>
-                  <p className="text-sm text-warm-500 dark:text-cream-400">Health Score</p>
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-warm-100 dark:bg-charcoal-800 rounded-sm overflow-hidden">
-                      <div
-                        className={`h-full ${
-                          (client.healthScore || 0) >= 80
-                            ? 'bg-lime-500'
-                            : (client.healthScore || 0) >= 60
-                              ? 'bg-yellow-500'
-                              : 'bg-red-500'
-                        }`}
-                        style={{ width: `${client.healthScore || 0}%` }}
-                      />
-                    </div>
-                    <span className="text-sm font-medium text-warm-700 dark:text-cream-300">
-                      {client.healthScore}/100
-                    </span>
-                  </div>
-                </div>
-              )}
-              {(client.loyaltyPoints > 0 || client.loyaltyTier !== 'bronze') && (
-                <div>
-                  <p className="text-sm text-warm-500 dark:text-cream-400">Loyalty</p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="capitalize rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">
-                      {client.loyaltyTier}
-                    </Badge>
-                    <span className="text-sm text-warm-500 dark:text-cream-400">
-                      {client.loyaltyPoints} points
-                    </span>
-                  </div>
-                </div>
-              )}
-              {client.notes && (
-                <div>
-                  <p className="text-sm text-warm-500 dark:text-cream-400">Notes</p>
-                  <p className="text-sm text-warm-700 dark:text-cream-300">{client.notes}</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          {/* Client Information — editable in place */}
+          <EditableClientInfo client={client} />
 
           {/* Contacts Card */}
           <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
@@ -288,11 +192,7 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {client.locations.map((location: any) => (
-                  <LocationCard
-                    key={location.id}
-                    location={location}
-                    clientId={client.id}
-                  />
+                  <LocationCard key={location.id} location={location} />
                 ))}
               </div>
             )}

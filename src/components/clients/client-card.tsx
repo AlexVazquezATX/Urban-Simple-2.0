@@ -4,7 +4,6 @@ import { MapPin, Mail, Phone } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ClientForm } from '@/components/forms/client-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { formatCurrency, formatMargin, marginToneClass } from '@/lib/financials'
 import { cn } from '@/lib/utils'
@@ -157,15 +156,6 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
               View Details
             </Button>
           </Link>
-          <ClientForm client={client}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 rounded-sm text-xs text-warm-600 hover:bg-warm-50 hover:text-ocean-600 dark:text-cream-400 dark:hover:bg-charcoal-800"
-            >
-              Edit
-            </Button>
-          </ClientForm>
           <ConfirmDeleteButton
             endpoint={`/api/clients/${client.id}`}
             entityLabel={client.name}

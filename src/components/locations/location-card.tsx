@@ -4,14 +4,12 @@ import { MapPin, Building2, CheckSquare, Users } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { LocationForm } from '@/components/forms/location-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
 import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
 
 interface LocationCardProps {
   location: LocationCardItem & { financials?: FinancialSummary | null }
-  clientId: string
   showFinancials?: boolean
 }
 
@@ -44,7 +42,7 @@ type LocationCardItem = {
   }>
 }
 
-export function LocationCard({ location, clientId, showFinancials = false }: LocationCardProps) {
+export function LocationCard({ location, showFinancials = false }: LocationCardProps) {
   const address = location.address
   const reviewFreshness = getReviewFreshness(location.reviews?.[0])
   const addressStr =
@@ -163,15 +161,6 @@ export function LocationCard({ location, clientId, showFinancials = false }: Loc
               View Details
             </Button>
           </Link>
-          <LocationForm clientId={clientId} location={location}>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 rounded-sm text-xs text-warm-600 hover:bg-warm-50 hover:text-ocean-600 dark:text-cream-400 dark:hover:bg-charcoal-800"
-            >
-              Edit
-            </Button>
-          </LocationForm>
           <ConfirmDeleteButton
             endpoint={`/api/locations/${location.id}`}
             entityLabel={location.name}

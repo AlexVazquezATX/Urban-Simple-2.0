@@ -424,7 +424,6 @@ export function LocationsListClient({
                       <LocationCard
                         key={location.id}
                         location={location}
-                        clientId={location.client.id}
                         showFinancials={showFinancials}
                       />
                     ))}
