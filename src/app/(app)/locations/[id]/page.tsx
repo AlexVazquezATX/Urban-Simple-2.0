@@ -1,11 +1,12 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { ArrowLeft, CheckSquare, Wrench } from 'lucide-react'
+import { CheckSquare, Wrench } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Breadcrumb } from '@/components/ui/breadcrumb'
 import { LocationForm } from '@/components/forms/location-form'
 import { LocationFinancialsBlock } from '@/components/locations/location-financials-block'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
@@ -31,103 +32,97 @@ async function LocationDetail({ id }: { id: string }) {
     return <div>Please log in</div>
   }
 
-  const location = await prisma.location.findFirst({
-    where: {
-      id,
-      deletedAt: null,
-      client: {
-        companyId: user.companyId,
+  const showFinancials = canSeeFinancials(user.role)
+
+  // The location query and the per-location agreement query are independent —
+  // the agreement query keys off the route param, so it runs concurrently.
+  const [location, agreement] = await Promise.all([
+    prisma.location.findFirst({
+      where: {
+        id,
         deletedAt: null,
-      },
-    },
-    include: {
-      client: {
-        select: {
-          id: true,
-          name: true,
+        client: {
+          companyId: user.companyId,
+          deletedAt: null,
         },
       },
-      branch: {
-        select: {
-          name: true,
-          code: true,
+      include: {
+        client: {
+          select: { id: true, name: true },
         },
-      },
-      checklistTemplate: {
-        select: {
-          id: true,
-          name: true,
+        branch: {
+          select: { name: true, code: true },
         },
-      },
-      serviceProfile: {
-        include: {
-          defaultManager: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              displayName: true,
-            },
-          },
+        checklistTemplate: {
+          select: { id: true, name: true },
         },
-      },
-      assignments: {
-        where: {
-          isActive: true,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              email: true,
-            },
-          },
-        },
-      },
-      reviews: {
-        where: {
-          reviewer: {
-            role: {
-              in: ['MANAGER', 'ADMIN', 'SUPER_ADMIN'],
-            },
-          },
-          photos: {
-            isEmpty: false,
-          },
-        },
-        orderBy: [
-          { reviewDate: 'desc' },
-          { createdAt: 'desc' },
-        ],
-        take: 1,
-        select: {
-          id: true,
-          reviewDate: true,
-          createdAt: true,
-          photos: true,
-        },
-      },
-      _count: {
-        select: {
-          serviceLogs: true,
-          issues: {
-            where: {
-              status: {
-                in: ['open', 'in_progress'],
+        serviceProfile: {
+          include: {
+            defaultManager: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                displayName: true,
               },
             },
           },
-          serviceAgreements: {
-            where: {
-              isActive: true,
+        },
+        assignments: {
+          where: { isActive: true },
+          include: {
+            user: {
+              select: { id: true, firstName: true, lastName: true, email: true },
+            },
+          },
+        },
+        reviews: {
+          where: {
+            reviewer: {
+              role: { in: ['MANAGER', 'ADMIN', 'SUPER_ADMIN'] },
+            },
+            photos: { isEmpty: false },
+          },
+          orderBy: [{ reviewDate: 'desc' }, { createdAt: 'desc' }],
+          take: 1,
+          select: {
+            id: true,
+            reviewDate: true,
+            createdAt: true,
+            photos: true,
+          },
+        },
+        _count: {
+          select: {
+            serviceLogs: true,
+            issues: {
+              where: { status: { in: ['open', 'in_progress'] } },
+            },
+            serviceAgreements: {
+              where: { isActive: true },
             },
           },
         },
       },
-    },
-  })
+    }),
+    showFinancials
+      ? prisma.serviceAgreement.findFirst({
+          where: { locationId: id, isActive: true },
+          select: {
+            id: true,
+            description: true,
+            monthlyAmount: true,
+            monthlyLaborCost: true,
+            monthlyMaterialCost: true,
+            monthlyOtherCost: true,
+            isActive: true,
+            startDate: true,
+            paymentTerms: true,
+            billingDay: true,
+          },
+        })
+      : Promise.resolve(null),
+  ])
 
   if (!location) {
     return (
@@ -145,25 +140,6 @@ async function LocationDetail({ id }: { id: string }) {
   const serviceProfile = normalizeServiceProfile(location.serviceProfile)
   const reviewFreshness = getReviewFreshness(location.reviews[0])
 
-  // Per-location financials (SUPER_ADMIN only).
-  const showFinancials = canSeeFinancials(user.role)
-  const agreement = showFinancials
-    ? await prisma.serviceAgreement.findFirst({
-        where: { locationId: location.id, isActive: true },
-        select: {
-          id: true,
-          description: true,
-          monthlyAmount: true,
-          monthlyLaborCost: true,
-          monthlyMaterialCost: true,
-          monthlyOtherCost: true,
-          isActive: true,
-          startDate: true,
-          paymentTerms: true,
-          billingDay: true,
-        },
-      })
-    : null
   const locationSummary = agreement
     ? summarizeAgreements([
         {
@@ -178,34 +154,40 @@ async function LocationDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href={`/clients/${location.client.id}`}>
-            <Button variant="ghost" size="icon" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
+      <div className="space-y-3">
+        <Breadcrumb
+          items={[
+            { label: 'Clients', href: '/clients' },
+            { label: location.client.name, href: `/clients/${location.client.id}` },
+            { label: location.name },
+          ]}
+        />
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">{location.name}</h1>
+            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
+              {location.name}
+            </h1>
             <p className="text-sm text-warm-500 dark:text-cream-400">
               {location.client.name} • {location.branch.name}
             </p>
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <LocationForm clientId={location.client.id} location={location}>
-            <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">Edit Location</Button>
-          </LocationForm>
-          <ConfirmDeleteButton
-            endpoint={`/api/locations/${location.id}`}
-            entityLabel={`${location.client.name} - ${location.name}`}
-            entityKind="location"
-            redirectTo={`/clients/${location.client.id}`}
-            buttonLabel="Delete"
-            variant="outline"
-            size="default"
-            className="rounded-sm border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
-          />
+          <div className="flex items-center gap-2">
+            <LocationForm clientId={location.client.id} location={location}>
+              <Button variant="outline" className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400 hover:bg-warm-50">
+                Edit Location
+              </Button>
+            </LocationForm>
+            <ConfirmDeleteButton
+              endpoint={`/api/locations/${location.id}`}
+              entityLabel={`${location.client.name} - ${location.name}`}
+              entityKind="location"
+              redirectTo={`/clients/${location.client.id}`}
+              buttonLabel="Delete"
+              variant="outline"
+              size="default"
+              className="rounded-sm border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
+            />
+          </div>
         </div>
       </div>
 
@@ -458,15 +440,15 @@ async function LocationDetail({ id }: { id: string }) {
 function LocationDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-10 w-10" />
+      <div className="space-y-3">
+        <Skeleton className="h-4 w-56" />
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <Skeleton className="h-9 w-48 mb-2" />
+            <Skeleton className="mb-2 h-9 w-48" />
             <Skeleton className="h-5 w-32" />
           </div>
+          <Skeleton className="h-10 w-32" />
         </div>
-        <Skeleton className="h-10 w-32" />
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
@@ -477,7 +459,7 @@ function LocationDetailSkeleton() {
             <div className="space-y-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i}>
-                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="mb-2 h-4 w-24" />
                   <Skeleton className="h-5 w-full" />
                 </div>
               ))}
@@ -509,4 +491,3 @@ export default async function LocationDetailPage({
     </Suspense>
   )
 }
-

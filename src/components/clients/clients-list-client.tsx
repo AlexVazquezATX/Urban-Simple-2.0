@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Plus } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -15,34 +16,118 @@ import {
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ClientForm } from '@/components/forms/client-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { ClientCardGrid } from './client-card-grid'
-import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
+import { FinancialsSummaryBand } from '@/components/financials/financials-summary-band'
+import { formatCurrency, formatMargin, marginToneClass, type FinancialsBandData } from '@/lib/financials'
+import { persistViewMode } from '@/lib/view-mode'
 
 interface ClientsListClientProps {
   clients: any[]
   showFinancials?: boolean
+  initialViewMode: ViewMode
+  bandData: FinancialsBandData | null
+  locationsServiced: number
 }
 
-export function ClientsListClient({ clients, showFinancials = false }: ClientsListClientProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>('table')
+export function ClientsListClient({
+  clients,
+  showFinancials = false,
+  initialViewMode,
+  bandData,
+  locationsServiced,
+}: ClientsListClientProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)
+  const [query, setQuery] = useState('')
+  const [status, setStatus] = useState('all')
 
-  // Load view preference from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('clients-view-mode') as ViewMode
-    if (saved && (saved === 'table' || saved === 'card')) {
-      setViewMode(saved)
-    }
-  }, [])
-
-  // Save view preference to localStorage
   const handleViewChange = (mode: ViewMode) => {
     setViewMode(mode)
-    localStorage.setItem('clients-view-mode', mode)
+    persistViewMode('clients-view-mode', mode)
   }
 
+  // Child-location rollup keyed by parent id — computed from the full list so
+  // it stays accurate even while the visible list is filtered.
+  const childLocationCount = useMemo(() => {
+    const map = new Map<string, number>()
+    for (const c of clients) {
+      if (c.parentClientId) {
+        map.set(
+          c.parentClientId,
+          (map.get(c.parentClientId) ?? 0) + (c.locations?.length ?? 0)
+        )
+      }
+    }
+    return map
+  }, [clients])
+
+  const isFiltering = query.trim() !== '' || status !== 'all'
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return clients.filter((c) => {
+      if (status !== 'all' && c.status !== status) return false
+      if (!q) return true
+      return (
+        c.name?.toLowerCase().includes(q) ||
+        c.legalName?.toLowerCase().includes(q) ||
+        c.billingEmail?.toLowerCase().includes(q)
+      )
+    })
+  }, [clients, query, status])
+
+  // When not filtering, order each parent immediately before its children so
+  // the hierarchy reads top-to-bottom. When filtering, keep results flat.
+  const displayClients = useMemo(() => {
+    const decorate = (c: any, isChild: boolean) => ({
+      ...c,
+      _isChild: isChild,
+      _childLocationCount: childLocationCount.get(c.id) ?? 0,
+    })
+
+    if (isFiltering) {
+      return filtered.map((c) => decorate(c, false))
+    }
+
+    const childrenByParent = new Map<string, any[]>()
+    const topLevel: any[] = []
+    for (const c of filtered) {
+      if (c.parentClientId) {
+        const list = childrenByParent.get(c.parentClientId) ?? []
+        list.push(c)
+        childrenByParent.set(c.parentClientId, list)
+      } else {
+        topLevel.push(c)
+      }
+    }
+
+    const ordered: any[] = []
+    const placed = new Set<string>()
+    for (const parent of topLevel) {
+      ordered.push(decorate(parent, false))
+      placed.add(parent.id)
+      for (const child of childrenByParent.get(parent.id) ?? []) {
+        ordered.push(decorate(child, true))
+        placed.add(child.id)
+      }
+    }
+    // Orphans: a child whose parent sits outside this list (e.g. other branch).
+    for (const c of filtered) {
+      if (!placed.has(c.id)) ordered.push(decorate(c, false))
+    }
+    return ordered
+  }, [filtered, isFiltering, childLocationCount])
+
+  // No clients at all — first-run empty state.
   if (clients.length === 0) {
     return (
       <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
@@ -59,30 +144,13 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
     )
   }
 
-  // Roll up financials across all clients so we can show a single header total.
-  const portfolioTotals = showFinancials
-    ? clients.reduce(
-        (acc, c) => {
-          const f: FinancialSummary | null = c.financials
-          if (!f) return acc
-          acc.revenue += f.monthlyRevenue
-          acc.cost += f.monthlyCost
-          acc.profit += f.monthlyProfit
-          return acc
-        },
-        { revenue: 0, cost: 0, profit: 0 }
-      )
-    : null
-  const portfolioMargin =
-    portfolioTotals && portfolioTotals.revenue > 0
-      ? (portfolioTotals.profit / portfolioTotals.revenue) * 100
-      : null
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Clients</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
+            Clients
+          </h1>
           <p className="text-sm text-warm-500 dark:text-cream-400">
             Manage your clients and their locations
           </p>
@@ -98,62 +166,58 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
         </div>
       </div>
 
-      {showFinancials && portfolioTotals && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
-              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Revenue</p>
-              <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-                {formatCurrency(portfolioTotals.revenue)}
-              </p>
-              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-                {formatCurrency(portfolioTotals.revenue * 12)} annualized
-              </p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
-              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Cost</p>
-              <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-                {formatCurrency(portfolioTotals.cost)}
-              </p>
-              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">labor + materials + other</p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
-              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Profit</p>
-              <p className={`mt-1 text-2xl font-bold ${marginToneClass(portfolioMargin)}`}>
-                {formatCurrency(portfolioTotals.profit)}
-              </p>
-              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">across all clients</p>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
-              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Portfolio Margin</p>
-              <p className={`mt-1 text-2xl font-bold ${marginToneClass(portfolioMargin)}`}>
-                {formatMargin(portfolioMargin)}
-              </p>
-              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">weighted across all locations</p>
-            </CardContent>
-          </Card>
+      <FinancialsSummaryBand
+        variant={showFinancials ? 'admin' : 'plain'}
+        locationsServiced={locationsServiced}
+        data={bandData}
+        scopeLabel="Portfolio"
+      />
+
+      {/* Search + status filter */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-warm-400 dark:text-cream-500" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search clients by name or email…"
+            className="rounded-sm pl-8"
+          />
         </div>
-      )}
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="w-full rounded-sm sm:w-44">
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="inactive">Inactive</SelectItem>
+            <SelectItem value="churned">Churned</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">All Clients</CardTitle>
+              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+                All Clients
+              </CardTitle>
               <CardDescription className="text-warm-500 dark:text-cream-400">
-                {clients.length} {clients.length === 1 ? 'client' : 'clients'}
+                {displayClients.length}
+                {isFiltering ? ` of ${clients.length}` : ''}{' '}
+                {clients.length === 1 ? 'client' : 'clients'}
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === 'table' ? (
+          {displayClients.length === 0 ? (
+            <div className="py-12 text-center text-warm-500 dark:text-cream-400">
+              No clients match your search.
+            </div>
+          ) : viewMode === 'table' ? (
             <Table>
               <TableHeader>
                 <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
@@ -175,7 +239,7 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {clients.map((client: any) => (
+                {displayClients.map((client: any) => (
                   <TableRow key={client.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
                     <TableCell>
                       {client.logoUrl ? (
@@ -197,12 +261,17 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
                       )}
                     </TableCell>
                     <TableCell className="font-medium text-warm-900 dark:text-cream-100">
-                      <Link
-                        href={`/clients/${client.id}`}
-                        className="hover:text-ocean-600 transition-colors"
-                      >
-                        {client.name}
-                      </Link>
+                      <div className={client._isChild ? 'flex items-center gap-1.5 pl-4' : ''}>
+                        {client._isChild && (
+                          <span className="text-plum-400" aria-hidden>↳</span>
+                        )}
+                        <Link
+                          href={`/clients/${client.id}`}
+                          className="hover:text-ocean-600 transition-colors"
+                        >
+                          {client.name}
+                        </Link>
+                      </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap items-center gap-1">
@@ -222,7 +291,14 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
                       </div>
                     </TableCell>
                     <TableCell className="text-warm-600 dark:text-cream-400">{client.billingEmail || '-'}</TableCell>
-                    <TableCell className="text-warm-600 dark:text-cream-400">{client.locations.length}</TableCell>
+                    <TableCell className="text-warm-600 dark:text-cream-400">
+                      {client.locations.length}
+                      {client._childLocationCount > 0 && (
+                        <span className="ml-1 text-xs text-plum-600">
+                          +{client._childLocationCount} in group
+                        </span>
+                      )}
+                    </TableCell>
                     {showFinancials && (
                       <>
                         <TableCell className="text-right font-mono text-warm-700 dark:text-cream-300">
@@ -268,12 +344,10 @@ export function ClientsListClient({ clients, showFinancials = false }: ClientsLi
               </TableBody>
             </Table>
           ) : (
-            <ClientCardGrid clients={clients} showFinancials={showFinancials} />
+            <ClientCardGrid clients={displayClients} showFinancials={showFinancials} />
           )}
         </CardContent>
       </Card>
     </div>
   )
 }
-
-

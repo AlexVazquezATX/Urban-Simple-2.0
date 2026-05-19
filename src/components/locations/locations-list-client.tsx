@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Building2, Plus } from 'lucide-react'
+import { Building2, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -15,17 +16,29 @@ import {
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
 import { LocationCard } from './location-card'
 import { LocationForm } from '@/components/forms/location-form'
 import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
-import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
+import { FinancialsSummaryBand } from '@/components/financials/financials-summary-band'
+import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary, type FinancialsBandData } from '@/lib/financials'
 import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
+import { persistViewMode } from '@/lib/view-mode'
 
 interface LocationsListClientProps {
   locations: LocationListItem[]
   showFinancials?: boolean
+  initialViewMode: ViewMode
+  bandData: FinancialsBandData | null
+  locationsServiced: number
 }
 
 type AddressLike = {
@@ -67,38 +80,91 @@ type LocationListItem = {
   financials?: FinancialSummary | null
 }
 
-export function LocationsListClient({ locations, showFinancials = false }: LocationsListClientProps) {
-  const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window === 'undefined') {
-      return 'table'
-    }
+function isAddressLike(value: unknown): value is AddressLike {
+  return typeof value === 'object' && value !== null
+}
 
-    const saved = localStorage.getItem('locations-view-mode')
-    return saved === 'card' ? 'card' : 'table'
-  })
+function addressToString(address: unknown): string {
+  if (typeof address === 'string') return address
+  if (isAddressLike(address)) {
+    return `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
+  }
+  return ''
+}
 
-  // Save view preference to localStorage
+export function LocationsListClient({
+  locations,
+  showFinancials = false,
+  initialViewMode,
+  bandData,
+  locationsServiced,
+}: LocationsListClientProps) {
+  const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)
+  const [query, setQuery] = useState('')
+  const [clientFilter, setClientFilter] = useState('all')
+
   const handleViewChange = (mode: ViewMode) => {
     setViewMode(mode)
-    localStorage.setItem('locations-view-mode', mode)
+    persistViewMode('locations-view-mode', mode)
   }
 
+  // Distinct clients present in the list, for the client filter dropdown.
+  const clientOptions = useMemo(() => {
+    const seen = new Map<string, string>()
+    for (const l of locations) {
+      if (!seen.has(l.client.id)) seen.set(l.client.id, l.client.name)
+    }
+    return Array.from(seen, ([id, name]) => ({ id, name })).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )
+  }, [locations])
+
+  const isFiltering = query.trim() !== '' || clientFilter !== 'all'
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return locations.filter((l) => {
+      if (clientFilter !== 'all' && l.client.id !== clientFilter) return false
+      if (!q) return true
+      return (
+        l.name.toLowerCase().includes(q) ||
+        addressToString(l.address).toLowerCase().includes(q)
+      )
+    })
+  }, [locations, query, clientFilter])
+
+  // Group locations under their client for the card view — locations arrive
+  // pre-ordered by client name, so consecutive grouping preserves order.
+  const groups = useMemo(() => {
+    const map = new Map<string, { client: LocationListItem['client']; items: LocationListItem[] }>()
+    for (const l of filtered) {
+      const group = map.get(l.client.id)
+      if (group) {
+        group.items.push(l)
+      } else {
+        map.set(l.client.id, { client: l.client, items: [l] })
+      }
+    }
+    return Array.from(map.values())
+  }, [filtered])
+
+  // No locations at all — first-run empty state.
   if (locations.length === 0) {
     return (
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Locations</h1>
-            <p className="text-sm text-warm-500 dark:text-cream-400">
-              View all service locations across all clients
-            </p>
-          </div>
+        <div>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
+            Locations
+          </h1>
+          <p className="text-sm text-warm-500 dark:text-cream-400">
+            View all service locations across all clients
+          </p>
         </div>
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="h-12 w-12 mb-4 text-warm-400 dark:text-cream-400" />
-            <p className="text-warm-600 dark:text-cream-400 mb-2">No locations yet</p>
-            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
+            <Building2 className="mb-4 h-12 w-12 text-warm-400 dark:text-cream-400" />
+            <p className="mb-2 text-warm-600 dark:text-cream-400">No locations yet</p>
+            <p className="mb-4 text-sm text-warm-500 dark:text-cream-400">
               Create your first location and link it to a client
             </p>
             <LocationForm>
@@ -117,34 +183,78 @@ export function LocationsListClient({ locations, showFinancials = false }: Locat
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Locations</h1>
+          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
+            Locations
+          </h1>
           <p className="text-sm text-warm-500 dark:text-cream-400">
             View all service locations across all clients
           </p>
         </div>
-        <ViewToggle value={viewMode} onChange={handleViewChange} />
+        <div className="flex items-center gap-3">
+          <ViewToggle value={viewMode} onChange={handleViewChange} />
+          <LocationForm>
+            <Button variant="lime" className="rounded-sm">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Location
+            </Button>
+          </LocationForm>
+        </div>
+      </div>
+
+      <FinancialsSummaryBand
+        variant={showFinancials ? 'admin' : 'plain'}
+        locationsServiced={locationsServiced}
+        data={bandData}
+        scopeLabel="All locations"
+      />
+
+      {/* Search + client filter */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-warm-400 dark:text-cream-500" />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search locations by name or address…"
+            className="rounded-sm pl-8"
+          />
+        </div>
+        <Select value={clientFilter} onValueChange={setClientFilter}>
+          <SelectTrigger className="w-full rounded-sm sm:w-60">
+            <SelectValue placeholder="Client" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All clients</SelectItem>
+            {clientOptions.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Card className="rounded-sm border-warm-200">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">All Locations</CardTitle>
+              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+                All Locations
+              </CardTitle>
               <CardDescription className="text-warm-500 dark:text-cream-400">
-                {locations.length}{' '}
+                {filtered.length}
+                {isFiltering ? ` of ${locations.length}` : ''}{' '}
                 {locations.length === 1 ? 'location' : 'locations'}
               </CardDescription>
             </div>
-            <LocationForm>
-              <Button variant="lime" size="sm" className="rounded-sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Location
-              </Button>
-            </LocationForm>
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === 'table' ? (
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-warm-500 dark:text-cream-400">
+              No locations match your search.
+            </div>
+          ) : viewMode === 'table' ? (
             <Table>
               <TableHeader>
                 <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
@@ -168,16 +278,10 @@ export function LocationsListClient({ locations, showFinancials = false }: Locat
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {locations.map((location) => {
-                  const address = location.address
+                {filtered.map((location) => {
                   const serviceProfile = normalizeServiceProfile(location.serviceProfile)
                   const reviewFreshness = getReviewFreshness(location.reviews?.[0])
-                  const addressStr =
-                    typeof address === 'string'
-                      ? address
-                      : isAddressLike(address)
-                        ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
-                        : '-'
+                  const addressStr = addressToString(location.address) || '-'
                   return (
                     <TableRow key={location.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50">
                       <TableCell>
@@ -301,14 +405,31 @@ export function LocationsListClient({ locations, showFinancials = false }: Locat
               </TableBody>
             </Table>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {locations.map((location) => (
-                <LocationCard
-                  key={location.id}
-                  location={location}
-                  clientId={location.client.id}
-                  showFinancials={showFinancials}
-                />
+            <div className="space-y-6">
+              {groups.map((group) => (
+                <div key={group.client.id} className="space-y-2.5">
+                  <div className="flex items-center gap-2 border-b border-warm-200 pb-1.5 dark:border-charcoal-700">
+                    <Link
+                      href={`/clients/${group.client.id}`}
+                      className="text-sm font-medium text-warm-700 transition-colors hover:text-ocean-600 dark:text-cream-200"
+                    >
+                      {group.client.name}
+                    </Link>
+                    <span className="text-xs text-warm-400 dark:text-cream-500">
+                      {group.items.length} {group.items.length === 1 ? 'location' : 'locations'}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {group.items.map((location) => (
+                      <LocationCard
+                        key={location.id}
+                        location={location}
+                        clientId={location.client.id}
+                        showFinancials={showFinancials}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -317,8 +438,3 @@ export function LocationsListClient({ locations, showFinancials = false }: Locat
     </div>
   )
 }
-
-function isAddressLike(value: unknown): value is AddressLike {
-  return typeof value === 'object' && value !== null
-}
-

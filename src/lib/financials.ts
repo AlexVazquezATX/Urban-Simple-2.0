@@ -56,6 +56,32 @@ export function summarizeAgreements(agreements: AgreementForFinancials[]): Finan
   }
 }
 
+// Headline figures for the financials summary band shown on the clients and
+// locations lists (and scoped on the detail pages). Reuses summarizeAgreements
+// so all money math lives in one place. locationsServiced is supplied by the
+// caller — it counts active locations that carry an active service agreement.
+export interface FinancialsBandData {
+  locationsServiced: number
+  mrr: number
+  arr: number
+  monthlyProfit: number
+  blendedMarginPct: number | null
+}
+
+export function summarizeBand(
+  agreements: AgreementForFinancials[],
+  locationsServiced: number
+): FinancialsBandData {
+  const summary = summarizeAgreements(agreements)
+  return {
+    locationsServiced,
+    mrr: summary.monthlyRevenue,
+    arr: summary.monthlyRevenue * 12,
+    monthlyProfit: summary.monthlyProfit,
+    blendedMarginPct: summary.marginPct,
+  }
+}
+
 export function formatCurrency(value: number): string {
   if (value === 0) return '$0'
   return value.toLocaleString('en-US', {

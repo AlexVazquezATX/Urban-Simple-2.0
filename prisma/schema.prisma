@@ -330,6 +330,7 @@ model Client {
   portalWalkthroughs    PortalWalkthrough[]
 
   @@index([parentClientId])
+  @@index([companyId, branchId, deletedAt])
   @@map("clients")
 }
 
@@ -390,6 +391,8 @@ model Location {
   timeEntries       TimeEntry[]
   portalWalkthroughs PortalWalkthrough[]
 
+  @@index([clientId, isActive, deletedAt])
+  @@index([branchId, isActive, deletedAt])
   @@map("locations")
 }
 
@@ -703,6 +706,8 @@ model ServiceAgreement {
 
   invoiceLineItems InvoiceLineItem[]
 
+  @@index([clientId, isActive])
+  @@index([locationId, isActive])
   @@map("service_agreements")
 }
 
