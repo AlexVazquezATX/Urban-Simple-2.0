@@ -728,7 +728,11 @@ model MonthlyFinancialSnapshot {
 
   monthlyRevenue       Decimal @map("monthly_revenue") @db.Decimal(12, 2)
   monthlyClientCost    Decimal @map("monthly_client_cost") @db.Decimal(12, 2)
+  // monthlyOverhead stays the all-in total of recurring expenses (operating +
+  // owner draws). ownerDraws is the owner-draw slice, so operating expenses =
+  // monthlyOverhead - ownerDraws. Historical rows default ownerDraws to 0.
   monthlyOverhead      Decimal @map("monthly_overhead") @db.Decimal(12, 2)
+  ownerDraws           Decimal @default(0) @map("owner_draws") @db.Decimal(12, 2)
   netCashFlow          Decimal @map("net_cash_flow") @db.Decimal(12, 2)
   activeAgreementCount Int     @map("active_agreement_count")
   activeExpenseCount   Int     @map("active_expense_count")
@@ -753,6 +757,10 @@ model RecurringExpense {
   //   rent, software, insurance, vehicles, marketing, payroll, utilities,
   //   subscriptions, professional_services, equipment, supplies, other
   category      String    @default("other")
+  // operating | owner_draw. Owner draws are distributions to the owners, not a
+  // business operating cost — kept out of operating profit. Extensible later to
+  // debt_service / discretionary.
+  expenseType   String    @default("operating") @map("expense_type")
   monthlyAmount Decimal   @map("monthly_amount") @db.Decimal(10, 2)
   vendor        String?
   paymentMethod String?   @map("payment_method") // ach, credit_card, check, autopay, etc.

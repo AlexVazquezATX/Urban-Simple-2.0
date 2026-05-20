@@ -135,21 +135,53 @@ export function expenseCategoryLabel(value: string): string {
   return EXPENSE_CATEGORIES.find(c => c.value === value)?.label ?? value
 }
 
-// Aggregate monthly amounts on a list of recurring expenses (active ones only).
+// Expense type classifies a recurring expense as a real operating cost vs an
+// owner draw (a distribution to the owners, kept out of operating profit).
+// String-valued so debt_service / discretionary can be added later.
+export const EXPENSE_TYPES = [
+  { value: 'operating', label: 'Operating expense' },
+  { value: 'owner_draw', label: 'Owner draw' },
+] as const
+
+export function expenseTypeLabel(value: string): string {
+  return EXPENSE_TYPES.find(t => t.value === value)?.label ?? value
+}
+
+// Aggregate monthly amounts on a list of recurring expenses (active ones only),
+// split into operating expenses and owner draws. Owner draws are excluded from
+// the operating category breakdown.
 export interface RecurringExpenseLike {
   monthlyAmount: Decimalish
   isActive: boolean
   category: string
+  expenseType?: string // 'operating' | 'owner_draw'; missing is treated as operating
 }
 
-export function summarizeRecurringExpenses(rows: RecurringExpenseLike[]) {
-  let total = 0
-  const byCategory = new Map<string, number>()
+export interface ExpenseBreakdown {
+  operatingTotal: number
+  ownerDrawsTotal: number
+  total: number
+  operatingByCategory: Map<string, number>
+}
+
+export function summarizeExpenses(rows: RecurringExpenseLike[]): ExpenseBreakdown {
+  let operatingTotal = 0
+  let ownerDrawsTotal = 0
+  const operatingByCategory = new Map<string, number>()
   for (const r of rows) {
     if (!r.isActive) continue
     const v = toNumber(r.monthlyAmount)
-    total += v
-    byCategory.set(r.category, (byCategory.get(r.category) ?? 0) + v)
+    if (r.expenseType === 'owner_draw') {
+      ownerDrawsTotal += v
+    } else {
+      operatingTotal += v
+      operatingByCategory.set(r.category, (operatingByCategory.get(r.category) ?? 0) + v)
+    }
   }
-  return { total, byCategory }
+  return {
+    operatingTotal,
+    ownerDrawsTotal,
+    total: operatingTotal + ownerDrawsTotal,
+    operatingByCategory,
+  }
 }

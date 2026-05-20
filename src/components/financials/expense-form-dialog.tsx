@@ -25,13 +25,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { EXPENSE_CATEGORIES } from '@/lib/financials'
+import { EXPENSE_CATEGORIES, EXPENSE_TYPES } from '@/lib/financials'
 
 interface ExpenseFormDialogProps {
   expense?: {
     id: string
     name: string
     category: string
+    expenseType: string
     monthlyAmount: string | number
     vendor: string | null
     paymentMethod: string | null
@@ -51,6 +52,7 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
 
   const [name, setName] = useState(expense?.name ?? '')
   const [category, setCategory] = useState(expense?.category ?? 'other')
+  const [expenseType, setExpenseType] = useState(expense?.expenseType ?? 'operating')
   const [monthlyAmount, setMonthlyAmount] = useState(expense?.monthlyAmount?.toString() ?? '')
   const [vendor, setVendor] = useState(expense?.vendor ?? '')
   const [paymentMethod, setPaymentMethod] = useState(expense?.paymentMethod ?? '')
@@ -69,6 +71,7 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
       // Reset form to current expense values when reopening.
       setName(expense.name)
       setCategory(expense.category)
+      setExpenseType(expense.expenseType)
       setMonthlyAmount(expense.monthlyAmount.toString())
       setVendor(expense.vendor ?? '')
       setPaymentMethod(expense.paymentMethod ?? '')
@@ -96,6 +99,7 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
         body: JSON.stringify({
           name,
           category,
+          expenseType,
           monthlyAmount,
           vendor: vendor || null,
           paymentMethod: paymentMethod || null,
@@ -133,6 +137,23 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
           <div className="space-y-1.5">
             <Label htmlFor="exp-name">Name *</Label>
             <Input id="exp-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Office rent" />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="exp-type">Expense Type</Label>
+            <Select value={expenseType} onValueChange={setExpenseType}>
+              <SelectTrigger id="exp-type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EXPENSE_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-warm-500 dark:text-cream-400">
+              Owner draws are distributions to the owners — kept out of operating profit.
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

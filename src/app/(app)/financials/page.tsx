@@ -14,7 +14,7 @@ import {
   formatMargin,
   marginToneClass,
   summarizeAgreements,
-  summarizeRecurringExpenses,
+  summarizeExpenses,
 } from '@/lib/financials'
 
 export default async function FinancialsDashboardPage() {
@@ -48,6 +48,7 @@ export default async function FinancialsDashboardPage() {
         id: true,
         name: true,
         category: true,
+        expenseType: true,
         monthlyAmount: true,
         isActive: true,
         vendor: true,
@@ -86,17 +87,24 @@ export default async function FinancialsDashboardPage() {
     }))
   )
 
-  // Aggregate recurring overhead.
-  const overhead = summarizeRecurringExpenses(
+  // Split recurring expenses into operating costs and owner draws.
+  const overhead = summarizeExpenses(
     expensesRaw.map(e => ({
       monthlyAmount: e.monthlyAmount as unknown as string,
       isActive: e.isActive,
       category: e.category,
+      expenseType: e.expenseType,
     }))
   )
 
-  // Net cash flow = client revenue - client costs - overhead.
-  const netCashFlow = clientPnl.monthlyProfit - overhead.total
+  // Waterfall: revenue − client costs − operating expenses = operating profit;
+  // operating profit − owner draws = net cash flow.
+  const operatingExpenses = overhead.operatingTotal
+  const ownerDraws = overhead.ownerDrawsTotal
+  const operatingProfit = clientPnl.monthlyProfit - operatingExpenses
+  const netCashFlow = operatingProfit - ownerDraws
+  const operatingMarginPct =
+    clientPnl.monthlyRevenue > 0 ? (operatingProfit / clientPnl.monthlyRevenue) * 100 : null
   const netMarginPct =
     clientPnl.monthlyRevenue > 0 ? (netCashFlow / clientPnl.monthlyRevenue) * 100 : null
 
@@ -191,8 +199,8 @@ export default async function FinancialsDashboardPage() {
     .filter(l => l.margin !== null && l.margin < 0)
     .sort((a, b) => (a.margin ?? 0) - (b.margin ?? 0))
 
-  // Overhead breakdown for the bar chart (or list).
-  const categoriesByTotal = Array.from(overhead.byCategory.entries())
+  // Operating-expense breakdown by category (owner draws excluded).
+  const categoriesByTotal = Array.from(overhead.operatingByCategory.entries())
     .sort((a, b) => b[1] - a[1])
 
   return (
@@ -208,7 +216,7 @@ export default async function FinancialsDashboardPage() {
             </Badge>
           </div>
           <p className="text-sm text-warm-500 dark:text-cream-400">
-            Cash flow at a glance. Client P&amp;L on the revenue side, recurring overhead on the cost side.
+            Operating Profit is the business&apos;s earning power; Net Cash Flow is what&apos;s left after owner draws.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -222,8 +230,9 @@ export default async function FinancialsDashboardPage() {
         </div>
       </div>
 
-      {/* Top KPI tiles */}
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+      {/* Waterfall KPIs: Revenue − Client Costs − Operating Expenses = Operating
+          Profit; Operating Profit − Owner Draws = Net Cash Flow. */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-4">
             <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Revenue</p>
@@ -237,7 +246,7 @@ export default async function FinancialsDashboardPage() {
         </Card>
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client Costs</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">− Client Costs</p>
             <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
               {formatCurrency(clientPnl.monthlyCost)}
             </p>
@@ -246,20 +255,47 @@ export default async function FinancialsDashboardPage() {
         </Card>
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Recurring Overhead</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">− Operating Expenses</p>
             <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(overhead.total)}
+              {formatCurrency(operatingExpenses)}
             </p>
             <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
               <Link href="/financials/expenses" className="hover:underline">
-                {expensesRaw.filter(e => e.isActive).length} active
+                rent, software, insurance, payroll…
               </Link>
+            </p>
+          </CardContent>
+        </Card>
+        <Card className={`rounded-sm border-2 ${operatingProfit < 0 ? 'border-red-300 bg-red-50/40 dark:bg-red-950/20' : 'border-lime-300 bg-lime-50/40 dark:bg-lime-950/20'}`}>
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">= Operating Profit</p>
+            <div className="mt-1 flex items-center gap-2">
+              {operatingProfit >= 0
+                ? <TrendingUp className="h-5 w-5 text-lime-600" />
+                : <TrendingDown className="h-5 w-5 text-red-600" />}
+              <p className={`text-2xl font-bold ${marginToneClass(operatingMarginPct)}`}>
+                {formatCurrency(operatingProfit)}
+              </p>
+            </div>
+            <p className={`mt-1 text-xs ${marginToneClass(operatingMarginPct)}`}>
+              {formatMargin(operatingMarginPct)} operating margin — before owner draws
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">− Owner Draws</p>
+            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+              {formatCurrency(ownerDraws)}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              what the owners take from profit
             </p>
           </CardContent>
         </Card>
         <Card className={`rounded-sm border-2 ${netCashFlow < 0 ? 'border-red-300 bg-red-50/40 dark:bg-red-950/20' : 'border-lime-300 bg-lime-50/40 dark:bg-lime-950/20'}`}>
           <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Net Cash Flow</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">= Net Cash Flow</p>
             <div className="mt-1 flex items-center gap-2">
               {netCashFlow >= 0
                 ? <TrendingUp className="h-5 w-5 text-lime-600" />
@@ -269,7 +305,7 @@ export default async function FinancialsDashboardPage() {
               </p>
             </div>
             <p className={`mt-1 text-xs ${marginToneClass(netMarginPct)}`}>
-              {formatMargin(netMarginPct)} net margin
+              {formatMargin(netMarginPct)} net margin — after owner draws
             </p>
           </CardContent>
         </Card>
@@ -389,10 +425,10 @@ export default async function FinancialsDashboardPage() {
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardHeader className="p-4 pb-2">
             <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Overhead by Category
+              Operating Expenses by Category
             </CardTitle>
             <CardDescription className="text-warm-500 dark:text-cream-400 text-xs">
-              Recurring monthly expenses, grouped.
+              Operating costs only — owner draws are excluded here.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-2 space-y-2">
@@ -403,7 +439,7 @@ export default async function FinancialsDashboardPage() {
               </p>
             )}
             {categoriesByTotal.map(([cat, total]) => {
-              const sharePct = overhead.total > 0 ? (total / overhead.total) * 100 : 0
+              const sharePct = operatingExpenses > 0 ? (total / operatingExpenses) * 100 : 0
               return (
                 <div key={cat} className="block">
                   <div className="flex items-center justify-between text-sm">

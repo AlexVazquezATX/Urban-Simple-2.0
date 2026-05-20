@@ -8,7 +8,7 @@
 import { prisma } from '@/lib/db'
 import {
   summarizeAgreements,
-  summarizeRecurringExpenses,
+  summarizeExpenses,
 } from '@/lib/financials'
 
 interface SnapshotResult {
@@ -18,6 +18,7 @@ interface SnapshotResult {
   monthlyRevenue: number
   monthlyClientCost: number
   monthlyOverhead: number
+  ownerDraws: number
   netCashFlow: number
   activeAgreementCount: number
   activeExpenseCount: number
@@ -47,7 +48,7 @@ export async function captureMonthlySnapshot(args: {
     }),
     prisma.recurringExpense.findMany({
       where: { companyId, isActive: true },
-      select: { monthlyAmount: true, isActive: true, category: true },
+      select: { monthlyAmount: true, isActive: true, category: true, expenseType: true },
     }),
   ])
 
@@ -60,17 +61,20 @@ export async function captureMonthlySnapshot(args: {
       isActive: a.isActive,
     }))
   )
-  const overhead = summarizeRecurringExpenses(
+  const overhead = summarizeExpenses(
     expenses.map(e => ({
       monthlyAmount: e.monthlyAmount as unknown as string,
       isActive: e.isActive,
       category: e.category,
+      expenseType: e.expenseType,
     }))
   )
 
   const monthlyRevenue = clientPnl.monthlyRevenue
   const monthlyClientCost = clientPnl.monthlyCost
+  // monthlyOverhead stays the all-in total; ownerDraws is its owner-draw slice.
   const monthlyOverhead = overhead.total
+  const ownerDraws = overhead.ownerDrawsTotal
   const netCashFlow = monthlyRevenue - monthlyClientCost - monthlyOverhead
 
   const result = await prisma.monthlyFinancialSnapshot.upsert({
@@ -81,6 +85,7 @@ export async function captureMonthlySnapshot(args: {
       monthlyRevenue,
       monthlyClientCost,
       monthlyOverhead,
+      ownerDraws,
       netCashFlow,
       activeAgreementCount: agreements.length,
       activeExpenseCount: expenses.length,
@@ -93,6 +98,7 @@ export async function captureMonthlySnapshot(args: {
       monthlyRevenue,
       monthlyClientCost,
       monthlyOverhead,
+      ownerDraws,
       netCashFlow,
       activeAgreementCount: agreements.length,
       activeExpenseCount: expenses.length,
@@ -106,6 +112,7 @@ export async function captureMonthlySnapshot(args: {
     monthlyRevenue,
     monthlyClientCost,
     monthlyOverhead,
+    ownerDraws,
     netCashFlow,
     activeAgreementCount: agreements.length,
     activeExpenseCount: expenses.length,

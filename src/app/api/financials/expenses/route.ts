@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { canSeeFinancials } from '@/lib/financials'
+import { canSeeFinancials, EXPENSE_TYPES } from '@/lib/financials'
 
 // GET /api/financials/expenses — list all recurring expenses for the company.
 export async function GET() {
@@ -31,6 +31,7 @@ export async function POST(request: NextRequest) {
   const {
     name,
     category,
+    expenseType,
     monthlyAmount,
     vendor,
     paymentMethod,
@@ -58,6 +59,7 @@ export async function POST(request: NextRequest) {
       companyId: user.companyId,
       name: name.trim(),
       category: (category || 'other').trim(),
+      expenseType: EXPENSE_TYPES.some(t => t.value === expenseType) ? expenseType : 'operating',
       monthlyAmount: amount,
       vendor: vendor?.trim() || null,
       paymentMethod: paymentMethod?.trim() || null,

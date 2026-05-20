@@ -20,9 +20,82 @@ import {
   canSeeFinancials,
   expenseCategoryLabel,
   formatCurrency,
-  summarizeRecurringExpenses,
+  summarizeExpenses,
   EXPENSE_CATEGORIES,
 } from '@/lib/financials'
+
+type ExpenseRow = {
+  id: string
+  name: string
+  category: string
+  expenseType: string
+  monthlyAmount: number
+  vendor: string | null
+  paymentMethod: string | null
+  billingDay: number
+  startDate: string
+  endDate: string | null
+  isActive: boolean
+  notes: string | null
+}
+
+function ExpenseTable({ rows }: { rows: ExpenseRow[] }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow className="border-warm-200 dark:border-charcoal-700">
+          <TableHead className="text-xs uppercase tracking-wider">Name</TableHead>
+          <TableHead className="text-xs uppercase tracking-wider">Category</TableHead>
+          <TableHead className="text-xs uppercase tracking-wider">Vendor</TableHead>
+          <TableHead className="text-xs uppercase tracking-wider text-right">Monthly</TableHead>
+          <TableHead className="text-xs uppercase tracking-wider text-center">Bill Day</TableHead>
+          <TableHead className="text-xs uppercase tracking-wider">Status</TableHead>
+          <TableHead className="text-xs uppercase tracking-wider text-right">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map((e) => (
+          <TableRow key={e.id} className="border-warm-200 dark:border-charcoal-700">
+            <TableCell className="font-medium text-warm-900 dark:text-cream-100">{e.name}</TableCell>
+            <TableCell>
+              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0">
+                {expenseCategoryLabel(e.category)}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-warm-600 dark:text-cream-400">{e.vendor || '—'}</TableCell>
+            <TableCell className="text-right font-mono">{formatCurrency(e.monthlyAmount)}</TableCell>
+            <TableCell className="text-center text-warm-600 dark:text-cream-400">{e.billingDay}</TableCell>
+            <TableCell>
+              <Badge
+                className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                  e.isActive
+                    ? 'bg-lime-100 text-lime-700 border-lime-200'
+                    : 'bg-warm-100 text-warm-600 border-warm-200'
+                }`}
+              >
+                {e.isActive ? 'Active' : 'Paused'}
+              </Badge>
+            </TableCell>
+            <TableCell className="text-right">
+              <div className="flex items-center justify-end gap-1">
+                <ExpenseFormDialog expense={e}>
+                  <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600">
+                    Edit
+                  </Button>
+                </ExpenseFormDialog>
+                <ConfirmDeleteButton
+                  endpoint={`/api/financials/expenses/${e.id}`}
+                  entityLabel={e.name}
+                  entityKind="expense"
+                />
+              </div>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
 
 export default async function ExpensesPage() {
   const user = await getCurrentUser()
@@ -37,20 +110,24 @@ export default async function ExpensesPage() {
   })
 
   // Serialize Decimals.
-  const expenses = expensesRaw.map(e => ({
+  const expenses: ExpenseRow[] = expensesRaw.map(e => ({
     ...e,
     monthlyAmount: Number(e.monthlyAmount),
     startDate: e.startDate.toISOString(),
     endDate: e.endDate?.toISOString() ?? null,
   }))
 
-  const summary = summarizeRecurringExpenses(
-    expenses.map(e => ({ monthlyAmount: e.monthlyAmount, isActive: e.isActive, category: e.category }))
+  const summary = summarizeExpenses(
+    expenses.map(e => ({
+      monthlyAmount: e.monthlyAmount,
+      isActive: e.isActive,
+      category: e.category,
+      expenseType: e.expenseType,
+    }))
   )
 
-  // Sort categories by spend descending for the breakdown tiles.
-  const categoriesByTotal = Array.from(summary.byCategory.entries())
-    .sort((a, b) => b[1] - a[1])
+  const operatingRows = expenses.filter(e => e.expenseType !== 'owner_draw')
+  const ownerDrawRows = expenses.filter(e => e.expenseType === 'owner_draw')
 
   return (
     <div className="space-y-4">
@@ -65,7 +142,8 @@ export default async function ExpensesPage() {
             </Badge>
           </div>
           <p className="text-sm text-warm-500 dark:text-cream-400">
-            Rent, software, insurance, vehicles, payroll. Feeds the financials dashboard cash-flow view.
+            Operating costs feed the dashboard&apos;s operating profit. Owner draws are tracked
+            separately — they come out of profit, not before it.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -81,10 +159,32 @@ export default async function ExpensesPage() {
         </div>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 md:grid-cols-3">
         <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
           <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Overhead</p>
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Operating Expenses</p>
+            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+              {formatCurrency(summary.operatingTotal)}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              {formatCurrency(summary.operatingTotal * 12)} annualized · counts against operating profit
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Owner Draws</p>
+            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
+              {formatCurrency(summary.ownerDrawsTotal)}
+            </p>
+            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+              {formatCurrency(summary.ownerDrawsTotal * 12)} annualized · taken from profit
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <CardContent className="p-4">
+            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Total Monthly Outflow</p>
             <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
               {formatCurrency(summary.total)}
             </p>
@@ -93,34 +193,23 @@ export default async function ExpensesPage() {
             </p>
           </CardContent>
         </Card>
-        {categoriesByTotal.slice(0, 3).map(([cat, total]) => (
-          <Card key={cat} className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
-              <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                {expenseCategoryLabel(cat)}
-              </p>
-              <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-                {formatCurrency(total)}
-              </p>
-              <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-                {summary.total > 0 ? `${((total / summary.total) * 100).toFixed(1)}% of overhead` : ''}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
+      {/* Operating expenses */}
       <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">All Expenses</CardTitle>
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+            Operating Expenses
+          </CardTitle>
           <CardDescription className="text-warm-500 dark:text-cream-400">
-            {expenses.length} {expenses.length === 1 ? 'item' : 'items'}, {expenses.filter(e => e.isActive).length} active
+            {operatingRows.length} {operatingRows.length === 1 ? 'item' : 'items'} ·{' '}
+            {formatCurrency(summary.operatingTotal)}/mo active
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {expenses.length === 0 ? (
-            <div className="text-center py-12 text-warm-500 dark:text-cream-400">
-              <p>No recurring expenses yet.</p>
+          {operatingRows.length === 0 ? (
+            <div className="py-8 text-center text-warm-500 dark:text-cream-400">
+              <p>No operating expenses yet.</p>
               <ExpenseFormDialog>
                 <Button variant="outline" className="mt-3 rounded-sm">
                   <Plus className="mr-2 h-4 w-4" />
@@ -129,70 +218,39 @@ export default async function ExpensesPage() {
               </ExpenseFormDialog>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow className="border-warm-200 dark:border-charcoal-700">
-                  <TableHead className="text-xs uppercase tracking-wider">Name</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider">Category</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider">Vendor</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider text-right">Monthly</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider text-center">Bill Day</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider">Status</TableHead>
-                  <TableHead className="text-xs uppercase tracking-wider text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenses.map((e) => (
-                  <TableRow key={e.id} className="border-warm-200 dark:border-charcoal-700">
-                    <TableCell className="font-medium text-warm-900 dark:text-cream-100">{e.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0">
-                        {expenseCategoryLabel(e.category)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-warm-600 dark:text-cream-400">{e.vendor || '—'}</TableCell>
-                    <TableCell className="text-right font-mono">{formatCurrency(e.monthlyAmount)}</TableCell>
-                    <TableCell className="text-center text-warm-600 dark:text-cream-400">{e.billingDay}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                          e.isActive
-                            ? 'bg-lime-100 text-lime-700 border-lime-200'
-                            : 'bg-warm-100 text-warm-600 border-warm-200'
-                        }`}
-                      >
-                        {e.isActive ? 'Active' : 'Paused'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <ExpenseFormDialog expense={e}>
-                          <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600">
-                            Edit
-                          </Button>
-                        </ExpenseFormDialog>
-                        <ConfirmDeleteButton
-                          endpoint={`/api/financials/expenses/${e.id}`}
-                          entityLabel={e.name}
-                          entityKind="expense"
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <ExpenseTable rows={operatingRows} />
           )}
         </CardContent>
       </Card>
 
-      {/* Show small note when there are paused/inactive items so user understands why a known expense isn't summing. */}
+      {/* Owner draws */}
+      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <CardHeader>
+          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+            Owner Draws
+          </CardTitle>
+          <CardDescription className="text-warm-500 dark:text-cream-400">
+            {ownerDrawRows.length} {ownerDrawRows.length === 1 ? 'item' : 'items'} ·{' '}
+            {formatCurrency(summary.ownerDrawsTotal)}/mo active · subtracted after operating profit
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {ownerDrawRows.length === 0 ? (
+            <p className="py-6 text-center text-sm text-warm-500 dark:text-cream-400">
+              No owner draws yet. Edit an expense and set its type to &ldquo;Owner draw&rdquo; to track
+              it here.
+            </p>
+          ) : (
+            <ExpenseTable rows={ownerDrawRows} />
+          )}
+        </CardContent>
+      </Card>
+
       {expenses.some(e => !e.isActive) && (
         <p className="text-xs text-warm-500 dark:text-cream-400">
-          Paused expenses are not counted in the monthly overhead total. Re-activate to include.
+          Paused expenses are not counted in the monthly totals. Re-activate to include.
         </p>
       )}
-      {/* Reference to the full categories list, in case user wants to see what's available. */}
       <p className="text-[11px] text-warm-400 dark:text-cream-500">
         Available categories: {EXPENSE_CATEGORIES.map(c => c.label).join(' · ')}
       </p>

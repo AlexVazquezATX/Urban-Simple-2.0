@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { canSeeFinancials } from '@/lib/financials'
+import { canSeeFinancials, EXPENSE_TYPES } from '@/lib/financials'
 
 async function ownedBy(id: string, companyId: string) {
   return prisma.recurringExpense.findFirst({ where: { id, companyId } })
@@ -27,6 +27,11 @@ export async function PATCH(
 
   if (body.name !== undefined) data.name = String(body.name).trim()
   if (body.category !== undefined) data.category = String(body.category).trim() || 'other'
+  if (body.expenseType !== undefined) {
+    data.expenseType = EXPENSE_TYPES.some(t => t.value === body.expenseType)
+      ? body.expenseType
+      : 'operating'
+  }
   if (body.monthlyAmount !== undefined) {
     const amt = parseFloat(body.monthlyAmount)
     if (!Number.isFinite(amt) || amt < 0) {
