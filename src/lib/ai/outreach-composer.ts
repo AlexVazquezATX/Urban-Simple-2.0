@@ -238,15 +238,27 @@ IMPORTANT GUIDELINES:
 - Don't use generic phrases like "I hope this email finds you well"
 - Show you've done research about their business
 - Do NOT include a closing signature, sign-off, or valediction (no "Best," "Thanks," "Cheers," "Best regards," "The Urban Simple Team," etc.) — the user's email signature is appended automatically
+- Do NOT use em dashes (—) anywhere in the body. Use periods, commas, or " - " (a hyphen surrounded by spaces) if you need a separator.
 
-CRITICAL: Generate ONE complete, ready-to-send message. Do NOT:
-- Provide multiple options or alternatives to choose from
-- Include bracketed placeholders like [Option A] or [Option B]
-- Suggest different sentence variations
-- Add comments or notes within the message
-- Include any meta-text like "Here's your email" or "Choose between"
+CRITICAL — NO PLACEHOLDERS, NO BRACKETS, NO PARENTHETICAL NOTES.
+The message must be ready to send as-is. NEVER emit any of these:
+- Bracketed placeholders such as [prospect's name], [your name], [contact name], [first name], [team], [Manager], [Owner], [Their name], etc.
+- Curly-brace placeholders such as {{name}} or {name}.
+- Parenthetical instructions like "(insert name here)" or "(your name)".
+- Multiple options or alternatives ([Option A], [Option B]).
+- Meta-text like "Here's your email" or "Choose between".
 
-The message should be final and polished - ready to send as-is without any editing required.
+GREETING RULES (use exactly these substitutions):
+- If a CONTACT PERSON's first name is provided in the prospect info above, greet them by that first name: "Hi <firstName>," or "Hello <firstName>,".
+- If NO contact first name is available, open with "Hi," or "Hello there," (followed by a comma and a blank line, then the body). DO NOT write "Hi [Manager]" or "Hi Team" with brackets or substitute a generic role with brackets.
+- If you absolutely must reference the company/team in the greeting, use the company name directly (e.g., "Hi Lakeway Bistro team,") — never brackets.
+
+SENDER-NAME RULES (only relevant if you reference the sender inside the body):
+- The sender is always Alex (full name: Alex Vazquez), owner of Urban Simple.
+- Refer to the sender as "Alex" in the body if needed (e.g., "I'm Alex, owner of Urban Simple..."). Never write "[your name]", "[sender name]", "[Alex]", or any bracketed/templated placeholder.
+- Remember: do NOT add a closing sign-off — the signature is appended automatically.
+
+The message should be final and polished — ready to send as-is without any editing required.
 
 OUTPUT FORMAT:
 ${channel === 'email' ? 'Subject: [your subject line here]\n\n' : ''}Body:
@@ -369,16 +381,17 @@ STEP CONTEXT:
 
 IMPORTANT GUIDELINES:
 - This is a TEMPLATE that will be personalized later with merge fields
-- Use these placeholders: {{company_name}}, {{contact_name}}, {{location}}
+- Use ONLY these double-curly merge fields: {{company_name}}, {{contact_name}}, {{location}}, {{your_name}}. Anything else with curly or square brackets is forbidden.
 - Keep messages progressively shorter as the sequence continues
 - Each step should have a unique angle - don't repeat the same pitch
 - Reference previous messages naturally (for steps 2+)
 - Include a clear but non-pushy call-to-action
 - Do NOT include a closing signature, sign-off, or valediction (no "Best," "Thanks," "Cheers," "Best regards," "The Urban Simple Team," etc.) — the user's email signature is appended automatically
+- Do NOT use em dashes (—) anywhere in the body. Use periods, commas, or " - " (a hyphen surrounded by spaces) if you need a separator.
 
 CRITICAL: Generate ONE complete, ready-to-use template. Do NOT:
 - Provide multiple options or alternatives
-- Include bracketed placeholders like [Option A] or [Option B]
+- Include square-bracket placeholders such as [Option A], [Option B], [prospect's name], [your name], [insert here], or any other [...] form. Square brackets are FORBIDDEN — only {{...}} merge fields above are allowed.
 - Add meta-text or comments
 
 OUTPUT FORMAT:

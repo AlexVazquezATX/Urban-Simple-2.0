@@ -8,8 +8,15 @@ export type ActionEntity =
   | 'location'
   | 'service_agreement'
   | 'recurring_expense'
+  | 'prospect'
+  | 'issue'
+  | 'client_contact'
+  | 'location_assignment'
+  | 'checklist_template'
+  | 'invoice'
+  | 'outreach_draft'
 
-export type ActionKind = 'create' | 'update'
+export type ActionKind = 'create' | 'update' | 'delete'
 
 export type FieldType =
   | 'text'
@@ -19,6 +26,7 @@ export type FieldType =
   | 'date'
   | 'select'
   | 'boolean'
+  | 'json' // nested object/array values rendered as a read-only formatted block
 
 export interface FieldOption {
   value: string
@@ -32,9 +40,10 @@ export interface ActionField {
   label: string
   type: FieldType
   /** Existing value before the change (updates only); omitted for creates. */
-  currentValue?: string | number | boolean | null
-  /** Proposed new value (or the value to write for creates). The user may edit this in the preview. */
-  newValue: string | number | boolean | null
+  currentValue?: unknown
+  /** Proposed new value (or the value to write for creates). The user may edit this in the preview.
+   * Widened to `unknown` so `json`-typed fields can carry nested objects/arrays directly. */
+  newValue: unknown
   /** Options for selects. */
   options?: FieldOption[]
   /** Small hint shown under the field. */

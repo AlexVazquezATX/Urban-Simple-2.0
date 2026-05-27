@@ -44,6 +44,40 @@ const ENTITY_LABELS: Record<ActionEntity, string> = {
   location: 'Location',
   service_agreement: 'Service Agreement',
   recurring_expense: 'Recurring Expense',
+  prospect: 'Prospect',
+  issue: 'Issue',
+  client_contact: 'Contact',
+  location_assignment: 'Location Assignment',
+  checklist_template: 'Checklist',
+  invoice: 'Invoice',
+  outreach_draft: 'Outreach Draft',
+}
+
+// Phrasing for what "delete" actually does, per entity — some entities
+// soft-delete, some deactivate, some void. The user sees "delete" in chat but
+// the destructive section shows the precise consequence.
+function deleteConsequence(entity: ActionEntity): string {
+  switch (entity) {
+    case 'client':
+    case 'location':
+      return 'Soft delete — record is hidden but recoverable. Related agreements deactivate.'
+    case 'service_agreement':
+      return 'Marks the agreement inactive. Billing on this location stops.'
+    case 'recurring_expense':
+    case 'prospect':
+    case 'issue':
+    case 'client_contact':
+    case 'location_assignment':
+      return 'Permanent delete — cannot be undone.'
+    case 'checklist_template':
+      return 'Deletes if unused; otherwise marks inactive so it stops appearing.'
+    case 'invoice':
+      return 'Voids the invoice. Voided invoices stay in history with status=void.'
+    case 'outreach_draft':
+      return 'Rejects the draft. It will not be sent.'
+    default:
+      return 'This cannot be undone.'
+  }
 }
 
 export function ProposedActionCard({
@@ -67,6 +101,8 @@ export function ProposedActionCard({
   const isLocked = applyState !== 'idle'
   const successCount = results.filter((r) => r.status === 'success').length
   const failureCount = results.filter((r) => r.status === 'failure').length
+  const destructiveCount = actions.filter((a) => a.kind === 'delete').length
+  const hasDestructive = destructiveCount > 0
 
   const onFieldChange = (
     actionId: string,
@@ -137,9 +173,20 @@ export function ProposedActionCard({
   const onCancel = () => setApplyState('cancelled')
 
   return (
-    <div className="rounded-sm border-2 border-ocean-300 bg-white p-3 dark:border-ocean-700 dark:bg-charcoal-900">
+    <div
+      className={cn(
+        'rounded-sm border-2 bg-white p-3 dark:bg-charcoal-900',
+        hasDestructive
+          ? 'border-red-300 dark:border-red-800'
+          : 'border-ocean-300 dark:border-ocean-700'
+      )}
+    >
       <div className="mb-2 flex items-start gap-2">
-        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-ocean-500" />
+        {hasDestructive ? (
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+        ) : (
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-ocean-500" />
+        )}
         <div className="flex-1">
           <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
             {set.summary}
@@ -167,6 +214,14 @@ export function ProposedActionCard({
 
       {applyState === 'idle' && (
         <div className="mt-3 flex items-center justify-end gap-2 border-t border-warm-200 pt-2.5 dark:border-charcoal-700">
+          {hasDestructive && (
+            <p className="mr-auto text-[11px] italic text-red-600 dark:text-red-400">
+              {destructiveCount === 1
+                ? '1 destructive change'
+                : `${destructiveCount} destructive changes`}{' '}
+              — read carefully before applying.
+            </p>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -178,12 +233,13 @@ export function ProposedActionCard({
           </Button>
           <Button
             type="button"
-            variant="lime"
+            variant={hasDestructive ? 'destructive' : 'lime'}
             size="sm"
             onClick={onApply}
             className="rounded-sm"
           >
-            Apply {actions.length > 1 ? `All (${actions.length})` : ''}
+            {hasDestructive ? 'Delete & Apply' : 'Apply'}
+            {actions.length > 1 ? ` All (${actions.length})` : ''}
           </Button>
         </div>
       )}
@@ -238,6 +294,7 @@ function ActionSection({
   disabled,
   onChange,
 }: ActionSectionProps) {
+  const isDelete = action.kind === 'delete'
   return (
     <div
       className={cn(
@@ -248,14 +305,21 @@ function ActionSection({
             ? 'border-red-300 dark:border-red-800'
             : status === 'skipped'
               ? 'border-warm-200 opacity-60 dark:border-charcoal-700'
-              : 'border-warm-200 dark:border-charcoal-700'
+              : isDelete
+                ? 'border-red-300 bg-red-50/40 dark:border-red-800 dark:bg-red-950/20'
+                : 'border-warm-200 dark:border-charcoal-700'
       )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Badge
             variant="outline"
-            className="rounded-sm border-warm-300 px-1.5 py-0 text-[10px] uppercase tracking-wider text-warm-600 dark:border-charcoal-700 dark:text-cream-400"
+            className={cn(
+              'rounded-sm px-1.5 py-0 text-[10px] uppercase tracking-wider',
+              isDelete
+                ? 'border-red-300 text-red-700 dark:border-red-800 dark:text-red-400'
+                : 'border-warm-300 text-warm-600 dark:border-charcoal-700 dark:text-cream-400'
+            )}
           >
             {action.kind} {ENTITY_LABELS[action.entity]}
           </Badge>
@@ -266,7 +330,11 @@ function ActionSection({
         <StatusIcon status={status} />
       </div>
 
-      {action.fields.length === 0 ? (
+      {isDelete ? (
+        <p className="text-xs text-red-700 dark:text-red-400">
+          {deleteConsequence(action.entity)}
+        </p>
+      ) : action.fields.length === 0 ? (
         <p className="text-xs italic text-warm-500 dark:text-cream-400">
           (no fields to change)
         </p>
@@ -405,7 +473,7 @@ function FieldInput({ field, disabled, onChange }: FieldRowProps) {
       return (
         <div className="flex items-center gap-2 rounded-sm border border-warm-200 bg-white px-2 py-1.5 dark:border-charcoal-700 dark:bg-charcoal-900">
           <Checkbox
-            checked={!!field.newValue}
+            checked={Boolean(field.newValue)}
             onCheckedChange={(c) => onChange(c === true)}
             disabled={disabled}
           />
@@ -413,6 +481,15 @@ function FieldInput({ field, disabled, onChange }: FieldRowProps) {
             {field.newValue ? 'Yes' : 'No'}
           </span>
         </div>
+      )
+    case 'json':
+      // Read-only formatted preview of a nested object/array — sections in a
+      // checklist template, lineItems in an invoice, etc. Inline editing the
+      // structure isn't supported in v1; user cancels + rephrases if wrong.
+      return (
+        <pre className="max-h-32 overflow-auto rounded-sm border border-warm-200 bg-warm-50/60 p-2 font-mono text-[10px] text-warm-700 dark:border-charcoal-700 dark:bg-charcoal-900/60 dark:text-cream-300">
+          {formatJson(field.newValue)}
+        </pre>
       )
     case 'text':
     default:
@@ -427,8 +504,24 @@ function FieldInput({ field, disabled, onChange }: FieldRowProps) {
   }
 }
 
-function asString(v: ActionField['newValue']): string {
+function asString(v: unknown): string {
   if (v === null || v === undefined) return ''
   if (typeof v === 'boolean') return v ? 'true' : 'false'
+  if (typeof v === 'object') {
+    try {
+      return JSON.stringify(v)
+    } catch {
+      return ''
+    }
+  }
   return String(v)
+}
+
+function formatJson(v: unknown): string {
+  if (v === null || v === undefined) return '(empty)'
+  try {
+    return JSON.stringify(v, null, 2)
+  } catch {
+    return String(v)
+  }
 }

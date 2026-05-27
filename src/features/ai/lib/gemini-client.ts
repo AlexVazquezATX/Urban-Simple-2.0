@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
+import { GoogleGenerativeAI, type Content } from '@google/generative-ai'
 import { ACTION_TOOLS } from './action-tools'
 
 // Accept either env var name. GOOGLE_GEMINI_API_KEY is the project's
@@ -42,7 +42,19 @@ export interface GeminiChatOptions {
 
 export type GeminiToolOrAnswer =
   | { kind: 'text'; text: string }
-  | { kind: 'tool_call'; name: string; args: Record<string, unknown> }
+  | {
+      kind: 'tool_call'
+      name: string
+      args: Record<string, unknown>
+      /**
+       * Verbatim model content from the SDK response. Echo this back into the
+       * `contents` array on the next turn so unknown fields like
+       * `thoughtSignature` (required by Gemini 3.x for multi-turn function
+       * calling) round-trip correctly. The SDK type (Content) doesn't declare
+       * thoughtSignature, but the raw object preserves it.
+       */
+      modelContent: Content
+    }
 
 /**
  * Cassie's personality string — the existing chat's default system prompt,
@@ -268,12 +280,14 @@ export async function testGeminiConnection(): Promise<boolean> {
  * Unified action-or-answer chat turn. Sends the assembled prompt to Gemini
  * with the action tools attached. If the model chose to call a tool (e.g.
  * propose_action_chain or ask_clarification), returns the tool call. Otherwise
- * returns the plain-text answer. Caller is responsible for assembling the full
- * prompt (system prompt + tools addendum + action/business context + history
- * + user message).
+ * returns the plain-text answer.
+ *
+ * Accepts either a single string (one-shot) or a Content[] (multi-turn — the
+ * caller drives the loop, appending model functionCall + user functionResponse
+ * parts and calling again until a terminal answer is returned).
  */
 export async function sendChatWithTools(
-  fullPrompt: string
+  input: string | Content[]
 ): Promise<GeminiToolOrAnswer> {
   if (!GEMINI_API_KEY) {
     throw new Error(
@@ -282,7 +296,11 @@ export async function sendChatWithTools(
   }
 
   try {
-    const result = await modelWithTools.generateContent(fullPrompt)
+    const request =
+      typeof input === 'string'
+        ? input
+        : { contents: input }
+    const result = await modelWithTools.generateContent(request as any)
     const response = result.response
 
     // Function calls take precedence over text. The SDK exposes them via a
@@ -293,10 +311,24 @@ export async function sendChatWithTools(
         : undefined
     if (Array.isArray(fnCalls) && fnCalls.length > 0) {
       const call = fnCalls[0]
+      // Pull the raw model Content from the response so the caller can echo
+      // it back verbatim (with all SDK-unknown fields intact, including the
+      // thoughtSignature that Gemini 3.x requires for multi-turn function
+      // calling). Fall back to a synthesized minimal Content if the candidate
+      // shape is unexpected.
+      const candidateContent: Content | undefined = (response as any)?.candidates?.[0]?.content
+      const modelContent: Content =
+        candidateContent && Array.isArray(candidateContent.parts)
+          ? candidateContent
+          : {
+              role: 'model',
+              parts: [{ functionCall: { name: call.name, args: call.args ?? {} } }],
+            }
       return {
         kind: 'tool_call',
         name: call.name,
         args: (call.args as Record<string, unknown>) ?? {},
+        modelContent,
       }
     }
 
@@ -310,17 +342,24 @@ export async function sendChatWithTools(
     }
     return { kind: 'text', text }
   } catch (error: any) {
-    console.error('Error calling Gemini (tools):', error)
-    if (error.message?.includes('API key')) {
+    // Log the full error verbatim so dev server output shows the actual cause
+    // (auth, schema rejection, model id mismatch, etc.) rather than the
+    // sanitized re-thrown message swallowing the detail.
+    console.error('[sendChatWithTools] Gemini SDK error:', error?.message, error?.stack)
+    // Only treat as an auth issue if the message is unambiguously about the key.
+    // Many unrelated errors include the substring "API key" (e.g. quota text);
+    // don't rewrite them into the misleading "key invalid" message.
+    if (
+      typeof error?.message === 'string' &&
+      /api[_\s]?key not valid|invalid api key|API_KEY_INVALID/i.test(error.message)
+    ) {
       throw new Error(
-        'Gemini API key is invalid. Please check your GEMINI_API_KEY in .env.local'
+        'Gemini API key is invalid. Please check your GOOGLE_GEMINI_API_KEY in .env.local'
       )
     }
-    if (error.message?.includes('quota')) {
-      throw new Error(
-        'Gemini API quota exceeded. Please check your Google Cloud billing.'
-      )
+    if (typeof error?.message === 'string' && /quota|rate.?limit/i.test(error.message)) {
+      throw new Error('Gemini API quota exceeded. Please check your Google Cloud billing.')
     }
-    throw new Error(`AI Error: ${error.message}`)
+    throw new Error(`Gemini tools error: ${error?.message ?? String(error)}`)
   }
 }

@@ -134,9 +134,91 @@ export const ACTION_TOOLS = [
           required: ['question'],
         },
       },
+      {
+        name: 'search_prospects',
+        description:
+          'Search prospects by company name when they are NOT visible in ACTION CONTEXT. ' +
+          'PREFER passing all the names you need to look up in `queries` (an array) — one call returns matches for everything, instead of you burning a turn per name. ' +
+          'Returns matches with id, companyName, legalName, status, priority, industry.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            queries: {
+              type: SchemaType.ARRAY,
+              description:
+                'PREFERRED: array of name substrings to match in one call (e.g. ["Oribellos", "Skybox", "Community Kitchen"]). Use this when looking up multiple prospects.',
+              items: { type: SchemaType.STRING },
+            },
+            query: {
+              type: SchemaType.STRING,
+              description:
+                'Single name substring (case-insensitive). Use ONLY when looking up exactly one prospect; otherwise prefer `queries`.',
+            },
+            limit: {
+              type: SchemaType.NUMBER,
+              description: 'Max matches to return per query (default 15, max 25).',
+            },
+          },
+        },
+      },
+      {
+        name: 'search_clients',
+        description:
+          'Search clients by name/legal name/billing email when NOT visible in ACTION CONTEXT. ' +
+          'PREFER passing all names in `queries` (array) to look up many at once. Returns id, name, status.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            queries: {
+              type: SchemaType.ARRAY,
+              description: 'PREFERRED: array of name substrings to match in one call.',
+              items: { type: SchemaType.STRING },
+            },
+            query: {
+              type: SchemaType.STRING,
+              description: 'Single name substring (case-insensitive). Prefer `queries` when looking up multiple.',
+            },
+            limit: {
+              type: SchemaType.NUMBER,
+              description: 'Max matches to return (default 15, max 25).',
+            },
+          },
+        },
+      },
+      {
+        name: 'search_locations',
+        description:
+          'Search locations by name when NOT visible in ACTION CONTEXT. ' +
+          'PREFER passing all names in `queries` (array). Returns id, name, clientId, clientName.',
+        parameters: {
+          type: SchemaType.OBJECT,
+          properties: {
+            queries: {
+              type: SchemaType.ARRAY,
+              description: 'PREFERRED: array of name substrings to match in one call.',
+              items: { type: SchemaType.STRING },
+            },
+            query: {
+              type: SchemaType.STRING,
+              description: 'Single name substring (case-insensitive). Prefer `queries` when looking up multiple.',
+            },
+            limit: {
+              type: SchemaType.NUMBER,
+              description: 'Max matches to return (default 15, max 25).',
+            },
+          },
+        },
+      },
     ],
   },
 ] as const
+
+/** Names of the read-only search tools, exposed for the chat route to dispatch on. */
+export const SEARCH_TOOL_NAMES = ['search_prospects', 'search_clients', 'search_locations'] as const
+export type SearchToolName = (typeof SEARCH_TOOL_NAMES)[number]
+export function isSearchToolName(name: string): name is SearchToolName {
+  return (SEARCH_TOOL_NAMES as readonly string[]).includes(name)
+}
 
 // ============================================================================
 // Field metadata — drives the preview UI for each entity's fields
@@ -174,6 +256,51 @@ const EXPENSE_TYPE_FIELD_OPTIONS: FieldOption[] = EXPENSE_TYPES.map((t) => ({
   value: t.value,
   label: t.label,
 }))
+
+// ---- Tier 2 enums ---------------------------------------------------------
+const PROSPECT_STATUS_OPTIONS = [
+  'new',
+  'researching',
+  'contacted',
+  'engaged',
+  'qualified',
+  'proposal_sent',
+  'won',
+  'lost',
+  'nurturing',
+]
+const PROSPECT_PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent']
+const PROSPECT_SOURCE_OPTIONS = [
+  'manual',
+  'csv_import',
+  'ai_discovery',
+  'referral',
+  'website',
+  'meta',
+  'other',
+]
+const ISSUE_CATEGORY_OPTIONS = ['quality', 'equipment', 'communication', 'safety', 'other']
+const ISSUE_SEVERITY_OPTIONS = ['low', 'medium', 'high', 'critical']
+const ISSUE_STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed']
+const CONTACT_ROLE_OPTIONS = ['primary', 'billing', 'operations', 'other']
+const OUTREACH_CHANNEL_OPTIONS = ['email', 'phone', 'sms', 'linkedin', 'instagram_dm']
+const OUTREACH_TONE_OPTIONS = ['friendly', 'professional', 'casual', 'warm']
+const OUTREACH_PURPOSE_OPTIONS = ['cold_outreach', 'follow_up', 're_engagement']
+
+const PROSPECT_STATUS_FIELD_OPTIONS = selectOptions(PROSPECT_STATUS_OPTIONS)
+const PROSPECT_PRIORITY_FIELD_OPTIONS = selectOptions(PROSPECT_PRIORITY_OPTIONS)
+const PROSPECT_SOURCE_FIELD_OPTIONS = selectOptions(PROSPECT_SOURCE_OPTIONS)
+const ISSUE_CATEGORY_FIELD_OPTIONS = selectOptions(ISSUE_CATEGORY_OPTIONS)
+const ISSUE_SEVERITY_FIELD_OPTIONS = selectOptions(ISSUE_SEVERITY_OPTIONS)
+const ISSUE_STATUS_FIELD_OPTIONS = selectOptions(ISSUE_STATUS_OPTIONS)
+const CONTACT_ROLE_FIELD_OPTIONS = selectOptions(CONTACT_ROLE_OPTIONS)
+const OUTREACH_CHANNEL_FIELD_OPTIONS = selectOptions(OUTREACH_CHANNEL_OPTIONS)
+const OUTREACH_TONE_FIELD_OPTIONS = selectOptions(OUTREACH_TONE_OPTIONS)
+const OUTREACH_PURPOSE_FIELD_OPTIONS: FieldOption[] = [
+  { value: 'cold_outreach', label: 'Cold outreach' },
+  { value: 'follow_up', label: 'Follow-up' },
+  { value: 're_engagement', label: 'Re-engagement' },
+]
 
 const FIELD_META: Record<ActionEntity, Record<string, FieldMeta>> = {
   client: {
@@ -230,6 +357,95 @@ const FIELD_META: Record<ActionEntity, Record<string, FieldMeta>> = {
     isActive: { label: 'Active', type: 'boolean' },
     notes: { label: 'Notes', type: 'textarea' },
   },
+  prospect: {
+    companyName: { label: 'Company Name', type: 'text' },
+    legalName: { label: 'Legal Name', type: 'text' },
+    industry: { label: 'Industry', type: 'text' },
+    businessType: { label: 'Business Type', type: 'text' },
+    website: { label: 'Website', type: 'text' },
+    phone: { label: 'Phone', type: 'text' },
+    status: { label: 'Status', type: 'select', options: PROSPECT_STATUS_FIELD_OPTIONS },
+    priority: { label: 'Priority', type: 'select', options: PROSPECT_PRIORITY_FIELD_OPTIONS },
+    source: { label: 'Source', type: 'select', options: PROSPECT_SOURCE_FIELD_OPTIONS },
+    sourceDetail: { label: 'Source Detail', type: 'text' },
+    estimatedValue: { label: 'Estimated Value', type: 'currency' },
+    estimatedSize: { label: 'Estimated Size', type: 'text' },
+    employeeCount: { label: 'Employee Count', type: 'number' },
+    annualRevenue: { label: 'Annual Revenue', type: 'currency' },
+    priceLevel: { label: 'Price Level', type: 'text' },
+    notes: { label: 'Notes', type: 'textarea' },
+    lostReason: { label: 'Lost Reason', type: 'text' },
+  },
+  issue: {
+    locationId: { label: 'Location', type: 'text', helper: 'Location id (required for create)' },
+    title: { label: 'Title', type: 'text' },
+    description: { label: 'Description', type: 'textarea' },
+    category: { label: 'Category', type: 'select', options: ISSUE_CATEGORY_FIELD_OPTIONS },
+    severity: { label: 'Severity', type: 'select', options: ISSUE_SEVERITY_FIELD_OPTIONS },
+    status: { label: 'Status', type: 'select', options: ISSUE_STATUS_FIELD_OPTIONS },
+    assignedToId: { label: 'Assigned To', type: 'text', helper: 'User id of assignee' },
+    resolution: { label: 'Resolution', type: 'textarea' },
+  },
+  client_contact: {
+    clientId: { label: 'Client', type: 'text', helper: 'Client id (required for all actions)' },
+    firstName: { label: 'First Name', type: 'text' },
+    lastName: { label: 'Last Name', type: 'text' },
+    email: { label: 'Email', type: 'text' },
+    phone: { label: 'Phone', type: 'text' },
+    role: { label: 'Role', type: 'select', options: CONTACT_ROLE_FIELD_OPTIONS },
+    isPortalUser: { label: 'Portal Access', type: 'boolean' },
+  },
+  location_assignment: {
+    locationId: { label: 'Location', type: 'text', helper: 'Location id (required for create)' },
+    userId: { label: 'Associate', type: 'text', helper: 'User id of the associate (required for create)' },
+    monthlyPay: { label: 'Monthly Pay', type: 'currency' },
+    startDate: { label: 'Start Date', type: 'date' },
+    endDate: { label: 'End Date', type: 'date' },
+    isActive: { label: 'Active', type: 'boolean' },
+    estimatedHoursPerVisit: { label: 'Estimated Hours / Visit', type: 'number' },
+    cleaningWindowStart: { label: 'Window Start', type: 'text', helper: 'HH:MM (e.g. 23:00)' },
+    cleaningWindowEnd: { label: 'Window End', type: 'text', helper: 'HH:MM (e.g. 02:00)' },
+    nightsPerWeek: { label: 'Nights / Week', type: 'number' },
+  },
+  checklist_template: {
+    name: { label: 'Name', type: 'text' },
+    nameEs: { label: 'Spanish Name', type: 'text' },
+    description: { label: 'Description', type: 'textarea' },
+    sections: {
+      label: 'Sections',
+      type: 'json',
+      helper: 'Array of { id, name, items: [{ id, text }] }. Read-only preview.',
+    },
+    isActive: { label: 'Active', type: 'boolean' },
+  },
+  invoice: {
+    clientId: { label: 'Client', type: 'text', helper: 'Client id (required for create)' },
+    issueDate: { label: 'Issue Date', type: 'date' },
+    dueDate: { label: 'Due Date', type: 'date' },
+    taxAmount: { label: 'Tax Amount', type: 'currency' },
+    notes: { label: 'Notes', type: 'textarea' },
+    terms: { label: 'Terms', type: 'textarea' },
+    status: { label: 'Status', type: 'text', helper: 'draft / sent / paid / void' },
+    lineItems: {
+      label: 'Line Items',
+      type: 'json',
+      helper: 'Array of { description, quantity, unitPrice }. Read-only preview.',
+    },
+  },
+  outreach_draft: {
+    prospectId: { label: 'Prospect', type: 'text', helper: 'Prospect id (required for create)' },
+    composeInstructions: {
+      label: 'Compose Instructions',
+      type: 'textarea',
+      helper: 'Free-text guidance for the composer: angle, tone notes, things to mention or avoid, length, etc. This is what shapes the email.',
+    },
+    tone: { label: 'Tone', type: 'select', options: OUTREACH_TONE_FIELD_OPTIONS },
+    purpose: { label: 'Purpose', type: 'select', options: OUTREACH_PURPOSE_FIELD_OPTIONS },
+    subject: { label: 'Subject', type: 'text', helper: 'Auto-composed; edit before applying.' },
+    body: { label: 'Body', type: 'textarea', helper: 'Auto-composed; edit before applying.' },
+    channel: { label: 'Channel', type: 'select', options: OUTREACH_CHANNEL_FIELD_OPTIONS },
+    approvalStatus: { label: 'Approval', type: 'text', helper: 'pending / approved / rejected' },
+  },
 }
 
 export const ALLOWED_FIELDS: Record<ActionEntity, string[]> = {
@@ -237,6 +453,13 @@ export const ALLOWED_FIELDS: Record<ActionEntity, string[]> = {
   location: Object.keys(FIELD_META.location),
   service_agreement: Object.keys(FIELD_META.service_agreement),
   recurring_expense: Object.keys(FIELD_META.recurring_expense),
+  prospect: Object.keys(FIELD_META.prospect),
+  issue: Object.keys(FIELD_META.issue),
+  client_contact: Object.keys(FIELD_META.client_contact),
+  location_assignment: Object.keys(FIELD_META.location_assignment),
+  checklist_template: Object.keys(FIELD_META.checklist_template),
+  invoice: Object.keys(FIELD_META.invoice),
+  outreach_draft: Object.keys(FIELD_META.outreach_draft),
 }
 
 // ============================================================================
@@ -245,17 +468,93 @@ export const ALLOWED_FIELDS: Record<ActionEntity, string[]> = {
 
 export function actionToolsSystemPromptAddendum(): string {
   return `
-You have access to two tools for taking actions in the user's business records:
+=== CRITICAL: HOW YOU MAKE CHANGES ===
 
-1. **propose_action_chain** — propose one or more record changes (CREATE or UPDATE) for
-   the user to preview and confirm. NEVER explain the change in prose AND call the tool;
-   just call the tool. The preview is shown automatically.
+You CANNOT directly create, update, delete, draft, save, schedule, send, or modify
+ANYTHING yourself. You have no direct write access to the database. The ONLY way a
+change happens is:
+  1. You call propose_action_chain (or ask_clarification).
+  2. The user sees a preview card in the chat.
+  3. The user clicks Apply.
+  4. Only then does the action actually run.
 
-2. **ask_clarification** — when the user's request is ambiguous (e.g. two clients
-   match a name) or missing a required field, ask a short follow-up question.
+This means:
+- NEVER write "I have successfully added/created/saved/drafted/scheduled X."
+- NEVER write "Done — I've taken care of that."
+- NEVER write "It is officially saved" or "It is sitting in your queue."
+- If you find yourself wanting to write any of those phrases — STOP. Call the tool
+  instead. A preview card IS your confirmation; you don't narrate it.
+- If you cannot call the tool for some reason (missing info, record not in your
+  context, ambiguous request), say so honestly: "I can't find X in my recent
+  context — could you paste the id, or should I create it fresh?"
 
-If the user is asking a QUESTION (about their business or anything else), respond
-with plain text — do not call any tool.
+You have five tools — two that propose changes and three read-only search helpers:
+
+1. **propose_action_chain** — propose one or more record changes (CREATE, UPDATE, or
+   DELETE) for the user to preview and confirm. Whenever the user uses action verbs
+   like add, create, update, change, edit, raise, lower, set, mark, assign, pause,
+   activate, draft, schedule, delete, remove, void, cancel — call this tool.
+   Don't also explain the change in prose; the preview is shown automatically.
+
+2. **ask_clarification** — when the user's request is ambiguous (e.g. two records
+   match a name, or a required field is missing), ask a short follow-up question
+   with optional button choices.
+
+3. **search_prospects(query, limit?)** — search by company name when the prospect
+   isn't in ACTION CONTEXT.
+
+4. **search_clients(query, limit?)** — search by name/legal name/billing email when
+   the client isn't in ACTION CONTEXT.
+
+5. **search_locations(query, limit?)** — search by name when the location isn't in
+   ACTION CONTEXT.
+
+If the user is asking a QUESTION (about their business, an opinion, casual chat),
+respond with plain text — do not call any tool. Action verbs above always mean
+"use a tool"; question words (what, how, when, why, who, show me, tell me) mean
+"answer in text."
+
+=== ABOUT THE ACTION CONTEXT BLOCK + WHEN TO SEARCH ===
+
+The ACTION CONTEXT below shows the MOST RECENT slice of each record type, not
+necessarily every record. Alex may have hundreds of prospects/clients/locations;
+older or paginated ones are invisible to you in this block.
+
+If the user mentions a specific record (e.g. "Test Hotel", "Lakeway Bistro") and
+you DO NOT see it in ACTION CONTEXT:
+  1. Call the matching search_* tool FIRST. Pass a substring of the name as the
+     query (e.g. query: "Test Hotel" or just "Test"). You will get a function
+     response back with the matches and their ids.
+  2. If exactly one match is returned, use that id in your propose_action_chain
+     call. Do NOT also narrate the search to the user; just proceed to propose.
+  3. If multiple matches are returned, call ask_clarification with the candidates
+     as button choices.
+  4. If zero matches are returned, call ask_clarification and ask the user
+     whether to create the record fresh.
+
+**BATCH LOOKUPS — IMPORTANT**: When the user gives you MULTIPLE names to look
+up (e.g. "draft emails for Oribellos, Allday Pizza, Skybox on 6th, Community
+Kitchen"), DO NOT call search_prospects four separate times. Pass ALL the
+names in a single call using the \`queries\` array:
+
+  search_prospects({ queries: ["Oribellos", "Allday Pizza", "Skybox", "Community Kitchen"] })
+
+This returns matches for all of them at once. You have a limited number of
+turns per response; one batched search leaves room for the propose_action_chain
+call. Multiple individual searches will burn your turn budget and the request
+will fail.
+
+After the batched search returns, match each result to its query by comparing
+companyName/name fields. If a query had no match, ask_clarification about
+just those (don't re-search). If all queries matched cleanly, go straight to
+propose_action_chain with one action per prospect.
+
+DO NOT silently substitute a different record. DO NOT invent ids. DO NOT claim
+the record doesn't exist without searching first.
+
+You can also use search_* tools proactively when answering questions if you need
+to surface a record that isn't in ACTION CONTEXT — but for most chat turns the
+ACTION CONTEXT block is enough.
 
 When you call propose_action_chain, use these exact field keys per entity. Use the
 ids from the ACTION CONTEXT block verbatim (do not invent ids). For chained creates,
@@ -290,13 +589,89 @@ Allowed fields: ${ALLOWED_FIELDS.recurring_expense.join(', ')}.
 - billingDay: integer 1-31.
 - isActive: boolean.
 
+### entity = "prospect"
+Allowed fields: ${ALLOWED_FIELDS.prospect.join(', ')}.
+- For creates, companyName is required.
+- status enum: ${PROSPECT_STATUS_OPTIONS.join(' | ')}. Default "new".
+- priority enum: ${PROSPECT_PRIORITY_OPTIONS.join(' | ')}. Default "medium".
+- source enum: ${PROSPECT_SOURCE_OPTIONS.join(' | ')}. Default "manual".
+- estimatedValue and annualRevenue are dollar numbers.
+
+### entity = "issue"
+Allowed fields: ${ALLOWED_FIELDS.issue.join(', ')}.
+- For creates, locationId (look up from ACTION CONTEXT) and title are required.
+- category enum: ${ISSUE_CATEGORY_OPTIONS.join(' | ')}. Default "other".
+- severity enum: ${ISSUE_SEVERITY_OPTIONS.join(' | ')}. Default "medium".
+- status enum: ${ISSUE_STATUS_OPTIONS.join(' | ')}. Default "open".
+- To resolve an issue: set status="resolved" with a resolution.
+
+### entity = "client_contact"
+Allowed fields: ${ALLOWED_FIELDS.client_contact.join(', ')}.
+- clientId is ALWAYS required (creates, updates, deletes) — it identifies which client's contact this is.
+- For creates, firstName, lastName, and email are required.
+- role enum: ${CONTACT_ROLE_OPTIONS.join(' | ')}. Default "primary".
+- isPortalUser: boolean — if true, the contact gets portal access.
+
+### entity = "location_assignment"
+Allowed fields: ${ALLOWED_FIELDS.location_assignment.join(', ')}.
+- For creates, locationId, userId, monthlyPay, and startDate are required.
+- monthlyPay is a dollar number.
+- cleaningWindowStart/End are 24-hour HH:MM strings (e.g. "23:00").
+- isActive: boolean.
+
+### entity = "checklist_template"
+Allowed fields: ${ALLOWED_FIELDS.checklist_template.join(', ')}.
+- For creates, name is required.
+- sections is a nested array: [{ id, name, items: [{ id, text }] }]. Generate short id strings like "s1", "s1-i1". Place this in field_values_json as a real nested array (not a string).
+- Example sections:
+  [{"id":"s1","name":"Bathrooms","items":[{"id":"s1-i1","text":"Clean toilet"},{"id":"s1-i2","text":"Restock toilet paper"}]}]
+
+### entity = "invoice"
+Allowed fields: ${ALLOWED_FIELDS.invoice.join(', ')}.
+- For creates, clientId and lineItems are required.
+- lineItems is a nested array: [{ description, quantity, unitPrice, serviceAgreementId? }]. Quantity and unitPrice are numbers. Place this as a real nested array (not a string) in field_values_json.
+- For updates, status enum: draft | sent | paid | void. Setting status="void" effectively cancels the invoice.
+
+### entity = "outreach_draft"
+Allowed fields: ${ALLOWED_FIELDS.outreach_draft.join(', ')}.
+- For creates, **prospectId is required**. Look it up in ACTION CONTEXT or call search_prospects first.
+- **composeInstructions** is the most important field — it shapes the email. Carry over the user's full intent verbatim or as a faithful rephrase: the angle (e.g. "follow up on a warm lead that came in 1-2 weeks ago"), things to mention ("we just got our new CRM dialed in"), things to avoid, length cues ("short and sweet"), and any specific call-to-action. The more of the user's actual guidance you preserve here, the better the email. If the user gave no specific guidance, pass a brief contextual description like "Initial cold outreach to introduce Urban Simple's nightly hospitality cleaning."
+- **tone** enum: ${OUTREACH_TONE_OPTIONS.join(' | ')}. Default "friendly". Use "warm" when the user says "warm", "personal", or "really friendly"; "professional" when they say "formal" or "business-like"; "casual" when they say "chill" or "laid back".
+- **purpose** enum: ${OUTREACH_PURPOSE_OPTIONS.join(' | ')}. Use "follow_up" whenever the user uses any of: "follow up", "follow-up", "follow them up", "circle back", "check in", "touch base again". Use "re_engagement" when the user says "re-engage", "wake up", "warm up an old prospect", "we lost touch". Use "cold_outreach" only for genuine first-touch (default if unclear).
+- **channel** enum: ${OUTREACH_CHANNEL_OPTIONS.join(' | ')}. Default "email".
+- **DO NOT set subject or body yourself.** The chat route runs the composer server-side after you propose, fills in subject + body using your composeInstructions, and shows the result in the preview card. The user can then edit either field before applying. If you write a subject/body inline, the composer will overwrite them — wasted work.
+- For updates / rejections, target_id is the OutreachMessage id.
+
+CRITICAL — DO NOT TYPE THE EMAIL IN CHAT. When the user asks you to draft an
+outreach email (any phrasing like "draft an email", "write up an email",
+"compose an outreach", "draft a follow-up", "put it in drafts"):
+  - Call propose_action_chain with entity="outreach_draft", kind="create",
+    and field_values_json containing prospectId + composeInstructions (+
+    optional tone/purpose).
+  - DO NOT also type out a "Subject:" + "Body:" block in your text response.
+    The preview card will show the composed email; if you type it inline you
+    are creating a fake confirmation.
+  - DO NOT say "I have generated the email and saved it in the queue" —
+    that's a lie. The user has to click Apply for anything to happen.
+  - If you cannot find the prospect in ACTION CONTEXT and search_prospects
+    returns nothing, call ask_clarification instead.
+
+For BATCH outreach (e.g. "draft follow-ups for these four prospects"), put
+ONE outreach_draft create per prospect into the SAME propose_action_chain
+call. Reuse the same composeInstructions, tone, and purpose across all items
+(they share the user's intent). The composer runs per-action so each email
+still gets personalized to its specific prospect.
+
 ### General rules
-- Always include a target_id for kind="update", looked up from ACTION CONTEXT.
-- For creates, omit target_id.
+- For kind="create", omit target_id.
+- For kind="update" or kind="delete", set target_id to the existing record's id (look it up in ACTION CONTEXT).
+- "delete" kind tells the executor to remove the record. The executor picks the right strategy per entity (hard delete, soft delete, deactivate, or void). The user just sees a destructive red preview.
 - target_label is a short human description shown in the preview (not sent to the API).
-- field_values_json must be a JSON string, e.g. '{"monthlyAmount":8000}'.
+- field_values_json must be a JSON string of an object; nested arrays/objects inside are fine.
 - Never invent ids — use only ids present in ACTION CONTEXT, or use "${ACTION_REF_PREFIX}<actionId>" for chained creates.
-- If the user wants to delete or deactivate something, set isActive=false (DELETE is not available yet).
+
+### Batching
+When the user lists multiple items in one request (e.g. "add prospects Lakeway Bistro, Hill Country Catering, and Austin Hotel" or "draft outreach emails to Test Hotel and Lakeway Bistro"), put ALL of them into a SINGLE propose_action_chain call as separate items in the actions array. Do NOT split into multiple turns. The preview card will render each one and Apply runs them in order.
 `.trim()
 }
 
@@ -431,6 +806,17 @@ function coerceFieldValue(value: unknown, type: FieldType): ActionField['newValu
       const n = parseFloat(String(value))
       return Number.isFinite(n) ? n : null
     }
+    case 'json':
+      // Preserve nested objects/arrays as-is; if a JSON string was emitted,
+      // parse it back so the executor sends a real object.
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return value
+        }
+      }
+      return value
     case 'date':
     case 'text':
     case 'textarea':

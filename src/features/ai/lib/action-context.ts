@@ -43,11 +43,70 @@ export interface ActionContextExpense {
   isActive: boolean
 }
 
+export interface ActionContextProspect {
+  id: string
+  companyName: string
+  status: string
+  priority: string
+}
+
+export interface ActionContextIssue {
+  id: string
+  title: string
+  status: string
+  severity: string
+  locationName: string
+}
+
+export interface ActionContextContact {
+  id: string
+  clientId: string
+  clientName: string
+  name: string
+  role: string
+}
+
+export interface ActionContextAssignment {
+  id: string
+  locationName: string
+  userName: string
+  isActive: boolean
+}
+
+export interface ActionContextChecklistTemplate {
+  id: string
+  name: string
+  isActive: boolean
+}
+
+export interface ActionContextInvoice {
+  id: string
+  invoiceNumber: string
+  clientName: string
+  status: string
+  totalAmount: number
+}
+
+export interface ActionContextOutreachDraft {
+  id: string
+  prospectName: string
+  subject: string | null
+  channel: string
+  approvalStatus: string
+}
+
 export interface ActionContext {
   clients: ActionContextClient[]
   locations: ActionContextLocation[]
   agreements: ActionContextAgreement[]
   expenses: ActionContextExpense[]
+  prospects: ActionContextProspect[]
+  issues: ActionContextIssue[]
+  contacts: ActionContextContact[]
+  assignments: ActionContextAssignment[]
+  checklists: ActionContextChecklistTemplate[]
+  invoices: ActionContextInvoice[]
+  outreachDrafts: ActionContextOutreachDraft[]
 }
 
 /**
@@ -66,7 +125,19 @@ export async function buildActionContext(args: {
     ...(branchId && { branchId }),
   }
 
-  const [clientsRaw, locationsRaw, agreementsRaw, expensesRaw] = await Promise.all([
+  const [
+    clientsRaw,
+    locationsRaw,
+    agreementsRaw,
+    expensesRaw,
+    prospectsRaw,
+    issuesRaw,
+    contactsRaw,
+    assignmentsRaw,
+    checklistsRaw,
+    invoicesRaw,
+    outreachDraftsRaw,
+  ] = await Promise.all([
     prisma.client.findMany({
       where: clientScope,
       select: {
@@ -124,6 +195,106 @@ export async function buildActionContext(args: {
       },
       orderBy: [{ isActive: 'desc' }, { name: 'asc' }],
     }),
+    // Prospects (active only — exclude won/lost so the list stays tight).
+    prisma.prospect.findMany({
+      where: {
+        companyId,
+        deletedAt: null,
+        status: { notIn: ['won', 'lost'] },
+      },
+      select: {
+        id: true,
+        companyName: true,
+        status: true,
+        priority: true,
+      },
+      orderBy: [{ priority: 'desc' }, { updatedAt: 'desc' }],
+      take: 200,
+    }),
+    // Issues — only open/in-progress, recent first.
+    prisma.issue.findMany({
+      where: {
+        client: { companyId },
+        status: { in: ['open', 'in_progress'] },
+      },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        severity: true,
+        location: { select: { name: true } },
+      },
+      orderBy: [{ severity: 'desc' }, { createdAt: 'desc' }],
+      take: 100,
+    }),
+    // Contacts for active clients in this branch scope.
+    prisma.clientContact.findMany({
+      where: { client: clientScope },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        clientId: true,
+        client: { select: { name: true } },
+      },
+      orderBy: [{ role: 'asc' }, { createdAt: 'asc' }],
+      take: 250,
+    }),
+    // Active location assignments.
+    prisma.locationAssignment.findMany({
+      where: {
+        isActive: true,
+        location: { client: clientScope },
+      },
+      select: {
+        id: true,
+        isActive: true,
+        location: { select: { name: true } },
+        user: { select: { firstName: true, lastName: true, displayName: true } },
+      },
+      orderBy: { startDate: 'desc' },
+      take: 150,
+    }),
+    // Active checklist templates.
+    prisma.checklistTemplate.findMany({
+      where: { companyId, isActive: true },
+      select: { id: true, name: true, isActive: true },
+      orderBy: { name: 'asc' },
+      take: 100,
+    }),
+    // Open / draft / sent invoices (skip paid + void).
+    prisma.invoice.findMany({
+      where: {
+        client: clientScope,
+        status: { notIn: ['paid', 'void'] },
+      },
+      select: {
+        id: true,
+        invoiceNumber: true,
+        status: true,
+        totalAmount: true,
+        client: { select: { name: true } },
+      },
+      orderBy: { issueDate: 'desc' },
+      take: 60,
+    }),
+    // Outreach drafts pending approval.
+    prisma.outreachMessage.findMany({
+      where: {
+        approvalStatus: 'pending',
+        prospect: { companyId, deletedAt: null },
+      },
+      select: {
+        id: true,
+        subject: true,
+        channel: true,
+        approvalStatus: true,
+        prospect: { select: { companyName: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    }),
   ])
 
   return {
@@ -162,6 +333,54 @@ export async function buildActionContext(args: {
       vendor: e.vendor,
       isActive: e.isActive,
     })),
+    prospects: prospectsRaw.map((p) => ({
+      id: p.id,
+      companyName: p.companyName,
+      status: p.status,
+      priority: p.priority,
+    })),
+    issues: issuesRaw.map((i) => ({
+      id: i.id,
+      title: i.title,
+      status: i.status,
+      severity: i.severity,
+      locationName: i.location.name,
+    })),
+    contacts: contactsRaw.map((c) => ({
+      id: c.id,
+      clientId: c.clientId,
+      clientName: c.client.name,
+      name: `${c.firstName} ${c.lastName}`.trim(),
+      role: c.role,
+    })),
+    assignments: assignmentsRaw.map((a) => ({
+      id: a.id,
+      locationName: a.location.name,
+      userName:
+        a.user.displayName ||
+        `${a.user.firstName} ${a.user.lastName}`.trim() ||
+        'Unknown',
+      isActive: a.isActive,
+    })),
+    checklists: checklistsRaw.map((c) => ({
+      id: c.id,
+      name: c.name,
+      isActive: c.isActive,
+    })),
+    invoices: invoicesRaw.map((i) => ({
+      id: i.id,
+      invoiceNumber: i.invoiceNumber,
+      clientName: i.client.name,
+      status: i.status,
+      totalAmount: Number(i.totalAmount),
+    })),
+    outreachDrafts: outreachDraftsRaw.map((m) => ({
+      id: m.id,
+      prospectName: m.prospect?.companyName ?? '(no prospect)',
+      subject: m.subject,
+      channel: m.channel,
+      approvalStatus: m.approvalStatus,
+    })),
   }
 }
 
@@ -186,6 +405,31 @@ export function formatActionContextForLLM(ctx: ActionContext): string {
     (e) =>
       `- ${e.name} [id=${e.id}] ($${e.monthlyAmount}/mo, category=${e.category}, type=${e.expenseType}${e.vendor ? `, vendor=${e.vendor}` : ''}${e.isActive ? '' : ', PAUSED'})`
   )
+  const prospectLines = ctx.prospects.map(
+    (p) =>
+      `- ${p.companyName} [id=${p.id}] (status=${p.status}, priority=${p.priority})`
+  )
+  const issueLines = ctx.issues.map(
+    (i) =>
+      `- ${i.title} [id=${i.id}] (severity=${i.severity}, status=${i.status}, location=${i.locationName})`
+  )
+  const contactLines = ctx.contacts.map(
+    (c) => `- ${c.name} [id=${c.id}] (client=${c.clientName} [${c.clientId}], role=${c.role})`
+  )
+  const assignmentLines = ctx.assignments.map(
+    (a) => `- ${a.userName} → ${a.locationName} [id=${a.id}]${a.isActive ? '' : ' (inactive)'}`
+  )
+  const checklistLines = ctx.checklists.map(
+    (c) => `- ${c.name} [id=${c.id}]${c.isActive ? '' : ' (inactive)'}`
+  )
+  const invoiceLines = ctx.invoices.map(
+    (i) =>
+      `- ${i.invoiceNumber} [id=${i.id}] (client=${i.clientName}, status=${i.status}, total=$${i.totalAmount})`
+  )
+  const outreachDraftLines = ctx.outreachDrafts.map(
+    (m) =>
+      `- ${m.prospectName} [id=${m.id}] (channel=${m.channel}, approval=${m.approvalStatus}${m.subject ? `, subject="${m.subject.slice(0, 60)}"` : ''})`
+  )
 
   return `
 === ACTION CONTEXT (use the ids verbatim when calling tools) ===
@@ -201,5 +445,26 @@ ${agreementLines.join('\n') || '(none)'}
 
 RECURRING EXPENSES (${ctx.expenses.length}):
 ${expenseLines.join('\n') || '(none)'}
+
+PROSPECTS — active pipeline (${ctx.prospects.length}):
+${prospectLines.join('\n') || '(none)'}
+
+OPEN ISSUES (${ctx.issues.length}):
+${issueLines.join('\n') || '(none)'}
+
+CLIENT CONTACTS (${ctx.contacts.length}):
+${contactLines.join('\n') || '(none)'}
+
+ACTIVE LOCATION ASSIGNMENTS (${ctx.assignments.length}):
+${assignmentLines.join('\n') || '(none)'}
+
+CHECKLIST TEMPLATES (${ctx.checklists.length}):
+${checklistLines.join('\n') || '(none)'}
+
+OPEN INVOICES (${ctx.invoices.length}):
+${invoiceLines.join('\n') || '(none)'}
+
+OUTREACH DRAFTS pending approval (${ctx.outreachDrafts.length}):
+${outreachDraftLines.join('\n') || '(none)'}
 `.trim()
 }

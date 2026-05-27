@@ -15,7 +15,33 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { prospectIds, templateId, campaignId } = body
+    const {
+      prospectIds,
+      templateId,
+      campaignId,
+      // Optional overrides — when Cassie pre-composes a draft (so the user can
+      // edit subject/body in the chat preview before applying), the route
+      // passes the finalized text here. If both are present we skip the
+      // composer entirely and persist exactly what came in.
+      subjectOverride,
+      bodyOverride,
+      channelOverride,
+      // Optional compose hints — when no override is provided, these tune the
+      // composer call. Empty/missing means use defaults.
+      composeInstructions,
+      tone: toneInput,
+      purpose: purposeInput,
+    } = body as {
+      prospectIds?: string[]
+      templateId?: string
+      campaignId?: string
+      subjectOverride?: string
+      bodyOverride?: string
+      channelOverride?: string
+      composeInstructions?: string
+      tone?: string
+      purpose?: string
+    }
 
     if (!prospectIds || !Array.isArray(prospectIds) || prospectIds.length === 0) {
       return NextResponse.json(
@@ -23,6 +49,14 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    const allowedTones = new Set(['professional', 'friendly', 'casual', 'warm'])
+    const allowedPurposes = new Set(['cold_outreach', 'follow_up', 're_engagement'])
+    const tone = toneInput && allowedTones.has(toneInput) ? (toneInput as any) : 'friendly'
+    const purpose = purposeInput && allowedPurposes.has(purposeInput) ? (purposeInput as any) : 'cold_outreach'
+    const trimmedInstructions = typeof composeInstructions === 'string' ? composeInstructions.trim() : ''
+    const hasOverride = typeof subjectOverride === 'string' && typeof bodyOverride === 'string'
+      && bodyOverride.trim().length > 0
 
     // Resolve campaign — auto-create if not provided or 'auto'
     let resolvedCampaignId = campaignId
@@ -101,25 +135,43 @@ export async function POST(request: NextRequest) {
           aiScoreReason: prospect.aiScoreReason || undefined,
         }
 
-        const channel = determineBestChannel(prospectData)
+        const channel = (channelOverride && typeof channelOverride === 'string'
+          ? channelOverride
+          : determineBestChannel(prospectData)) as any
 
-        const generated = await generateOutreachMessage({
-          channel: channel as any,
-          prospect: prospectData,
-          tone: 'friendly',
-          purpose: 'cold_outreach',
-          template: template
-            ? {
-                name: template.name,
-                category: template.category,
-                channel: template.channel,
-                subject: template.subject || undefined,
-                body: template.body,
-                variables: template.variables,
-                aiInstructions: template.aiInstructions || undefined,
-              }
-            : undefined,
-        })
+        // Two paths:
+        //  1. Overrides provided — skip composer, persist subjectOverride +
+        //     bodyOverride verbatim. This is what Cassie uses after the chat
+        //     route pre-composes and the user edits in the preview card.
+        //  2. No override — compose with the provided tone/purpose/instructions
+        //     (or defaults). This is the legacy "auto-draft a batch" path.
+        let finalSubject: string | undefined
+        let finalBody: string
+        if (hasOverride) {
+          finalSubject = subjectOverride
+          finalBody = bodyOverride!
+        } else {
+          const generated = await generateOutreachMessage({
+            channel,
+            prospect: prospectData,
+            tone,
+            purpose,
+            customInstructions: trimmedInstructions || undefined,
+            template: template
+              ? {
+                  name: template.name,
+                  category: template.category,
+                  channel: template.channel,
+                  subject: template.subject || undefined,
+                  body: template.body,
+                  variables: template.variables,
+                  aiInstructions: template.aiInstructions || undefined,
+                }
+              : undefined,
+          })
+          finalSubject = generated.subject
+          finalBody = generated.body
+        }
 
         const message = await prisma.outreachMessage.create({
           data: {
@@ -127,9 +179,9 @@ export async function POST(request: NextRequest) {
             prospectId: prospect.id,
             step: 1,
             delayDays: 0,
-            channel: generated.channel,
-            subject: generated.subject,
-            body: generated.body,
+            channel,
+            subject: finalSubject,
+            body: finalBody,
             isAiGenerated: true,
             approvalStatus: 'pending',
             status: 'pending',
@@ -140,7 +192,7 @@ export async function POST(request: NextRequest) {
           prospectId: prospect.id,
           prospectName: prospect.companyName,
           messageId: message.id,
-          channel: generated.channel,
+          channel,
           success: true,
         })
       } catch (error) {

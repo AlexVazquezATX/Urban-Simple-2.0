@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { X, Send, Sparkles, Loader2, Plus, MessageSquare, Trash2 } from 'lucide-react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { X, Send, Sparkles, Loader2, Plus, MessageSquare, Trash2, ImagePlus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -18,13 +18,31 @@ import {
 import { AttachmentRenderer } from './attachments/attachment-renderer'
 import type { MessageAttachment } from '../types/ai-types'
 
+interface PendingImage {
+  id: string
+  /** data: URL for in-app preview (no separate fetch needed). */
+  dataUrl: string
+  /** Pure base64 (no prefix) — what we POST to /api/ai/chat. */
+  base64: string
+  mimeType: string
+  /** Original file name when picked via file dialog; '' for pasted images. */
+  name: string
+  sizeBytes: number
+}
+
 interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
   content: string
   timestamp: Date
   attachments?: MessageAttachment[]
+  /** Images attached to a user message (kept only in session memory). */
+  images?: PendingImage[]
 }
+
+const ACCEPTED_IMAGE_MIME = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+const MAX_IMAGES_PER_MESSAGE = 5
+const MAX_BYTES_PER_IMAGE = 5 * 1024 * 1024 // ~5 MB
 
 interface Conversation {
   id: string
@@ -50,23 +68,30 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
   const [showConversations, setShowConversations] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [conversationToDelete, setConversationToDelete] = useState<string | null>(null)
+  const [pendingImages, setPendingImages] = useState<PendingImage[]>([])
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive. The ref is attached to
+  // shadcn's <ScrollArea> wrapper, but the actual scrollable element is the
+  // Radix viewport (`[data-radix-scroll-area-viewport]`) inside it — calling
+  // scrollTo on the wrapper is a no-op. Also scroll while loading so the
+  // "Thinking..." indicator stays visible.
   useEffect(() => {
-    if (scrollRef.current) {
-      // Use setTimeout to ensure DOM has updated
-      setTimeout(() => {
-        if (scrollRef.current) {
-          scrollRef.current.scrollTo({
-            top: scrollRef.current.scrollHeight,
-            behavior: 'smooth'
-          })
-        }
-      }, 100)
-    }
-  }, [messages, messages.length])
+    if (!scrollRef.current) return
+    const viewport = scrollRef.current.querySelector<HTMLElement>(
+      '[data-radix-scroll-area-viewport]'
+    )
+    const target = viewport ?? scrollRef.current
+    // Two RAFs so layout settles after the new message renders, especially
+    // when attachments (proposed-action cards, charts) push content height.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        target.scrollTo({ top: target.scrollHeight, behavior: 'smooth' })
+      })
+    })
+  }, [messages, isLoading])
 
   // Focus input when sidebar opens
   useEffect(() => {
@@ -208,19 +233,93 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
   }
 
+  // Convert a File into a PendingImage by reading as data URL. We split off
+  // the base64 portion (everything after the comma) for the API payload, and
+  // keep the full data URL for the in-app preview <img src=...>.
+  const fileToPendingImage = useCallback(async (file: File): Promise<PendingImage | null> => {
+    if (!ACCEPTED_IMAGE_MIME.includes(file.type)) {
+      toast.error(`Unsupported image type: ${file.type || 'unknown'}`)
+      return null
+    }
+    if (file.size > MAX_BYTES_PER_IMAGE) {
+      toast.error(`Image too large (max 5 MB): ${file.name || 'pasted image'}`)
+      return null
+    }
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onerror = () => reject(reader.error ?? new Error('FileReader failed'))
+      reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '')
+      reader.readAsDataURL(file)
+    })
+    const commaIdx = dataUrl.indexOf(',')
+    const base64 = commaIdx >= 0 ? dataUrl.slice(commaIdx + 1) : ''
+    if (!base64) return null
+    return {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      dataUrl,
+      base64,
+      mimeType: file.type,
+      name: file.name || '',
+      sizeBytes: file.size,
+    }
+  }, [])
+
+  const addFiles = useCallback(async (files: FileList | File[]) => {
+    const arr = Array.from(files)
+    const room = MAX_IMAGES_PER_MESSAGE - pendingImages.length
+    if (room <= 0) {
+      toast.error(`Max ${MAX_IMAGES_PER_MESSAGE} images per message`)
+      return
+    }
+    const slice = arr.slice(0, room)
+    if (arr.length > slice.length) {
+      toast.error(`Only added the first ${slice.length} (max ${MAX_IMAGES_PER_MESSAGE} per message)`)
+    }
+    const results = await Promise.all(slice.map(fileToPendingImage))
+    const added = results.filter((r): r is PendingImage => r !== null)
+    if (added.length > 0) {
+      setPendingImages((prev) => [...prev, ...added])
+    }
+  }, [pendingImages.length, fileToPendingImage])
+
+  const onPaste = useCallback((e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items
+    if (!items) return
+    const files: File[] = []
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i]
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        const f = item.getAsFile()
+        if (f) files.push(f)
+      }
+    }
+    if (files.length > 0) {
+      e.preventDefault()
+      void addFiles(files)
+    }
+  }, [addFiles])
+
+  const removePendingImage = (id: string) => {
+    setPendingImages((prev) => prev.filter((p) => p.id !== id))
+  }
+
   const handleSendMessage = async (overrideText?: string) => {
     const text = (overrideText ?? input).trim()
-    if (!text || isLoading) return
+    const imagesForThisSend = pendingImages
+    if (!text && imagesForThisSend.length === 0) return
+    if (isLoading) return
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
       content: text,
       timestamp: new Date(),
+      images: imagesForThisSend.length > 0 ? imagesForThisSend : undefined,
     }
 
     setMessages((prev) => [...prev, userMessage])
     if (!overrideText) setInput('')
+    setPendingImages([])
     setIsLoading(true)
 
     try {
@@ -231,13 +330,27 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
           message: userMessage.content,
           includeContext: true,
           conversationId: currentConversationId,
+          images: imagesForThisSend.map((img) => ({
+            mimeType: img.mimeType,
+            data: img.base64,
+          })),
         }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to get AI response')
+        // Surface the server's `details` field too — the top-level `error` is
+        // usually a generic label like "Failed to get AI response" and the
+        // real cause is in `details`.
+        const detail = typeof data?.details === 'string' && data.details.trim().length > 0
+          ? data.details
+          : ''
+        const errorType = typeof data?.errorType === 'string' ? data.errorType : ''
+        const composed = [data?.error, detail && `(${detail})`, errorType && `[${errorType}]`]
+          .filter(Boolean)
+          .join(' ')
+        throw new Error(composed || 'Failed to get AI response')
       }
 
       const aiMessage: ChatMessage = {
@@ -256,12 +369,17 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
       console.error('Chat error:', error)
       toast.error(error.message || 'Failed to get AI response')
 
-      // Add error message to chat
+      // Add error message to chat. Show the actual server message so issues
+      // beyond "missing key" (schema rejection, model errors, etc.) are visible
+      // without digging through console logs.
+      const detail =
+        typeof error?.message === 'string' && error.message.trim().length > 0
+          ? error.message
+          : 'unknown error'
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          "I'm sorry, I encountered an error. Please make sure the AI assistant is properly configured with a GEMINI_API_KEY.",
+        content: `I'm sorry, I hit an error: ${detail}. (Check the dev server console for the full stack.)`,
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])
@@ -447,9 +565,26 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                             : 'bg-muted'
                         )}
                       >
-                        <p className="text-sm whitespace-pre-wrap">
-                          {message.content}
-                        </p>
+                        {message.images && message.images.length > 0 && (
+                          <div className={cn(
+                            'flex flex-wrap gap-2',
+                            message.content ? 'mb-2' : ''
+                          )}>
+                            {message.images.map((img) => (
+                              <img
+                                key={img.id}
+                                src={img.dataUrl}
+                                alt={img.name || 'attached image'}
+                                className="max-h-48 max-w-full rounded-md object-contain bg-black/10"
+                              />
+                            ))}
+                          </div>
+                        )}
+                        {message.content && (
+                          <p className="text-sm whitespace-pre-wrap">
+                            {message.content}
+                          </p>
+                        )}
                         <p className="text-xs opacity-70 mt-1">
                           {message.timestamp.toLocaleTimeString('en-US', {
                             hour: 'numeric',
@@ -485,19 +620,69 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
 
           {/* Input */}
           <div className="p-4 border-t">
+            {/* Pending image thumbnails */}
+            {pendingImages.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-2">
+                {pendingImages.map((img) => (
+                  <div
+                    key={img.id}
+                    className="relative h-16 w-16 rounded-md overflow-hidden border bg-muted"
+                  >
+                    <img
+                      src={img.dataUrl}
+                      alt={img.name || 'pasted image'}
+                      className="h-full w-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removePendingImage(img.id)}
+                      className="absolute top-0.5 right-0.5 rounded-full bg-black/60 text-white p-0.5 hover:bg-black/80"
+                      aria-label="Remove image"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_IMAGE_MIME.join(',')}
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    void addFiles(e.target.files)
+                  }
+                  // Reset so the same file can be selected again later
+                  e.target.value = ''
+                }}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-[60px] w-[44px] flex-shrink-0"
+                disabled={isLoading || pendingImages.length >= MAX_IMAGES_PER_MESSAGE}
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach image"
+              >
+                <ImagePlus className="h-5 w-5" />
+              </Button>
               <Textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Ask me anything..."
+                onPaste={onPaste}
+                placeholder="Ask me anything... (paste an image to share it)"
                 className="min-h-[60px] max-h-[120px] resize-none"
                 disabled={isLoading}
               />
               <Button
                 onClick={() => handleSendMessage()}
-                disabled={!input.trim() || isLoading}
+                disabled={(!input.trim() && pendingImages.length === 0) || isLoading}
                 size="icon"
                 className="h-[60px] w-[60px]"
               >
@@ -509,7 +694,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
               </Button>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
-              Press Enter to send, Shift+Enter for new line
+              Press Enter to send, Shift+Enter for new line · Paste or attach up to {MAX_IMAGES_PER_MESSAGE} images
             </p>
           </div>
         </div>

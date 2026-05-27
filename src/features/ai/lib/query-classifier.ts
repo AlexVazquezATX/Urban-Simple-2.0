@@ -32,6 +32,26 @@ export interface QueryClassification {
 export function classifyQuery(query: string): QueryClassification {
   const lowerQuery = query.toLowerCase()
 
+  // ACTION VERBS — if any of these appear, the user is asking for a database
+  // change. Always route as business (intent != 'general') so the chat route
+  // takes the tools path. This overrides every "casual topic" trigger below,
+  // since terms like "restaurant" are normal business vocabulary when the
+  // user is describing a prospect's industry.
+  const actionVerbPatterns = [
+    /\b(add|create|draft|compose|update|edit|change|set|mark|assign|delete|remove|void|cancel|deactivate|pause|activate|schedule|raise|lower|sched(?:ule)?)\b/,
+    /\b(make|new)\s+(a\s+)?(prospect|client|location|invoice|issue|contact|expense|assignment|checklist|outreach|draft|template|agreement)\b/,
+    /\bput\s+(it|that)\s+(in|into)\b/,
+    /\bdrop\s+(it|that)\s+(in|into)\b/,
+  ]
+  if (actionVerbPatterns.some((p) => p.test(lowerQuery))) {
+    return {
+      intent: 'clients',
+      confidence: 0.85,
+      keywords: ['action'],
+      timeframe: undefined,
+    }
+  }
+
   // Common casual greetings/phrases that should ALWAYS be general
   const casualPhrases = [
     "what's up",
@@ -51,27 +71,20 @@ export function classifyQuery(query: string): QueryClassification {
     "hey cassie",
   ]
 
-  // Entertainment/casual topics that should ALWAYS be general
+  // Entertainment/casual topics that should ALWAYS be general. Genuinely
+  // ambiguous terms (restaurant, dinner, lunch, food, vacation, holiday) have
+  // been removed — they're common business vocabulary too, and action-verb
+  // detection above already protects "add a prospect: ... restaurant ..."
+  // style queries. Pure-casual entertainment terms stay.
   const casualTopics = [
     "stranger things",
     "tv show",
     "episode",
-    "season",
-    "movie",
     "netflix",
-    "watched",
-    "watching",
     "binge",
     "binged",
     "binging",
     "fan of",
-    "restaurant",
-    "dinner",
-    "lunch",
-    "food",
-    "weekend",
-    "vacation",
-    "holiday",
   ]
 
   // Check if query is a casual greeting or casual topic first

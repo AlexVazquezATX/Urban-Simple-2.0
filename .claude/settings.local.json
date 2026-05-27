@@ -12,7 +12,11 @@
       "mcp__Claude_in_Chrome__computer",
       "Bash(rm \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple/.claude/launch.json\")",
       "Bash(git -C \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple\" cherry-pick 25b2734)",
-      "mcp__Claude_in_Chrome__read_page"
+      "mcp__Claude_in_Chrome__read_page",
+      "Bash(rm \"C:/Users/avazq/.claude-worktrees/Urban-Simple-2.0/jovial-almeida/.claude/settings.local.json.preupdate-backup\" && echo \"Backup removed.\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\avazq\\.claude-worktrees\\Urban-Simple-2.0\\jovial-almeida\\.claude"
     ]
   }
 }
