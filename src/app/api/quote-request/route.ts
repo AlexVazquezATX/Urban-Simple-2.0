@@ -154,15 +154,32 @@ ${message ? `\nAdditional Notes:\n${message}` : ''}`,
         <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/growth/prospects/${prospect.id}">View Prospect in Dashboard</a></p>
       `
 
-      const recipientEmail = process.env.QUOTE_REQUEST_EMAIL || companyRecord.email || 'info@urbansimple.net'
+      // Send to Alex's inbox using the same env var the landing-page form
+      // uses. The old QUOTE_REQUEST_EMAIL fallback chain ended at
+      // info@urbansimple.net (not Alex's inbox), which is why home-page
+      // leads were going unnoticed.
+      const recipientEmail = process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'
 
-      const resend = new Resend(process.env.RESEND_API_KEY || '')
-      await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-        to: recipientEmail,
-        subject: emailSubject,
-        html: emailBody,
-      })
+      // Send FROM a verified domain address. The previous fallback
+      // (onboarding@resend.dev) is Resend's sandbox sender — in production
+      // it only delivers to verified addresses on the account, which is
+      // why these failed silently.
+      const fromAddress = process.env.RESEND_FROM_EMAIL || 'Urban Simple Leads <leads@urbansimple.net>'
+
+      if (!process.env.RESEND_API_KEY) {
+        console.error('[quote-request] RESEND_API_KEY is not set; skipping notification email')
+      } else {
+        const resend = new Resend(process.env.RESEND_API_KEY)
+        const { error: sendError } = await resend.emails.send({
+          from: fromAddress,
+          to: recipientEmail,
+          subject: emailSubject,
+          html: emailBody,
+        })
+        if (sendError) {
+          console.error('[quote-request] notification email failed', sendError)
+        }
+      }
     } catch (emailError) {
       console.error('Failed to send email notification:', emailError)
       // Don't fail the request if email fails
