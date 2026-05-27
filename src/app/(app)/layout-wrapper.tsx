@@ -45,6 +45,18 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     setIsLoginPage(isLogin)
   }, [pathname])
 
+  // Cmd+K (Mac) / Ctrl+K (Win/Linux) opens the AI assistant from anywhere.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setIsAIChatOpen(true)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
   // Auth check runs only once on mount
   useEffect(() => {
     if (hasCheckedAuth.current) return

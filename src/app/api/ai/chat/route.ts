@@ -1,5 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sendChatMessage } from '@/features/ai/lib/gemini-client'
+import {
+  sendChatMessage,
+  sendChatWithTools,
+  CASSIE_SYSTEM_PROMPT,
+  GEMINI_MODEL_ID,
+  GEMINI_API_KEY,
+} from '@/features/ai/lib/gemini-client'
 import {
   buildBusinessContext,
   formatContextForAI,
@@ -20,6 +26,15 @@ import {
   getConversationHistory,
 } from '@/features/ai/lib/conversation-manager'
 import { generateAttachments } from '@/features/ai/lib/attachment-generator'
+import {
+  actionToolsSystemPromptAddendum,
+  parseToolCall,
+} from '@/features/ai/lib/action-tools'
+import {
+  buildActionContext,
+  formatActionContextForLLM,
+} from '@/features/ai/lib/action-context'
+import type { MessageAttachment } from '@/features/ai/types/ai-types'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -57,8 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('[AI Chat] Authorized user:', user.email, '(SUPER_ADMIN)')
-    console.log('[AI Chat] GEMINI_API_KEY exists:', !!process.env.GEMINI_API_KEY)
-    console.log('[AI Chat] GEMINI_API_KEY length:', process.env.GEMINI_API_KEY?.length || 0)
+    console.log('[AI Chat] Gemini key resolved:', !!GEMINI_API_KEY, '(length:', GEMINI_API_KEY.length, ')')
 
     const body: ChatRequest = await request.json()
     const { message, includeContext = true, conversationId: providedConversationId } = body
@@ -127,12 +141,80 @@ export async function POST(request: NextRequest) {
     // Add language instruction if Spanish
     enhancedMessage = addLanguageInstruction(enhancedMessage, detectedLanguage)
 
-    // Get AI response with language-aware system prompt
-    console.log('[AI Chat] Calling Gemini API with', recentHistory.length, 'messages of history...')
+    // Build action context (compact lists with ids the LLM uses to resolve
+    // names → records when proposing changes). Skipped for casual chat.
+    let actionContextString: string | undefined
+    if (needsBusinessContext) {
+      console.log('[AI Chat] Building action context...')
+      const actionContext = await buildActionContext({
+        companyId: user.companyId,
+        branchId: user.branchId,
+      })
+      actionContextString = formatActionContextForLLM(actionContext)
+    }
+
+    // Path decision: business-y turns go through the tools-enabled call (the
+    // model can either answer in text OR propose an action chain / ask for a
+    // clarification). Casual turns stay on the simple chat call for speed.
+    const useTools = needsBusinessContext
+    let response: string
+    let attachments: MessageAttachment[] = []
+
+    console.log(
+      '[AI Chat] Calling Gemini API with',
+      recentHistory.length,
+      'messages of history...',
+      useTools ? '(tools enabled)' : '(text only)'
+    )
     const startTime = Date.now()
-    const response = await sendChatMessage(enhancedMessage, undefined, {
-      systemPrompt: undefined, // Use default system prompt from gemini-client
-    })
+
+    if (useTools) {
+      const fullPrompt = [
+        CASSIE_SYSTEM_PROMPT,
+        actionToolsSystemPromptAddendum(),
+        actionContextString,
+        contextString ? `BUSINESS CONTEXT:\n${contextString}` : '',
+        historyContext,
+        `User: ${message}`,
+        'Respond with EITHER a tool call (propose_action_chain or ask_clarification) OR plain text. Use a tool only when the user wants to make a change or you genuinely need to clarify. For questions or casual chat, respond with text.',
+      ]
+        .filter(Boolean)
+        .join('\n\n')
+
+      const toolResult = await sendChatWithTools(fullPrompt)
+      if (toolResult.kind === 'tool_call') {
+        try {
+          const parsed = parseToolCall({
+            name: toolResult.name,
+            args: toolResult.args,
+          })
+          if (parsed.kind === 'actions') {
+            response = `I'll set up: ${parsed.data.summary}. Review the preview below and hit Apply when ready.`
+            attachments = [
+              {
+                type: 'proposed_action',
+                data: { set: parsed.data, userPrompt: message },
+              },
+            ]
+          } else {
+            // clarification
+            response = parsed.data.question
+            attachments = [{ type: 'clarification', data: parsed.data }]
+          }
+        } catch (parseErr: any) {
+          console.error('[AI Chat] Failed to parse tool call:', parseErr)
+          response =
+            "Hmm, I had trouble turning that into a concrete change. Could you rephrase what you'd like to do?"
+        }
+      } else {
+        response = toolResult.text
+      }
+    } else {
+      response = await sendChatMessage(enhancedMessage, undefined, {
+        systemPrompt: undefined,
+      })
+    }
+
     const responseTime = Date.now() - startTime
     console.log('[AI Chat] Got response from Gemini in', responseTime, 'ms')
 
@@ -153,16 +235,21 @@ export async function POST(request: NextRequest) {
       role: 'assistant',
       content: response,
       language: detectedLanguage,
-      aiModel: 'gemini-2.5-flash',
+      aiModel: GEMINI_MODEL_ID,
       responseTime,
     })
 
     console.log('[AI Chat] Messages saved to conversation')
 
-    // Generate rich attachments based on query intent and context
-    const attachments = businessContext
-      ? generateAttachments(classification.intent, businessContext, message)
-      : []
+    // For text-answer turns, run the existing rich-attachments generator
+    // (charts/tables). Action/clarification turns supply their own attachment.
+    if (attachments.length === 0 && businessContext) {
+      attachments = generateAttachments(
+        classification.intent,
+        businessContext,
+        message
+      )
+    }
 
     console.log('[AI Chat] Generated', attachments.length, 'attachments')
 

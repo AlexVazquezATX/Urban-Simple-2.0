@@ -1,4 +1,5 @@
 // AI Chat Types
+import type { ProposedActionSet, ProposedClarification } from './action-types'
 
 export interface ChatMessage {
   id: string
@@ -9,7 +10,14 @@ export interface ChatMessage {
 }
 
 export interface MessageAttachment {
-  type: 'chart' | 'table' | 'action' | 'link' | 'list'
+  type:
+    | 'chart'
+    | 'table'
+    | 'action'
+    | 'link'
+    | 'list'
+    | 'proposed_action'
+    | 'clarification'
   data: any
 }
 
@@ -58,6 +66,28 @@ export interface ListAttachment extends MessageAttachment {
       link?: string
     }>
   }
+}
+
+/**
+ * Proposed record change(s) the chat is about to make. Renders as an inline
+ * preview card with editable fields and an Apply button. The user's natural-
+ * language prompt is included so we can log it with the audit entry on Apply.
+ */
+export interface ProposedActionAttachment extends MessageAttachment {
+  type: 'proposed_action'
+  data: {
+    set: ProposedActionSet
+    userPrompt: string
+  }
+}
+
+/**
+ * The chat needs a quick clarification before proposing actions. Renders as
+ * a question with optional inline buttons.
+ */
+export interface ClarificationAttachment extends MessageAttachment {
+  type: 'clarification'
+  data: ProposedClarification
 }
 
 export interface BusinessContext {

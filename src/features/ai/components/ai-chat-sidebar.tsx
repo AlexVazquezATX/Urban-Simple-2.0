@@ -89,6 +89,26 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
   }, [currentConversationId])
 
+  // Forward clarification-button clicks (dispatched as 'ai-chat-prompt'
+  // CustomEvents) into the normal send flow. Using a ref keeps the listener
+  // pointed at the latest handleSendMessage closure across re-renders.
+  const promptHandlerRef = useRef<(text: string) => void>(() => {})
+  useEffect(() => {
+    promptHandlerRef.current = (text: string) => {
+      void handleSendMessage(text)
+    }
+  })
+  useEffect(() => {
+    const onPrompt = (e: Event) => {
+      const ce = e as CustomEvent<{ text?: string }>
+      const text = ce.detail?.text?.trim()
+      if (text) promptHandlerRef.current(text)
+    }
+    window.addEventListener('ai-chat-prompt', onPrompt as EventListener)
+    return () =>
+      window.removeEventListener('ai-chat-prompt', onPrompt as EventListener)
+  }, [])
+
   const loadConversations = async () => {
     try {
       const response = await fetch('/api/ai/conversations')
@@ -188,18 +208,19 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
     }
   }
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return
+  const handleSendMessage = async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim()
+    if (!text || isLoading) return
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input.trim(),
+      content: text,
       timestamp: new Date(),
     }
 
     setMessages((prev) => [...prev, userMessage])
-    setInput('')
+    if (!overrideText) setInput('')
     setIsLoading(true)
 
     try {
@@ -475,7 +496,7 @@ export function AIChatSidebar({ isOpen, onClose }: AIChatSidebarProps) {
                 disabled={isLoading}
               />
               <Button
-                onClick={handleSendMessage}
+                onClick={() => handleSendMessage()}
                 disabled={!input.trim() || isLoading}
                 size="icon"
                 className="h-[60px] w-[60px]"
