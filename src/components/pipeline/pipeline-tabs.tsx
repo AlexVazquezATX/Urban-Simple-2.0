@@ -4,11 +4,10 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Users, Kanban, Mail, Search, Bot } from 'lucide-react'
+import { Users, Kanban, Mail, Search } from 'lucide-react'
 import { ProspectsListClient } from '@/components/growth/prospects-list-client'
 import { PipelineBoard } from '@/components/growth/pipeline-board'
 import { DiscoverySearch } from '@/components/growth/discovery-search'
-import { GrowthAgentDashboard } from '@/components/growth/agent/growth-agent-dashboard'
 import { MessagesHub } from '@/components/growth/outreach/messages-hub'
 import { QuickCompose } from '@/components/growth/outreach/quick-compose'
 import { TemplateLibrary } from '@/components/growth/outreach/template-library'
@@ -17,10 +16,9 @@ import { SequenceList } from '@/components/growth/outreach/sequence-list'
 interface PipelineTabsProps {
   prospects: any[]
   pipelineProspects: any[]
-  userRole: string
 }
 
-export function PipelineTabs({ prospects, pipelineProspects, userRole }: PipelineTabsProps) {
+export function PipelineTabs({ prospects, pipelineProspects }: PipelineTabsProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const tabParam = searchParams.get('tab') || 'prospects'
@@ -34,8 +32,6 @@ export function PipelineTabs({ prospects, pipelineProspects, userRole }: Pipelin
     setActiveTab(value)
     router.push(`/pipeline?tab=${value}`, { scroll: false })
   }
-
-  const isSuperAdmin = userRole === 'SUPER_ADMIN'
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
@@ -56,12 +52,6 @@ export function PipelineTabs({ prospects, pipelineProspects, userRole }: Pipelin
           <Search className="h-3.5 w-3.5" />
           Discovery
         </TabsTrigger>
-        {isSuperAdmin && (
-          <TabsTrigger value="agent" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
-            <Bot className="h-3.5 w-3.5" />
-            Agent
-          </TabsTrigger>
-        )}
       </TabsList>
 
       <TabsContent value="prospects" className="mt-0">
@@ -81,12 +71,6 @@ export function PipelineTabs({ prospects, pipelineProspects, userRole }: Pipelin
       <TabsContent value="discovery" className="mt-0">
         <DiscoverySearch />
       </TabsContent>
-
-      {isSuperAdmin && (
-        <TabsContent value="agent" className="mt-0">
-          <GrowthAgentDashboard />
-        </TabsContent>
-      )}
     </Tabs>
   )
 }

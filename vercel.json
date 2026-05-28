@@ -17,10 +17,6 @@
       "schedule": "*/15 * * * *"
     },
     {
-      "path": "/api/cron/growth-agent",
-      "schedule": "*/15 * * * *"
-    },
-    {
       "path": "/api/cron/dispatch-regenerate",
       "schedule": "0 4 * * 1"
     },

@@ -2,10 +2,9 @@ import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import Link from 'next/link'
-import { Bot, Key, Users, MessageSquare, Sparkles, FileText } from 'lucide-react'
+import { Key, Users, MessageSquare, Sparkles, FileText } from 'lucide-react'
 
 const settingsLinks = [
-  { href: '/growth/agent', icon: Bot, label: 'Growth Agent', description: 'Configure autonomous lead generation pipeline' },
   { href: '/growth/api-keys', icon: Key, label: 'API Keys', description: 'Manage API keys for external integrations' },
   { href: '/admin/studio-clients', icon: Users, label: 'Studio Clients', description: 'Manage BackHaus studio customers' },
   { href: '/admin/feedback', icon: MessageSquare, label: 'Feedback', description: 'View user feedback and bug reports' },

@@ -38,7 +38,6 @@ import {
   ArrowRight,
   AtSign,
   UserPlus,
-  Bot,
   X,
   ChevronLeft,
   ChevronRight,
@@ -70,8 +69,6 @@ interface Prospect {
   address?: any
   aiEnriched?: boolean
   priceLevel?: string | null
-  agentQueued?: boolean
-  agentQueuedAt?: string | null
   doNotContact?: boolean
   lastContactedAt?: string | null
   createdAt: string
@@ -147,7 +144,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [isEnrichingBulk, setIsEnrichingBulk] = useState(false)
   const [isFindingEmails, setIsFindingEmails] = useState(false)
   const [isFindingContacts, setIsFindingContacts] = useState(false)
-  const [isQueueing, setIsQueueing] = useState(false)
   const [isDiscoveringOwners, setIsDiscoveringOwners] = useState(false)
   const [isGeneratingOutreach, setIsGeneratingOutreach] = useState(false)
   const [sequences, setSequences] = useState<any[]>([])
@@ -177,7 +173,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
       }).length,
       hotLeads: prospects.filter(p => p.priority === 'high' || p.priority === 'urgent').length,
       followUp: prospects.filter(p => p.status === 'contacted' || p.status === 'engaged').length,
-      queued: prospects.filter(p => p.agentQueued).length,
       withEmails: prospects.filter(p => p.contacts.some(c => c.email)).length,
       withWebsite: prospects.filter(p => p.website && p.website.trim().length > 0).length,
       noWebsite: prospects.filter(p => !p.website || p.website.trim().length === 0).length,
@@ -234,8 +229,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         matchesTab = prospect.priority === 'high' || prospect.priority === 'urgent'
       } else if (activeTab === 'follow_up') {
         matchesTab = prospect.status === 'contacted' || prospect.status === 'engaged'
-      } else if (activeTab === 'queued') {
-        matchesTab = prospect.agentQueued === true
       } else if (activeTab === 'with_emails') {
         matchesTab = prospect.contacts.some((c) => c.email)
       } else if (activeTab === 'with_website') {
@@ -736,42 +729,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     }
   }
 
-  // Queue for Agent handler
-  const handleQueueForAgent = async (action: 'add' | 'remove' = 'add') => {
-    if (selectedIds.size === 0) {
-      toast.error('No prospects selected')
-      return
-    }
-    setIsQueueing(true)
-    try {
-      const res = await fetch('/api/growth/agent/queue', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prospectIds: Array.from(selectedIds),
-          action,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.error(data.error)
-        return
-      }
-      setProspects((prev) =>
-        prev.map((p) =>
-          selectedIds.has(p.id)
-            ? { ...p, agentQueued: action === 'add', agentQueuedAt: action === 'add' ? new Date().toISOString() : null }
-            : p
-        )
-      )
-      toast.success(data.message)
-      setSelectedIds(new Set())
-    } catch {
-      toast.error('Failed to update agent queue')
-    } finally {
-      setIsQueueing(false)
-    }
-  }
 
   // Bulk discover owners handler - BEST FOR HOSPITALITY (restaurants, hotels, venues)
   // Uses Yelp + Google + Apollo + Hunter.io to find REAL owner names and emails
@@ -1355,9 +1312,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
             )}
             <TabsTrigger value="with_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-blue-700">Has Website ({stats.withWebsite})</TabsTrigger>
             <TabsTrigger value="no_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-red-700">No Website ({stats.noWebsite})</TabsTrigger>
-            {stats.queued > 0 && (
-              <TabsTrigger value="queued" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-purple-700">Queued ({stats.queued})</TabsTrigger>
-            )}
           </TabsList>
         </Tabs>
 
@@ -1437,22 +1391,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               </Button>
               <Button
                 size="sm"
-                variant="outline"
-                onClick={() => handleQueueForAgent('add')}
-                disabled={isQueueing}
-                className="rounded-sm bg-white dark:bg-charcoal-900 border-purple-300 text-purple-700 hover:bg-purple-50"
-                title="Add selected prospects to the Growth Agent processing queue"
-              >
-                {isQueueing ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Bot className="mr-1.5 h-3.5 w-3.5" />
-                )}
-                Queue
-              </Button>
-
-              <Button
-                size="sm"
                 className="rounded-sm bg-green-700 hover:bg-green-800 text-white"
                 onClick={handleBulkGenerateOutreach}
                 disabled={isGeneratingOutreach}
@@ -1502,17 +1440,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                         </DropdownMenuItem>
                       ))}
                     </>
-                  )}
-                  <DropdownMenuSeparator />
-                  {prospects.some((p) => selectedIds.has(p.id) && p.agentQueued) && (
-                    <DropdownMenuItem
-                      onClick={() => handleQueueForAgent('remove')}
-                      disabled={isQueueing}
-                      className="text-red-600"
-                    >
-                      <X className="mr-2 h-4 w-4" />
-                      Remove from Queue
-                    </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
                   {statusOptions.filter(s => s.value !== 'all').map((status) => (
@@ -1708,11 +1635,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                               {isWebsiteLead && (
                                 <Badge className={`text-[10px] px-1.5 py-0 bg-ocean-500 text-white border-ocean-600 ${isNewWebsiteLead ? 'animate-pulse' : ''}`}>
                                   Website Lead
-                                </Badge>
-                              )}
-                              {prospect.agentQueued && (
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-purple-300 text-purple-600">
-                                  Queued
                                 </Badge>
                               )}
                             </div>

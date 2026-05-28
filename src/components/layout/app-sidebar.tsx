@@ -45,7 +45,6 @@ import {
   AtSign,
   Camera,
   Key,
-  Bot,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DarkModeToggle } from '@/components/ui/dark-mode-toggle'
@@ -167,7 +166,6 @@ export function AppSidebar() {
   const growthItems = [
     { href: '/growth', icon: Rocket, label: 'Daily Planner', exact: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
-    { href: '/growth/agent', icon: Bot, label: 'Growth Agent', roles: ['SUPER_ADMIN'] },
     { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/pipeline', icon: TrendingUp, label: 'Pipeline', roles: ['SUPER_ADMIN', 'ADMIN'] },
     { href: '/growth/discovery', icon: Search, label: 'AI Discovery', roles: ['SUPER_ADMIN', 'ADMIN'] },

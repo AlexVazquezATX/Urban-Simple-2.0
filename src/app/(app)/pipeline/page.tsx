@@ -84,7 +84,6 @@ async function PipelineData() {
     <PipelineTabs
       prospects={serializedProspects}
       pipelineProspects={serializedPipeline}
-      userRole={user.role}
     />
   )
 }
