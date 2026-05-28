@@ -1155,13 +1155,13 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">urgent</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30 dark:border-red-400/30 font-semibold uppercase tracking-wider">urgent</Badge>
       case 'high':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-500 text-white border-orange-600 font-bold uppercase tracking-wider">hot</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 dark:border-amber-400/40 font-semibold uppercase tracking-wider">hot</Badge>
       case 'medium':
         return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700">warm</Badge>
       default:
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">cold</Badge>
+        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-500/15 text-ocean-700 dark:text-ocean-300 border-ocean-500/30 dark:border-ocean-400/30">cold</Badge>
     }
   }
 
@@ -1684,8 +1684,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                       <tr
                         key={prospect.id}
                         className={`hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer transition-colors ${
-                          selectedIds.has(prospect.id) ? 'bg-lime-50'
-                          : isNewWebsiteLead ? 'bg-ocean-50/60 border-l-2 border-l-ocean-500'
+                          selectedIds.has(prospect.id) ? 'bg-lime-50 dark:bg-lime-500/10'
+                          : isNewWebsiteLead ? 'bg-ocean-50/60 dark:bg-ocean-500/5 border-l-2 border-l-ocean-500'
                           : ''
                         }`}
                         onClick={() => handleSelectProspect(prospect)}
@@ -1701,7 +1701,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                             <div className="flex items-center gap-1.5">
                               <span className="text-sm font-medium text-warm-900 dark:text-cream-100">{prospect.companyName}</span>
                               {prospect.doNotContact && (
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-300 text-red-600 bg-red-50">
+                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-300 dark:border-red-400/40 text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-500/10">
                                   <Ban className="h-2.5 w-2.5 mr-0.5" />DNC
                                 </Badge>
                               )}
