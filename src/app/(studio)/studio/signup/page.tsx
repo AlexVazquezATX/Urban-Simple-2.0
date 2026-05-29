@@ -104,7 +104,7 @@ export default function StudioSignupPage() {
               className="h-8 w-auto opacity-70"
               priority
             />
-            <span className="w-2 h-2 rounded-full bg-amber-500 mb-0.5" />
+            <span className="w-2 h-2 rounded-full bg-honey-500 mb-0.5" />
           </Link>
           <p className="text-sm text-warm-500 mt-3">
             Create stunning food photography in seconds
@@ -112,7 +112,7 @@ export default function StudioSignupPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-warm-200 p-6">
+        <div className="bg-white rounded-2xl shadow-card border border-cream-300 p-6">
           <h1 className="text-lg font-display font-medium text-charcoal-900 mb-1">
             Create your account
           </h1>
@@ -126,7 +126,7 @@ export default function StudioSignupPage() {
               {showSignInLink && (
                 <Link
                   href="/studio/login"
-                  className="block mt-1.5 text-ocean-600 hover:text-ocean-700 font-medium"
+                  className="block mt-1.5 text-bronze-600 hover:text-bronze-700 font-medium"
                 >
                   Sign in to your account &rarr;
                 </Link>
@@ -144,7 +144,7 @@ export default function StudioSignupPage() {
                 onChange={(e) => setRestaurantName(e.target.value)}
                 placeholder="e.g. The Golden Fork, Hilton Miami"
                 required
-                className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
               />
             </div>
 
@@ -158,7 +158,7 @@ export default function StudioSignupPage() {
                   onChange={(e) => setFirstName(e.target.value)}
                   placeholder="John"
                   required
-                  className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                  className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
                 />
               </div>
               <div className="space-y-2">
@@ -170,7 +170,7 @@ export default function StudioSignupPage() {
                   onChange={(e) => setLastName(e.target.value)}
                   placeholder="Doe"
                   required
-                  className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                  className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
                 />
               </div>
             </div>
@@ -185,7 +185,7 @@ export default function StudioSignupPage() {
                 placeholder="you@yourbusiness.com"
                 required
                 autoComplete="email"
-                className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
               />
             </div>
 
@@ -200,14 +200,14 @@ export default function StudioSignupPage() {
                 required
                 minLength={6}
                 autoComplete="new-password"
-                className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
               />
             </div>
 
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white"
+              className="w-full bg-honey-400 hover:bg-honey-500 text-charcoal-900 font-semibold shadow-glow"
             >
               {loading ? (
                 <>
@@ -224,11 +224,11 @@ export default function StudioSignupPage() {
             Free plan includes 10 AI-generated images per month.
             <br />
             By signing up you agree to our{' '}
-            <Link href="/studio/terms" className="text-ocean-500 hover:text-ocean-600">
+            <Link href="/studio/terms" className="text-bronze-600 hover:text-bronze-700">
               Terms of Service
             </Link>{' '}
             and{' '}
-            <Link href="/studio/privacy" className="text-ocean-500 hover:text-ocean-600">
+            <Link href="/studio/privacy" className="text-bronze-600 hover:text-bronze-700">
               Privacy Policy
             </Link>
           </p>
@@ -238,7 +238,7 @@ export default function StudioSignupPage() {
         <div className="text-center mt-4">
           <p className="text-sm text-warm-500">
             Already have an account?{' '}
-            <Link href="/studio/login" className="text-ocean-600 hover:text-ocean-700 font-medium">
+            <Link href="/studio/login" className="text-bronze-600 hover:text-bronze-700 font-medium">
               Sign in
             </Link>
           </p>

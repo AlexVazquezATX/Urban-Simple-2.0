@@ -137,30 +137,30 @@ function StudioGalleryContent() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-cream-100">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+      <div className="border-b border-cream-300/70 bg-cream-50/80 backdrop-blur sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link
                 href="/studio"
-                className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+                className="w-9 h-9 rounded-full bg-white border border-cream-300 shadow-soft flex items-center justify-center text-warm-600 hover:text-charcoal-900 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 text-warm-600" />
+                <ArrowLeft className="w-4 h-4" />
               </Link>
               <div>
-                <h1 className="text-lg font-display font-medium text-warm-900">
+                <h1 className="font-display text-2xl tracking-tight text-charcoal-900 leading-none">
                   Gallery
                 </h1>
-                <p className="text-sm text-warm-500">
+                <p className="text-xs text-warm-500 mt-1">
                   {content.length} {content.length === 1 ? 'image' : 'images'} saved
                 </p>
               </div>
             </div>
 
             <Link href="/studio/generate">
-              <Button variant="lime" size="sm" className="rounded-sm">
+              <Button size="sm" className="rounded-full bg-honey-400 hover:bg-honey-500 text-charcoal-900 font-semibold shadow-glow">
                 <Sparkles className="w-3.5 h-3.5 mr-1.5" />
                 Create New
               </Button>
@@ -179,10 +179,10 @@ function StudioGalleryContent() {
                 key={mode}
                 onClick={() => setFilterMode(mode)}
                 className={cn(
-                  'px-3 py-1.5 rounded-sm text-sm font-medium transition-colors',
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   filterMode === mode
-                    ? 'bg-warm-900 text-white'
-                    : 'bg-white border border-warm-200 text-warm-700 hover:border-warm-300'
+                    ? 'bg-charcoal-900 text-white'
+                    : 'bg-white border border-cream-300 text-warm-700 hover:border-bronze-200'
                 )}
               >
                 {mode === 'all' ? 'All' : mode === 'food_photo' ? 'Food Photos' : 'Branded Posts'}
@@ -206,8 +206,8 @@ function StudioGalleryContent() {
                 onClick={() => setSelectedItem(item)}
                 className="group cursor-pointer"
               >
-                <div className="rounded-sm border border-warm-200 overflow-hidden bg-white hover:border-lime-400 hover:shadow-md transition-all">
-                  <div className="aspect-square bg-warm-100 relative">
+                <div className="rounded-2xl border border-cream-300/70 overflow-hidden bg-white hover:border-bronze-300 hover:shadow-card transition-all">
+                  <div className="aspect-square bg-cream-200 relative">
                     {item.hasImage ? (
                       <ThrottledImage
                         src={imageUrl(item.id)}
@@ -221,10 +221,10 @@ function StudioGalleryContent() {
                     )}
 
                     <Badge
-                      className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-sm ${
+                      className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-lg ${
                         item.mode === 'food_photo'
-                          ? 'bg-amber-100 text-amber-700 border-amber-200'
-                          : 'bg-purple-100 text-purple-700 border-purple-200'
+                          ? 'bg-honey-100 text-honey-800 border-honey-200'
+                          : 'bg-bronze-100 text-bronze-700 border-bronze-200'
                       }`}
                     >
                       {item.mode === 'food_photo' ? (
@@ -243,7 +243,7 @@ function StudioGalleryContent() {
                             e.stopPropagation()
                             router.push(`/studio/generate?mode=branded_post&sourceImageId=${item.id}`)
                           }}
-                          className="flex items-center gap-1 px-2.5 py-1 bg-white/90 hover:bg-white rounded-sm text-xs font-medium text-plum-700 transition-colors"
+                          className="flex items-center gap-1 px-2.5 py-1 bg-white/90 hover:bg-white rounded-full text-xs font-medium text-bronze-700 transition-colors"
                         >
                           <Wand2 className="w-3 h-3" />
                           Use in Branded Post
@@ -270,8 +270,8 @@ function StudioGalleryContent() {
           </div>
         ) : (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
-              <ImageIcon className="w-7 h-7 text-warm-400" />
+            <div className="w-16 h-16 rounded-2xl bg-bronze-50 border border-bronze-100 flex items-center justify-center mx-auto mb-4">
+              <ImageIcon className="w-7 h-7 text-bronze-400" />
             </div>
             <h3 className="text-sm font-medium text-warm-900 mb-1">
               No images yet
@@ -282,7 +282,7 @@ function StudioGalleryContent() {
                 : 'Start creating to build your gallery.'}
             </p>
             <Link href="/studio/generate">
-              <Button variant="lime" size="sm" className="rounded-sm">
+              <Button size="sm" className="rounded-full bg-honey-400 hover:bg-honey-500 text-charcoal-900 font-semibold shadow-glow">
                 Create Your First Image
               </Button>
             </Link>
@@ -296,9 +296,9 @@ function StudioGalleryContent() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedItem?.mode === 'food_photo' ? (
-                <Camera className="w-4 h-4 text-amber-600" />
+                <Camera className="w-4 h-4 text-honey-700" />
               ) : (
-                <Sparkles className="w-4 h-4 text-purple-600" />
+                <Sparkles className="w-4 h-4 text-bronze-700" />
               )}
               {selectedItem?.headline || selectedItem?.outputFormat || 'Generated Image'}
             </DialogTitle>
@@ -306,7 +306,7 @@ function StudioGalleryContent() {
 
           {selectedItem && (
             <div className="space-y-4">
-              <div className="rounded-sm overflow-hidden bg-warm-100 relative group">
+              <div className="rounded-lg overflow-hidden bg-cream-200 relative group">
                 {selectedItem.hasImage ? (
                   <>
                     <img
@@ -317,7 +317,7 @@ function StudioGalleryContent() {
                     />
                     <button
                       onClick={() => setLightboxOpen(true)}
-                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-sm text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-lg text-white opacity-0 group-hover:opacity-100 transition-opacity"
                       title="View full size"
                     >
                       <Maximize2 className="w-4 h-4" />
@@ -365,7 +365,7 @@ function StudioGalleryContent() {
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1 rounded-sm"
+                    className="flex-1 rounded-lg"
                     onClick={() => handleDownload(selectedItem)}
                   >
                     <Download className="w-4 h-4 mr-1.5" />
@@ -373,7 +373,7 @@ function StudioGalleryContent() {
                   </Button>
                   <Button
                     variant="outline"
-                    className="rounded-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50"
                     onClick={() => handleDelete(selectedItem.id)}
                     disabled={deleting === selectedItem.id}
                   >
@@ -388,7 +388,7 @@ function StudioGalleryContent() {
                 {selectedItem.hasImage && (
                   <Button
                     variant="outline"
-                    className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
+                    className="w-full rounded-lg border-bronze-200 text-bronze-700 hover:bg-bronze-50 hover:border-bronze-300"
                     onClick={() => {
                       setSelectedItem(null)
                       router.push(`/studio/generate?mode=branded_post&sourceImageId=${selectedItem.id}`)
@@ -412,7 +412,7 @@ function StudioGalleryContent() {
         >
           <button
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-sm text-white transition-colors"
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
           >
             <X className="w-6 h-6" />
           </button>

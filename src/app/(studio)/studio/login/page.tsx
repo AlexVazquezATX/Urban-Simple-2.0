@@ -68,7 +68,7 @@ function StudioLoginContent() {
               className="h-8 w-auto opacity-70"
               priority
             />
-            <span className="w-2 h-2 rounded-full bg-amber-500 mb-0.5" />
+            <span className="w-2 h-2 rounded-full bg-honey-500 mb-0.5" />
           </Link>
           <p className="text-sm text-warm-500 mt-3">
             AI-powered food photography & branded content
@@ -76,7 +76,7 @@ function StudioLoginContent() {
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-lg shadow-sm border border-warm-200 p-6">
+        <div className="bg-white rounded-2xl shadow-card border border-cream-300 p-6">
           <h1 className="text-lg font-display font-medium text-charcoal-900 mb-1">
             Sign in to your account
           </h1>
@@ -85,7 +85,7 @@ function StudioLoginContent() {
           </p>
 
           {justSignedUp && (
-            <div className="rounded-md bg-lime-50 border border-lime-200 p-3 text-sm text-lime-700 mb-4">
+            <div className="rounded-lg bg-status-success-light border border-sage-200 p-3 text-sm text-status-success mb-4">
               Account created! Sign in to get started.
             </div>
           )}
@@ -107,7 +107,7 @@ function StudioLoginContent() {
                 placeholder="you@yourbusiness.com"
                 required
                 autoComplete="email"
-                className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
               />
             </div>
             <div className="space-y-2">
@@ -115,7 +115,7 @@ function StudioLoginContent() {
                 <Label htmlFor="password">Password</Label>
                 <Link
                   href="/studio/forgot-password"
-                  className="text-xs text-ocean-600 hover:text-ocean-700"
+                  className="text-xs text-bronze-600 hover:text-bronze-700"
                 >
                   Forgot password?
                 </Link>
@@ -128,13 +128,13 @@ function StudioLoginContent() {
                 placeholder="Your password"
                 required
                 autoComplete="current-password"
-                className="border-warm-200 focus:border-ocean-400 focus:ring-ocean-400"
+                className="border-cream-300 focus:border-bronze-400 focus:ring-bronze-400"
               />
             </div>
             <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white"
+              className="w-full bg-honey-400 hover:bg-honey-500 text-charcoal-900 font-semibold shadow-glow"
             >
               {loading ? (
                 <>
@@ -152,7 +152,7 @@ function StudioLoginContent() {
         <div className="text-center mt-4 space-y-2">
           <p className="text-sm text-warm-500">
             Don&apos;t have an account?{' '}
-            <Link href="/studio/signup" className="text-ocean-600 hover:text-ocean-700 font-medium">
+            <Link href="/studio/signup" className="text-bronze-600 hover:text-bronze-700 font-medium">
               Sign up free
             </Link>
           </p>

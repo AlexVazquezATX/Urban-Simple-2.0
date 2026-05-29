@@ -119,7 +119,7 @@ export function StudioNav() {
               className="h-5 w-auto opacity-70"
               priority
             />
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mb-0.5" />
+            <span className="w-1.5 h-1.5 rounded-full bg-honey-500 mb-0.5" />
           </Link>
 
           {/* Desktop Nav Links */}
@@ -152,7 +152,7 @@ export function StudioNav() {
                 {tierLabel}
               </Badge>
               {usage?.planTier === 'TRIAL' && (
-                <span className="text-xs text-ocean-500 group-hover:text-ocean-700 font-medium transition-colors">
+                <span className="text-xs text-bronze-600 group-hover:text-bronze-700 font-medium transition-colors">
                   Upgrade
                 </span>
               )}
@@ -164,8 +164,8 @@ export function StudioNav() {
                 onClick={() => setAccountMenuOpen(!accountMenuOpen)}
                 className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-sm text-warm-600 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100 hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors"
               >
-                <div className="w-7 h-7 rounded-full bg-ocean-100 flex items-center justify-center">
-                  <span className="text-xs font-medium text-ocean-700">
+                <div className="w-7 h-7 rounded-full bg-bronze-100 flex items-center justify-center">
+                  <span className="text-xs font-medium text-bronze-700">
                     {user?.firstName?.[0] || 'U'}
                   </span>
                 </div>
@@ -227,7 +227,7 @@ export function StudioNav() {
                 {tierLabel}
               </Badge>
               {usage?.planTier === 'TRIAL' && (
-                <span className="text-[10px] text-ocean-500 font-medium">Upgrade</span>
+                <span className="text-[10px] text-bronze-600 font-medium">Upgrade</span>
               )}
             </Link>
             <button
