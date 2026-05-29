@@ -16,14 +16,12 @@ const MODES = [
     title: 'Food Photography',
     description: 'Transform dish photos into professional images',
     icon: Camera,
-    gradient: 'from-amber-500 to-orange-500',
   },
   {
     id: 'branded_post' as GenerationMode,
     title: 'Branded Posts',
     description: 'Create promotional graphics with your brand',
     icon: Sparkles,
-    gradient: 'from-purple-500 to-pink-500',
   },
 ]
 
@@ -40,20 +38,20 @@ export function ModeSelector({ value, onChange, disabled }: ModeSelectorProps) {
             onClick={() => onChange(mode.id)}
             disabled={disabled}
             className={cn(
-              'flex-1 p-4 rounded-sm border-2 transition-all text-left',
+              'flex-1 p-4 rounded-xl border transition-all text-left',
               isSelected
-                ? 'border-lime-500 bg-lime-50'
-                : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
+                ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
+                : 'border-cream-300 hover:border-bronze-200 bg-white',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
             <div className="flex items-start gap-3">
               <div
                 className={cn(
-                  'w-10 h-10 rounded-sm flex items-center justify-center shrink-0',
+                  'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
                   isSelected
-                    ? `bg-gradient-to-br ${mode.gradient} text-white`
-                    : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
+                    ? 'bg-bronze-100 text-bronze-700'
+                    : 'bg-cream-200 text-warm-500'
                 )}
               >
                 <Icon className="w-5 h-5" />
@@ -61,13 +59,13 @@ export function ModeSelector({ value, onChange, disabled }: ModeSelectorProps) {
               <div>
                 <h3
                   className={cn(
-                    'text-sm font-medium',
-                    isSelected ? 'text-lime-700' : 'text-warm-900 dark:text-cream-100'
+                    'text-sm font-semibold',
+                    isSelected ? 'text-charcoal-900' : 'text-charcoal-800'
                   )}
                 >
                   {mode.title}
                 </h3>
-                <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{mode.description}</p>
+                <p className="text-xs text-warm-500 mt-0.5">{mode.description}</p>
               </div>
             </div>
           </button>

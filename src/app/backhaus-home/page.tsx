@@ -145,7 +145,7 @@ function BackHausNav() {
               className="h-5 w-auto opacity-70"
               priority
             />
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mb-0.5" />
+            <span className="w-1.5 h-1.5 rounded-full bg-honey-500 mb-0.5" />
           </Link>
 
           {/* Desktop links */}
@@ -922,7 +922,7 @@ function BackHausFooter() {
                 height={24}
                 className="h-5 w-auto"
               />
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mb-0.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-honey-500 mb-0.5" />
             </div>
             <p className="text-sm text-charcoal-400 leading-relaxed">
               AI-powered food photography and branded content for restaurants.

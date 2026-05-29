@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp, Layers } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import {
@@ -16,6 +15,7 @@ import {
   ImageSourcePicker,
   GalleryPickerDialog,
   UsageBar,
+  CaptionCard,
 } from '@/components/creative-studio'
 import {
   CUISINE_TYPES,
@@ -99,6 +99,12 @@ function StudioGenerateContent() {
 
   const [isSaving, setIsSaving] = useState(false)
 
+  // Caption Writer
+  const [captionLoading, setCaptionLoading] = useState(false)
+  const [caption, setCaption] = useState('')
+  const [captionHashtags, setCaptionHashtags] = useState<string[]>([])
+  const [captionError, setCaptionError] = useState<string | null>(null)
+
   // Fetch source image data on mount if sourceImageId is in URL
   useEffect(() => {
     if (initialSourceImageId) {
@@ -137,6 +143,9 @@ function StudioGenerateContent() {
     setAdditionalInstructions('')
     setLogoChoice('none')
     setApplyBrandColors(true)
+    setCaption('')
+    setCaptionHashtags([])
+    setCaptionError(null)
     if (mode === 'food_photo') {
       setSourceImage(null)
       setSourceImageType('none')
@@ -155,6 +164,9 @@ function StudioGenerateContent() {
 
     setIsGenerating(true)
     setGeneratedImage(null)
+    setCaption('')
+    setCaptionHashtags([])
+    setCaptionError(null)
 
     try {
       const body =
@@ -209,12 +221,49 @@ function StudioGenerateContent() {
       )
 
       toast.success('Image generated successfully!')
+
+      // Auto-write a ready-to-post caption for the new image.
+      loadCaption()
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Generation failed'
       toast.error(message)
       console.error('Generation error:', error)
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  async function loadCaption() {
+    setCaptionError(null)
+    setCaptionLoading(true)
+    setCaption('')
+    setCaptionHashtags([])
+
+    try {
+      const response = await fetch('/api/creative-studio/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          dishDescription: dishDescription || undefined,
+          cuisineType: cuisineType || undefined,
+          outputFormat: mode === 'food_photo' ? outputFormat : undefined,
+          headline: mode === 'branded_post' ? headline || undefined : undefined,
+          postType: mode === 'branded_post' ? postType : undefined,
+          restaurantName: brandKit?.restaurantName || undefined,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Caption failed')
+
+      const data = await response.json()
+      setCaption(data.caption || '')
+      setCaptionHashtags(Array.isArray(data.hashtags) ? data.hashtags : [])
+    } catch (error) {
+      console.error('Caption error:', error)
+      setCaptionError('Caption generation failed')
+    } finally {
+      setCaptionLoading(false)
     }
   }
 
@@ -267,25 +316,25 @@ function StudioGenerateContent() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50">
+    <div className="min-h-screen bg-cream-100">
       {/* Header */}
-      <div className="border-b border-warm-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+      <div className="border-b border-cream-300/70 bg-cream-50/80 backdrop-blur sticky top-0 z-20">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3.5">
           <div className="flex items-center gap-4">
             <Link
               href="/studio"
-              className="p-2 hover:bg-warm-100 rounded-sm transition-colors"
+              className="w-9 h-9 rounded-full bg-white border border-cream-300 shadow-soft flex items-center justify-center text-warm-600 hover:text-charcoal-900 transition-colors"
             >
-              <ArrowLeft className="w-4 h-4 text-warm-600" />
+              <ArrowLeft className="w-4 h-4" />
             </Link>
             <div>
-              <h1 className="text-lg font-display font-medium text-warm-900">
-                Create Content
+              <h1 className="font-display text-2xl tracking-tight text-charcoal-900 leading-none">
+                Create
               </h1>
-              <p className="text-sm text-warm-500">
+              <p className="text-xs text-warm-500 mt-1">
                 {mode === 'food_photo'
-                  ? 'Transform your dish photos'
-                  : 'Generate branded graphics'}
+                  ? 'Turn a dish photo into professional food photography'
+                  : 'Generate branded graphics with your brand'}
               </p>
             </div>
           </div>
@@ -301,7 +350,7 @@ function StudioGenerateContent() {
           {/* Left Column - Form */}
           <div className="space-y-5">
             {/* Mode Selector */}
-            <div className="bg-white rounded-sm border border-warm-200 p-4">
+            <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4">
               <Label className="text-warm-700 mb-3 block">Generation Mode</Label>
               <ModeSelector
                 value={mode}
@@ -313,7 +362,7 @@ function StudioGenerateContent() {
             {/* Food Photo Mode Form */}
             {mode === 'food_photo' && (
               <>
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
+                <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4">
                   <Label className="text-warm-700 mb-3 block">Dish Photo</Label>
                   <DishPhotoUpload
                     value={dishPhoto}
@@ -323,7 +372,7 @@ function StudioGenerateContent() {
                   />
                 </div>
 
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
+                <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4">
                   <Label className="text-warm-700 mb-3 block">Output Format</Label>
                   <OutputFormatSelector
                     value={outputFormat}
@@ -332,7 +381,7 @@ function StudioGenerateContent() {
                   />
                 </div>
 
-                <div className="bg-white rounded-sm border border-warm-200 p-4 space-y-4">
+                <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4 space-y-4">
                   <div>
                     <Label htmlFor="description" className="text-warm-700 mb-2 block">
                       Dish Description (optional)
@@ -343,7 +392,7 @@ function StudioGenerateContent() {
                       onChange={(e) => setDishDescription(e.target.value)}
                       placeholder="e.g., Grilled salmon with lemon butter sauce"
                       disabled={isGenerating}
-                      className="rounded-sm"
+                      className="rounded-lg"
                     />
                   </div>
 
@@ -356,7 +405,7 @@ function StudioGenerateContent() {
                       value={cuisineType}
                       onChange={(e) => setCuisineType(e.target.value)}
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
+                      className="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-bronze-500/20 focus:border-bronze-400"
                     >
                       <option value="">Select cuisine...</option>
                       {CUISINE_TYPES.map((c) => (
@@ -376,7 +425,7 @@ function StudioGenerateContent() {
                       value={foodStyle}
                       onChange={(e) => setFoodStyle(e.target.value)}
                       disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
+                      className="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-warm-900 text-sm focus:outline-none focus:ring-2 focus:ring-bronze-500/20 focus:border-bronze-400"
                     >
                       <option value="">Select style...</option>
                       {STYLE_PREFERENCES.map((s) => (
@@ -389,7 +438,7 @@ function StudioGenerateContent() {
                 </div>
 
                 {/* Style Reference */}
-                <div className="bg-white rounded-sm border border-warm-200 overflow-hidden">
+                <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft overflow-hidden">
                   <button
                     type="button"
                     onClick={() => setShowStyleReference(!showStyleReference)}
@@ -416,7 +465,7 @@ function StudioGenerateContent() {
                       </p>
 
                       {styleReference ? (
-                        <div className="relative aspect-video rounded-sm overflow-hidden bg-warm-100">
+                        <div className="relative aspect-video rounded-lg overflow-hidden bg-warm-100">
                           <img
                             src={styleReference}
                             alt="Style reference"
@@ -424,7 +473,7 @@ function StudioGenerateContent() {
                           />
                           <button
                             onClick={() => setStyleReference(null)}
-                            className="absolute top-2 right-2 p-1.5 bg-warm-900/80 hover:bg-warm-900 rounded-sm text-white transition-colors"
+                            className="absolute top-2 right-2 p-1.5 bg-warm-900/80 hover:bg-warm-900 rounded-lg text-white transition-colors"
                             title="Remove reference"
                           >
                             <X className="w-4 h-4" />
@@ -436,13 +485,13 @@ function StudioGenerateContent() {
                             type="button"
                             onClick={() => setStyleGalleryOpen(true)}
                             disabled={isGenerating}
-                            className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors"
+                            className="aspect-video rounded-lg border-2 border-dashed border-warm-300 hover:border-bronze-300 bg-warm-50 flex flex-col items-center justify-center transition-colors"
                           >
                             <Layers className="w-7 h-7 text-warm-400 mb-1.5" />
                             <span className="text-sm text-warm-600">From Gallery</span>
                           </button>
                           <label className="block cursor-pointer">
-                            <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 hover:border-lime-400 bg-warm-50 flex flex-col items-center justify-center transition-colors">
+                            <div className="aspect-video rounded-lg border-2 border-dashed border-warm-300 hover:border-bronze-300 bg-warm-50 flex flex-col items-center justify-center transition-colors">
                               <ImageIcon className="w-7 h-7 text-warm-400 mb-1.5" />
                               <span className="text-sm text-warm-600">Upload Image</span>
                             </div>
@@ -481,7 +530,7 @@ function StudioGenerateContent() {
             {/* Branded Post Mode Form */}
             {mode === 'branded_post' && (
               <>
-              <div className="bg-white rounded-sm border border-warm-200 p-4">
+              <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4">
                 <Label className="text-warm-700 mb-3 block">Source Image</Label>
                 <ImageSourcePicker
                   value={sourceImage}
@@ -492,7 +541,7 @@ function StudioGenerateContent() {
                 />
               </div>
 
-              <div className="bg-white rounded-sm border border-warm-200 p-4">
+              <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4">
                 <BrandedPostForm
                   postType={postType}
                   onPostTypeChange={setPostType}
@@ -511,7 +560,7 @@ function StudioGenerateContent() {
 
               {/* Logo Picker */}
               {brandKit && (brandKit.logoUrl || brandKit.iconUrl) && (
-                <div className="bg-white rounded-sm border border-warm-200 p-4">
+                <div className="bg-white rounded-2xl border border-cream-300/70 shadow-soft p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <Stamp className="w-4 h-4 text-warm-500" />
                     <Label className="text-warm-700">Include Logo</Label>
@@ -521,19 +570,19 @@ function StudioGenerateContent() {
                       onClick={() => setLogoChoice('none')}
                       disabled={isGenerating}
                       className={cn(
-                        'flex-1 p-2.5 rounded-sm border text-center transition-all',
+                        'flex-1 p-2.5 rounded-lg border text-center transition-all',
                         logoChoice === 'none'
-                          ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
+                          ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
                           : 'border-warm-200 hover:border-warm-300 bg-white',
                         isGenerating && 'opacity-50 cursor-not-allowed'
                       )}
                     >
-                      <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-1.5">
+                      <div className="w-10 h-10 rounded-lg bg-warm-100 flex items-center justify-center mx-auto mb-1.5">
                         <X className="w-4 h-4 text-warm-400" />
                       </div>
                       <p className={cn(
                         'text-xs font-medium',
-                        logoChoice === 'none' ? 'text-plum-700' : 'text-warm-600'
+                        logoChoice === 'none' ? 'text-bronze-700' : 'text-warm-600'
                       )}>
                         No Logo
                       </p>
@@ -544,19 +593,19 @@ function StudioGenerateContent() {
                         onClick={() => setLogoChoice('logo')}
                         disabled={isGenerating}
                         className={cn(
-                          'flex-1 p-2.5 rounded-sm border text-center transition-all',
+                          'flex-1 p-2.5 rounded-lg border text-center transition-all',
                           logoChoice === 'logo'
-                            ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
+                            ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
                             : 'border-warm-200 hover:border-warm-300 bg-white',
                           isGenerating && 'opacity-50 cursor-not-allowed'
                         )}
                       >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
                           <img src={brandKit.logoUrl} alt="Logo" className="w-full h-full object-contain p-0.5" />
                         </div>
                         <p className={cn(
                           'text-xs font-medium',
-                          logoChoice === 'logo' ? 'text-plum-700' : 'text-warm-600'
+                          logoChoice === 'logo' ? 'text-bronze-700' : 'text-warm-600'
                         )}>
                           Full Logo
                         </p>
@@ -568,19 +617,19 @@ function StudioGenerateContent() {
                         onClick={() => setLogoChoice('icon')}
                         disabled={isGenerating}
                         className={cn(
-                          'flex-1 p-2.5 rounded-sm border text-center transition-all',
+                          'flex-1 p-2.5 rounded-lg border text-center transition-all',
                           logoChoice === 'icon'
-                            ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
+                            ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
                             : 'border-warm-200 hover:border-warm-300 bg-white',
                           isGenerating && 'opacity-50 cursor-not-allowed'
                         )}
                       >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg bg-warm-50 border border-warm-100 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
                           <img src={brandKit.iconUrl} alt="Icon" className="w-full h-full object-contain p-0.5" />
                         </div>
                         <p className={cn(
                           'text-xs font-medium',
-                          logoChoice === 'icon' ? 'text-plum-700' : 'text-warm-600'
+                          logoChoice === 'icon' ? 'text-bronze-700' : 'text-warm-600'
                         )}>
                           Icon
                         </p>
@@ -608,9 +657,9 @@ function StudioGenerateContent() {
                               onClick={() => setLogoPlacement(value)}
                               disabled={isGenerating}
                               className={cn(
-                                'px-2 py-1.5 rounded-sm border text-xs font-medium transition-all',
+                                'px-2 py-1.5 rounded-lg border text-xs font-medium transition-all',
                                 logoPlacement === value
-                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
+                                  ? 'border-bronze-400 bg-bronze-50 text-bronze-700'
                                   : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
                                 isGenerating && 'opacity-50 cursor-not-allowed'
                               )}
@@ -632,9 +681,9 @@ function StudioGenerateContent() {
                               onClick={() => setLogoSize(size)}
                               disabled={isGenerating}
                               className={cn(
-                                'px-2 py-1.5 rounded-sm border text-xs font-medium capitalize transition-all',
+                                'px-2 py-1.5 rounded-lg border text-xs font-medium capitalize transition-all',
                                 logoSize === size
-                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
+                                  ? 'border-bronze-400 bg-bronze-50 text-bronze-700'
                                   : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
                                 isGenerating && 'opacity-50 cursor-not-allowed'
                               )}
@@ -656,9 +705,9 @@ function StudioGenerateContent() {
                               onClick={() => setLogoOpacity(opacity)}
                               disabled={isGenerating}
                               className={cn(
-                                'px-2 py-1.5 rounded-sm border text-xs font-medium transition-all',
+                                'px-2 py-1.5 rounded-lg border text-xs font-medium transition-all',
                                 logoOpacity === opacity
-                                  ? 'border-plum-500 bg-plum-50 text-plum-700'
+                                  ? 'border-bronze-400 bg-bronze-50 text-bronze-700'
                                   : 'border-warm-200 bg-white text-warm-600 hover:border-warm-300',
                                 isGenerating && 'opacity-50 cursor-not-allowed'
                               )}
@@ -677,9 +726,9 @@ function StudioGenerateContent() {
 
             {/* Additional Instructions */}
             <div className={cn(
-              'bg-white rounded-sm border p-4',
+              'bg-white rounded-lg border p-4',
               postType === 'custom' && mode === 'branded_post'
-                ? 'border-plum-300 ring-1 ring-plum-200'
+                ? 'border-bronze-300 ring-1 ring-bronze-200'
                 : 'border-warm-200'
             )}>
               <Label htmlFor="instructions" className="text-warm-700 mb-2 block">
@@ -700,7 +749,7 @@ function StudioGenerateContent() {
                 }
                 disabled={isGenerating}
                 rows={postType === 'custom' && mode === 'branded_post' ? 5 : 3}
-                className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 resize-none disabled:opacity-50"
+                className="w-full px-3 py-2 rounded-xl border border-cream-300 bg-white text-warm-900 text-sm placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-bronze-500/20 focus:border-bronze-400 resize-none disabled:opacity-50"
               />
               <p className="text-xs text-warm-500 mt-1.5">
                 {postType === 'custom' && mode === 'branded_post'
@@ -710,29 +759,27 @@ function StudioGenerateContent() {
             </div>
 
             {/* Generate Button */}
-            <Button
-              variant="lime"
-              size="lg"
-              className="w-full rounded-sm"
+            <button
               onClick={handleGenerate}
               disabled={!canGenerate || isGenerating}
+              className="w-full rounded-2xl bg-honey-400 hover:bg-honey-500 text-charcoal-900 font-semibold text-base py-3.5 inline-flex items-center justify-center gap-2 shadow-glow transition-colors disabled:opacity-50 disabled:pointer-events-none disabled:shadow-none"
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   Generating...
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Image
+                  <Sparkles className="w-4 h-4" />
+                  Generate {mode === 'food_photo' ? 'photo' : 'post'}
                 </>
               )}
-            </Button>
+            </button>
           </div>
 
           {/* Right Column - Preview */}
-          <div className="lg:sticky lg:top-20 lg:self-start">
+          <div className="lg:sticky lg:top-24 lg:self-start space-y-4">
             <PreviewPanel
               imageBase64={generatedImage}
               aspectRatio={generatedAspectRatio}
@@ -744,6 +791,18 @@ function StudioGenerateContent() {
               disabled={isGenerating}
               mode={mode}
             />
+
+            {/* Caption Writer — appears once an image exists */}
+            {generatedImage && (
+              <CaptionCard
+                loading={captionLoading}
+                caption={caption}
+                hashtags={captionHashtags}
+                error={captionError}
+                onRegenerate={loadCaption}
+                disabled={captionLoading}
+              />
+            )}
           </div>
         </div>
       </div>

@@ -96,13 +96,13 @@ export function UsageBar() {
               <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">
                 {usage.generationsUsed} / {usage.generationsLimit}
               </span>
-              <div className="flex-1 max-w-[200px] h-1.5 bg-warm-200 dark:bg-charcoal-700 rounded-full overflow-hidden">
+              <div className="flex-1 max-w-[200px] h-1.5 bg-cream-300 rounded-full overflow-hidden">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
-                    isAtLimit ? 'bg-red-500' :
-                    isNearLimit ? 'bg-amber-500' :
-                    'bg-lime-500'
+                    isAtLimit ? 'bg-status-error' :
+                    isNearLimit ? 'bg-honey-500' :
+                    'bg-gradient-to-r from-honey-400 to-bronze-500'
                   )}
                   style={{ width: `${Math.min(percent, 100)}%` }}
                 />
@@ -139,7 +139,7 @@ export function UsageBar() {
               variant="outline"
               size="sm"
               onClick={handleUpgrade}
-              className="h-7 text-xs border-lime-400 text-lime-700 hover:bg-lime-50"
+              className="h-7 text-xs border-bronze-300 text-bronze-700 hover:bg-bronze-50"
             >
               <ArrowUpCircle className="w-3 h-3 mr-1" />
               Upgrade

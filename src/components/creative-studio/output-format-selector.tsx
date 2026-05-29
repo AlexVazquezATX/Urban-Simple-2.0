@@ -43,18 +43,18 @@ export function OutputFormatSelector({
             onClick={() => onChange(format.id)}
             disabled={disabled}
             className={cn(
-              'p-3 rounded-sm border transition-all text-left',
+              'p-3 rounded-xl border transition-all text-left',
               isSelected
-                ? 'border-lime-500 bg-lime-50 ring-1 ring-lime-500'
-                : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
+                ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
+                : 'border-cream-300 hover:border-bronze-200 bg-white',
               disabled && 'opacity-50 cursor-not-allowed'
             )}
           >
             <div className="flex items-center gap-2.5">
               <div
                 className={cn(
-                  'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
-                  isSelected ? 'bg-lime-100 text-lime-600' : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
+                  'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                  isSelected ? 'bg-bronze-100 text-bronze-700' : 'bg-cream-200 text-warm-500'
                 )}
               >
                 <Icon className="w-4 h-4" />
@@ -62,13 +62,13 @@ export function OutputFormatSelector({
               <div className="min-w-0">
                 <h4
                   className={cn(
-                    'text-sm font-medium truncate',
-                    isSelected ? 'text-lime-700' : 'text-warm-900 dark:text-cream-100'
+                    'text-sm font-semibold truncate',
+                    isSelected ? 'text-charcoal-900' : 'text-charcoal-800'
                   )}
                 >
                   {format.title}
                 </h4>
-                <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{format.aspectRatio}</p>
+                <p className="text-xs text-warm-500 truncate">{format.aspectRatio}</p>
               </div>
             </div>
           </button>

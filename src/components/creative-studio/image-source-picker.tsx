@@ -46,7 +46,7 @@ export function ImageSourcePicker({
   return (
     <div className="space-y-3">
       {/* Segmented control */}
-      <div className="flex rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden">
+      <div className="flex rounded-lg border border-warm-200 dark:border-charcoal-700 overflow-hidden">
         {SOURCE_OPTIONS.map((option) => {
           const Icon = option.icon
           const isSelected = sourceType === option.id
@@ -59,7 +59,7 @@ export function ImageSourcePicker({
               className={cn(
                 'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors',
                 isSelected
-                  ? 'bg-plum-50 text-plum-700 border-plum-500'
+                  ? 'bg-bronze-50 text-bronze-700 border-bronze-400'
                   : 'bg-white dark:bg-charcoal-900 text-warm-600 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800',
                 option.id !== 'upload' && 'border-l border-warm-200 dark:border-charcoal-700',
                 disabled && 'opacity-50 cursor-not-allowed'
@@ -85,7 +85,7 @@ export function ImageSourcePicker({
       {sourceType === 'gallery' && (
         <>
           {value ? (
-            <div className="relative rounded-sm overflow-hidden aspect-video bg-warm-100 dark:bg-charcoal-800">
+            <div className="relative rounded-lg overflow-hidden aspect-video bg-warm-100 dark:bg-charcoal-800">
               <img
                 src={value}
                 alt="Selected from gallery"
@@ -94,7 +94,7 @@ export function ImageSourcePicker({
               {!disabled && (
                 <button
                   onClick={() => setShowGalleryPicker(true)}
-                  className="absolute bottom-2 right-2 px-3 py-1.5 bg-white/90 hover:bg-white rounded-sm text-xs font-medium text-warm-700 transition-colors"
+                  className="absolute bottom-2 right-2 px-3 py-1.5 bg-white/90 hover:bg-white rounded-lg text-xs font-medium text-warm-700 transition-colors"
                 >
                   Change
                 </button>
@@ -106,13 +106,13 @@ export function ImageSourcePicker({
               onClick={() => setShowGalleryPicker(true)}
               disabled={disabled}
               className={cn(
-                'w-full rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-600 hover:border-plum-400 bg-warm-50 dark:bg-charcoal-800 transition-colors cursor-pointer',
+                'w-full rounded-lg border-2 border-dashed border-warm-300 dark:border-charcoal-600 hover:border-bronze-300 bg-warm-50 dark:bg-charcoal-800 transition-colors cursor-pointer',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
             >
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-12 h-12 rounded-sm bg-plum-100 flex items-center justify-center mb-2">
-                  <ImageIcon className="w-5 h-5 text-plum-600" />
+                <div className="w-12 h-12 rounded-lg bg-bronze-100 flex items-center justify-center mb-2">
+                  <ImageIcon className="w-5 h-5 text-bronze-700" />
                 </div>
                 <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
                   Choose from Gallery
@@ -132,7 +132,7 @@ export function ImageSourcePicker({
       )}
 
       {sourceType === 'none' && (
-        <div className="rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700 px-4 py-3">
+        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700 px-4 py-3">
           <p className="text-xs text-warm-600 dark:text-cream-400">
             The AI will generate a fully original graphic from your headline and brand kit.
           </p>

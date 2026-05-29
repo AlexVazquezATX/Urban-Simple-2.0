@@ -88,9 +88,9 @@ export function BrandedPostForm({
                 onClick={() => onPostTypeChange(type.id)}
                 disabled={disabled}
                 className={cn(
-                  'p-3 rounded-sm border transition-all text-left',
+                  'p-3 rounded-lg border transition-all text-left',
                   isSelected
-                    ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
+                    ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
                     : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                   disabled && 'opacity-50 cursor-not-allowed'
                 )}
@@ -98,8 +98,8 @@ export function BrandedPostForm({
                 <div className="flex items-center gap-2.5">
                   <div
                     className={cn(
-                      'w-8 h-8 rounded-sm flex items-center justify-center shrink-0',
-                      isSelected ? 'bg-plum-100 text-plum-600' : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
+                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
+                      isSelected ? 'bg-bronze-100 text-bronze-700' : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
                     )}
                   >
                     <Icon className="w-4 h-4" />
@@ -108,7 +108,7 @@ export function BrandedPostForm({
                     <h4
                       className={cn(
                         'text-sm font-medium truncate',
-                        isSelected ? 'text-plum-700' : 'text-warm-900 dark:text-cream-100'
+                        isSelected ? 'text-bronze-700' : 'text-warm-900 dark:text-cream-100'
                       )}
                     >
                       {type.title}
@@ -124,8 +124,8 @@ export function BrandedPostForm({
 
       {/* Custom mode hint */}
       {postType === 'custom' && (
-        <div className="p-3 rounded-sm bg-plum-50 border border-plum-200">
-          <p className="text-sm text-plum-700">
+        <div className="p-3 rounded-lg bg-bronze-50 border border-bronze-200">
+          <p className="text-sm text-bronze-700">
             Describe your vision in the <strong>Additional Directions</strong> box below. You have full creative control — tell the AI exactly what you want.
           </p>
         </div>
@@ -142,7 +142,7 @@ export function BrandedPostForm({
           onChange={(e) => onHeadlineChange(e.target.value)}
           placeholder={postType === 'custom' ? 'Leave empty for a purely visual graphic' : 'e.g., 20% Off This Weekend!'}
           disabled={disabled}
-          className="rounded-sm"
+          className="rounded-lg"
         />
         <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
           {postType === 'custom' ? 'Optional — only add if you want text on the graphic' : 'The main text to display on the graphic'}
@@ -151,12 +151,12 @@ export function BrandedPostForm({
 
       {/* Brand Kit Info (if selected) */}
       {brandKit && (
-        <div className="p-3 rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
+        <div className="p-3 rounded-lg bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  'w-8 h-8 rounded-sm transition-opacity',
+                  'w-8 h-8 rounded-lg transition-opacity',
                   !applyBrandColors && 'opacity-30'
                 )}
                 style={{ backgroundColor: brandKit.primaryColor }}
@@ -176,7 +176,7 @@ export function BrandedPostForm({
                 disabled={disabled}
                 className={cn(
                   'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
-                  applyBrandColors ? 'bg-plum-500' : 'bg-warm-300',
+                  applyBrandColors ? 'bg-bronze-500' : 'bg-warm-300',
                   disabled && 'opacity-50 cursor-not-allowed'
                 )}
               >
@@ -202,9 +202,9 @@ export function BrandedPostForm({
               onClick={() => onAspectRatioChange(ratio.value)}
               disabled={disabled}
               className={cn(
-                'px-3 py-2 rounded-sm border text-sm transition-all',
+                'px-3 py-2 rounded-lg border text-sm transition-all',
                 aspectRatio === ratio.value
-                  ? 'border-plum-500 bg-plum-50 text-plum-700 font-medium'
+                  ? 'border-bronze-400 bg-bronze-50 text-bronze-700 font-medium'
                   : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 text-warm-700 dark:text-cream-300',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
@@ -225,9 +225,9 @@ export function BrandedPostForm({
               onClick={() => onStyleChange(pref.value)}
               disabled={disabled}
               className={cn(
-                'w-full p-3 rounded-sm border transition-all text-left',
+                'w-full p-3 rounded-lg border transition-all text-left',
                 style === pref.value
-                  ? 'border-plum-500 bg-plum-50'
+                  ? 'border-bronze-400 bg-bronze-50'
                   : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
                 disabled && 'opacity-50 cursor-not-allowed'
               )}
@@ -235,7 +235,7 @@ export function BrandedPostForm({
               <p
                 className={cn(
                   'text-sm font-medium',
-                  style === pref.value ? 'text-plum-700' : 'text-warm-900 dark:text-cream-100'
+                  style === pref.value ? 'text-bronze-700' : 'text-warm-900 dark:text-cream-100'
                 )}
               >
                 {pref.label}

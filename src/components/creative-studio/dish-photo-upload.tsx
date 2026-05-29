@@ -113,7 +113,7 @@ export function DishPhotoUpload({
   // Show preview if we have an image
   if (value) {
     return (
-      <div className={cn('relative rounded-sm overflow-hidden', className)}>
+      <div className={cn('relative rounded-xl overflow-hidden', className)}>
         <img
           src={value}
           alt="Uploaded dish"
@@ -122,7 +122,7 @@ export function DishPhotoUpload({
         {!disabled && (
           <button
             onClick={handleClear}
-            className="absolute top-2 right-2 p-1.5 bg-warm-900/80 hover:bg-warm-900 rounded-sm text-white transition-colors"
+            className="absolute top-2.5 right-2.5 p-1.5 bg-charcoal-900/70 hover:bg-charcoal-900 backdrop-blur rounded-full text-white transition-colors"
             title="Remove image"
           >
             <X className="w-4 h-4" />
@@ -131,7 +131,7 @@ export function DishPhotoUpload({
         {!disabled && (
           <button
             onClick={handleClick}
-            className="absolute bottom-2 right-2 p-2 bg-white/90 hover:bg-white rounded-sm text-warm-700 transition-colors flex items-center gap-1.5 text-xs font-medium"
+            className="absolute bottom-2.5 right-2.5 px-3 py-1.5 bg-white/90 hover:bg-white rounded-full text-charcoal-800 shadow-soft transition-colors flex items-center gap-1.5 text-xs font-medium"
           >
             <Camera className="w-3.5 h-3.5" />
             Change
@@ -155,10 +155,10 @@ export function DishPhotoUpload({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'relative rounded-sm border-2 border-dashed transition-colors cursor-pointer',
+        'relative rounded-xl border-2 border-dashed transition-colors cursor-pointer',
         isDragging
-          ? 'border-lime-500 bg-lime-50'
-          : 'border-warm-300 dark:border-charcoal-600 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800',
+          ? 'border-bronze-400 bg-bronze-50'
+          : 'border-cream-300 hover:border-bronze-300 bg-cream-50',
         disabled && 'opacity-50 cursor-not-allowed',
         isProcessing && 'pointer-events-none',
         className
@@ -167,28 +167,28 @@ export function DishPhotoUpload({
       <div className="flex flex-col items-center justify-center p-8 text-center">
         {isProcessing ? (
           <>
-            <Loader2 className="w-10 h-10 text-lime-600 animate-spin mb-3" />
-            <p className="text-sm font-medium text-warm-700 dark:text-cream-300">Processing image...</p>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Compressing for upload</p>
+            <Loader2 className="w-10 h-10 text-bronze-600 animate-spin mb-3" />
+            <p className="text-sm font-medium text-charcoal-800">Processing image...</p>
+            <p className="text-xs text-warm-500 mt-1">Compressing for upload</p>
           </>
         ) : error ? (
           <>
-            <AlertCircle className="w-10 h-10 text-red-500 mb-3" />
-            <p className="text-sm font-medium text-red-600">{error}</p>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Click to try again</p>
+            <AlertCircle className="w-10 h-10 text-status-error mb-3" />
+            <p className="text-sm font-medium text-status-error">{error}</p>
+            <p className="text-xs text-warm-500 mt-1">Click to try again</p>
           </>
         ) : (
           <>
-            <div className="w-14 h-14 rounded-sm bg-lime-100 flex items-center justify-center mb-3">
-              <Upload className="w-6 h-6 text-lime-600" />
+            <div className="w-14 h-14 rounded-2xl bg-bronze-50 border border-bronze-100 flex items-center justify-center mb-3">
+              <Upload className="w-6 h-6 text-bronze-600" />
             </div>
-            <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
+            <p className="text-sm font-medium text-charcoal-900">
               Drop your dish photo here
             </p>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
+            <p className="text-xs text-warm-500 mt-1">
               or click to browse
             </p>
-            <p className="text-xs text-warm-400 dark:text-cream-400 mt-3">
+            <p className="text-xs text-warm-400 mt-3">
               JPG, PNG, HEIC up to 20MB
             </p>
           </>

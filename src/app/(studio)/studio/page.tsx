@@ -10,15 +10,12 @@ import {
   Layers,
   Palette,
   Loader2,
-  TrendingUp,
-  Calendar,
   ChevronRight,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { UsageBar } from '@/components/creative-studio'
 import { toast } from 'sonner'
 import { ThrottledImage } from '@/components/studio/throttled-image'
+import { StatTile, ToolCard } from '@/components/studio/ui'
 
 interface StudioStats {
   totalGenerations: number
@@ -54,6 +51,7 @@ function StudioDashboardContent() {
   const searchParams = useSearchParams()
   const [stats, setStats] = useState<StudioStats | null>(null)
   const [recentContent, setRecentContent] = useState<ContentItem[]>([])
+  const [firstName, setFirstName] = useState<string>('')
   const [loading, setLoading] = useState(true)
 
   // Show checkout success toast
@@ -69,16 +67,19 @@ function StudioDashboardContent() {
 
   async function loadDashboardData() {
     try {
-      const [statsResponse, recentResponse] = await Promise.all([
+      const [statsResponse, recentResponse, userResponse] = await Promise.all([
         fetch('/api/creative-studio/content?includeStats=true&limit=1'),
         fetch('/api/creative-studio/content?recent=true&limit=6'),
+        fetch('/api/users/me'),
       ])
 
       const statsData = await statsResponse.json()
       const recentData = await recentResponse.json()
+      const userData = userResponse.ok ? await userResponse.json() : null
 
       setStats(statsData.stats || null)
       setRecentContent(recentData.content || [])
+      if (userData?.firstName) setFirstName(userData.firstName)
     } catch (error) {
       console.error('Failed to load dashboard data:', error)
     } finally {
@@ -95,153 +96,102 @@ function StudioDashboardContent() {
   }
 
   const hasContent = recentContent.length > 0
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div className="p-4 md:p-6">
-      {/* Usage Bar */}
+    <>
       <UsageBar />
 
-      {/* Header with Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 mt-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">
-            Dashboard
+      <div className="px-5 md:px-8 py-7">
+        {/* Greeting */}
+        <div className="mb-7">
+          <p className="text-sm text-warm-500">{greeting},</p>
+          <h1 className="font-display text-4xl tracking-tight text-charcoal-900 mt-0.5">
+            {firstName || 'Welcome back'}
           </h1>
-          <p className="text-sm text-warm-500 mt-0.5">
-            Professional food photography & branded content
-          </p>
         </div>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="text-right">
-            <p className="text-xl font-semibold text-warm-900">
-              {stats?.totalGenerations || 0}
-            </p>
-            <p className="text-xs text-warm-500">generated</p>
-          </div>
-          <div className="h-8 w-px bg-warm-200" />
-          <div className="text-right">
-            <p className="text-xl font-semibold text-lime-600">
-              {stats?.savedContent || 0}
-            </p>
-            <p className="text-xs text-warm-500">saved</p>
-          </div>
-        </div>
-      </div>
 
-      {/* Action Cards - Main CTAs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <Link href="/studio/generate?mode=food_photo" className="group">
-          <div className="h-32 rounded-sm bg-gradient-to-br from-amber-500 to-orange-500 p-5 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between h-full">
-              <div className="text-white">
-                <div className="w-10 h-10 rounded-sm bg-white/20 flex items-center justify-center mb-3">
-                  <Camera className="w-5 h-5" />
-                </div>
-                <h2 className="text-lg font-medium">Food Photography</h2>
-                <p className="text-sm text-white/80 mt-0.5">
-                  Transform dish photos into professional images
-                </p>
+        {/* Hero create band */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-7">
+          <Link
+            href="/studio/generate?mode=food_photo"
+            className="lg:col-span-3 group relative overflow-hidden rounded-3xl bg-charcoal-900 shadow-elevated p-7 min-h-[180px] flex flex-col justify-between"
+          >
+            <div className="absolute -right-10 -top-10 w-56 h-56 rounded-full bg-bronze-500/20 blur-3xl" />
+            <div className="absolute right-6 bottom-0 w-40 h-40 rounded-full bg-honey-500/10 blur-2xl" />
+            <div className="relative">
+              <div className="w-11 h-11 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center mb-4 border border-white/10">
+                <Camera className="w-5 h-5 text-honey-300" />
               </div>
-              <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
+              <h2 className="font-display text-2xl text-cream-50 tracking-tight">Food Photography</h2>
+              <p className="text-sm text-cream-300 mt-1 max-w-sm">
+                Turn a quick phone snap of any dish into a menu-ready, professional photograph in seconds.
+              </p>
             </div>
-          </div>
-        </Link>
+            <div className="relative mt-5">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-honey-400 text-charcoal-900 text-sm font-semibold px-4 py-2 shadow-glow group-hover:bg-honey-300 transition-colors">
+                <Sparkles className="w-4 h-4" /> Create a photo
+              </span>
+            </div>
+          </Link>
 
-        <Link href="/studio/generate?mode=branded_post" className="group">
-          <div className="h-32 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 p-5 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between h-full">
-              <div className="text-white">
-                <div className="w-10 h-10 rounded-sm bg-white/20 flex items-center justify-center mb-3">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <h2 className="text-lg font-medium">Branded Posts</h2>
-                <p className="text-sm text-white/80 mt-0.5">
-                  Create promotional graphics with your brand
-                </p>
+          <Link
+            href="/studio/generate?mode=branded_post"
+            className="lg:col-span-2 group relative overflow-hidden rounded-3xl bg-white border border-cream-300 shadow-card p-7 min-h-[180px] flex flex-col justify-between hover:shadow-elevated transition-shadow"
+          >
+            <div>
+              <div className="w-11 h-11 rounded-xl bg-bronze-50 border border-bronze-100 flex items-center justify-center mb-4">
+                <Sparkles className="w-5 h-5 text-bronze-600" />
               </div>
-              <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
+              <h2 className="font-display text-2xl text-charcoal-900 tracking-tight">Branded Posts</h2>
+              <p className="text-sm text-warm-500 mt-1">On-brand promo graphics with your logo, colors and copy.</p>
             </div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Secondary Navigation */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Link href="/studio/gallery" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-warm-100 flex items-center justify-center shrink-0">
-              <Layers className="w-4 h-4 text-warm-600" />
+            <div className="mt-5">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-bronze-200 text-bronze-700 text-sm font-semibold px-4 py-2 group-hover:bg-bronze-50 transition-colors">
+                Design a post <ChevronRight className="w-4 h-4" />
+              </span>
             </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-warm-900">Gallery</h3>
-              <p className="text-xs text-warm-500 truncate">Browse saved</p>
-            </div>
-          </div>
-        </Link>
-
-        <Link href="/studio/brand-kit" className="group">
-          <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 hover:border-plum-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center shrink-0">
-              <Palette className="w-4 h-4 text-plum-600" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-warm-900">Brand Kit</h3>
-              <p className="text-xs text-warm-500 truncate">Colors & logo</p>
-            </div>
-          </div>
-        </Link>
-
-        <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center shrink-0">
-            <Calendar className="w-4 h-4 text-ocean-600" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-medium text-warm-900">This Month</h3>
-            <p className="text-xs text-ocean-600 font-medium">
-              {stats?.thisMonthGenerations || 0} created
-            </p>
-          </div>
+          </Link>
         </div>
 
-        <div className="h-20 rounded-sm bg-white border border-warm-200 p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-medium text-warm-900">Food Photos</h3>
-            <p className="text-xs text-amber-600 font-medium">
-              {stats?.generationsByMode?.food_photo || 0} generated
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Recent Content */}
-      <div className="rounded-sm bg-white border border-warm-200">
-        <div className="px-4 py-3 border-b border-warm-200 flex items-center justify-between">
-          <h2 className="text-base font-display font-medium text-warm-900">
-            Recent Creations
-          </h2>
-          {hasContent && (
-            <Link
-              href="/studio/gallery"
-              className="text-xs text-ocean-600 hover:text-ocean-700 font-medium"
-            >
-              View all
-            </Link>
-          )}
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+          <StatTile label="This month" value={stats?.thisMonthGenerations || 0} sub="creations" accent="text-bronze-600" />
+          <StatTile label="All time" value={stats?.totalGenerations || 0} sub="generated" accent="text-charcoal-900" />
+          <StatTile label="Saved" value={stats?.savedContent || 0} sub="in your gallery" accent="text-sage-500" />
+          <StatTile label="Food photos" value={stats?.generationsByMode?.food_photo || 0} sub="created" accent="text-terracotta-500" />
         </div>
 
-        {hasContent ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
-            {recentContent.map((item) => (
+        {/* Tools */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-8">
+          <ToolCard icon={Layers} title="Gallery" sub="Browse everything you've made" href="/studio/gallery" />
+          <ToolCard icon={Palette} title="Brand Kit" sub="Your colors, logo & style" href="/studio/brand-kit" />
+        </div>
+
+        {/* Recent creations */}
+        <div>
+          <div className="flex items-center justify-between mb-3.5">
+            <h2 className="font-display text-xl text-charcoal-900 tracking-tight">Recent creations</h2>
+            {hasContent && (
               <Link
-                key={item.id}
-                href={`/studio/gallery?view=${item.id}`}
-                className="group"
+                href="/studio/gallery"
+                className="text-sm text-bronze-600 hover:text-bronze-700 font-medium inline-flex items-center gap-1"
               >
-                <div className="rounded-sm border border-warm-200 overflow-hidden hover:border-lime-400 transition-colors">
-                  <div className="aspect-square bg-warm-100 relative">
+                View all <ChevronRight className="w-4 h-4" />
+              </Link>
+            )}
+          </div>
+
+          {hasContent ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {recentContent.map((item) => (
+                <Link
+                  key={item.id}
+                  href={`/studio/gallery?view=${item.id}`}
+                  className="group rounded-2xl overflow-hidden bg-white border border-cream-300/70 shadow-soft hover:shadow-card hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  <div className="aspect-[4/3] bg-cream-200 relative">
                     {item.hasImage ? (
                       <ThrottledImage
                         src={`/api/creative-studio/content/image?id=${item.id}`}
@@ -250,54 +200,43 @@ function StudioDashboardContent() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-warm-300" />
+                        <ImageIcon className="w-8 h-8 text-cream-400" />
                       </div>
                     )}
-                    <Badge
-                      className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-sm ${
-                        item.mode === 'food_photo'
-                          ? 'bg-amber-100 text-amber-700 border-amber-200'
-                          : 'bg-purple-100 text-purple-700 border-purple-200'
-                      }`}
-                    >
+                    <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-wide rounded-full bg-charcoal-900/35 backdrop-blur text-white px-2 py-0.5 border border-white/10">
                       {item.mode === 'food_photo' ? 'Food' : 'Branded'}
-                    </Badge>
+                    </span>
                   </div>
-                  <div className="p-2.5">
-                    <p className="text-xs text-warm-900 font-medium truncate">
+                  <div className="px-3.5 py-3">
+                    <p className="text-sm font-medium text-charcoal-900 truncate">
                       {item.headline || item.outputFormat || 'Untitled'}
                     </p>
-                    <p className="text-[10px] text-warm-500 mt-0.5">
-                      {new Date(item.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                      })}
+                    <p className="text-xs text-warm-500 mt-0.5">
+                      {new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        ) : (
-          <div className="px-4 py-12 text-center">
-            <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-3">
-              <Camera className="w-6 h-6 text-amber-600" />
+                </Link>
+              ))}
             </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">
-              Start creating professional content
-            </h3>
-            <p className="text-xs text-warm-500 mb-4 max-w-sm mx-auto">
-              Transform your dish photos or generate branded graphics in seconds.
-            </p>
-            <Link href="/studio/generate">
-              <Button variant="lime" size="sm" className="rounded-sm">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Create Your First Image
-              </Button>
-            </Link>
-          </div>
-        )}
+          ) : (
+            <div className="rounded-2xl bg-white border border-cream-300/70 shadow-soft px-4 py-14 text-center">
+              <div className="w-14 h-14 rounded-2xl bg-bronze-50 border border-bronze-100 flex items-center justify-center mx-auto mb-3">
+                <Camera className="w-6 h-6 text-bronze-600" />
+              </div>
+              <h3 className="font-display text-lg text-charcoal-900 mb-1">Start creating professional content</h3>
+              <p className="text-sm text-warm-500 mb-5 max-w-sm mx-auto">
+                Transform your dish photos or generate branded graphics in seconds.
+              </p>
+              <Link
+                href="/studio/generate"
+                className="inline-flex items-center gap-1.5 rounded-full bg-honey-400 hover:bg-honey-500 text-charcoal-900 text-sm font-semibold px-5 py-2.5 shadow-glow transition-colors"
+              >
+                <Sparkles className="w-4 h-4" /> Create your first image
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   )
 }
