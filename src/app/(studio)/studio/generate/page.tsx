@@ -15,6 +15,7 @@ import {
   ImageSourcePicker,
   GalleryPickerDialog,
   UsageBar,
+  CaptionCard,
 } from '@/components/creative-studio'
 import {
   CUISINE_TYPES,
@@ -98,6 +99,12 @@ function StudioGenerateContent() {
 
   const [isSaving, setIsSaving] = useState(false)
 
+  // Caption Writer
+  const [captionLoading, setCaptionLoading] = useState(false)
+  const [caption, setCaption] = useState('')
+  const [captionHashtags, setCaptionHashtags] = useState<string[]>([])
+  const [captionError, setCaptionError] = useState<string | null>(null)
+
   // Fetch source image data on mount if sourceImageId is in URL
   useEffect(() => {
     if (initialSourceImageId) {
@@ -136,6 +143,9 @@ function StudioGenerateContent() {
     setAdditionalInstructions('')
     setLogoChoice('none')
     setApplyBrandColors(true)
+    setCaption('')
+    setCaptionHashtags([])
+    setCaptionError(null)
     if (mode === 'food_photo') {
       setSourceImage(null)
       setSourceImageType('none')
@@ -154,6 +164,9 @@ function StudioGenerateContent() {
 
     setIsGenerating(true)
     setGeneratedImage(null)
+    setCaption('')
+    setCaptionHashtags([])
+    setCaptionError(null)
 
     try {
       const body =
@@ -208,12 +221,49 @@ function StudioGenerateContent() {
       )
 
       toast.success('Image generated successfully!')
+
+      // Auto-write a ready-to-post caption for the new image.
+      loadCaption()
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Generation failed'
       toast.error(message)
       console.error('Generation error:', error)
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  async function loadCaption() {
+    setCaptionError(null)
+    setCaptionLoading(true)
+    setCaption('')
+    setCaptionHashtags([])
+
+    try {
+      const response = await fetch('/api/creative-studio/caption', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          dishDescription: dishDescription || undefined,
+          cuisineType: cuisineType || undefined,
+          outputFormat: mode === 'food_photo' ? outputFormat : undefined,
+          headline: mode === 'branded_post' ? headline || undefined : undefined,
+          postType: mode === 'branded_post' ? postType : undefined,
+          restaurantName: brandKit?.restaurantName || undefined,
+        }),
+      })
+
+      if (!response.ok) throw new Error('Caption failed')
+
+      const data = await response.json()
+      setCaption(data.caption || '')
+      setCaptionHashtags(Array.isArray(data.hashtags) ? data.hashtags : [])
+    } catch (error) {
+      console.error('Caption error:', error)
+      setCaptionError('Caption generation failed')
+    } finally {
+      setCaptionLoading(false)
     }
   }
 
@@ -729,7 +779,7 @@ function StudioGenerateContent() {
           </div>
 
           {/* Right Column - Preview */}
-          <div className="lg:sticky lg:top-20 lg:self-start">
+          <div className="lg:sticky lg:top-24 lg:self-start space-y-4">
             <PreviewPanel
               imageBase64={generatedImage}
               aspectRatio={generatedAspectRatio}
@@ -741,6 +791,18 @@ function StudioGenerateContent() {
               disabled={isGenerating}
               mode={mode}
             />
+
+            {/* Caption Writer — appears once an image exists */}
+            {generatedImage && (
+              <CaptionCard
+                loading={captionLoading}
+                caption={caption}
+                hashtags={captionHashtags}
+                error={captionError}
+                onRegenerate={loadCaption}
+                disabled={captionLoading}
+              />
+            )}
           </div>
         </div>
       </div>
