@@ -108,6 +108,7 @@ export async function PATCH(
       estimatedSize,
       employeeCount,
       annualRevenue,
+      priceLevel,
       status,
       priority,
       estimatedValue,
@@ -138,6 +139,7 @@ export async function PATCH(
         ...(estimatedSize !== undefined && { estimatedSize }),
         ...(employeeCount !== undefined && { employeeCount }),
         ...(annualRevenue !== undefined && { annualRevenue: annualRevenue ? parseFloat(annualRevenue) : null }),
+        ...(priceLevel !== undefined && { priceLevel }),
         ...(status !== undefined && { status }),
         ...(priority !== undefined && { priority }),
         ...(estimatedValue !== undefined && { estimatedValue: estimatedValue ? parseFloat(estimatedValue) : null }),
@@ -331,10 +333,22 @@ export async function PATCH(
     })
 
     return NextResponse.json(updatedProspect)
-  } catch (error) {
-    console.error('Error updating prospect:', error)
+  } catch (error: any) {
+    // Log the full error (message + stack + Prisma code if present) so failures
+    // are diagnosable from the dev/prod server output instead of just "Failed
+    // to update prospect".
+    console.error('Error updating prospect:', {
+      message: error?.message,
+      code: error?.code,
+      meta: error?.meta,
+      stack: error?.stack,
+    })
     return NextResponse.json(
-      { error: 'Failed to update prospect' },
+      {
+        error: 'Failed to update prospect',
+        details: typeof error?.message === 'string' ? error.message : undefined,
+        code: typeof error?.code === 'string' ? error.code : undefined,
+      },
       { status: 500 }
     )
   }

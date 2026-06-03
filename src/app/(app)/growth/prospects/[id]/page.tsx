@@ -9,6 +9,11 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { ProspectDetailClient } from '@/components/growth/prospect-detail-client'
 
+// Always fetch fresh data on each request — the inline edit form on this
+// page calls router.refresh() after a save, and we want that to pick up the
+// just-persisted values rather than a cached snapshot.
+export const dynamic = 'force-dynamic'
+
 async function ProspectDetail({ id }: { id: string }) {
   const user = await getCurrentUser()
   if (!user) {

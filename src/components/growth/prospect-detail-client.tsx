@@ -163,7 +163,6 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
     priority: prospect.priority,
     source: prospect.source,
     estimatedValue: prospect.estimatedValue ? String(prospect.estimatedValue) : '',
-    nextFollowUp: prospect.nextFollowUp || '',
 
     // Social Media
     linkedin: socialMedia.linkedin || '',
@@ -239,6 +238,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
           businessType: formData.businessType || null,
           industry: formData.industry || null,
           estimatedSize: formData.estimatedSize || null,
+          priceLevel: formData.priceLevel || null,
           status: formData.status,
           priority: formData.priority,
           source: formData.source,
@@ -266,12 +266,53 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to save')
+        const error = await response.json().catch(() => ({}))
+        const detail = typeof error?.details === 'string' ? error.details : ''
+        const code = typeof error?.code === 'string' ? error.code : ''
+        const composed = [error?.error, detail && `(${detail})`, code && `[${code}]`]
+          .filter(Boolean)
+          .join(' ')
+        throw new Error(composed || 'Failed to save')
       }
 
       const data = await response.json()
       setProspect(data)
+      // Re-derive formData from the persisted prospect so the form reflects
+      // exactly what is now in the database (rather than the values the user
+      // typed — which might differ if the API normalized anything).
+      const savedAddress = (data.address as any) || {}
+      const savedDiscovery = (data.discoveryData as any) || {}
+      const savedSocial = savedDiscovery.socialMedia || {}
+      const savedContact = data.contacts?.[0]
+      setFormData((prev) => ({
+        ...prev,
+        contactName: savedContact ? `${savedContact.firstName} ${savedContact.lastName}`.trim() : '',
+        contactEmail: savedContact?.email || '',
+        contactPhone: savedContact?.phone || data.phone || '',
+        contactTitle: savedContact?.title || '',
+        companyName: data.companyName,
+        website: data.website || '',
+        city: savedAddress.city || '',
+        state: savedAddress.state || '',
+        street: savedAddress.street || '',
+        zip: savedAddress.zip || '',
+        businessType: data.businessType || '',
+        industry: data.industry || '',
+        estimatedSize: data.estimatedSize || '',
+        priceLevel: data.priceLevel || '',
+        status: data.status,
+        priority: data.priority,
+        source: data.source,
+        estimatedValue: data.estimatedValue ? String(data.estimatedValue) : '',
+        linkedin: savedSocial.linkedin || '',
+        instagram: savedSocial.instagram || '',
+        facebook: savedSocial.facebook || '',
+        twitter: savedSocial.twitter || '',
+        notes: data.notes || '',
+      }))
+      // Bust any server-rendered cache so navigating back/forward shows the
+      // freshly-saved record.
+      router.refresh()
       toast.success('Lead saved successfully')
     } catch (error: any) {
       console.error('Error saving:', error)
@@ -740,6 +781,14 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>ZIP</Label>
+                  <Input
+                    value={formData.zip}
+                    onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
+                    placeholder="78701"
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Facility Type</Label>
                   <Select
                     value={formData.businessType}
@@ -894,14 +943,6 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                     value={formData.estimatedValue}
                     onChange={(e) => setFormData({ ...formData, estimatedValue: e.target.value })}
                     placeholder="10000"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Next Follow-Up</Label>
-                  <Input
-                    type="date"
-                    value={formData.nextFollowUp}
-                    onChange={(e) => setFormData({ ...formData, nextFollowUp: e.target.value })}
                   />
                 </div>
               </div>
