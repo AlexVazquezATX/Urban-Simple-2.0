@@ -431,10 +431,29 @@ export async function POST(request: NextRequest) {
     }
     updateData.approvalStatus = action === 'approve' ? 'approved' : 'rejected'
 
+    // On reject, also flip status to 'cancelled'. The Ready-to-Send / Scheduled
+    // views already filter by approvalStatus='approved' so rejection alone
+    // would hide them from the UI — but autopilot-campaign rows are picked up
+    // by the executor cron based on status='pending' WITHOUT checking
+    // approvalStatus. Cancelling protects those from being sent after a
+    // UI-initiated delete. (Matches the cancelPendingMessagesForProspect
+    // precedent.) Approval branch is unchanged.
+    if (action === 'reject') {
+      updateData.status = 'cancelled'
+    }
+
+    // Guard the write to only affect rows that are still actionable. Without
+    // this guard, if the executor cron flipped a row to `status='sent'`
+    // between the UI click and the API call, we would overwrite status to
+    // 'cancelled' while keeping the (now-real) sentAt and resendEmailId —
+    // corrupting analytics and orphaning Resend webhooks. With the guard,
+    // `updated.count` honestly reflects how many rows were actionable; the
+    // UI's "deleted N of M" toast surfaces the gap to the user.
     const updated = await prisma.outreachMessage.updateMany({
       where: {
         id: { in: messageIds },
         prospect: { companyId: user.companyId },
+        status: 'pending',
       },
       data: updateData,
     })
