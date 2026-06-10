@@ -1,72 +1,40 @@
-'use client'
-
-import { useState } from 'react'
-import { RefreshCw } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { ExternalLink } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { toast } from 'sonner'
 
 interface QBSyncButtonProps {
-  invoiceId: string
+  invoiceId?: string
   qbInvoiceId?: string | null
 }
 
-export function QBSyncButton({ invoiceId, qbInvoiceId }: QBSyncButtonProps) {
-  const [loading, setLoading] = useState(false)
+// Mirror-first model: invoices flow FROM QuickBooks, so this shows where the
+// invoice lives in QBO instead of pretending to push. Per-invoice push to QBO
+// is phase 2 of the integration.
+export function QBSyncButton({ qbInvoiceId }: QBSyncButtonProps) {
+  if (!qbInvoiceId) return null
 
-  const handleSync = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch(`/api/invoices/${invoiceId}/sync-qb`, {
-        method: 'POST',
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to sync to QuickBooks')
-      }
-
-      const data = await response.json()
-      toast.success('Invoice synced to QuickBooks')
-      
-      // Refresh the page to show updated QB ID
-      window.location.reload()
-    } catch (error: any) {
-      toast.error(error.message || 'Something went wrong')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (qbInvoiceId) {
+  // Backfilled/synced ids are numeric QBO transaction ids; anything else
+  // (e.g. legacy placeholder ids) gets a plain badge without a link.
+  if (!/^\d+$/.test(qbInvoiceId)) {
     return (
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className="font-mono text-xs">
-          QB: {qbInvoiceId}
-        </Badge>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleSync}
-          disabled={loading}
-        >
-          <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Re-sync
-        </Button>
-      </div>
+      <Badge variant="outline" className="rounded-sm font-mono text-xs">
+        QB: {qbInvoiceId}
+      </Badge>
     )
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleSync}
-      disabled={loading}
+    <a
+      href={`https://qbo.intuit.com/app/invoice?txnId=${qbInvoiceId}`}
+      target="_blank"
+      rel="noopener noreferrer"
     >
-      <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-      {loading ? 'Syncing...' : 'Sync to QuickBooks'}
-    </Button>
+      <Badge
+        variant="outline"
+        className="rounded-sm text-xs gap-1 hover:bg-warm-50 dark:hover:bg-charcoal-800"
+      >
+        View in QuickBooks
+        <ExternalLink className="h-3 w-3" />
+      </Badge>
+    </a>
   )
 }
-

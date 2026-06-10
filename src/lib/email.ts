@@ -1,5 +1,6 @@
 import { Resend } from 'resend'
 import { InvoiceEmail } from '@/emails/invoice-email'
+import { PaymentReminderEmail } from '@/emails/payment-reminder-email'
 import { prisma } from '@/lib/db'
 
 interface SendInvoiceEmailParams {
@@ -148,6 +149,107 @@ export async function sendInvoiceEmail({
       },
     })
 
+    return {
+      success: false,
+      error: error.message,
+    }
+  }
+}
+
+interface SendPaymentReminderEmailParams {
+  invoiceId: string
+  to: string
+  from?: string
+}
+
+export async function sendPaymentReminderEmail({
+  invoiceId,
+  to,
+  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+}: SendPaymentReminderEmailParams) {
+  const subjectFor = (invoiceNumber: string) =>
+    `Payment reminder: Invoice ${invoiceNumber} from Urban Simple`
+
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error(
+        'RESEND_API_KEY not configured. Please add it to your .env.local file.'
+      )
+    }
+
+    const invoice = await prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: {
+        client: { select: { name: true } },
+      },
+    })
+    if (!invoice) {
+      throw new Error('Invoice not found')
+    }
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const daysPastDue = Math.floor(
+      (today.getTime() - new Date(invoice.dueDate).getTime()) / (1000 * 60 * 60 * 24)
+    )
+
+    const dueDate = new Date(invoice.dueDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+    const balanceDue = `$${Number(invoice.balanceDue).toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`
+
+    const resend = new Resend(process.env.RESEND_API_KEY || '')
+    const { data, error } = await resend.emails.send({
+      from,
+      to,
+      subject: subjectFor(invoice.invoiceNumber),
+      react: PaymentReminderEmail({
+        invoiceNumber: invoice.invoiceNumber,
+        clientName: invoice.client.name,
+        dueDate,
+        balanceDue,
+        daysPastDue,
+        companyName: 'Urban Simple',
+        companyEmail: 'billing@urbansimple.net',
+      }),
+    })
+
+    if (error) {
+      throw new Error(`Failed to send email: ${error.message || JSON.stringify(error)}`)
+    }
+
+    const log = await prisma.emailLog.create({
+      data: {
+        recipientEmail: to,
+        subject: subjectFor(invoice.invoiceNumber),
+        body: '',
+        status: 'sent',
+        sentAt: new Date(),
+      },
+    })
+
+    return {
+      success: true,
+      emailId: data?.id,
+      emailLogId: log.id,
+      message: `Reminder sent to ${to}`,
+    }
+  } catch (error: any) {
+    console.error('Error sending payment reminder email:', error)
+    await prisma.emailLog.create({
+      data: {
+        recipientEmail: to,
+        subject: 'Payment reminder (failed)',
+        body: '',
+        status: 'failed',
+        errorMessage: error.message,
+      },
+    })
     return {
       success: false,
       error: error.message,

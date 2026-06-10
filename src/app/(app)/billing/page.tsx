@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ARagingTable } from '@/components/billing/ar-aging-table'
+import { QboConnectionCard } from '@/components/billing/qbo-connection-card'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -129,6 +130,9 @@ async function ARDashboard() {
           Track unpaid invoices and how long they've been waiting
         </p>
       </div>
+
+      {/* QuickBooks connection + sync */}
+      <QboConnectionCard />
 
       {/* Payment Status by Age */}
       <div className="grid gap-4 md:grid-cols-4">

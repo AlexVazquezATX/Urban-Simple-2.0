@@ -2688,6 +2688,8 @@ model WeeklyHoursSummary {
 // QUICKBOOKS ONLINE INTEGRATION
 // ============================================
 
+// One row per company. Tokens rotate on every refresh (Intuit invalidates the
+// old refresh token), so all token writes go through src/lib/qbo/client.ts.
 model QBOConnection {
   id                    String   @id @default(cuid())
   companyId             String   @unique @map("company_id")
@@ -2697,7 +2699,10 @@ model QBOConnection {
   accessTokenExpiresAt  DateTime @map("access_token_expires_at")
   refreshTokenExpiresAt DateTime @map("refresh_token_expires_at")
   isActive              Boolean  @default(true) @map("is_active")
+  connectedById         String?  @map("connected_by_id")
   lastSyncAt            DateTime? @map("last_sync_at")
+  lastSyncStatus        String?  @map("last_sync_status") // success, error
+  lastSyncError         String?  @map("last_sync_error")
   createdAt             DateTime @default(now()) @map("created_at")
   updatedAt             DateTime @updatedAt @map("updated_at")
 

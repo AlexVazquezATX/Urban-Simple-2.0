@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { sendPaymentReminderEmail } from '@/lib/email'
 
 // POST /api/invoices/[id]/reminders - Create payment reminder
 export async function POST(
@@ -63,13 +64,20 @@ export async function POST(
       }
     }
 
-    // Create reminder record
+    const recipient = invoice.client.billingEmail
+    if (!recipient) {
+      return NextResponse.json(
+        { error: 'Client has no billing email. Add one on the client record first.' },
+        { status: 400 }
+      )
+    }
+
+    // Create reminder record; sentAt is stamped only after the email goes out
     const reminder = await prisma.paymentReminder.create({
       data: {
         invoiceId,
         reminderType: finalReminderType,
         scheduledFor: new Date(),
-        sentAt: new Date(), // Mark as sent immediately for manual reminders
       },
       include: {
         invoice: {
@@ -86,20 +94,27 @@ export async function POST(
       },
     })
 
-    // TODO: Send email via SendGrid
-    // For now, just log it
-    console.log('Payment reminder sent:', {
-      invoiceNumber: reminder.invoice.invoiceNumber,
-      client: reminder.invoice.client.name,
-      email: reminder.invoice.client.billingEmail,
-      reminderType: finalReminderType,
-      daysPastDue,
+    const emailResult = await sendPaymentReminderEmail({
+      invoiceId,
+      to: recipient,
     })
 
+    if (emailResult.success) {
+      await prisma.paymentReminder.update({
+        where: { id: reminder.id },
+        data: {
+          sentAt: new Date(),
+          emailLogId: emailResult.emailLogId ?? null,
+        },
+      })
+    }
+
     return NextResponse.json({
-      message: 'Reminder sent',
+      message: emailResult.success
+        ? `Reminder sent to ${recipient}`
+        : `Reminder recorded but email failed: ${emailResult.error}`,
       reminder,
-      emailSent: true, // Will be false when email fails
+      emailSent: emailResult.success,
     })
   } catch (error) {
     console.error('Error creating payment reminder:', error)
