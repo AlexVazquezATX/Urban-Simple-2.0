@@ -120,7 +120,7 @@ export default function BlogManagementPage() {
   const totalViews = posts.reduce((sum, p) => sum + p.viewCount, 0)
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6">
+    <div>
       <PageHeader
         kicker="GROWTH · CONTENT"
         title="Blog Management"

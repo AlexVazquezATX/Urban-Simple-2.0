@@ -272,7 +272,7 @@ export default function CreativeDetailPage({
   ]
 
   return (
-    <div className="p-6">
+    <div>
       {/* Header */}
       <PageHeader
         kicker="CREATIVE HUB · CREATIVES"

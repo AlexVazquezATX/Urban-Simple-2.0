@@ -199,7 +199,7 @@ export default function CreativeStudioPage() {
   const hasContent = recentContent.length > 0
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <PageHeader
         kicker="STUDIO · BACKHAUS"
         title="Creative Studio"

@@ -183,7 +183,7 @@ function GenerateContent() {
   }
 
   return (
-    <div className="p-6">
+    <div>
       {/* Header */}
       <PageHeader
         kicker="CREATIVE HUB · GENERATE"

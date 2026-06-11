@@ -250,7 +250,7 @@ export default function EmailFinderPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-6xl mx-auto bg-background min-h-screen">
+    <div>
       <PageHeader
         kicker="GROWTH · EMAIL FINDER"
         title="Email Finder"

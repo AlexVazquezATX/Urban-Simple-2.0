@@ -1231,7 +1231,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   }
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6">
+    <div>
       <PageHeader
         kicker="GROWTH · PROSPECTS"
         title="Leads"

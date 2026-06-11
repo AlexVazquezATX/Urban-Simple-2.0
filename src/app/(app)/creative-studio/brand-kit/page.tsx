@@ -176,7 +176,7 @@ export default function BrandKitPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div>
       <PageHeader
         backHref="/creative-studio"
         kicker="STUDIO · BACKHAUS"

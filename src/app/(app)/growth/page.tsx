@@ -106,7 +106,7 @@ async function DailyPlannerContent() {
   }, {} as Record<string, number>)
 
   return (
-    <div className="mx-auto max-w-7xl p-4 md:p-6">
+    <div>
       <PageHeader
         kicker="GROWTH · DAILY PLANNER"
         title="Daily Planner"
@@ -348,7 +348,7 @@ export default function GrowthPage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-7xl p-4 md:p-6">
+        <div>
           {/* Header skeleton */}
           <div className="mb-6 flex items-end justify-between">
             <div>

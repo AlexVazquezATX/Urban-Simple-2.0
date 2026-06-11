@@ -63,7 +63,7 @@ export default async function PulseArchivePage() {
   })
 
   return (
-    <div className="container mx-auto py-6 max-w-5xl">
+    <div>
       <PulseArchiveView briefings={briefings} bookmarkedItems={bookmarkedItems} />
     </div>
   )

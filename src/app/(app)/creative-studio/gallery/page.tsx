@@ -147,7 +147,7 @@ function GalleryContent() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl">
+    <div>
       <PageHeader
         backHref="/creative-studio"
         kicker="STUDIO · BACKHAUS"

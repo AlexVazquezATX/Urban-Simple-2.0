@@ -122,7 +122,7 @@ export function PulseBriefingView({
   // No briefing state
   if (!currentBriefing) {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <div className="py-8 md:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -202,7 +202,7 @@ export function PulseBriefingView({
   // Generating state
   if (currentBriefing.status === 'generating') {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <div className="py-8 md:py-12">
         <div className="space-y-8">
           <div className="flex items-center gap-4">
             <RefreshCw className="h-6 w-6 animate-spin text-primary" />
@@ -232,7 +232,7 @@ export function PulseBriefingView({
   // Failed state
   if (currentBriefing.status === 'failed') {
     return (
-      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <div className="py-8 md:py-12">
         <Card className="mx-auto max-w-2xl border-coral-600/30 bg-coral-600/10 dark:border-coral-300/25 dark:bg-coral-300/12">
           <CardContent className="py-16 text-center space-y-6">
             <h2 className="font-display text-xl font-semibold text-coral-600 dark:text-coral-300">
@@ -269,7 +269,7 @@ export function PulseBriefingView({
   )
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+    <div className="py-8 md:py-12">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

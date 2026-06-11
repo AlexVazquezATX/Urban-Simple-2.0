@@ -86,7 +86,7 @@ export function UsageBar({ className }: { className?: string }) {
       'bg-card border-border',
       className
     )}>
-      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {isPaused ? (
             <div className="flex items-center gap-2 text-coral-600 dark:text-coral-300">

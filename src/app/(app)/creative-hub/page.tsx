@@ -140,7 +140,7 @@ export default function CreativeHubPage() {
   const hasContent = stats?.recentContent && stats.recentContent.length > 0
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-background min-h-screen">
+    <div>
       <PageHeader
         kicker="GROWTH · CREATIVE HUB"
         title="Creative Hub"

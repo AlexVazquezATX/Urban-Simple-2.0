@@ -53,7 +53,7 @@ async function PipelineContent() {
   const totalValue = serializedProspects.reduce((sum, p) => sum + (p.estimatedValue || 0), 0)
 
   return (
-    <div className="mx-auto max-w-full p-4 md:p-6">
+    <div>
       <PageHeader
         kicker="GROWTH · PIPELINE"
         title="Pipeline"
@@ -85,7 +85,7 @@ export default function PipelinePage() {
   return (
     <Suspense
       fallback={
-        <div className="mx-auto max-w-full p-4 md:p-6">
+        <div>
           {/* Header skeleton */}
           <div className="mb-6 flex items-end justify-between">
             <div>

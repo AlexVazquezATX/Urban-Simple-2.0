@@ -37,7 +37,7 @@ function OutreachContent() {
   }, [tabParam, prospectParam])
 
   return (
-    <div className="mx-auto min-h-screen max-w-7xl p-4 md:p-6">
+    <div>
       <PageHeader
         kicker="GROWTH · OUTREACH"
         title="Outreach Hub"

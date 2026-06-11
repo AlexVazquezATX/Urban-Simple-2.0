@@ -262,7 +262,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
   // Step 1: Parameters
   if (step === 'params') {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <Button variant="ghost" onClick={onCancel} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Posts
@@ -391,7 +391,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
   // Step 2: Select Idea
   if (step === 'ideas') {
     return (
-      <div className="p-6 max-w-4xl mx-auto">
+      <div>
         <Button variant="ghost" onClick={() => setStep('params')} className="mb-4">
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Parameters
@@ -434,7 +434,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
   // Step 3: Generating
   if (step === 'generating') {
     return (
-      <div className="p-6 max-w-3xl mx-auto">
+      <div>
         <Card className="p-12 text-center">
           <Loader2 className="w-16 h-16 mx-auto mb-6 text-primary animate-spin" />
           <h2 className="font-display text-2xl font-bold tracking-[-0.5px] text-foreground mb-2">
@@ -454,7 +454,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
   // Step 4: Review & Publish
   if (step === 'review' && editedPost) {
     return (
-      <div className="p-6 max-w-5xl mx-auto">
+      <div>
         <div className="flex items-center justify-between mb-6">
           <Button variant="ghost" onClick={() => setStep('ideas')}>
             <ArrowLeft className="w-4 h-4 mr-2" />

@@ -471,11 +471,11 @@ export default function ContentStudioPage() {
     (generatedImage?.imageBase64 ? `data:image/png;base64,${generatedImage.imageBase64}` : undefined)
 
   return (
-    <div className="min-h-screen bg-background">
+    <div>
       {/* Batch Progress Bar */}
       {isBatchMode && (
         <div className="bg-gold-600/10 border-b border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 px-6 py-2">
-          <div className="flex items-center justify-between max-w-7xl mx-auto">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 text-gold-600 dark:text-gold-400">
               <Layers className="w-4 h-4" />
               <span className="text-sm font-medium">
@@ -519,8 +519,8 @@ export default function ContentStudioPage() {
       )}
 
       {/* Header */}
-      <div className="px-6 pt-6">
-        <div className="max-w-7xl mx-auto">
+      <div>
+        <div>
           <PageHeader
             kicker="CREATIVE HUB · CREATE"
             title="Create Content"
@@ -560,8 +560,8 @@ export default function ContentStudioPage() {
 
       {/* Topic Context Banner */}
       {topicContext && (
-        <div className="px-6 pt-4">
-          <div className="max-w-7xl mx-auto rounded-[12px] bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 px-4 py-3">
+        <div className="pt-4">
+          <div className="rounded-[12px] bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 px-4 py-3">
             <div className="flex items-center gap-2 text-sm">
               <Sparkles className="w-4 h-4 text-gold-600 dark:text-gold-400" />
               <span className="font-medium text-gold-600 dark:text-gold-400">Creating from:</span>
@@ -572,7 +572,7 @@ export default function ContentStudioPage() {
       )}
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* LEFT: Editor */}
           <div className="space-y-6">

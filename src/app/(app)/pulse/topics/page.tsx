@@ -27,7 +27,7 @@ export default async function PulseTopicsPage() {
   })
 
   return (
-    <div className="container mx-auto py-6 max-w-5xl">
+    <div>
       <PulseTopicManager topics={topics} />
     </div>
   )

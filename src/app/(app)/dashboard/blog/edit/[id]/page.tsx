@@ -382,7 +382,7 @@ export default function BlogEditPage() {
     <div className="min-h-screen">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/blog')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
@@ -468,7 +468,7 @@ export default function BlogEditPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="pt-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Editor */}
           <div className="lg:col-span-2 space-y-6">
