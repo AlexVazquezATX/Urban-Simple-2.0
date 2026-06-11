@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/layout/page-header'
-import { Clock, CheckCircle, Loader2, ClipboardList, ChevronRight } from 'lucide-react'
+import { Clock, CheckCircle, Loader2, ClipboardList, ChevronRight, Moon, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -32,7 +32,15 @@ const statusConfig: Record<string, { label: string; variant: 'neutral' | 'teal' 
   partial: { label: 'Partial', variant: 'gold' },
 }
 
-export function MyNightView({ userName }: { userName: string }) {
+export function MyNightView({
+  userName,
+  greeting = 'Good evening',
+  dateKicker = 'TONIGHT · YOUR ROUTE',
+}: {
+  userName: string
+  greeting?: string
+  dateKicker?: string
+}) {
   const [locations, setLocations] = useState<NightLocation[]>([])
   const [loading, setLoading] = useState(true)
   const [shiftCount, setShiftCount] = useState(0)
@@ -73,30 +81,48 @@ export function MyNightView({ userName }: { userName: string }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         <PageHeader
-          kicker="TODAY · MY NIGHT"
-          title={`Good evening, ${userName}`}
+          kicker={dateKicker}
+          title={`${greeting}, ${userName}`}
           subtitle={
             shiftCount === 0
-              ? 'No shifts scheduled for tonight'
-              : `${completedCount}/${totalCount} locations complete`
+              ? "You're off tonight — enjoy the quiet."
+              : completedCount === totalCount
+                ? 'Every stop done — nice work tonight. ✦'
+                : `${totalCount - completedCount} ${totalCount - completedCount === 1 ? 'stop' : 'stops'} left on your route.`
           }
           className="mb-0"
         />
 
-        {/* Progress bar — track secondary, fill gold */}
+        {/* Warm status tiles — pastel in light, dim-tinted in dark */}
         {totalCount > 0 && (
-          <div className="flex items-center gap-3">
-            <div className="h-1.5 w-full max-w-md overflow-hidden rounded-full bg-secondary">
-              <div
-                className="h-full rounded-full bg-primary transition-all duration-500"
-                style={{ width: `${(completedCount / totalCount) * 100}%` }}
-              />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[14px] border border-sage-line bg-sage-bg p-4 text-sage-deep dark:border-green-300/20 dark:bg-green-300/10 dark:text-green-300">
+              <div className="flex items-center justify-between">
+                <span className="kicker opacity-75">Tonight</span>
+                <Moon className="size-4 opacity-70" />
+              </div>
+              <p className="mt-2 font-display text-2xl font-bold leading-none tracking-[-0.5px]">
+                {totalCount} {totalCount === 1 ? 'stop' : 'stops'}
+              </p>
+              <p className="mt-1.5 text-xs opacity-85">on your route</p>
             </div>
-            <span className="font-mono text-[11.5px] tabular-nums text-gold-600 dark:text-gold-400">
-              {completedCount}/{totalCount}
-            </span>
+            <div className="rounded-[14px] border border-sky-line bg-sky-bg p-4 text-sky-deep dark:border-teal-300/20 dark:bg-teal-300/10 dark:text-teal-300">
+              <div className="flex items-center justify-between">
+                <span className="kicker opacity-75">Progress</span>
+                <Sparkles className="size-4 opacity-70" />
+              </div>
+              <p className="mt-2 font-display text-2xl font-bold leading-none tracking-[-0.5px]">
+                {completedCount} of {totalCount}
+              </p>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+                <div
+                  className="h-full rounded-full bg-current transition-all duration-500"
+                  style={{ width: `${(completedCount / totalCount) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         )}
       </div>

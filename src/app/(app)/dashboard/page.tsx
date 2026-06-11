@@ -17,6 +17,7 @@ import { NetCashFlowCard } from '@/components/dashboard/net-cash-flow-card'
 import { BriefingBanner } from '@/components/dashboard/briefing-banner'
 import { SnapshotButton } from '@/components/dashboard/snapshot-button'
 import { MyNightView } from '@/components/command/my-night-view'
+import { ManagerDashboard } from '@/components/dashboard/manager-dashboard'
 
 async function DashboardStats() {
   const user = await getCurrentUser()
@@ -293,12 +294,20 @@ export default async function DashboardPage() {
   const currentHour = now.getHours()
   const greeting = currentHour < 12 ? 'Good morning' : currentHour < 18 ? 'Good afternoon' : 'Good evening'
 
-  // Associates get the simplified "My Night" view
+  const kicker = `${now.toLocaleDateString('en-US', { weekday: 'long' })} · ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+
+  // Associates get the simplified "My Night" route view.
   if (user?.role === 'ASSOCIATE') {
-    return <MyNightView userName={user.firstName} />
+    return <MyNightView userName={user.firstName} greeting={greeting} dateKicker={kicker} />
   }
 
-  const kicker = `${now.toLocaleDateString('en-US', { weekday: 'long' })} · ${now.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`
+  // Managers get the operations-first dashboard (warm voice, no money).
+  // Admins + Super Admins keep the finance-forward dashboard below.
+  if (user?.role === 'MANAGER') {
+    return (
+      <ManagerDashboard userName={user.firstName} greeting={greeting} dateKicker={kicker} />
+    )
+  }
 
   return (
     <div>
