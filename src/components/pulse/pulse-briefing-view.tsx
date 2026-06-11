@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import {
   RefreshCw,
@@ -27,11 +29,7 @@ import {
   Sparkles,
   TrendingUp,
   Quote,
-  Brain,
   Plus,
-  Sun,
-  Sunrise,
-  Moon,
   ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -119,118 +117,84 @@ export function PulseBriefingView({
     }
   }
 
-  const getTimeIcon = () => {
-    const hour = new Date().getHours()
-    if (hour >= 5 && hour < 12) return <Sunrise className="h-6 w-6 text-orange-400" />
-    if (hour >= 12 && hour < 18) return <Sun className="h-6 w-6 text-yellow-400" />
-    return <Moon className="h-6 w-6 text-blue-400" />
-  }
-
   const currentBriefing = localBriefing
 
   // No briefing state
   if (!currentBriefing) {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-        <div className="container mx-auto py-12 px-4 max-w-7xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-12"
-          >
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
-                {getTimeIcon()}
-                <div>
-                  <h1 className="text-2xl md:text-3xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-                    Good {getTimeOfDay()}, {userName}
-                  </h1>
-                  <p className="text-warm-500 dark:text-cream-400 text-base">
-                    {format(new Date(), 'EEEE, MMMM d, yyyy')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
+      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-8"
+        >
+          <PageHeader
+            kicker="PULSE · DAILY BRIEFING"
+            title={`Good ${getTimeOfDay()}, ${userName}`}
+            subtitle={format(new Date(), 'EEEE, MMMM d, yyyy')}
+            actions={
+              <>
                 <Link href="/pulse/archive">
-                  <Button variant="outline" className="rounded-sm">
+                  <Button variant="outline">
                     <Calendar className="h-4 w-4 mr-2" />
                     Archive
                   </Button>
                 </Link>
                 <Link href="/pulse/topics">
-                  <Button variant="outline" className="rounded-sm">
+                  <Button variant="outline">
                     <Settings className="h-4 w-4 mr-2" />
                     Topics
                   </Button>
                 </Link>
-              </div>
-            </div>
+              </>
+            }
+          />
 
-            {/* Empty State */}
-            <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 overflow-hidden">
-              <CardContent className="py-20">
-                <div className="text-center space-y-8 max-w-lg mx-auto">
-                  <div className="relative mx-auto w-24 h-24">
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-                      className="absolute inset-0"
-                    >
-                      <Sparkles className="h-24 w-24 text-warm-200" />
-                    </motion.div>
-                    <Brain className="h-14 w-14 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-ocean-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-display font-medium text-warm-900 dark:text-cream-100">
-                      Your Daily Briefing Awaits
-                    </h2>
-                    <p className="text-warm-500 dark:text-cream-400 mt-3 text-base">
-                      {topicsCount === 0
-                        ? 'Add some topics to get personalized content delivered to you each day.'
-                        : 'Generate your personalized briefing with AI-curated insights on your topics.'}
-                    </p>
-                  </div>
-                  <div className="flex justify-center gap-4">
-                    {topicsCount === 0 ? (
-                      <Link href="/pulse/topics">
-                        <Button variant="lime" size="lg" className="rounded-sm px-8">
-                          <Plus className="h-5 w-5 mr-2" />
-                          Add Topics
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button
-                        variant="lime"
-                        size="lg"
-                        className="rounded-sm px-8"
-                        onClick={() => handleGenerate()}
-                        disabled={generating}
-                      >
-                        {generating ? (
-                          <>
-                            <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                            Generating...
-                          </>
-                        ) : (
-                          <>
-                            <Sparkles className="h-5 w-5 mr-2" />
-                            Generate Briefing
-                          </>
-                        )}
+          {/* Empty State */}
+          <Card className="overflow-hidden">
+            <CardContent className="py-16">
+              <EmptyState
+                icon={Sparkles}
+                title="Your daily briefing awaits"
+                description={
+                  topicsCount === 0
+                    ? 'Add a few topics and Pulse will curate a personal briefing for you every morning.'
+                    : `Pulse will curate fresh insights across your ${topicsCount} active topic${topicsCount !== 1 ? 's' : ''}.`
+                }
+                action={
+                  topicsCount === 0 ? (
+                    <Link href="/pulse/topics">
+                      <Button variant="gold" size="lg" className="px-8">
+                        <Plus className="h-5 w-5 mr-2" />
+                        Add Topics
                       </Button>
-                    )}
-                  </div>
-                  {topicsCount > 0 && (
-                    <p className="text-sm text-warm-400 dark:text-cream-400">
-                      {topicsCount} active topic{topicsCount !== 1 ? 's' : ''} configured
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
+                    </Link>
+                  ) : (
+                    <Button
+                      variant="gold"
+                      size="lg"
+                      className="px-8"
+                      onClick={() => handleGenerate()}
+                      disabled={generating}
+                    >
+                      {generating ? (
+                        <>
+                          <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-5 w-5 mr-2" />
+                          Generate Briefing
+                        </>
+                      )}
+                    </Button>
+                  )
+                }
+              />
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
     )
   }
@@ -238,29 +202,27 @@ export function PulseBriefingView({
   // Generating state
   if (currentBriefing.status === 'generating') {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-        <div className="container mx-auto py-12 px-4 max-w-7xl">
-          <div className="space-y-8">
-            <div className="flex items-center gap-4">
-              <RefreshCw className="h-6 w-6 animate-spin text-ocean-600" />
-              <div>
-                <h1 className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">Generating Your Briefing...</h1>
-                <p className="text-warm-500 dark:text-cream-400">This may take a minute</p>
-              </div>
+      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <div className="space-y-8">
+          <div className="flex items-center gap-4">
+            <RefreshCw className="h-6 w-6 animate-spin text-primary" />
+            <div>
+              <h1 className="font-display text-2xl font-semibold text-foreground">Generating Your Briefing...</h1>
+              <p className="text-muted-foreground">This may take a minute</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map((i) => (
-                <Card key={i} className="overflow-hidden rounded-sm border-warm-200 dark:border-charcoal-700">
-                  <Skeleton className="h-48 w-full" />
-                  <CardContent className="p-5 space-y-3">
-                    <Skeleton className="h-4 w-20" />
-                    <Skeleton className="h-6 w-full" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="p-5 space-y-3">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-6 w-full" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </div>
@@ -270,32 +232,30 @@ export function PulseBriefingView({
   // Failed state
   if (currentBriefing.status === 'failed') {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-        <div className="container mx-auto py-12 px-4 max-w-7xl">
-          <Card className="rounded-sm border-red-200 bg-red-50 max-w-2xl mx-auto">
-            <CardContent className="py-16 text-center space-y-6">
-              <h2 className="text-xl font-display font-medium text-red-700">
-                Generation Failed
-              </h2>
-              <p className="text-warm-600 dark:text-cream-300">
-                {currentBriefing.errorMessage || 'Something went wrong while generating your briefing.'}
-              </p>
-              <Button variant="outline" size="lg" className="rounded-sm" onClick={() => handleGenerate(true)} disabled={generating}>
-                {generating ? (
-                  <>
-                    <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
-                    Retrying...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw className="h-5 w-5 mr-2" />
-                    Try Again
-                  </>
-                )}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+      <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+        <Card className="mx-auto max-w-2xl border-coral-600/30 bg-coral-600/10 dark:border-coral-300/25 dark:bg-coral-300/12">
+          <CardContent className="py-16 text-center space-y-6">
+            <h2 className="font-display text-xl font-semibold text-coral-600 dark:text-coral-300">
+              Generation Failed
+            </h2>
+            <p className="text-muted-foreground">
+              {currentBriefing.errorMessage || 'Something went wrong while generating your briefing.'}
+            </p>
+            <Button variant="outline" size="lg" onClick={() => handleGenerate(true)} disabled={generating}>
+              {generating ? (
+                <>
+                  <RefreshCw className="h-5 w-5 mr-2 animate-spin" />
+                  Retrying...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-5 w-5 mr-2" />
+                  Try Again
+                </>
+              )}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -309,30 +269,20 @@ export function PulseBriefingView({
   )
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      <div className="container mx-auto py-8 md:py-12 px-4 max-w-7xl">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="space-y-8"
-        >
-          {/* Header */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              {getTimeIcon()}
-              <div>
-                <h1 className="text-2xl md:text-3xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-                  {currentBriefing.title || format(new Date(currentBriefing.date), 'EEEE, MMMM d')}
-                </h1>
-                <p className="text-warm-500 dark:text-cream-400">
-                  Your personalized daily briefing
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
+    <div className="container mx-auto max-w-7xl px-4 py-8 md:py-12">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="space-y-8"
+      >
+        <PageHeader
+          kicker={`PULSE · ${format(new Date(currentBriefing.date), 'EEEE, MMMM d')}`}
+          title={currentBriefing.title || format(new Date(currentBriefing.date), 'EEEE, MMMM d')}
+          subtitle="Your personalized daily briefing"
+          actions={
+            <>
               <Button
                 variant="outline"
-                className="rounded-sm"
                 onClick={() => handleGenerate(true)}
                 disabled={generating}
               >
@@ -340,152 +290,152 @@ export function PulseBriefingView({
                 Refresh
               </Button>
               <Link href="/pulse/archive">
-                <Button variant="outline" className="rounded-sm">
+                <Button variant="ghost">
                   <Calendar className="h-4 w-4 mr-2" />
                   Archive
                 </Button>
               </Link>
               <Link href="/pulse/topics">
-                <Button variant="outline" className="rounded-sm">
+                <Button variant="ghost">
                   <Settings className="h-4 w-4 mr-2" />
                   Topics
                 </Button>
               </Link>
+            </>
+          }
+        />
+
+        {/* Greeting & Summary */}
+        {(currentBriefing.greeting || currentBriefing.summary) && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card>
+              <CardContent className="py-4 px-6">
+                {currentBriefing.greeting && (
+                  <p className="font-display text-lg font-medium text-foreground mb-4">
+                    {currentBriefing.greeting}
+                  </p>
+                )}
+                {currentBriefing.summary && (
+                  <div>
+                    <button
+                      onClick={() => setExpandedSummary(!expandedSummary)}
+                      className="kicker flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {expandedSummary ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                      Executive Summary
+                    </button>
+                    <AnimatePresence>
+                      {expandedSummary && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="text-muted-foreground mt-3 leading-relaxed"
+                        >
+                          {currentBriefing.summary}
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Inspiration Quote */}
+        {currentBriefing.inspirationQuote && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card className="border-gold-600/30 bg-gold-600/10 dark:border-gold-400/25 dark:bg-gold-400/12">
+              <CardContent className="py-3 px-6">
+                <div className="flex items-center gap-3">
+                  <Quote className="h-4 w-4 text-gold-600 dark:text-gold-400 shrink-0" />
+                  <p className="italic text-sm text-foreground/80 font-display">
+                    {currentBriefing.inspirationQuote}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Content Items - Magazine Grid */}
+        {contentItems.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="font-display text-lg font-semibold text-foreground">Today's Insights</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {contentItems.map((item, index) => (
+                <InsightCard
+                  key={item.id}
+                  item={item}
+                  index={index}
+                />
+              ))}
             </div>
           </div>
+        )}
 
-          {/* Greeting & Summary */}
-          {(currentBriefing.greeting || currentBriefing.summary) && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-            >
-              <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-                <CardContent className="py-4 px-6">
-                  {currentBriefing.greeting && (
-                    <p className="text-lg font-display font-medium text-warm-800 dark:text-cream-200 mb-4">
-                      {currentBriefing.greeting}
-                    </p>
-                  )}
-                  {currentBriefing.summary && (
-                    <div>
-                      <button
-                        onClick={() => setExpandedSummary(!expandedSummary)}
-                        className="flex items-center gap-2 text-sm text-warm-500 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200 transition-colors"
-                      >
-                        {expandedSummary ? (
-                          <ChevronUp className="h-4 w-4" />
-                        ) : (
-                          <ChevronDown className="h-4 w-4" />
-                        )}
-                        Executive Summary
-                      </button>
-                      <AnimatePresence>
-                        {expandedSummary && (
-                          <motion.p
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="text-warm-600 dark:text-cream-300 mt-3 leading-relaxed"
-                          >
-                            {currentBriefing.summary}
-                          </motion.p>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Inspiration Quote */}
-          {currentBriefing.inspirationQuote && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Card className="rounded-sm border-lime-200 dark:border-lime-800 bg-lime-50/50 dark:bg-lime-950/30">
-                <CardContent className="py-3 px-6">
-                  <div className="flex items-center gap-3">
-                    <Quote className="h-4 w-4 text-lime-600 dark:text-lime-400 shrink-0" />
-                    <p className="italic text-sm text-warm-600 dark:text-cream-300 font-display">
-                      {currentBriefing.inspirationQuote}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
-          {/* Content Items - Magazine Grid */}
-          {contentItems.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Today's Insights</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {contentItems.map((item, index) => (
-                  <InsightCard
-                    key={item.id}
-                    item={item}
-                    index={index}
-                  />
-                ))}
-              </div>
+        {/* Business Insights - at bottom */}
+        {businessItems.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="space-y-4"
+          >
+            <Separator className="my-4" />
+            <div className="flex items-center gap-3">
+              <TrendingUp className="h-5 w-5 text-gold-600 dark:text-gold-400" />
+              <h2 className="font-display text-lg font-semibold text-foreground">Business Snapshot</h2>
             </div>
-          )}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {businessItems.map((item, index) => (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 + index * 0.05 }}
+                >
+                  <Card className="h-full transition-colors hover:border-primary/40">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">
+                        {item.title}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {item.summary}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-          {/* Business Insights - at bottom */}
-          {businessItems.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="space-y-4"
-            >
-              <Separator className="my-4 bg-warm-200 dark:bg-charcoal-700" />
-              <div className="flex items-center gap-3">
-                <TrendingUp className="h-5 w-5 text-lime-600" />
-                <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Business Snapshot</h2>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {businessItems.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.45 + index * 0.05 }}
-                  >
-                    <Card className="h-full rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
-                      <CardHeader className="pb-2">
-                        <CardTitle className="text-base font-medium text-warm-900 dark:text-cream-100">
-                          {item.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-warm-600 dark:text-cream-300 leading-relaxed">
-                          {item.summary}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Footer */}
-          {currentBriefing.generatedAt && (
-            <p className="text-center text-sm text-warm-400 dark:text-cream-400 pt-8">
-              Generated {format(new Date(currentBriefing.generatedAt), 'h:mm a')} using {currentBriefing.aiModel || 'Gemini'}
-              {currentBriefing.generationTime && (
-                <> in {(currentBriefing.generationTime / 1000).toFixed(1)}s</>
-              )}
-            </p>
-          )}
-        </motion.div>
-      </div>
+        {/* Footer */}
+        {currentBriefing.generatedAt && (
+          <p className="text-center text-sm text-muted-foreground pt-8 font-mono tabular-nums">
+            Generated {format(new Date(currentBriefing.generatedAt), 'h:mm a')} using {currentBriefing.aiModel || 'Gemini'}
+            {currentBriefing.generationTime && (
+              <> in {(currentBriefing.generationTime / 1000).toFixed(1)}s</>
+            )}
+          </p>
+        )}
+      </motion.div>
     </div>
   )
 }
@@ -525,9 +475,9 @@ function InsightCard({
       transition={{ delay: 0.3 + index * 0.05 }}
     >
       <Link href={`/pulse/item/${item.id}`}>
-        <Card className="overflow-hidden group cursor-pointer rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors h-full flex flex-col">
+        <Card className="overflow-hidden group cursor-pointer transition-colors hover:border-primary/40 h-full flex flex-col">
           {/* Image/Gradient Header */}
-          <div className={`relative h-48 bg-gradient-to-br ${gradient} rounded-t-sm overflow-hidden`}>
+          <div className={`relative h-48 bg-gradient-to-br ${gradient} overflow-hidden`}>
             {item.imageBase64 ? (
               <img
                 src={`data:image/png;base64,${item.imageBase64}`}
@@ -546,7 +496,7 @@ function InsightCard({
             {/* Bookmark button */}
             <button
               onClick={handleBookmark}
-              className="absolute top-3 right-3 p-2 rounded-sm bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
+              className="absolute top-3 right-3 p-2 rounded-full bg-black/30 backdrop-blur-sm text-white hover:bg-black/50 transition-colors"
             >
               {bookmarked ? (
                 <BookmarkCheck className="h-4 w-4" />
@@ -558,7 +508,7 @@ function InsightCard({
             {/* Topic badge */}
             {item.topic && (
               <div className="absolute bottom-3 left-3">
-                <Badge className="rounded-sm bg-white/20 backdrop-blur-sm text-white border-white/30 text-xs">
+                <Badge className="bg-white/20 backdrop-blur-sm text-white border-white/30 text-xs">
                   {item.topic.name}
                 </Badge>
               </div>
@@ -569,30 +519,26 @@ function InsightCard({
           <CardContent className="p-5 flex-1 flex flex-col">
             <div className="flex items-center gap-2 mb-2">
               {item.sentiment === 'positive' && (
-                <Badge variant="secondary" className="rounded-sm text-xs bg-lime-50 text-lime-700 border-lime-200">
-                  Positive
-                </Badge>
+                <Badge variant="green">Positive</Badge>
               )}
               {item.sentiment === 'negative' && (
-                <Badge variant="secondary" className="rounded-sm text-xs bg-red-50 text-red-600 border-red-200">
-                  Negative
-                </Badge>
+                <Badge variant="coral">Negative</Badge>
               )}
             </div>
 
-            <h3 className="font-display font-medium text-lg leading-tight line-clamp-2 text-warm-900 dark:text-cream-100 group-hover:text-ocean-600 transition-colors">
+            <h3 className="font-display font-medium text-lg leading-tight line-clamp-2 text-foreground group-hover:text-primary transition-colors">
               {item.title}
             </h3>
 
-            <p className="text-sm text-warm-500 dark:text-cream-400 mt-3 line-clamp-3 flex-1">
+            <p className="text-sm text-muted-foreground mt-3 line-clamp-3 flex-1">
               {item.summary}
             </p>
 
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-warm-100 dark:border-charcoal-700">
-              <span className="text-xs text-warm-400 dark:text-cream-400">
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+              <span className="text-xs text-muted-foreground">
                 {item.sourceName || 'AI Curated'}
               </span>
-              <span className="text-xs text-ocean-600 flex items-center gap-1 group-hover:gap-2 transition-all">
+              <span className="text-xs text-primary flex items-center gap-1 group-hover:gap-2 transition-all">
                 Read more
                 <ArrowRight className="h-3 w-3" />
               </span>

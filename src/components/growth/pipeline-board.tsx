@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -11,10 +12,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Building2, DollarSign, MoreVertical, ArrowLeft } from 'lucide-react'
+import { Building2, MoreVertical, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { formatMoney } from '@/lib/format'
 
 const PIPELINE_STAGES = [
   { id: 'new', label: 'New' },
@@ -26,6 +29,19 @@ const PIPELINE_STAGES = [
   { id: 'won', label: 'Won' },
   { id: 'lost', label: 'Lost' },
 ]
+
+// Chip mapping: urgent→coral · high (shown as "hot")→gold · everything quieter
+// shows no chip (keeps the board quiet — no invented "cold" label).
+function priorityChip(priority: string) {
+  switch (priority) {
+    case 'urgent':
+      return <Badge variant="coral" className="uppercase tracking-wider">urgent</Badge>
+    case 'high':
+      return <Badge variant="gold" className="uppercase tracking-wider">hot</Badge>
+    default:
+      return null
+  }
+}
 
 interface Prospect {
   id: string
@@ -118,55 +134,27 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-3 pb-4 min-w-max">
+      <div className="flex min-w-max gap-3 pb-4">
         {PIPELINE_STAGES.map((stage) => {
           const stageProspects = prospectsByStage[stage.id] || []
           const isWon = stage.id === 'won'
-          const isLost = stage.id === 'lost'
+          const isEmpty = stageProspects.length === 0
 
           return (
-            <div key={stage.id} className="w-60 flex-shrink-0 flex flex-col">
+            <div key={stage.id} className="flex w-60 flex-shrink-0 flex-col">
               {/* Column Header */}
-              <div
-                className={`
-                  flex items-center justify-between px-3 py-2 rounded-t-sm border border-b-0
-                  ${
-                    isWon
-                      ? 'bg-lime-100 border-lime-200'
-                      : isLost
-                      ? 'bg-warm-200 dark:bg-charcoal-700 border-warm-300 dark:border-charcoal-700'
-                      : 'bg-warm-100 dark:bg-charcoal-800 border-warm-200 dark:border-charcoal-700'
-                  }
-                `}
-              >
+              <div className="mb-2 flex items-center justify-between px-1">
                 <span
-                  className={`
-                    text-[10px] font-semibold uppercase tracking-wide
-                    ${
-                      isWon
-                        ? 'text-lime-700'
-                        : isLost
-                        ? 'text-warm-600 dark:text-cream-400'
-                        : 'text-warm-700 dark:text-cream-300'
-                    }
-                  `}
+                  className={cn(
+                    'kicker',
+                    isWon ? 'text-green-600 dark:text-green-300' : 'text-muted-foreground'
+                  )}
                 >
                   {stage.label}
                 </span>
-                <span
-                  className={`
-                    text-[10px] font-medium px-1.5 py-0.5 rounded-sm
-                    ${
-                      isWon
-                        ? 'bg-lime-200 text-lime-700'
-                        : isLost
-                        ? 'bg-warm-300 dark:bg-charcoal-600 text-warm-600 dark:text-cream-400'
-                        : 'bg-warm-200 dark:bg-charcoal-700 text-warm-700 dark:text-cream-300'
-                    }
-                  `}
-                >
+                <Badge variant={isWon ? 'green' : 'neutral'} className="font-mono tabular-nums">
                   {stageProspects.length}
-                </span>
+                </Badge>
               </div>
 
               {/* Droppable Column */}
@@ -175,17 +163,20 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                   <div
                     ref={provided.innerRef}
                     {...provided.droppableProps}
-                    className={`
-                      rounded-b-sm border border-t-0 p-2 space-y-1.5 min-h-80 max-h-[calc(100vh-280px)] overflow-y-auto
-                      ${
-                        isWon
-                          ? 'bg-lime-50/50 border-lime-200'
-                          : isLost
-                          ? 'bg-warm-100/50 dark:bg-charcoal-800/50 border-warm-300 dark:border-charcoal-700'
-                          : 'bg-warm-50 dark:bg-charcoal-800 border-warm-200 dark:border-charcoal-700'
-                      }
-                      ${snapshot.isDraggingOver ? 'bg-ocean-50' : ''}
-                    `}
+                    className={cn(
+                      'max-h-[calc(100vh-280px)] min-h-80 space-y-2 overflow-y-auto rounded-[12px] p-2 transition-colors',
+                      isEmpty && !snapshot.isDraggingOver
+                        ? cn(
+                            'border-2 border-dashed',
+                            isWon
+                              ? 'border-green-600/30 dark:border-green-300/25'
+                              : 'border-border'
+                          )
+                        : isWon
+                          ? 'border border-green-600/30 bg-green-600/10 dark:border-green-300/25 dark:bg-green-300/12'
+                          : 'border border-border bg-secondary/40',
+                      snapshot.isDraggingOver && 'border-primary/40 bg-primary/10'
+                    )}
                   >
                     {stageProspects.map((prospect, index) => (
                       <Draggable key={prospect.id} draggableId={prospect.id} index={index}>
@@ -196,24 +187,24 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                             {...provided.dragHandleProps}
                           >
                             <Card
-                              className={`
-                                transition-all duration-200 cursor-grab active:cursor-grabbing rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 bg-white dark:bg-charcoal-900
-                                ${snapshot.isDragging ? 'shadow-lg rotate-1' : ''}
-                              `}
+                              className={cn(
+                                'cursor-grab gap-0 rounded-[12px] border-border bg-card py-0 transition-all duration-200 active:cursor-grabbing hover:border-primary/40',
+                                snapshot.isDragging && 'rotate-1 shadow-lg'
+                              )}
                             >
                               <CardContent className="p-2.5">
                                 <div className="flex items-start gap-2">
-                                  <div className="w-7 h-7 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center flex-shrink-0">
-                                    <Building2 className="h-3.5 w-3.5 text-warm-600 dark:text-cream-400" />
+                                  <div className="grid size-7 shrink-0 place-items-center rounded-[8px] bg-secondary">
+                                    <Building2 className="size-3.5 text-muted-foreground" />
                                   </div>
-                                  <div className="flex-1 min-w-0">
+                                  <div className="min-w-0 flex-1">
                                     <Link href={`/growth/prospects/${prospect.id}`}>
-                                      <h4 className="text-xs font-medium text-warm-900 dark:text-cream-100 truncate hover:text-ocean-600">
+                                      <h4 className="truncate text-xs font-semibold text-foreground transition-colors hover:text-primary">
                                         {prospect.companyName}
                                       </h4>
                                     </Link>
                                     {prospect.contacts && prospect.contacts.length > 0 && (
-                                      <p className="text-[10px] text-warm-500 dark:text-cream-400 truncate mt-0.5">
+                                      <p className="mt-0.5 truncate text-[10.5px] text-muted-foreground">
                                         {prospect.contacts[0].firstName}{' '}
                                         {prospect.contacts[0].lastName}
                                       </p>
@@ -224,12 +215,12 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                       <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-5 w-5 p-0 text-warm-400 dark:text-cream-500 hover:text-warm-700 dark:hover:text-cream-300"
+                                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
                                       >
-                                        <MoreVertical className="h-3 w-3" />
+                                        <MoreVertical className="size-3.5" />
                                       </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end" className="rounded-sm">
+                                    <DropdownMenuContent align="end">
                                       <DropdownMenuItem
                                         onClick={() => router.push(`/growth/prospects/${prospect.id}`)}
                                         className="text-xs"
@@ -239,36 +230,28 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                                       <DropdownMenuSeparator />
                                       <DropdownMenuItem
                                         onClick={() => handleRemoveFromPipeline(prospect.id)}
-                                        className="text-xs text-red-600"
+                                        className="text-xs"
                                       >
-                                        <ArrowLeft className="mr-1.5 h-3 w-3" />
+                                        <ArrowLeft className="size-3.5" />
                                         Remove from Pipeline
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </div>
 
-                                {(prospect.estimatedValue || prospect.priority) && (
-                                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
-                                    {prospect.estimatedValue && (
-                                      <span className="text-[10px] text-warm-600 dark:text-cream-400 flex items-center gap-0.5">
-                                        <DollarSign className="h-2.5 w-2.5" />
-                                        {Number(prospect.estimatedValue).toLocaleString()}
+                                {(prospect.estimatedValue ||
+                                  (prospect.priority && prospect.priority !== 'medium')) && (
+                                  <div className="mt-2 flex items-center justify-between gap-1.5 border-t border-border/60 pt-2">
+                                    {prospect.estimatedValue ? (
+                                      <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                                        {formatMoney(prospect.estimatedValue)}
                                       </span>
+                                    ) : (
+                                      <span />
                                     )}
-                                    {prospect.priority && prospect.priority !== 'medium' && (
-                                      <span
-                                        className={`text-[10px] font-medium px-1 py-0 rounded-sm ${
-                                          prospect.priority === 'urgent'
-                                            ? 'bg-red-100 text-red-700'
-                                            : prospect.priority === 'high'
-                                            ? 'bg-plum-100 text-plum-700'
-                                            : 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400'
-                                        }`}
-                                      >
-                                        {prospect.priority}
-                                      </span>
-                                    )}
+                                    {prospect.priority &&
+                                      prospect.priority !== 'medium' &&
+                                      priorityChip(prospect.priority)}
                                   </div>
                                 )}
                               </CardContent>
@@ -279,12 +262,11 @@ export function PipelineBoard({ initialProspects }: PipelineBoardProps) {
                     ))}
                     {provided.placeholder}
 
-                    {stageProspects.length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-6 text-warm-400 dark:text-cream-500">
-                        <div className="w-8 h-8 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mb-1.5">
-                          <Building2 className="h-4 w-4 text-warm-300 dark:text-charcoal-500" />
-                        </div>
-                        <span className="text-[10px]">No prospects</span>
+                    {isEmpty && !snapshot.isDraggingOver && (
+                      <div className="flex min-h-72 flex-col items-center justify-center text-center">
+                        <span className="text-xs text-muted-foreground">
+                          {isWon ? 'No wins yet' : 'No prospects yet'}
+                        </span>
                       </div>
                     )}
                   </div>

@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Card, CardHeader } from '@/components/ui/card'
+import { PageHeader } from '@/components/layout/page-header'
 import { LiveOpsView } from '@/components/command/live-ops-view'
 import { NeedsAttentionQueue } from '@/components/command/needs-attention-queue'
 import { BusinessPulseStrip } from '@/components/command/business-pulse-strip'
@@ -137,7 +138,7 @@ function CommandCenterSkeleton() {
     <div className="space-y-6">
       <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Card key={i} className="rounded-sm">
+          <Card key={i}>
             <CardHeader>
               <Skeleton className="h-3 w-16 mb-2" />
               <Skeleton className="h-6 w-20" />
@@ -147,9 +148,9 @@ function CommandCenterSkeleton() {
       </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
-          <Skeleton className="h-64 rounded-sm" />
+          <Skeleton className="h-64 rounded-[14px]" />
         </div>
-        <Skeleton className="h-64 rounded-sm" />
+        <Skeleton className="h-64 rounded-[14px]" />
       </div>
     </div>
   )
@@ -168,14 +169,12 @@ export default async function CommandCenterPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-medium tracking-tight font-display text-warm-900 dark:text-cream-100">
-          {greeting}, {user?.firstName}
-        </h1>
-        <p className="text-warm-500 dark:text-cream-400">
-          Here&apos;s what&apos;s happening with your business today
-        </p>
-      </div>
+      <PageHeader
+        kicker="TODAY · COMMAND CENTER"
+        title={`${greeting}, ${user?.firstName ?? ''}`}
+        subtitle="Here's what's happening with your business today"
+        className="mb-0"
+      />
 
       <Suspense fallback={<CommandCenterSkeleton />}>
         <CommandCenterData />

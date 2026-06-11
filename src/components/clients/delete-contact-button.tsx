@@ -20,11 +20,15 @@ import { toast } from 'sonner'
 interface DeleteContactButtonProps {
   clientId: string
   contactId: string
+  // Optional custom trigger (e.g. a kebab DropdownMenuItem). Falls back to a
+  // muted ghost icon button — delete never sits red outside the confirm dialog.
+  children?: React.ReactNode
 }
 
 export function DeleteContactButton({
   clientId,
   contactId,
+  children,
 }: DeleteContactButtonProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -56,9 +60,11 @@ export function DeleteContactButton({
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="sm" disabled={loading}>
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
+        {children ?? (
+          <Button variant="ghost" size="icon-sm" disabled={loading} aria-label="Delete contact">
+            <Trash2 className="size-4" />
+          </Button>
+        )}
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -73,7 +79,7 @@ export function DeleteContactButton({
           <AlertDialogAction
             onClick={handleDelete}
             disabled={loading}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="bg-destructive text-white hover:bg-destructive/90"
           >
             {loading ? 'Deleting...' : 'Delete'}
           </AlertDialogAction>
@@ -82,5 +88,3 @@ export function DeleteContactButton({
     </AlertDialog>
   )
 }
-
-

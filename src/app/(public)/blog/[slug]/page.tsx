@@ -80,7 +80,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 <div className="flex gap-4 mb-6">
                   <span
                     className="text-white font-bold uppercase tracking-widest text-xs px-3 py-1.5 rounded"
-                    style={{ backgroundColor: post.category?.color || '#A67C52' }}
+                    style={{ backgroundColor: post.category?.color || '#9C7418' }}
                   >
                     {post.category?.name}
                   </span>

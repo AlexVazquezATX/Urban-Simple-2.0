@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Plus, Edit, Trash2 } from 'lucide-react'
+import { ClipboardList, Pencil, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -13,6 +13,8 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
 import { ChecklistForm } from '@/components/forms/checklist-form'
 import { DuplicateChecklistButton } from '@/components/operations/duplicate-checklist-button'
 import { getCurrentUser } from '@/lib/auth'
@@ -43,133 +45,141 @@ async function ChecklistsList() {
     },
   })
 
-  if (templates.length === 0) {
-    return (
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <p className="text-warm-500 dark:text-cream-400 mb-4">No checklist templates yet</p>
+  return (
+    <div>
+      <PageHeader
+        kicker="OPERATIONS · CHECKLISTS"
+        title="Checklist Templates"
+        subtitle="Create and manage reusable service checklists"
+        actions={
           <ChecklistForm>
-            <Button variant="lime" className="rounded-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Template
+            <Button variant="gold">
+              <Plus className="size-4" />
+              New Template
             </Button>
           </ChecklistForm>
-        </CardContent>
-      </Card>
-    )
-  }
+        }
+      />
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Checklist Templates</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 dark:text-cream-400 mt-1">
-            Create and manage reusable service checklists
-          </p>
-        </div>
-        <ChecklistForm>
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="mr-2 h-4 w-4" />
-            New Template
-          </Button>
-        </ChecklistForm>
-      </div>
+      {templates.length === 0 ? (
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={ClipboardList}
+              title="No checklists yet — build your first one"
+              description="Templates keep every crew working the same standard, in English and Spanish. Create one and assign it to your locations."
+              action={
+                <ChecklistForm>
+                  <Button variant="outline">
+                    <Plus className="size-4" />
+                    Create Your First Template
+                  </Button>
+                </ChecklistForm>
+              }
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="gap-4">
+          <CardHeader>
+            <CardTitle>All Templates</CardTitle>
+            <CardDescription className="text-xs">
+              {templates.length} {templates.length === 1 ? 'template' : 'templates'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Spanish Name</TableHead>
+                  <TableHead>Sections</TableHead>
+                  <TableHead>Locations</TableHead>
+                  <TableHead>Services</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {templates.map((template: any) => {
+                  const sections = Array.isArray(template.sections) ? template.sections : []
+                  const sectionCount = sections.length
+                  const itemCount = sections.reduce(
+                    (sum: number, section: any) =>
+                      sum + (Array.isArray(section.items) ? section.items.length : 0),
+                    0
+                  )
 
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">All Templates</CardTitle>
-          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
-            {templates.length} {templates.length === 1 ? 'template' : 'templates'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="border-warm-200 dark:border-charcoal-700">
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Name</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Spanish Name</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Sections</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Locations</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Services</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {templates.map((template: any) => {
-                const sections = Array.isArray(template.sections) ? template.sections : []
-                const sectionCount = sections.length
-                const itemCount = sections.reduce(
-                  (sum: number, section: any) =>
-                    sum + (Array.isArray(section.items) ? section.items.length : 0),
-                  0
-                )
-
-                return (
-                  <TableRow key={template.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                    <TableCell className="font-medium text-sm text-warm-900 dark:text-cream-100">
-                      <Link
-                        href={`/operations/checklists/${template.id}`}
-                        className="hover:text-ocean-600 hover:underline"
-                      >
-                        {template.name}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-sm text-warm-500 dark:text-cream-400">
-                      {template.nameEs || '-'}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
-                        {sectionCount} {sectionCount === 1 ? 'section' : 'sections'}
-                        {itemCount > 0 && ` • ${itemCount} items`}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-warm-700 dark:text-cream-300">{template._count.locations}</TableCell>
-                    <TableCell className="text-sm text-warm-700 dark:text-cream-300">{template._count.serviceLogs}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <DuplicateChecklistButton
-                          templateId={template.id}
-                          templateName={template.name}
-                        />
-                        <Link href={`/operations/checklists/${template.id}`}>
-                          <Button variant="ghost" size="sm" className="rounded-sm h-7 px-2 text-xs">
-                            <Edit className="h-3 w-3 mr-1" />
-                            Edit
-                          </Button>
+                  return (
+                    <TableRow key={template.id}>
+                      <TableCell className="text-sm font-medium text-foreground">
+                        <Link
+                          href={`/operations/checklists/${template.id}`}
+                          className="hover:text-primary hover:underline"
+                        >
+                          {template.name}
                         </Link>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {template.nameEs || '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="neutral">
+                          {sectionCount} {sectionCount === 1 ? 'section' : 'sections'}
+                          {itemCount > 0 && ` · ${itemCount} items`}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-sm tabular-nums text-foreground">
+                        {template._count.locations}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm tabular-nums text-foreground">
+                        {template._count.serviceLogs}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <DuplicateChecklistButton
+                            templateId={template.id}
+                            templateName={template.name}
+                          />
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/operations/checklists/${template.id}`}>
+                              <Pencil className="size-4" />
+                              Edit
+                            </Link>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
 
 function ChecklistsListSkeleton() {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <div className="flex items-end justify-between">
         <div>
-          <Skeleton className="h-8 w-48 mb-2 rounded-sm" />
-          <Skeleton className="h-4 w-64 rounded-sm" />
+          <Skeleton className="mb-2 h-3 w-40" />
+          <Skeleton className="mb-2 h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
         </div>
-        <Skeleton className="h-10 w-32 rounded-sm" />
+        <Skeleton className="h-9 w-32 rounded-[9px]" />
       </div>
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4 pb-3">
-          <Skeleton className="h-5 w-32 mb-2 rounded-sm" />
-          <Skeleton className="h-3 w-48 rounded-sm" />
+      <Card className="gap-4">
+        <CardHeader>
+          <Skeleton className="mb-2 h-5 w-32" />
+          <Skeleton className="h-3 w-48" />
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent>
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-sm" />
+              <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
         </CardContent>
@@ -185,4 +195,3 @@ export default function ChecklistsPage() {
     </Suspense>
   )
 }
-

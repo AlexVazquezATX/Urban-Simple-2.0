@@ -93,10 +93,10 @@ interface TaskFormProps {
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: 'text-slate-500' },
-  { value: 'medium', label: 'Medium', color: 'text-blue-600' },
-  { value: 'high', label: 'High', color: 'text-orange-600' },
-  { value: 'urgent', label: 'Urgent', color: 'text-red-600' },
+  { value: 'low', label: 'Low', color: 'text-muted-foreground' },
+  { value: 'medium', label: 'Medium', color: 'text-gold-600 dark:text-gold-400' },
+  { value: 'high', label: 'High', color: 'text-coral-600 dark:text-coral-300' },
+  { value: 'urgent', label: 'Urgent', color: 'text-coral-600 dark:text-coral-300' },
 ]
 
 const STATUS_OPTIONS = [
@@ -247,21 +247,21 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-charcoal-900 rounded-2xl shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-card rounded-[18px] shadow-elevated w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto border border-border">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-charcoal-100 dark:border-charcoal-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-charcoal-900 dark:text-cream-100">
+            <h2 className="font-display text-xl font-bold tracking-[-0.4px] text-foreground">
               {task ? 'Edit Task' : 'New Task'}
             </h2>
             <button
               type="button"
               onClick={() => setIsStarred(!isStarred)}
               className={cn(
-                'p-1.5 rounded-lg transition-all',
+                'p-1.5 rounded-[9px] transition-all',
                 isStarred
-                  ? 'text-amber-500 bg-amber-50 hover:bg-amber-100'
-                  : 'text-charcoal-400 hover:text-amber-400 hover:bg-charcoal-100 dark:hover:bg-charcoal-800'
+                  ? 'text-gold-600 bg-gold-600/10 dark:text-gold-400 dark:bg-gold-400/12'
+                  : 'text-muted-foreground hover:text-gold-600 hover:bg-secondary dark:hover:text-gold-400'
               )}
               title={isStarred ? 'Unstar task' : 'Star task'}
             >
@@ -270,9 +270,9 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-charcoal-100 dark:hover:bg-charcoal-800 transition-colors"
+            className="p-2 rounded-[9px] hover:bg-secondary transition-colors"
           >
-            <X className="w-5 h-5 text-charcoal-500 dark:text-cream-400" />
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -388,7 +388,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                   {goals.length > 0 && (
                     <>
                       {goals.filter(g => g.period === 'weekly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500 dark:text-cream-400">
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                           This Week
                         </div>
                       )}
@@ -404,7 +404,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                         </SelectItem>
                       ))}
                       {goals.filter(g => g.period === 'monthly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-charcoal-500 dark:text-cream-400">
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                           This Month
                         </div>
                       )}
@@ -469,7 +469,7 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                     'px-3 py-1 rounded-full text-sm border transition-colors',
                     selectedTagIds.includes(tag.id)
                       ? 'border-transparent'
-                      : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-300'
+                      : 'border-border bg-secondary/60 text-muted-foreground hover:text-foreground'
                   )}
                   style={selectedTagIds.includes(tag.id) ? {
                     backgroundColor: `${tag.color}20`,
@@ -508,11 +508,11 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-charcoal-100 dark:border-charcoal-700">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading || !title.trim()}>
+            <Button type="submit" variant="gold" disabled={loading || !title.trim()}>
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />

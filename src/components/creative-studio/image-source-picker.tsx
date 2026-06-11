@@ -46,7 +46,7 @@ export function ImageSourcePicker({
   return (
     <div className="space-y-3">
       {/* Segmented control */}
-      <div className="flex rounded-lg border border-warm-200 dark:border-charcoal-700 overflow-hidden">
+      <div className="flex overflow-hidden rounded-[12px] border border-border">
         {SOURCE_OPTIONS.map((option) => {
           const Icon = option.icon
           const isSelected = sourceType === option.id
@@ -57,15 +57,15 @@ export function ImageSourcePicker({
               onClick={() => handleSourceTypeChange(option.id)}
               disabled={disabled}
               className={cn(
-                'flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors',
+                'flex flex-1 items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium transition-colors',
                 isSelected
-                  ? 'bg-bronze-50 text-bronze-700 border-bronze-400'
-                  : 'bg-white dark:bg-charcoal-900 text-warm-600 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800',
-                option.id !== 'upload' && 'border-l border-warm-200 dark:border-charcoal-700',
-                disabled && 'opacity-50 cursor-not-allowed'
+                  ? 'bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400'
+                  : 'bg-card text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
+                option.id !== 'upload' && 'border-l border-border',
+                disabled && 'cursor-not-allowed opacity-50'
               )}
             >
-              <Icon className="w-3.5 h-3.5" />
+              <Icon className="size-3.5" />
               {option.label}
             </button>
           )
@@ -85,16 +85,16 @@ export function ImageSourcePicker({
       {sourceType === 'gallery' && (
         <>
           {value ? (
-            <div className="relative rounded-lg overflow-hidden aspect-video bg-warm-100 dark:bg-charcoal-800">
+            <div className="relative aspect-video overflow-hidden rounded-[12px] bg-secondary">
               <img
                 src={value}
                 alt="Selected from gallery"
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
               {!disabled && (
                 <button
                   onClick={() => setShowGalleryPicker(true)}
-                  className="absolute bottom-2 right-2 px-3 py-1.5 bg-white/90 hover:bg-white rounded-lg text-xs font-medium text-warm-700 transition-colors"
+                  className="absolute bottom-2 right-2 rounded-full bg-white/90 px-3 py-1.5 text-xs font-medium text-ink-900 transition-colors hover:bg-white"
                 >
                   Change
                 </button>
@@ -106,18 +106,18 @@ export function ImageSourcePicker({
               onClick={() => setShowGalleryPicker(true)}
               disabled={disabled}
               className={cn(
-                'w-full rounded-lg border-2 border-dashed border-warm-300 dark:border-charcoal-600 hover:border-bronze-300 bg-warm-50 dark:bg-charcoal-800 transition-colors cursor-pointer',
-                disabled && 'opacity-50 cursor-not-allowed'
+                'w-full cursor-pointer rounded-[12px] border-2 border-dashed border-border bg-secondary/40 transition-colors hover:border-gold-600/40 dark:hover:border-gold-400/40',
+                disabled && 'cursor-not-allowed opacity-50'
               )}
             >
               <div className="flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-12 h-12 rounded-lg bg-bronze-100 flex items-center justify-center mb-2">
-                  <ImageIcon className="w-5 h-5 text-bronze-700" />
+                <div className="mb-2 grid size-12 place-items-center rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12">
+                  <ImageIcon className="size-5 text-gold-600 dark:text-gold-400" />
                 </div>
-                <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
+                <p className="text-sm font-medium text-foreground">
                   Choose from Gallery
                 </p>
-                <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Pick a previously generated image
                 </p>
               </div>
@@ -132,8 +132,8 @@ export function ImageSourcePicker({
       )}
 
       {sourceType === 'none' && (
-        <div className="rounded-lg bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700 px-4 py-3">
-          <p className="text-xs text-warm-600 dark:text-cream-400">
+        <div className="rounded-[12px] border border-border bg-secondary/50 px-4 py-3">
+          <p className="text-xs text-muted-foreground">
             The AI will generate a fully original graphic from your headline and brand kit.
           </p>
         </div>

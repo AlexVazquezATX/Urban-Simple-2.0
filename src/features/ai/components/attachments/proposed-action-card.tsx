@@ -175,24 +175,24 @@ export function ProposedActionCard({
   return (
     <div
       className={cn(
-        'rounded-sm border-2 bg-white p-3 dark:bg-charcoal-900',
+        'rounded-[14px] border-2 bg-card p-3',
         hasDestructive
-          ? 'border-red-300 dark:border-red-800'
-          : 'border-ocean-300 dark:border-ocean-700'
+          ? 'border-coral-600/30 dark:border-coral-300/25'
+          : 'border-gold-600/30 dark:border-gold-400/25'
       )}
     >
       <div className="mb-2 flex items-start gap-2">
         {hasDestructive ? (
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-coral-600 dark:text-coral-300" />
         ) : (
-          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-ocean-500" />
+          <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-gold-600 dark:text-gold-400" />
         )}
         <div className="flex-1">
-          <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
+          <p className="text-sm font-medium text-foreground">
             {set.summary}
           </p>
           {set.derived && (
-            <p className="mt-0.5 text-xs text-warm-500 dark:text-cream-400">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               {set.derived}
             </p>
           )}
@@ -213,9 +213,9 @@ export function ProposedActionCard({
       </div>
 
       {applyState === 'idle' && (
-        <div className="mt-3 flex items-center justify-end gap-2 border-t border-warm-200 pt-2.5 dark:border-charcoal-700">
+        <div className="mt-3 flex items-center justify-end gap-2 border-t border-border pt-2.5">
           {hasDestructive && (
-            <p className="mr-auto text-[11px] italic text-red-600 dark:text-red-400">
+            <p className="mr-auto text-[11px] italic text-coral-600 dark:text-coral-300">
               {destructiveCount === 1
                 ? '1 destructive change'
                 : `${destructiveCount} destructive changes`}{' '}
@@ -227,16 +227,14 @@ export function ProposedActionCard({
             variant="ghost"
             size="sm"
             onClick={onCancel}
-            className="rounded-sm"
           >
             Cancel
           </Button>
           <Button
             type="button"
-            variant={hasDestructive ? 'destructive' : 'lime'}
+            variant={hasDestructive ? 'destructive' : 'gold'}
             size="sm"
             onClick={onApply}
-            className="rounded-sm"
           >
             {hasDestructive ? 'Delete & Apply' : 'Apply'}
             {actions.length > 1 ? ` All (${actions.length})` : ''}
@@ -245,14 +243,14 @@ export function ProposedActionCard({
       )}
 
       {applyState === 'applying' && (
-        <div className="mt-3 flex items-center justify-end gap-2 border-t border-warm-200 pt-2.5 text-xs text-warm-500 dark:border-charcoal-700 dark:text-cream-400">
+        <div className="mt-3 flex items-center justify-end gap-2 border-t border-border pt-2.5 text-xs text-muted-foreground">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           Applying…
         </div>
       )}
 
       {applyState === 'done' && (
-        <div className="mt-3 flex items-center gap-2 border-t border-lime-200 pt-2.5 text-sm text-lime-700 dark:border-lime-900">
+        <div className="mt-3 flex items-center gap-2 border-t border-green-600/30 pt-2.5 text-sm text-green-600 dark:border-green-300/25 dark:text-green-300">
           <Check className="h-4 w-4" />
           <span>
             Done — {successCount === 1 ? '1 change' : `${successCount} changes`} applied.
@@ -261,7 +259,7 @@ export function ProposedActionCard({
       )}
 
       {applyState === 'failed' && (
-        <div className="mt-3 flex items-start gap-2 border-t border-red-200 pt-2.5 text-sm text-red-700 dark:border-red-900">
+        <div className="mt-3 flex items-start gap-2 border-t border-coral-600/30 pt-2.5 text-sm text-coral-600 dark:border-coral-300/25 dark:text-coral-300">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
             Stopped at the first failure — {successCount} applied, {failureCount} failed,{' '}
@@ -271,7 +269,7 @@ export function ProposedActionCard({
       )}
 
       {applyState === 'cancelled' && (
-        <div className="mt-3 border-t border-warm-200 pt-2.5 text-xs italic text-warm-500 dark:border-charcoal-700 dark:text-cream-400">
+        <div className="mt-3 border-t border-border pt-2.5 text-xs italic text-muted-foreground">
           Cancelled — nothing was changed.
         </div>
       )}
@@ -298,16 +296,16 @@ function ActionSection({
   return (
     <div
       className={cn(
-        'rounded-sm border bg-warm-50/40 p-2.5 dark:bg-charcoal-800/40',
+        'rounded-sm border bg-secondary/40 p-2.5',
         status === 'success'
-          ? 'border-lime-300 dark:border-lime-800'
+          ? 'border-green-600/40 dark:border-green-300/30'
           : status === 'failure'
-            ? 'border-red-300 dark:border-red-800'
+            ? 'border-coral-600/40 dark:border-coral-300/30'
             : status === 'skipped'
-              ? 'border-warm-200 opacity-60 dark:border-charcoal-700'
+              ? 'border-border opacity-60'
               : isDelete
-                ? 'border-red-300 bg-red-50/40 dark:border-red-800 dark:bg-red-950/20'
-                : 'border-warm-200 dark:border-charcoal-700'
+                ? 'border-coral-600/40 bg-coral-600/10 dark:border-coral-300/30 dark:bg-coral-300/10'
+                : 'border-border'
       )}
     >
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -317,13 +315,13 @@ function ActionSection({
             className={cn(
               'rounded-sm px-1.5 py-0 text-[10px] uppercase tracking-wider',
               isDelete
-                ? 'border-red-300 text-red-700 dark:border-red-800 dark:text-red-400'
-                : 'border-warm-300 text-warm-600 dark:border-charcoal-700 dark:text-cream-400'
+                ? 'border-coral-600/40 text-coral-600 dark:border-coral-300/30 dark:text-coral-300'
+                : 'border-border text-muted-foreground'
             )}
           >
             {action.kind} {ENTITY_LABELS[action.entity]}
           </Badge>
-          <span className="text-xs font-medium text-warm-900 dark:text-cream-100">
+          <span className="text-xs font-medium text-foreground">
             {action.targetLabel}
           </span>
         </div>
@@ -331,11 +329,11 @@ function ActionSection({
       </div>
 
       {isDelete ? (
-        <p className="text-xs text-red-700 dark:text-red-400">
+        <p className="text-xs text-coral-600 dark:text-coral-300">
           {deleteConsequence(action.entity)}
         </p>
       ) : action.fields.length === 0 ? (
-        <p className="text-xs italic text-warm-500 dark:text-cream-400">
+        <p className="text-xs italic text-muted-foreground">
           (no fields to change)
         </p>
       ) : (
@@ -352,7 +350,7 @@ function ActionSection({
       )}
 
       {status === 'failure' && errorMessage && (
-        <p className="mt-2 text-xs text-red-700 dark:text-red-400">
+        <p className="mt-2 text-xs text-coral-600 dark:text-coral-300">
           {errorMessage}
         </p>
       )}
@@ -362,17 +360,17 @@ function ActionSection({
 
 function StatusIcon({ status }: { status: ActionApplyResult['status'] }) {
   if (status === 'in_progress') {
-    return <Loader2 className="h-3.5 w-3.5 animate-spin text-warm-500" />
+    return <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
   }
   if (status === 'success') {
-    return <Check className="h-3.5 w-3.5 text-lime-600" />
+    return <Check className="h-3.5 w-3.5 text-green-600 dark:text-green-300" />
   }
   if (status === 'failure') {
-    return <X className="h-3.5 w-3.5 text-red-600" />
+    return <X className="h-3.5 w-3.5 text-coral-600 dark:text-coral-300" />
   }
   if (status === 'skipped') {
     return (
-      <span className="text-[10px] uppercase tracking-wider text-warm-400">
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
         skipped
       </span>
     )
@@ -392,18 +390,18 @@ function FieldRow({ field, disabled, onChange }: FieldRowProps) {
 
   return (
     <div className="space-y-1">
-      <Label className="text-[10px] font-medium uppercase tracking-wider text-warm-500 dark:text-cream-400">
+      <Label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         {field.label}
       </Label>
       {isRef ? (
-        <p className="rounded-sm border border-dashed border-warm-300 bg-warm-50/60 px-2 py-1 text-[11px] italic text-warm-500 dark:border-charcoal-700 dark:bg-charcoal-900/40 dark:text-cream-400">
+        <p className="rounded-sm border border-dashed border-border bg-secondary/60 px-2 py-1 text-[11px] italic text-muted-foreground">
           ↳ resolved from earlier action
         </p>
       ) : (
         <FieldInput field={field} disabled={disabled} onChange={onChange} />
       )}
       {field.helper && !isRef && (
-        <p className="text-[10px] text-warm-400 dark:text-cream-500">{field.helper}</p>
+        <p className="text-[10px] text-muted-foreground/70">{field.helper}</p>
       )}
     </div>
   )
@@ -471,13 +469,13 @@ function FieldInput({ field, disabled, onChange }: FieldRowProps) {
       )
     case 'boolean':
       return (
-        <div className="flex items-center gap-2 rounded-sm border border-warm-200 bg-white px-2 py-1.5 dark:border-charcoal-700 dark:bg-charcoal-900">
+        <div className="flex items-center gap-2 rounded-sm border border-border bg-card px-2 py-1.5">
           <Checkbox
             checked={Boolean(field.newValue)}
             onCheckedChange={(c) => onChange(c === true)}
             disabled={disabled}
           />
-          <span className="text-xs text-warm-700 dark:text-cream-300">
+          <span className="text-xs text-foreground/80">
             {field.newValue ? 'Yes' : 'No'}
           </span>
         </div>
@@ -487,7 +485,7 @@ function FieldInput({ field, disabled, onChange }: FieldRowProps) {
       // checklist template, lineItems in an invoice, etc. Inline editing the
       // structure isn't supported in v1; user cancels + rephrases if wrong.
       return (
-        <pre className="max-h-32 overflow-auto rounded-sm border border-warm-200 bg-warm-50/60 p-2 font-mono text-[10px] text-warm-700 dark:border-charcoal-700 dark:bg-charcoal-900/60 dark:text-cream-300">
+        <pre className="max-h-32 overflow-auto rounded-sm border border-border bg-secondary/60 p-2 font-mono text-[10px] text-foreground/80">
           {formatJson(field.newValue)}
         </pre>
       )

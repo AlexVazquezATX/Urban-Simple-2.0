@@ -7,6 +7,12 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  experimental: {
+    // next/font's Google Fonts fetch fails behind this machine's TLS setup
+    // without system certificates (Bricolage Grotesque / Instrument Sans /
+    // Spline Sans Mono are fetched at build time).
+    turbopackUseSystemTlsCerts: true,
+  },
   images: {
     remotePatterns: [
       {

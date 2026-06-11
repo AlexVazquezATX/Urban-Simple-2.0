@@ -77,8 +77,8 @@ export function InviteTeammateButton() {
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) reset(); setOpen(next) }}>
       <DialogTrigger asChild>
-        <Button variant="lime" className="rounded-sm">
-          <UserPlus className="mr-1.5 h-4 w-4" />
+        <Button variant="gold" className="rounded-full px-5">
+          <UserPlus className="h-3.5 w-3.5" />
           Invite
         </Button>
       </DialogTrigger>
@@ -127,10 +127,10 @@ export function InviteTeammateButton() {
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting} className="rounded-sm">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting} className="rounded-full">
             Cancel
           </Button>
-          <Button type="button" onClick={handleInvite} disabled={submitting} className="rounded-sm">
+          <Button type="button" variant="gold" onClick={handleInvite} disabled={submitting} className="rounded-full">
             {submitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

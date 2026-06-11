@@ -5,9 +5,12 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ARagingTable } from '@/components/billing/ar-aging-table'
 import { Clock, AlertTriangle, DollarSign, FileText, ScrollText } from 'lucide-react'
 import Link from 'next/link'
+import { formatMoneyExact } from '@/lib/format'
 
 interface MoneyTabsProps {
   arData: {
@@ -18,6 +21,21 @@ interface MoneyTabsProps {
   allInvoices: any[]
   agreements: any[]
   invoiceSummary: { totalOutstanding: number; totalOverdue: number; overdueCount: number }
+}
+
+// Invoice status → chip tone. Paid is success, sent is informational,
+// overdue is attention; everything else stays neutral.
+function invoiceStatusVariant(status: string): 'green' | 'teal' | 'coral' | 'neutral' {
+  if (status === 'paid') return 'green'
+  if (status === 'sent') return 'teal'
+  if (status === 'overdue') return 'coral'
+  return 'neutral'
+}
+
+// Title-case the raw status so chips read "Paid"/"Sent" like every other
+// chip, instead of the lowercase enum value.
+function invoiceStatusLabel(status: string): string {
+  return status.charAt(0).toUpperCase() + status.slice(1)
 }
 
 export function MoneyTabs({ arData, allInvoices, agreements, invoiceSummary }: MoneyTabsProps) {
@@ -37,88 +55,71 @@ export function MoneyTabs({ arData, allInvoices, agreements, invoiceSummary }: M
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-      <TabsList className="bg-warm-100 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
-        <TabsTrigger value="overview" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
+      <TabsList>
+        <TabsTrigger value="overview" className="gap-1.5">
           <DollarSign className="h-3.5 w-3.5" />
           Overview
         </TabsTrigger>
-        <TabsTrigger value="invoices" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
+        <TabsTrigger value="invoices" className="gap-1.5">
           <FileText className="h-3.5 w-3.5" />
           Invoices
         </TabsTrigger>
-        <TabsTrigger value="agreements" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
+        <TabsTrigger value="agreements" className="gap-1.5">
           <ScrollText className="h-3.5 w-3.5" />
           Agreements
         </TabsTrigger>
       </TabsList>
 
       <TabsContent value="overview" className="mt-0 space-y-6">
-        {/* AR Aging Cards */}
+        {/* AR aging ramp: teal (current) → gold (1-2mo) → coral (2-3mo) →
+            danger red (3+mo — the ONE approved red outside confirm dialogs). */}
         <div className="grid gap-4 md:grid-cols-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900 border-l-4 border-l-ocean-500">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">On Time (0-30d)</CardTitle>
-              <Clock className="h-4 w-4 text-ocean-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-display font-medium text-ocean-700 dark:text-ocean-400">
-                ${arData.totals.current.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-warm-500 dark:text-cream-400">{arData.counts.current} invoices</p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">1-2 Months</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-display font-medium text-yellow-600 dark:text-yellow-400">
-                ${arData.totals.overdue_31_60.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-warm-500 dark:text-cream-400">{arData.counts.overdue_31_60} invoices</p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">2-3 Months</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-orange-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-display font-medium text-orange-600 dark:text-orange-400">
-                ${arData.totals.overdue_61_90.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-warm-500 dark:text-cream-400">{arData.counts.overdue_61_90} invoices</p>
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">3+ Months</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-display font-medium text-red-600 dark:text-red-400">
-                ${arData.totals.overdue_90_plus.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-              <p className="text-xs text-warm-500 dark:text-cream-400">{arData.counts.overdue_90_plus} invoices</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            label="On time (0-30d)"
+            icon={Clock}
+            tone="teal"
+            value={formatMoneyExact(arData.totals.current)}
+            sub={`${arData.counts.current} invoices`}
+          />
+          <StatCard
+            label="1-2 months"
+            icon={AlertTriangle}
+            tone="gold"
+            value={formatMoneyExact(arData.totals.overdue_31_60)}
+            sub={`${arData.counts.overdue_31_60} invoices`}
+          />
+          <StatCard
+            label="2-3 months"
+            icon={AlertTriangle}
+            tone="coral"
+            value={formatMoneyExact(arData.totals.overdue_61_90)}
+            sub={`${arData.counts.overdue_61_90} invoices`}
+          />
+          <StatCard
+            label="3+ months"
+            icon={AlertTriangle}
+            value={
+              <span className="text-destructive">
+                {formatMoneyExact(arData.totals.overdue_90_plus)}
+              </span>
+            }
+            sub={`${arData.counts.overdue_90_plus} invoices`}
+          />
         </div>
 
         {/* Total Outstanding */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
+        <Card>
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Total Outstanding</CardTitle>
-            <CardDescription className="text-warm-500 dark:text-cream-400">All unpaid invoices across all aging buckets</CardDescription>
+            <CardTitle>Total Outstanding</CardTitle>
+            <CardDescription>All unpaid invoices across all aging buckets</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-display font-medium text-warm-900 dark:text-cream-100">
-              ${arData.totals.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            <div className="font-display text-4xl font-bold tracking-[-1px] tabular-nums text-foreground">
+              {formatMoneyExact(arData.totals.total)}
             </div>
-            <p className="text-sm text-warm-500 dark:text-cream-400 mt-2">{arData.counts.total} invoices outstanding</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {arData.counts.total} invoices outstanding
+            </p>
           </CardContent>
         </Card>
 
@@ -126,76 +127,71 @@ export function MoneyTabs({ arData, allInvoices, agreements, invoiceSummary }: M
       </TabsContent>
 
       <TabsContent value="invoices" className="mt-0 space-y-4">
-        {/* Invoice Summary Cards */}
+        {/* Invoice summary */}
         <div className="grid gap-4 md:grid-cols-3">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-warm-500 dark:text-cream-400">Total Invoices</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{allInvoices.length}</div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-warm-500 dark:text-cream-400">Outstanding</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">
-                ${invoiceSummary.totalOutstanding.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-warm-500 dark:text-cream-400">Overdue</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-semibold text-destructive">
-                ${invoiceSummary.totalOverdue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-                <span className="text-sm font-normal text-warm-500 dark:text-cream-400 ml-2">({invoiceSummary.overdueCount} invoices)</span>
-              </div>
-            </CardContent>
-          </Card>
+          <StatCard label="Total invoices" value={allInvoices.length} />
+          <StatCard
+            label="Outstanding"
+            value={formatMoneyExact(invoiceSummary.totalOutstanding)}
+          />
+          <StatCard
+            label="Overdue"
+            tone="coral"
+            value={formatMoneyExact(invoiceSummary.totalOverdue)}
+            sub={`${invoiceSummary.overdueCount} invoices`}
+          />
         </div>
 
         {/* Invoice List */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
+        <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
-                    <th className="text-left p-3 font-medium text-warm-600 dark:text-cream-300">Invoice #</th>
-                    <th className="text-left p-3 font-medium text-warm-600 dark:text-cream-300">Client</th>
-                    <th className="text-left p-3 font-medium text-warm-600 dark:text-cream-300">Date</th>
-                    <th className="text-right p-3 font-medium text-warm-600 dark:text-cream-300">Amount</th>
-                    <th className="text-right p-3 font-medium text-warm-600 dark:text-cream-300">Balance</th>
-                    <th className="text-center p-3 font-medium text-warm-600 dark:text-cream-300">Status</th>
+                  <tr className="border-b border-border bg-secondary/50">
+                    <th className="kicker p-3 text-left font-normal text-muted-foreground">Invoice #</th>
+                    <th className="kicker p-3 text-left font-normal text-muted-foreground">Client</th>
+                    <th className="kicker p-3 text-left font-normal text-muted-foreground">Date</th>
+                    <th className="kicker p-3 text-right font-normal text-muted-foreground">Amount</th>
+                    <th className="kicker p-3 text-right font-normal text-muted-foreground">Balance</th>
+                    <th className="kicker p-3 text-center font-normal text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allInvoices.map((inv) => (
-                    <tr key={inv.id} className="border-b border-warm-100 dark:border-charcoal-800 hover:bg-warm-50/50 dark:hover:bg-charcoal-800/50">
+                    <tr key={inv.id} className="h-[52px] border-b border-border/60 transition-colors hover:bg-secondary/50">
                       <td className="p-3">
-                        <Link href={`/invoices/${inv.id}`} className="text-ocean-600 dark:text-ocean-400 hover:underline font-medium">
+                        <Link
+                          href={`/invoices/${inv.id}`}
+                          className="font-medium text-teal-600 hover:underline dark:text-teal-300"
+                        >
                           {inv.invoiceNumber}
                         </Link>
                       </td>
-                      <td className="p-3 text-warm-700 dark:text-cream-300">{inv.clientName}</td>
-                      <td className="p-3 text-warm-500 dark:text-cream-400">{new Date(inv.issueDate).toLocaleDateString()}</td>
-                      <td className="p-3 text-right text-warm-700 dark:text-cream-300">${Number(inv.totalAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                      <td className="p-3 text-right text-warm-700 dark:text-cream-300">${Number(inv.balanceDue).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                      <td className="p-3 text-foreground">{inv.clientName}</td>
+                      <td className="p-3 font-mono tabular-nums text-muted-foreground">
+                        {new Date(inv.issueDate).toLocaleDateString()}
+                      </td>
+                      <td className="p-3 text-right font-mono tabular-nums text-foreground">
+                        {formatMoneyExact(Number(inv.totalAmount))}
+                      </td>
+                      <td className="p-3 text-right font-mono tabular-nums text-foreground">
+                        {formatMoneyExact(Number(inv.balanceDue))}
+                      </td>
                       <td className="p-3 text-center">
-                        <Badge variant={inv.status === 'paid' ? 'default' : inv.status === 'sent' ? 'secondary' : 'outline'} className="text-xs">
-                          {inv.status}
-                        </Badge>
+                        <Badge variant={invoiceStatusVariant(inv.status)}>{invoiceStatusLabel(inv.status)}</Badge>
                       </td>
                     </tr>
                   ))}
                   {allInvoices.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-8 text-center text-warm-400 dark:text-cream-500">No invoices found</td>
+                      <td colSpan={6}>
+                        <EmptyState
+                          icon={FileText}
+                          title="No invoices yet"
+                          description="Invoices show up here as soon as the first one is generated."
+                        />
+                      </td>
                     </tr>
                   )}
                 </tbody>
@@ -206,28 +202,30 @@ export function MoneyTabs({ arData, allInvoices, agreements, invoiceSummary }: M
       </TabsContent>
 
       <TabsContent value="agreements" className="mt-0 space-y-4">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
+        <Card>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
-                    <th className="text-left p-3 font-medium text-warm-600 dark:text-cream-300">Client</th>
-                    <th className="text-left p-3 font-medium text-warm-600 dark:text-cream-300">Location</th>
-                    <th className="text-right p-3 font-medium text-warm-600 dark:text-cream-300">Monthly Amount</th>
-                    <th className="text-left p-3 font-medium text-warm-600 dark:text-cream-300">Payment Terms</th>
-                    <th className="text-center p-3 font-medium text-warm-600 dark:text-cream-300">Status</th>
+                  <tr className="border-b border-border bg-secondary/50">
+                    <th className="kicker p-3 text-left font-normal text-muted-foreground">Client</th>
+                    <th className="kicker p-3 text-left font-normal text-muted-foreground">Location</th>
+                    <th className="kicker p-3 text-right font-normal text-muted-foreground">Monthly Amount</th>
+                    <th className="kicker p-3 text-left font-normal text-muted-foreground">Payment Terms</th>
+                    <th className="kicker p-3 text-center font-normal text-muted-foreground">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {agreements.map((sa) => (
-                    <tr key={sa.id} className="border-b border-warm-100 dark:border-charcoal-800 hover:bg-warm-50/50 dark:hover:bg-charcoal-800/50">
-                      <td className="p-3 text-warm-700 dark:text-cream-300 font-medium">{sa.clientName}</td>
-                      <td className="p-3 text-warm-600 dark:text-cream-400">{sa.locationName}</td>
-                      <td className="p-3 text-right text-warm-700 dark:text-cream-300">${Number(sa.monthlyAmount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-                      <td className="p-3 text-warm-500 dark:text-cream-400">{sa.paymentTerms}</td>
+                    <tr key={sa.id} className="h-[52px] border-b border-border/60 transition-colors hover:bg-secondary/50">
+                      <td className="p-3 font-medium text-foreground">{sa.clientName}</td>
+                      <td className="p-3 text-muted-foreground">{sa.locationName}</td>
+                      <td className="p-3 text-right font-mono tabular-nums text-foreground">
+                        {formatMoneyExact(Number(sa.monthlyAmount))}
+                      </td>
+                      <td className="p-3 text-muted-foreground">{sa.paymentTerms}</td>
                       <td className="p-3 text-center">
-                        <Badge variant={sa.isActive ? 'default' : 'secondary'} className="text-xs">
+                        <Badge variant={sa.isActive ? 'green' : 'neutral'}>
                           {sa.isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </td>
@@ -235,7 +233,13 @@ export function MoneyTabs({ arData, allInvoices, agreements, invoiceSummary }: M
                   ))}
                   {agreements.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-warm-400 dark:text-cream-500">No service agreements found</td>
+                      <td colSpan={5}>
+                        <EmptyState
+                          icon={ScrollText}
+                          title="No service agreements yet"
+                          description="Active agreements appear here once a client is set up with recurring billing."
+                        />
+                      </td>
                     </tr>
                   )}
                 </tbody>

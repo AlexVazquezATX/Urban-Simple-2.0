@@ -2,16 +2,18 @@ import { Suspense } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
+import { PageHeader } from '@/components/layout/page-header'
 import { EditableLocationInfo } from '@/components/locations/editable-location-info'
 import { EditableDispatchProfile } from '@/components/locations/editable-dispatch-profile'
 import { EditableEquipment } from '@/components/locations/editable-equipment'
 import { EditableServiceAgreement } from '@/components/locations/editable-service-agreement'
+import { LocationRowActions } from '@/components/locations/location-row-actions'
+import { reviewBadgeVariant } from '@/components/locations/tones'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
 import { canSeeFinancials } from '@/lib/financials'
+import { cn } from '@/lib/utils'
 
 async function LocationDetail({ id }: { id: string }) {
   const user = await getCurrentUser()
@@ -115,7 +117,7 @@ async function LocationDetail({ id }: { id: string }) {
 
   if (!location) {
     return (
-      <div className="text-destructive">
+      <div className="text-sm text-muted-foreground">
         Location not found. Please try again.
       </div>
     )
@@ -125,35 +127,19 @@ async function LocationDetail({ id }: { id: string }) {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-3">
-        <Breadcrumb
-          items={[
-            { label: 'Clients', href: '/clients' },
-            { label: location.client.name, href: `/clients/${location.client.id}` },
-            { label: location.name },
-          ]}
-        />
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-              {location.name}
-            </h1>
-            <p className="text-sm text-warm-500 dark:text-cream-400">
-              {location.client.name} • {location.branch.name}
-            </p>
-          </div>
-          <ConfirmDeleteButton
-            endpoint={`/api/locations/${location.id}`}
+      <PageHeader
+        kicker={`CLIENTS · ${location.client.name.toUpperCase()}`}
+        title={location.name}
+        subtitle={`${location.client.name} • ${location.branch.name}`}
+        backHref={`/clients/${location.client.id}`}
+        actions={
+          <LocationRowActions
+            locationId={location.id}
             entityLabel={`${location.client.name} - ${location.name}`}
-            entityKind="location"
             redirectTo={`/clients/${location.client.id}`}
-            buttonLabel="Delete"
-            variant="outline"
-            size="default"
-            className="rounded-sm border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
           />
-        </div>
-      </div>
+        }
+      />
 
       {showFinancials && (
         <EditableServiceAgreement
@@ -185,65 +171,60 @@ async function LocationDetail({ id }: { id: string }) {
         <EditableLocationInfo location={location} />
 
         <div className="space-y-6">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <Card>
             <CardHeader>
-              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Quick Stats</CardTitle>
+              <CardTitle>Quick Stats</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-warm-500 dark:text-cream-400">Service Logs</span>
-                <span className="font-medium text-warm-900 dark:text-cream-100">
+                <span className="text-sm text-muted-foreground">Service Logs</span>
+                <span className="font-mono text-sm font-medium tabular-nums text-foreground">
                   {location._count.serviceLogs}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-warm-500 dark:text-cream-400">Open Issues</span>
-                <Badge
-                  className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                <span className="text-sm text-muted-foreground">Open Issues</span>
+                <span
+                  className={cn(
+                    'font-mono text-sm tabular-nums',
                     location._count.issues > 0
-                      ? 'bg-red-100 text-red-700 border-red-200'
-                      : 'bg-warm-100 text-warm-600 border-warm-200'
-                  }`}
+                      ? 'font-medium text-coral-600 dark:text-coral-300'
+                      : 'text-muted-foreground'
+                  )}
                 >
                   {location._count.issues}
-                </Badge>
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-warm-500 dark:text-cream-400">Active Agreements</span>
-                <span className="font-medium text-warm-900 dark:text-cream-100">
+                <span className="text-sm text-muted-foreground">Active Agreements</span>
+                <span className="font-mono text-sm font-medium tabular-nums text-foreground">
                   {location._count.serviceAgreements}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-warm-500 dark:text-cream-400">Last Reviewed</span>
+                <span className="text-sm text-muted-foreground">Last Reviewed</span>
                 <div className="text-right">
-                  <Badge
-                    className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                      reviewFreshness.isStale
-                        ? 'bg-red-100 text-red-700 border-red-200'
-                        : 'bg-lime-100 text-lime-700 border-lime-200'
-                    }`}
-                  >
+                  <Badge variant={reviewBadgeVariant(reviewFreshness)}>
                     {reviewFreshness.shortLabel}
                   </Badge>
-                  <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     {reviewFreshness.reviewedOnLabel || 'Manager review with photos required'}
                   </p>
                 </div>
               </div>
               {location.assignments.length > 0 && (
-                <div className="pt-3 border-t border-warm-200 dark:border-charcoal-700">
-                  <p className="text-sm text-warm-500 mb-2">Assigned Associates</p>
+                <div className="border-t border-border pt-3">
+                  <p className="mb-2 text-sm text-muted-foreground">Assigned Associates</p>
                   <div className="space-y-1">
                     {location.assignments.map((assignment) => (
                       <div
                         key={assignment.id}
-                        className="text-sm flex items-center justify-between"
+                        className="flex items-center justify-between text-sm"
                       >
-                        <span className="text-warm-700 dark:text-cream-300">
+                        <span className="text-foreground">
                           {assignment.user.firstName} {assignment.user.lastName}
                         </span>
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
+                        <Badge variant="neutral" className="font-mono tabular-nums">
                           ${Number(assignment.monthlyPay).toFixed(2)}/mo
                         </Badge>
                       </div>

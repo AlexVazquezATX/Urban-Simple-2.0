@@ -21,11 +21,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  formatCurrency,
-  formatMargin,
-  marginToneClass,
-} from '@/lib/financials'
+import { formatMargin } from '@/lib/financials'
+import { formatMoney } from '@/lib/format'
+import { marginToneClass } from './margin-tone'
 
 interface FinancialsQuickEditDialogProps {
   agreementId: string
@@ -108,12 +106,7 @@ export function FinancialsQuickEditDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800"
-        >
+        <Button type="button" variant="ghost" size="sm" className="h-7 px-2 text-xs">
           <Pencil className="mr-1 h-3 w-3" />
           Edit
         </Button>
@@ -173,20 +166,20 @@ export function FinancialsQuickEditDialog({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50/60 dark:bg-charcoal-900/40 p-2 text-xs">
+          <div className="grid grid-cols-3 gap-2 rounded-[10px] border border-border bg-secondary/40 p-2.5 text-xs">
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Total Cost</p>
-              <p className="font-mono font-medium">{formatCurrency(liveCost)}</p>
+              <p className="kicker text-muted-foreground">Total Cost</p>
+              <p className="font-mono font-medium tabular-nums text-foreground">{formatMoney(liveCost)}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Profit</p>
-              <p className={`font-mono font-medium ${marginToneClass(liveMargin)}`}>
-                {formatCurrency(liveProfit)}
+              <p className="kicker text-muted-foreground">Profit</p>
+              <p className={`font-mono font-medium tabular-nums ${marginToneClass(liveMargin)}`}>
+                {formatMoney(liveProfit)}
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Margin</p>
-              <p className={`font-mono font-medium ${marginToneClass(liveMargin)}`}>
+              <p className="kicker text-muted-foreground">Margin</p>
+              <p className={`font-mono font-medium tabular-nums ${marginToneClass(liveMargin)}`}>
                 {formatMargin(liveMargin)}
               </p>
             </div>
@@ -199,11 +192,10 @@ export function FinancialsQuickEditDialog({
             variant="outline"
             onClick={() => setOpen(false)}
             disabled={saving}
-            className="rounded-sm"
           >
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={saving} className="rounded-sm">
+          <Button type="button" onClick={handleSave} disabled={saving}>
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

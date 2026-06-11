@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { Banknote } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -11,6 +12,8 @@ import {
 } from '@/components/ui/table'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { formatMoneyExact } from '@/lib/format'
 
 interface PaymentHistoryProps {
   payments: any[]
@@ -19,79 +22,78 @@ interface PaymentHistoryProps {
 export function PaymentHistory({ payments }: PaymentHistoryProps) {
   if (payments.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Payment History</CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">No payments recorded yet</CardDescription>
+          <CardTitle>Payment History</CardTitle>
+          <CardDescription>No payments recorded yet</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-warm-500 dark:text-cream-400 text-center py-8">
-            Payments will appear here once recorded
-          </p>
+          <EmptyState
+            icon={Banknote}
+            title="No payments yet"
+            description="Payments will appear here as soon as one is recorded."
+          />
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+    <Card>
       <CardHeader>
-        <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Payment History</CardTitle>
-        <CardDescription className="text-warm-500 dark:text-cream-400">
+        <CardTitle>Payment History</CardTitle>
+        <CardDescription>
           {payments.length} {payments.length === 1 ? 'payment' : 'payments'} recorded
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
-            <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Date</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Amount</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Method</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Reference</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Invoice</TableHead>
-              <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead>Reference</TableHead>
+              <TableHead>Invoice</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {payments.map((payment) => (
-              <TableRow key={payment.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                <TableCell className="text-warm-600 dark:text-cream-400">
+              <TableRow key={payment.id}>
+                <TableCell className="font-mono tabular-nums text-muted-foreground">
                   {new Date(payment.paymentDate).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="font-medium text-warm-900 dark:text-cream-100">
-                  ${Number(payment.amount).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                <TableCell className="text-right font-mono tabular-nums text-foreground">
+                  {formatMoneyExact(Number(payment.amount))}
                 </TableCell>
-                <TableCell className="capitalize text-warm-600 dark:text-cream-400">
+                <TableCell className="capitalize text-muted-foreground">
                   {payment.paymentMethod.replace('_', ' ')}
                 </TableCell>
-                <TableCell className="text-warm-500 dark:text-cream-400">
-                  {payment.referenceNumber || '-'}
+                <TableCell className="font-mono tabular-nums text-muted-foreground">
+                  {payment.referenceNumber || '—'}
                 </TableCell>
                 <TableCell>
                   {payment.invoice ? (
                     <Link
-                      href={`/app/invoices/${payment.invoice.id}`}
-                      className="text-warm-900 dark:text-cream-100 hover:text-ocean-600 transition-colors"
+                      href={`/invoices/${payment.invoice.id}`}
+                      className="font-mono tabular-nums text-foreground transition-colors hover:text-primary"
                     >
                       {payment.invoice.invoiceNumber}
                     </Link>
                   ) : (
-                    <span className="text-warm-500 dark:text-cream-400">-</span>
+                    <span className="text-muted-foreground">—</span>
                   )}
                 </TableCell>
                 <TableCell>
                   <Badge
-                    className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                    variant={
                       payment.status === 'completed'
-                        ? 'bg-lime-100 text-lime-700 border-lime-200'
+                        ? 'green'
                         : payment.status === 'failed'
-                          ? 'bg-red-100 text-red-700 border-red-200'
-                          : 'bg-warm-100 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700'
-                    }`}
+                          ? 'coral'
+                          : 'neutral'
+                    }
                   >
                     {payment.status}
                   </Badge>
@@ -104,7 +106,3 @@ export function PaymentHistory({ payments }: PaymentHistoryProps) {
     </Card>
   )
 }
-
-
-
-

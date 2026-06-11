@@ -1,12 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock } from 'lucide-react'
-import {
-  formatCurrency,
-  formatMargin,
-  marginToneClass,
-  type FinancialSummary,
-} from '@/lib/financials'
+import { formatMargin, type FinancialSummary } from '@/lib/financials'
+import { formatMoney } from '@/lib/format'
 import { FinancialsQuickEditDialog } from './financials-quick-edit-dialog'
+import { marginToneClass } from './margin-tone'
 
 interface AgreementRow {
   id: string
@@ -29,47 +26,49 @@ export function ClientFinancialsBlock({ summary, agreements }: ClientFinancialsB
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-      <CardHeader className="p-4 pb-2">
+    <Card className="gap-3 py-4">
+      <CardHeader className="px-4">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Financials
-            </CardTitle>
-            <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
-              Per-location P&L. Edit cost values via the service agreement form.
+            <CardTitle>Financials</CardTitle>
+            <CardDescription className="text-xs">
+              Per-location P&amp;L. Edit cost values via the service agreement form.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">
+          <div className="kicker flex items-center gap-1.5 text-muted-foreground">
             <Lock className="h-3 w-3" />
             Super admin only
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-2 space-y-4">
+      <CardContent className="space-y-4 px-4">
         {/* Summary tiles */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Monthly Revenue</p>
-            <p className="mt-1 text-xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.monthlyRevenue)}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Monthly Revenue</p>
+            <p className="mt-1 font-display text-xl font-bold tabular-nums text-foreground">
+              {formatMoney(summary.monthlyRevenue)}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Monthly Cost</p>
-            <p className="mt-1 text-xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.monthlyCost)}
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Monthly Cost</p>
+            <p className="mt-1 font-display text-xl font-bold tabular-nums text-foreground">
+              {formatMoney(summary.monthlyCost)}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Monthly Profit</p>
-            <p className={`mt-1 text-xl font-bold ${marginToneClass(summary.marginPct)}`}>
-              {formatCurrency(summary.monthlyProfit)}
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Monthly Profit</p>
+            <p
+              className={`mt-1 font-display text-xl font-bold tabular-nums ${marginToneClass(summary.marginPct)}`}
+            >
+              {formatMoney(summary.monthlyProfit)}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Margin</p>
-            <p className={`mt-1 text-xl font-bold ${marginToneClass(summary.marginPct)}`}>
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Margin</p>
+            <p
+              className={`mt-1 font-display text-xl font-bold tabular-nums ${marginToneClass(summary.marginPct)}`}
+            >
               {formatMargin(summary.marginPct)}
             </p>
           </div>
@@ -79,14 +78,14 @@ export function ClientFinancialsBlock({ summary, agreements }: ClientFinancialsB
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-warm-200 dark:border-charcoal-700 text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">
-                <th className="py-2 pr-3 text-left">Location</th>
-                <th className="py-2 px-3 text-right">Revenue</th>
-                <th className="py-2 px-3 text-right">Labor</th>
-                <th className="py-2 px-3 text-right">Materials</th>
-                <th className="py-2 px-3 text-right">Other</th>
-                <th className="py-2 px-3 text-right">Profit</th>
-                <th className="py-2 px-3 text-right">Margin</th>
+              <tr className="border-b border-border">
+                <th className="kicker py-2 pr-3 text-left font-normal text-muted-foreground">Location</th>
+                <th className="kicker px-3 py-2 text-right font-normal text-muted-foreground">Revenue</th>
+                <th className="kicker px-3 py-2 text-right font-normal text-muted-foreground">Labor</th>
+                <th className="kicker px-3 py-2 text-right font-normal text-muted-foreground">Materials</th>
+                <th className="kicker px-3 py-2 text-right font-normal text-muted-foreground">Other</th>
+                <th className="kicker px-3 py-2 text-right font-normal text-muted-foreground">Profit</th>
+                <th className="kicker px-3 py-2 text-right font-normal text-muted-foreground">Margin</th>
                 <th className="py-2 pl-3 text-right" />
               </tr>
             </thead>
@@ -96,24 +95,24 @@ export function ClientFinancialsBlock({ summary, agreements }: ClientFinancialsB
                 const profit = a.monthlyAmount - totalCost
                 const margin = a.monthlyAmount > 0 ? (profit / a.monthlyAmount) * 100 : null
                 return (
-                  <tr key={a.id} className="border-b border-warm-100 dark:border-charcoal-800/60">
-                    <td className="py-2 pr-3 text-warm-900 dark:text-cream-100">{a.locationName}</td>
-                    <td className="py-2 px-3 text-right font-mono text-warm-700 dark:text-cream-300">
-                      {formatCurrency(a.monthlyAmount)}
+                  <tr key={a.id} className="border-b border-border/60">
+                    <td className="py-2 pr-3 text-foreground">{a.locationName}</td>
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-foreground">
+                      {formatMoney(a.monthlyAmount)}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono text-warm-600 dark:text-cream-400">
-                      {a.monthlyLaborCost !== null ? formatCurrency(a.monthlyLaborCost) : '—'}
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                      {a.monthlyLaborCost !== null ? formatMoney(a.monthlyLaborCost) : '—'}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono text-warm-600 dark:text-cream-400">
-                      {a.monthlyMaterialCost !== null ? formatCurrency(a.monthlyMaterialCost) : '—'}
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                      {a.monthlyMaterialCost !== null ? formatMoney(a.monthlyMaterialCost) : '—'}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono text-warm-600 dark:text-cream-400">
-                      {a.monthlyOtherCost !== null ? formatCurrency(a.monthlyOtherCost) : '—'}
+                    <td className="px-3 py-2 text-right font-mono tabular-nums text-muted-foreground">
+                      {a.monthlyOtherCost !== null ? formatMoney(a.monthlyOtherCost) : '—'}
                     </td>
-                    <td className={`py-2 px-3 text-right font-mono ${marginToneClass(margin)}`}>
-                      {formatCurrency(profit)}
+                    <td className={`px-3 py-2 text-right font-mono tabular-nums ${marginToneClass(margin)}`}>
+                      {formatMoney(profit)}
                     </td>
-                    <td className={`py-2 px-3 text-right font-mono ${marginToneClass(margin)}`}>
+                    <td className={`px-3 py-2 text-right font-mono tabular-nums ${marginToneClass(margin)}`}>
                       {formatMargin(margin)}
                     </td>
                     <td className="py-1 pl-3 text-right">

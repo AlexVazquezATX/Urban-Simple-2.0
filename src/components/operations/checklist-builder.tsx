@@ -7,11 +7,8 @@ import {
   Trash2,
   GripVertical,
   Save,
-  Languages,
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  X,
+  Sparkles,
+  ListChecks,
   Maximize2,
   Search,
 } from 'lucide-react'
@@ -30,7 +27,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Dialog,
   DialogContent,
@@ -39,7 +35,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
+import { cn } from '@/lib/utils'
 
 interface ChecklistItem {
   id: string
@@ -84,6 +93,44 @@ interface SectionType {
   }>
 }
 
+type DeleteTarget =
+  | { type: 'section'; sectionId: string; label: string }
+  | { type: 'item'; sectionId: string; itemId: string; label: string }
+
+/** Segmented control — bordered inline-flex, active segment bg-secondary + semibold. */
+function Segmented<T extends string>({
+  value,
+  onChange,
+  options,
+  className,
+}: {
+  value: T
+  onChange: (value: T) => void
+  options: Array<{ value: T; label: string }>
+  className?: string
+}) {
+  return (
+    <div className={cn('inline-flex items-stretch overflow-hidden rounded-[9px] border border-border', className)}>
+      {options.map((option, index) => (
+        <button
+          key={String(option.value)}
+          type="button"
+          onClick={() => onChange(option.value)}
+          className={cn(
+            'px-3 py-1.5 text-xs transition-colors',
+            index < options.length - 1 && 'border-r border-border',
+            value === option.value
+              ? 'bg-secondary font-semibold text-foreground'
+              : 'text-muted-foreground hover:text-foreground'
+          )}
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
   const router = useRouter()
   const [sections, setSections] = useState<ChecklistSection[]>(
@@ -101,6 +148,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
   const [showAllItems, setShowAllItems] = useState<Record<string, boolean>>({})
   const [itemSelectorOpen, setItemSelectorOpen] = useState<Record<string, boolean>>({})
   const [searchQuery, setSearchQuery] = useState<Record<string, string>>({})
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
   // Load section types from library
   useEffect(() => {
@@ -272,6 +320,16 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
     )
   }
 
+  const confirmDelete = () => {
+    if (!deleteTarget) return
+    if (deleteTarget.type === 'section') {
+      deleteSection(deleteTarget.sectionId)
+    } else {
+      deleteItem(deleteTarget.sectionId, deleteTarget.itemId)
+    }
+    setDeleteTarget(null)
+  }
+
   const handleTranslateAll = async () => {
     setTranslating(true)
     try {
@@ -401,52 +459,58 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Build Checklist</h2>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            Add sections and items to create your checklist template
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Tabs
-            value={previewLanguage}
-            onValueChange={(v) => setPreviewLanguage(v as 'en' | 'es')}
-          >
-            <TabsList className="rounded-sm bg-warm-100 dark:bg-charcoal-800">
-              <TabsTrigger value="en" className="rounded-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">English</TabsTrigger>
-              <TabsTrigger value="es" className="rounded-sm data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">Español</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Button onClick={handleTranslateAll} disabled={translating} variant="outline" className="rounded-sm">
-            <Languages className="mr-2 h-4 w-4" />
-            {translating ? 'Translating...' : 'AI Translate All'}
-          </Button>
-          <Button onClick={handleSave} disabled={saving} variant="lime" className="rounded-sm">
-            <Save className="mr-2 h-4 w-4" />
-            {saving ? 'Saving...' : 'Save Checklist'}
-          </Button>
-        </div>
+      {/* Sticky builder header — back arrow + record title, EN/Español
+          segmented toggle, AI Translate All (outline), Save (the one gold). */}
+      <div className="sticky top-0 z-10 -mx-1 border-b border-border bg-background/95 px-1 pb-3 pt-1 backdrop-blur">
+        <PageHeader
+          className="mb-0"
+          kicker="OPERATIONS · CHECKLIST BUILDER"
+          title={template.name}
+          subtitle={
+            [template.nameEs, template.description].filter(Boolean).join(' · ') || undefined
+          }
+          backHref="/operations/checklists"
+          actions={
+            <>
+              <Segmented
+                value={previewLanguage}
+                onChange={(v) => setPreviewLanguage(v)}
+                options={[
+                  { value: 'en', label: 'EN' },
+                  { value: 'es', label: 'Español' },
+                ]}
+              />
+              <Button onClick={handleTranslateAll} disabled={translating} variant="outline">
+                <Sparkles className="size-4" />
+                {translating ? 'Translating...' : 'AI Translate All'}
+              </Button>
+              <Button onClick={handleSave} disabled={saving} variant="gold">
+                <Save className="size-4" />
+                {saving ? 'Saving...' : 'Save Checklist'}
+              </Button>
+            </>
+          }
+        />
       </div>
 
       {/* Add Section Dialog */}
       <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" className="rounded-sm">
-            <Plus className="mr-2 h-4 w-4" />
+          <Button variant="outline">
+            <Plus className="size-4" />
             Add Section
           </Button>
         </DialogTrigger>
-        <DialogContent className="rounded-sm">
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Add Section</DialogTitle>
-            <DialogDescription className="text-sm text-warm-500 dark:text-cream-400">
+            <DialogTitle>Add Section</DialogTitle>
+            <DialogDescription>
               Choose a section type from the library or create a custom section
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Section Type (Optional)</Label>
+              <Label>Section Type (Optional)</Label>
               <Select
                 value={selectedSectionType}
                 onValueChange={(value) => {
@@ -455,7 +519,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 }}
                 disabled={loadingLibrary}
               >
-                <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
+                <SelectTrigger className="mt-1.5 w-full">
                   <SelectValue
                     placeholder={
                       loadingLibrary
@@ -466,7 +530,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                     }
                   />
                 </SelectTrigger>
-                <SelectContent className="rounded-sm">
+                <SelectContent>
                   {sectionTypes.length === 0 ? (
                     <SelectItem value="__empty__" disabled>
                       {loadingLibrary
@@ -483,13 +547,13 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                 </SelectContent>
               </Select>
               {sectionTypes.length === 0 && !loadingLibrary && (
-                <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-                  Run: <code className="bg-warm-100 dark:bg-charcoal-800 px-1 rounded-sm">npx tsx scripts/seed-checklist-library.ts</code>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Run: <code className="rounded bg-secondary px-1 font-mono">npx tsx scripts/seed-checklist-library.ts</code>
                 </p>
               )}
             </div>
             <div>
-              <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Or Custom Section Name</Label>
+              <Label>Or Custom Section Name</Label>
               <Input
                 value={customSectionName}
                 onChange={(e) => {
@@ -497,31 +561,33 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                   setSelectedSectionType('')
                 }}
                 placeholder="e.g., Special Equipment"
-                className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+                className="mt-1.5"
               />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setAddSectionOpen(false)} className="rounded-sm">
+              <Button variant="outline" onClick={() => setAddSectionOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={addSection} variant="lime" className="rounded-sm">Add Section</Button>
+              <Button onClick={addSection} variant="gold">Add Section</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {sections.length === 0 ? (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-warm-500 dark:text-cream-400 mb-4">No sections yet</p>
-            <Dialog open={addSectionOpen} onOpenChange={setAddSectionOpen}>
-              <DialogTrigger asChild>
-                <Button variant="lime" className="rounded-sm">
-                  <Plus className="mr-2 h-4 w-4" />
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={ListChecks}
+              title="No sections yet — every great checklist starts with one"
+              description="Pull a ready-made section from the library or name your own, then add the items your crews will check off."
+              action={
+                <Button variant="outline" onClick={() => setAddSectionOpen(true)}>
+                  <Plus className="size-4" />
                   Add First Section
                 </Button>
-              </DialogTrigger>
-            </Dialog>
+              }
+            />
           </CardContent>
         </Card>
       ) : (
@@ -539,59 +605,66 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
             )
 
             return (
-              <Card key={section.id} className="rounded-sm border-warm-200 dark:border-charcoal-700">
-                <CardHeader className="p-4">
-                  <div className="flex items-start justify-between">
+              <Card key={section.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 space-y-4">
                       <div className="flex items-center gap-2">
-                        <GripVertical className="h-5 w-5 text-warm-400" />
-                        <span className="text-sm font-medium text-warm-500 dark:text-cream-400">
+                        <GripVertical className="size-4 cursor-grab text-muted-foreground/70" />
+                        <span className="kicker text-muted-foreground">
                           Section {sectionIndex + 1}
                         </span>
                       </div>
+                      {/* Bilingual field pair — EN + ES side-by-side, 1fr/1fr */}
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Section Name (English) *</Label>
+                          <Label>Section Name (English) *</Label>
                           <Input
                             value={section.name}
                             onChange={(e) =>
                               updateSection(section.id, { name: e.target.value })
                             }
                             placeholder="e.g., Kitchen Equipment"
-                            className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+                            className="mt-1.5"
                           />
                         </div>
                         <div>
-                          <Label className="text-xs font-medium text-warm-700 dark:text-cream-300">Section Name (Spanish)</Label>
+                          <Label>Section Name (Spanish)</Label>
                           <Input
                             value={section.nameEs || ''}
                             onChange={(e) =>
                               updateSection(section.id, { nameEs: e.target.value })
                             }
                             placeholder="e.g., Equipamiento de Cocina"
-                            className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+                            className="mt-1.5"
                           />
                         </div>
                       </div>
                     </div>
                     <Button
                       variant="ghost"
-                      size="icon"
-                      onClick={() => deleteSection(section.id)}
-                      className="rounded-sm"
+                      size="icon-sm"
+                      aria-label="Delete section"
+                      onClick={() =>
+                        setDeleteTarget({
+                          type: 'section',
+                          sectionId: section.id,
+                          label: section.name || `Section ${sectionIndex + 1}`,
+                        })
+                      }
                     >
-                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <Trash2 className="size-4" />
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0 space-y-4">
+                <CardContent className="space-y-4">
                   {/* Quick-select panel for library items */}
                   {sectionType && libraryItems.length > 0 && (
-                    <div className="border border-warm-200 dark:border-charcoal-700 rounded-sm p-4 bg-warm-50 dark:bg-charcoal-800">
-                      <div className="flex items-center justify-between mb-3">
-                        <Label className="text-sm font-semibold">
-                          Popular Items (click to add)
-                        </Label>
+                    <div className="rounded-[12px] border border-border bg-secondary/40 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <span className="kicker text-muted-foreground">
+                          Popular Items · Click to Add
+                        </span>
                         <div className="flex gap-2">
                           <Button
                             variant="ghost"
@@ -615,7 +688,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                               })
                             }
                           >
-                            <Maximize2 className="h-4 w-4 mr-1" />
+                            <Maximize2 className="size-4" />
                             Open Selector
                           </Button>
                         </div>
@@ -630,7 +703,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                             return (
                               <div
                                 key={item.id}
-                                className="flex items-center space-x-2 p-2 rounded hover:bg-background cursor-pointer"
+                                className="flex cursor-pointer items-center space-x-2 rounded-[9px] p-2 transition-colors hover:bg-background"
                                 onClick={() => {
                                   if (isSelected) {
                                     // Remove item
@@ -653,18 +726,14 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                 }}
                               >
                                 <Checkbox checked={isSelected} />
-                                <Label className="flex-1 cursor-pointer text-sm">
+                                <span className="flex-1 cursor-pointer text-sm text-foreground">
                                   {item.text}
-                                </Label>
+                                </span>
                                 {item.requiresPhoto && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Photo
-                                  </Badge>
+                                  <Badge variant="teal">Photo</Badge>
                                 )}
                                 {item.priority === 'high' && (
-                                  <Badge variant="destructive" className="text-xs">
-                                    High
-                                  </Badge>
+                                  <Badge variant="coral">High</Badge>
                                 )}
                               </div>
                             )
@@ -685,8 +754,8 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                         })
                       }
                     >
-                      <DialogContent className="max-w-4xl h-[85vh] flex flex-col p-0">
-                        <DialogHeader className="px-6 pt-6 pb-4">
+                      <DialogContent className="flex h-[85vh] max-w-4xl flex-col p-0">
+                        <DialogHeader className="px-6 pb-4 pt-6">
                           <DialogTitle>
                             Select Items for {section.name}
                           </DialogTitle>
@@ -694,10 +763,10 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                             Choose items from the library to add to this section. You can search and filter items.
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="flex-1 flex flex-col min-h-0 px-6 pb-6 space-y-4 overflow-hidden">
+                        <div className="flex min-h-0 flex-1 flex-col space-y-4 overflow-hidden px-6 pb-6">
                           {/* Search */}
                           <div className="relative flex-shrink-0">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                               placeholder="Search items..."
                               value={searchQuery[section.id] || ''}
@@ -711,7 +780,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                             />
                           </div>
                           {/* Items List */}
-                          <ScrollArea className="flex-1 min-h-0">
+                          <ScrollArea className="min-h-0 flex-1">
                             <div className="space-y-2 pr-4">
                               {libraryItems
                                 .filter((item) => {
@@ -727,7 +796,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                   return (
                                     <div
                                       key={item.id}
-                                      className="flex items-start space-x-3 p-3 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                                      className="flex cursor-pointer items-start space-x-3 rounded-[12px] border border-border p-3 transition-colors hover:bg-secondary/50"
                                       onClick={() => {
                                         if (isSelected) {
                                           // Remove item
@@ -757,25 +826,25 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                         }}
                                       />
                                       <div className="flex-1 space-y-1">
-                                        <Label className="cursor-pointer text-sm font-medium">
+                                        <span className="block cursor-pointer text-sm font-medium text-foreground">
                                           {item.text}
-                                        </Label>
+                                        </span>
                                         {item.textEs && (
                                           <p className="text-xs text-muted-foreground">
                                             {item.textEs}
                                           </p>
                                         )}
-                                        <div className="flex gap-2 mt-2">
-                                          <Badge variant="secondary" className="text-xs">
+                                        <div className="mt-2 flex gap-2">
+                                          <Badge variant="neutral">
                                             {item.frequency}
                                           </Badge>
                                           {item.requiresPhoto && (
-                                            <Badge variant="outline" className="text-xs">
+                                            <Badge variant="teal">
                                               Photo Required
                                             </Badge>
                                           )}
                                           {item.priority === 'high' && (
-                                            <Badge variant="destructive" className="text-xs">
+                                            <Badge variant="coral">
                                               High Priority
                                             </Badge>
                                           )}
@@ -787,11 +856,12 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                             </div>
                           </ScrollArea>
                           {/* Footer with selected count */}
-                          <div className="flex items-center justify-between pt-4 border-t flex-shrink-0">
-                            <p className="text-sm text-muted-foreground">
+                          <div className="flex flex-shrink-0 items-center justify-between border-t border-border pt-4">
+                            <p className="font-mono text-sm tabular-nums text-muted-foreground">
                               {section.items.length} item{section.items.length !== 1 ? 's' : ''} selected
                             </p>
                             <Button
+                              variant="gold"
                               onClick={() =>
                                 setItemSelectorOpen({
                                   ...itemSelectorOpen,
@@ -810,17 +880,18 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                   {/* Selected Items */}
                   {section.items.length > 0 && (
                     <div className="space-y-2">
-                      <Label className="text-sm font-semibold">Selected Items</Label>
+                      <span className="kicker text-muted-foreground">Selected Items</span>
                       {section.items.map((item) => (
                         <div
                           key={item.id}
-                          className="border rounded-lg p-3 bg-background space-y-2"
+                          className="space-y-2 rounded-[12px] border border-border bg-background p-3"
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1 space-y-2">
+                              {/* Bilingual field pair — EN + ES side-by-side, 1fr/1fr */}
                               <div className="grid grid-cols-2 gap-2">
                                 <div>
-                                  <Label className="text-xs">Item Text (English) *</Label>
+                                  <Label>Item Text (English) *</Label>
                                   <Input
                                     value={item.text}
                                     onChange={(e) =>
@@ -829,11 +900,11 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                       })
                                     }
                                     placeholder="e.g., Clean exhaust hood"
-                                    className="text-sm"
+                                    className="mt-1.5 text-sm"
                                   />
                                 </div>
                                 <div>
-                                  <Label className="text-xs">Item Text (Spanish)</Label>
+                                  <Label>Item Text (Spanish)</Label>
                                   <Input
                                     value={item.textEs || ''}
                                     onChange={(e) =>
@@ -842,20 +913,20 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                       })
                                     }
                                     placeholder="e.g., Limpiar campana extractora"
-                                    className="text-sm"
+                                    className="mt-1.5 text-sm"
                                   />
                                 </div>
                               </div>
                               <div className="grid grid-cols-3 gap-2">
                                 <div>
-                                  <Label className="text-xs">Frequency</Label>
+                                  <Label>Frequency</Label>
                                   <Select
                                     value={item.frequency}
                                     onValueChange={(value: ChecklistItem['frequency']) =>
                                       updateItem(section.id, item.id, { frequency: value })
                                     }
                                   >
-                                    <SelectTrigger className="h-8 text-xs">
+                                    <SelectTrigger size="sm" className="mt-1.5 w-full text-xs">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -867,14 +938,14 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                   </Select>
                                 </div>
                                 <div>
-                                  <Label className="text-xs">Priority</Label>
+                                  <Label>Priority</Label>
                                   <Select
                                     value={item.priority}
                                     onValueChange={(value: ChecklistItem['priority']) =>
                                       updateItem(section.id, item.id, { priority: value })
                                     }
                                   >
-                                    <SelectTrigger className="h-8 text-xs">
+                                    <SelectTrigger size="sm" className="mt-1.5 w-full text-xs">
                                       <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -883,7 +954,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                     </SelectContent>
                                   </Select>
                                 </div>
-                                <div className="flex items-end">
+                                <div className="flex items-end pb-2">
                                   <div className="flex items-center space-x-2">
                                     <Checkbox
                                       id={`photo-${item.id}`}
@@ -896,7 +967,7 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                                     />
                                     <Label
                                       htmlFor={`photo-${item.id}`}
-                                      className="text-xs cursor-pointer"
+                                      className="cursor-pointer"
                                     >
                                       Photo
                                     </Label>
@@ -906,11 +977,19 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                             </div>
                             <Button
                               variant="ghost"
-                              size="icon"
-                              className="ml-2 h-8 w-8"
-                              onClick={() => deleteItem(section.id, item.id)}
+                              size="icon-sm"
+                              className="ml-2"
+                              aria-label="Delete item"
+                              onClick={() =>
+                                setDeleteTarget({
+                                  type: 'item',
+                                  sectionId: section.id,
+                                  itemId: item.id,
+                                  label: item.text || 'this item',
+                                })
+                              }
                             >
-                              <Trash2 className="h-4 w-4 text-destructive" />
+                              <Trash2 className="size-4" />
                             </Button>
                           </div>
                         </div>
@@ -923,9 +1002,9 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => addItem(section.id)}
-                    className="w-full"
+                    className="w-full border-dashed"
                   >
-                    <Plus className="mr-2 h-4 w-4" />
+                    <Plus className="size-4" />
                     Add Custom Item
                   </Button>
                 </CardContent>
@@ -939,37 +1018,32 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
       {sections.length > 0 && (
         <Card>
           <CardHeader>
+            <div className="kicker mb-1 text-muted-foreground">Live Preview</div>
             <CardTitle>Preview ({previewLanguage === 'en' ? 'English' : 'Español'})</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {sections.map((section, idx) => (
                 <div key={section.id} className="space-y-2">
-                  <h3 className="font-semibold">
+                  <h3 className="font-display text-[15px] font-bold tracking-[-0.2px] text-foreground">
                     {previewLanguage === 'en' ? section.name : section.nameEs || section.name}
                   </h3>
                   {section.items.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic">No items</p>
+                    <p className="text-sm italic text-muted-foreground">No items</p>
                   ) : (
-                    <ul className="list-disc list-inside space-y-1 ml-4">
+                    <ul className="ml-4 list-inside list-disc space-y-1">
                       {section.items.map((item) => (
-                        <li key={item.id} className="text-sm flex items-center gap-2">
+                        <li key={item.id} className="flex items-center gap-2 text-sm">
                           <span>
                             {previewLanguage === 'en' ? item.text : item.textEs || item.text}
                           </span>
                           {item.requiresPhoto && (
-                            <Badge variant="outline" className="text-xs">
-                              Photo
-                            </Badge>
+                            <Badge variant="teal">Photo</Badge>
                           )}
                           {item.priority === 'high' && (
-                            <Badge variant="destructive" className="text-xs">
-                              High Priority
-                            </Badge>
+                            <Badge variant="coral">High Priority</Badge>
                           )}
-                          <Badge variant="secondary" className="text-xs">
-                            {item.frequency}
-                          </Badge>
+                          <Badge variant="neutral">{item.frequency}</Badge>
                         </li>
                       ))}
                     </ul>
@@ -981,6 +1055,45 @@ export function ChecklistBuilder({ template }: ChecklistBuilderProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* Delete confirmation — the only place red is allowed */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">
+              {deleteTarget?.type === 'section' ? 'Delete this section?' : 'Delete this item?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget?.type === 'section' ? (
+                <>
+                  &ldquo;{deleteTarget.label}&rdquo; and all of its items will be removed from
+                  this checklist. The change is applied when you save.
+                </>
+              ) : (
+                <>
+                  &ldquo;{deleteTarget?.label}&rdquo; will be removed from this section. The
+                  change is applied when you save.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={confirmDelete}
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

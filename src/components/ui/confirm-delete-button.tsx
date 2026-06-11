@@ -79,7 +79,7 @@ export function ConfirmDeleteButton({
           type="button"
           variant={variant}
           size={size}
-          className={className ?? 'h-7 text-xs rounded-sm text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30'}
+          className={className ?? 'h-7 text-xs text-muted-foreground hover:text-foreground'}
           onClick={(e) => e.stopPropagation()}
         >
           <Trash2 className="mr-1 h-3 w-3" />
@@ -94,7 +94,7 @@ export function ConfirmDeleteButton({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={deleting} className="rounded-sm">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={deleting}>
             Cancel
           </Button>
           <Button
@@ -102,7 +102,6 @@ export function ConfirmDeleteButton({
             variant="destructive"
             onClick={handleDelete}
             disabled={deleting}
-            className="rounded-sm bg-red-600 hover:bg-red-700"
           >
             {deleting ? (
               <>

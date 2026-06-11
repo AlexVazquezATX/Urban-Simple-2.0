@@ -1,8 +1,9 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { SearchX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ChecklistBuilder } from '@/components/operations/checklist-builder'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -46,49 +47,38 @@ async function ChecklistDetail({ id }: { id: string }) {
 
   if (!template) {
     return (
-      <div className="text-red-600">
-        Checklist template not found. Please try again.
-      </div>
+      <EmptyState
+        icon={SearchX}
+        title="Checklist not found"
+        description="It may have been removed, or the link is out of date. Head back to your templates and try again."
+        action={
+          <Button asChild variant="outline">
+            <Link href="/operations/checklists">Back to Checklists</Link>
+          </Button>
+        }
+      />
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/operations/checklists">
-          <Button variant="ghost" size="icon" className="rounded-sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">{template.name}</h1>
-          {template.nameEs && (
-            <p className="text-sm text-warm-500 dark:text-cream-400">{template.nameEs}</p>
-          )}
-          {template.description && (
-            <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">{template.description}</p>
-          )}
-        </div>
-      </div>
-
-      <ChecklistBuilder template={template as any} />
-    </div>
-  )
+  return <ChecklistBuilder template={template as any} />
 }
 
 function ChecklistDetailSkeleton() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Skeleton className="h-10 w-10 rounded-sm" />
-        <div>
-          <Skeleton className="h-8 w-64 mb-2 rounded-sm" />
-          <Skeleton className="h-4 w-48 rounded-sm" />
+      <div className="flex items-end justify-between">
+        <div className="flex items-center gap-3">
+          <Skeleton className="size-8 rounded-[9px]" />
+          <div>
+            <Skeleton className="mb-2 h-8 w-64" />
+            <Skeleton className="h-4 w-48" />
+          </div>
         </div>
+        <Skeleton className="h-9 w-64 rounded-[9px]" />
       </div>
       <div className="space-y-4">
-        <Skeleton className="h-32 w-full rounded-sm" />
-        <Skeleton className="h-64 w-full rounded-sm" />
+        <Skeleton className="h-32 w-full rounded-[14px]" />
+        <Skeleton className="h-64 w-full rounded-[14px]" />
       </div>
     </div>
   )
@@ -106,4 +96,3 @@ export default async function ChecklistDetailPage({
     </Suspense>
   )
 }
-

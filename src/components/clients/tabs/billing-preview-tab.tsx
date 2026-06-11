@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,6 +42,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Plus, Wrench, Edit } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { formatMoneyExact } from '@/lib/format'
 import type { BillingPreview, FacilityLineItem, ServiceLineItemData } from '@/lib/billing/billing-types'
 import { ServiceLineItemForm } from '@/components/forms/service-line-item-form'
 
@@ -49,13 +52,8 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-  }).format(amount)
-}
+// Billing money always shows cents.
+const formatCurrency = formatMoneyExact
 
 function formatPercent(rate: number): string {
   return `${(rate * 100).toFixed(2)}%`
@@ -74,14 +72,14 @@ function formatDays(days: number[]): string {
 
 function StatusDot({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    ACTIVE: 'bg-lime-500',
-    PAUSED: 'bg-yellow-500',
-    SEASONAL_PAUSED: 'bg-orange-400',
-    PENDING_APPROVAL: 'bg-warm-400',
-    CLOSED: 'bg-red-400',
+    ACTIVE: 'bg-green-600 dark:bg-green-300',
+    PAUSED: 'bg-gold-600 dark:bg-gold-400',
+    SEASONAL_PAUSED: 'bg-teal-600 dark:bg-teal-300',
+    PENDING_APPROVAL: 'bg-muted-foreground/50',
+    CLOSED: 'bg-coral-600 dark:bg-coral-300',
   }
   return (
-    <span className={`inline-block h-2 w-2 rounded-full ${colors[status] || 'bg-warm-300'}`} />
+    <span className={`inline-block h-2 w-2 rounded-full ${colors[status] || 'bg-muted-foreground/40'}`} />
   )
 }
 
@@ -187,11 +185,11 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
 
   if (error) {
     return (
-      <Card className="border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
-          <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">{error}</p>
-          <Button variant="outline" size="sm" onClick={fetchPreview} className="rounded-sm">
+          <AlertCircle className="mb-3 h-8 w-8 text-coral-600 dark:text-coral-300" />
+          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" size="sm" onClick={fetchPreview}>
             Retry
           </Button>
         </CardContent>
@@ -210,19 +208,18 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
-            size="icon"
+            size="icon-sm"
             onClick={goToPreviousMonth}
-            className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
 
           <div className="flex items-center gap-2">
             <Select value={String(month)} onValueChange={(v) => setMonth(parseInt(v))}>
-              <SelectTrigger className="w-[130px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
+              <SelectTrigger className="h-8 w-[130px] text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-sm">
+              <SelectContent>
                 {MONTH_NAMES.map((name, i) => (
                   <SelectItem key={i + 1} value={String(i + 1)}>{name}</SelectItem>
                 ))}
@@ -230,10 +227,10 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
             </Select>
 
             <Select value={String(year)} onValueChange={(v) => setYear(parseInt(v))}>
-              <SelectTrigger className="w-[85px] rounded-sm border-warm-200 dark:border-charcoal-700 h-8 text-sm">
+              <SelectTrigger className="h-8 w-[85px] text-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="rounded-sm">
+              <SelectContent>
                 {Array.from({ length: 5 }, (_, i) => now.getFullYear() - 1 + i).map(y => (
                   <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                 ))}
@@ -243,9 +240,8 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
 
           <Button
             variant="outline"
-            size="icon"
+            size="icon-sm"
             onClick={goToNextMonth}
-            className="rounded-sm border-warm-200 dark:border-charcoal-700 h-8 w-8"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -255,7 +251,7 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
               variant="ghost"
               size="sm"
               onClick={goToCurrentMonth}
-              className="rounded-sm text-ocean-600 text-xs ml-1"
+              className="ml-1 text-xs"
             >
               Today
             </Button>
@@ -263,37 +259,29 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <Switch
-              checked={hideTax}
-              onCheckedChange={setHideTax}
-              className="data-[state=checked]:bg-ocean-500 data-[state=unchecked]:bg-warm-300"
-            />
-            <span className="text-xs text-warm-600 dark:text-cream-400">Hide Tax</span>
+          <label className="flex cursor-pointer items-center gap-2">
+            <Switch checked={hideTax} onCheckedChange={setHideTax} />
+            <span className="text-xs text-muted-foreground">Hide Tax</span>
           </label>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
-              >
-                <Download className="h-3.5 w-3.5 mr-1.5" />
+              <Button variant="outline" size="sm">
+                <Download className="h-3.5 w-3.5" />
                 Export
               </Button>
             </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuItem onClick={handleExportPdf}>
-              <FileDown className="h-3.5 w-3.5 mr-2" />
+              <FileDown className="h-3.5 w-3.5" />
               PDF Report
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportCsv}>
-              <FileSpreadsheet className="h-3.5 w-3.5 mr-2" />
+              <FileSpreadsheet className="h-3.5 w-3.5" />
               CSV Spreadsheet
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleExportQb}>
-              <FileText className="h-3.5 w-3.5 mr-2" />
+              <FileText className="h-3.5 w-3.5" />
               QuickBooks CSV
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -326,39 +314,33 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
       </div>
 
       {/* Line items table */}
-      <Card className="border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="pb-3">
+      <Card className="gap-3">
+        <CardHeader className="pb-0">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
-              Facility Line Items
-            </CardTitle>
-            <span className="text-xs text-warm-500 dark:text-cream-400">
+            <CardTitle className="text-[15px]">Facility Line Items</CardTitle>
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {preview.activeFacilityCount} of {preview.totalFacilityCount} active
             </span>
           </div>
         </CardHeader>
         <CardContent className="p-0">
           {preview.lineItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center px-4">
-              <FileText className="h-8 w-8 text-warm-300 dark:text-charcoal-600 mb-3" />
-              <p className="text-sm text-warm-500">
-                No facility profiles configured for this client.
-              </p>
-              <p className="text-xs text-warm-400 mt-1">
-                Add facilities in the Facilities tab to generate billing previews.
-              </p>
-            </div>
+            <EmptyState
+              icon={FileText}
+              title="No facility profiles configured"
+              description="Add facilities in the Facilities tab to generate billing previews."
+            />
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Facility</TableHead>
-                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Status</TableHead>
-                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Schedule</TableHead>
-                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Rate</TableHead>
-                    {!hideTax && <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Tax</TableHead>}
-                    <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Total</TableHead>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead className="pl-6">Facility</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Schedule</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    {!hideTax && <TableHead className="text-right">Tax</TableHead>}
+                    <TableHead className="pr-6 text-right">Total</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -376,19 +358,19 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
                     const facilitySubtotal = preview.lineItems.reduce((s, li) => s + li.lineItemTotal, 0)
                     const facilityTax = preview.lineItems.reduce((s, li) => s + li.lineItemTax, 0)
                     return (
-                      <TableRow className="border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 font-medium">
-                        <TableCell colSpan={3} className="text-sm text-warm-800 dark:text-cream-200">
+                      <TableRow className="bg-secondary/50 font-medium hover:bg-secondary/50">
+                        <TableCell colSpan={3} className="pl-6 text-sm text-foreground">
                           Facility Subtotal ({preview.activeFacilityCount} active)
                         </TableCell>
-                        <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
+                        <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
                           {formatCurrency(facilitySubtotal)}
                         </TableCell>
                         {!hideTax && (
-                          <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
+                          <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
                             {formatCurrency(facilityTax)}
                           </TableCell>
                         )}
-                        <TableCell className="text-right text-sm text-warm-900 dark:text-cream-100 font-semibold">
+                        <TableCell className="pr-6 text-right font-mono text-sm font-semibold tabular-nums text-foreground">
                           {formatCurrency(hideTax ? facilitySubtotal : facilitySubtotal + facilityTax)}
                         </TableCell>
                       </TableRow>
@@ -414,13 +396,13 @@ export function BillingPreviewTab({ clientId, facilities }: BillingPreviewTabPro
 
       {/* Grand total — only shown if there are service items */}
       {preview.serviceLineItems.length > 0 && (
-        <Card className="border-ocean-200 bg-ocean-50">
-          <CardContent className="p-3">
+        <Card className="border-gold-600/30 bg-gold-600/10 py-3 dark:border-gold-400/25 dark:bg-gold-400/12">
+          <CardContent className="px-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-display font-medium text-ocean-800">
+              <p className="font-display text-sm font-bold text-foreground">
                 Grand Total (facilities + services)
               </p>
-              <p className="text-lg font-display font-bold text-ocean-900">
+              <p className="font-mono text-lg font-bold tabular-nums text-foreground">
                 {formatCurrency(hideTax ? preview.subtotal : preview.total)}
               </p>
             </div>
@@ -446,12 +428,16 @@ function SummaryCard({
   highlight?: boolean
 }) {
   return (
-    <Card className={`border-warm-200 dark:border-charcoal-700 ${highlight ? 'bg-ocean-50 border-ocean-200' : ''}`}>
-      <CardContent className="p-3">
-        <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">{label}</p>
-        <p className={`text-lg font-display font-semibold ${highlight ? 'text-ocean-700' : 'text-warm-900 dark:text-cream-100'}`}>
-          {value}
-        </p>
+    <Card
+      className={cn(
+        'gap-0 py-3',
+        highlight &&
+          'border-primary/30 bg-gradient-to-br from-primary/10 to-transparent dark:from-gold-400/12'
+      )}
+    >
+      <CardContent className="px-4">
+        <p className="kicker mb-1 text-muted-foreground">{label}</p>
+        <p className="font-mono text-lg font-semibold tabular-nums text-foreground">{value}</p>
       </CardContent>
     </Card>
   )
@@ -468,10 +454,10 @@ function DeltaCard({
 }) {
   if (previousTotal === null || deltaAmount === null) {
     return (
-      <Card className="border-warm-200 dark:border-charcoal-700">
-        <CardContent className="p-3">
-          <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">vs. Prior Month</p>
-          <p className="text-sm text-warm-400 dark:text-cream-400">No data</p>
+      <Card className="gap-0 py-3">
+        <CardContent className="px-4">
+          <p className="kicker mb-1 text-muted-foreground">vs. Prior Month</p>
+          <p className="text-sm text-muted-foreground">No data</p>
         </CardContent>
       </Card>
     )
@@ -482,16 +468,23 @@ function DeltaCard({
   const isFlat = deltaAmount === 0
 
   return (
-    <Card className={`border-warm-200 dark:border-charcoal-700 ${isUp ? 'bg-red-50/50' : isDown ? 'bg-lime-50/50' : ''}`}>
-      <CardContent className="p-3">
-        <p className="text-xs text-warm-500 dark:text-cream-400 mb-0.5">vs. Prior Month</p>
+    <Card className="gap-0 py-3">
+      <CardContent className="px-4">
+        <p className="kicker mb-1 text-muted-foreground">vs. Prior Month</p>
         <div className="flex items-center gap-1.5">
-          {isUp && <TrendingUp className="h-4 w-4 text-red-500" />}
-          {isDown && <TrendingDown className="h-4 w-4 text-lime-600" />}
-          {isFlat && <Minus className="h-4 w-4 text-warm-400" />}
-          <span className={`text-lg font-display font-semibold ${
-            isUp ? 'text-red-600' : isDown ? 'text-lime-700' : 'text-warm-600'
-          }`}>
+          {isUp && <TrendingUp className="h-4 w-4 text-coral-600 dark:text-coral-300" />}
+          {isDown && <TrendingDown className="h-4 w-4 text-green-600 dark:text-green-300" />}
+          {isFlat && <Minus className="h-4 w-4 text-muted-foreground" />}
+          <span
+            className={cn(
+              'font-mono text-lg font-semibold tabular-nums',
+              isUp
+                ? 'text-coral-600 dark:text-coral-300'
+                : isDown
+                  ? 'text-green-600 dark:text-green-300'
+                  : 'text-muted-foreground'
+            )}
+          >
             {isFlat ? 'No change' : `${isUp ? '+' : ''}${formatCurrency(deltaAmount)}`}
           </span>
         </div>
@@ -515,73 +508,68 @@ function LineItemRow({
   const canToggle = item.effectiveStatus === 'ACTIVE' || item.effectiveStatus === 'PAUSED'
 
   return (
-    <TableRow className={`border-warm-200 dark:border-charcoal-700 ${dimmed ? 'opacity-50' : ''}`}>
-      <TableCell className="py-2">
+    <TableRow className={dimmed ? 'opacity-50' : ''}>
+      <TableCell className="py-2 pl-6">
         <div className="flex items-center gap-2">
           {canToggle ? (
             <Switch
               checked={item.effectiveStatus === 'ACTIVE'}
               disabled={toggling === item.facilityProfileId}
               onCheckedChange={(checked) => onToggle(item.facilityProfileId, checked)}
-              className="data-[state=checked]:bg-lime-500 data-[state=unchecked]:bg-warm-300"
             />
           ) : (
             <StatusDot status={item.effectiveStatus} />
           )}
           <div>
-            <span className="text-sm text-warm-800 dark:text-cream-200">{item.locationName}</span>
+            <span className="text-sm text-foreground">{item.locationName}</span>
             {item.category && (
-              <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400">
+              <Badge variant="neutral" className="ml-2">
                 {item.category}
               </Badge>
             )}
             {item.isOverridden && (
-              <Badge className="ml-1 text-[10px] px-1.5 py-0 bg-orange-100 text-orange-700 border-orange-200">
+              <Badge variant="gold" className="ml-1">
                 Override
               </Badge>
             )}
             {item.isSeasonallyPaused && (
-              <Badge className="ml-1 text-[10px] px-1.5 py-0 bg-yellow-100 text-yellow-700 border-yellow-200">
+              <Badge variant="teal" className="ml-1">
                 Seasonal
               </Badge>
             )}
           </div>
         </div>
       </TableCell>
-      <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
+      <TableCell className="py-2 text-xs text-muted-foreground">
         {item.effectiveStatus.replace('_', ' ')}
       </TableCell>
-      <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
+      <TableCell className="py-2 font-mono text-xs tabular-nums text-muted-foreground">
         {item.includedInTotal ? `${item.effectiveFrequency}x/wk · ${formatDays(item.effectiveDaysOfWeek)}` : '-'}
       </TableCell>
-      <TableCell className="py-2 text-right text-sm text-warm-800 dark:text-cream-200">
+      <TableCell className="py-2 text-right font-mono text-sm tabular-nums text-foreground">
         {item.includedInTotal ? (
           <div>
             {formatCurrency(item.effectiveRate)}
             {item.isProRated && (
-              <div className="text-[10px] text-orange-600 font-normal">
+              <div className="text-[10px] font-normal text-muted-foreground">
                 {item.activeDays} of {item.scheduledDays} days
               </div>
             )}
           </div>
         ) : (
-          <span className="line-through text-warm-400">{formatCurrency(item.effectiveRate)}</span>
+          <span className="text-muted-foreground line-through">{formatCurrency(item.effectiveRate)}</span>
         )}
       </TableCell>
       {!hideTax && (
-        <TableCell className="py-2 text-right text-xs text-warm-600 dark:text-cream-400">
+        <TableCell className="py-2 text-right font-mono text-xs tabular-nums text-muted-foreground">
           {item.includedInTotal ? formatCurrency(item.lineItemTax) : '-'}
         </TableCell>
       )}
-      <TableCell className="py-2 text-right text-sm font-medium text-warm-800 dark:text-cream-200">
+      <TableCell className="py-2 pr-6 text-right font-mono text-sm font-medium tabular-nums text-foreground">
         {item.includedInTotal ? (
-          <div>
+          <div className="flex items-center justify-end gap-1">
             {formatCurrency(hideTax ? item.lineItemTotal : item.lineItemTotal)}
-            {item.isProRated && (
-              <Badge className="ml-1 text-[9px] px-1 py-0 bg-orange-100 text-orange-700 border-orange-200">
-                Pro-rated
-              </Badge>
-            )}
+            {item.isProRated && <Badge variant="gold">Pro-rated</Badge>}
           </div>
         ) : '$0.00'}
       </TableCell>
@@ -602,41 +590,39 @@ function ExplanationPanel({ preview }: { preview: BillingPreview }) {
   if (!hasContent) return null
 
   return (
-    <Card className="border-warm-200 dark:border-charcoal-700 bg-warm-50/50 dark:bg-charcoal-800/50">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-display font-medium text-warm-800 dark:text-cream-200">
-          Billing Notes
-        </CardTitle>
+    <Card className="gap-2 border-teal-600/30 bg-teal-600/10 py-4 dark:border-teal-300/25 dark:bg-teal-300/12">
+      <CardHeader className="px-4">
+        <CardTitle className="text-sm">Billing Notes</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-xs text-warm-600 dark:text-cream-400">
+      <CardContent className="space-y-2 px-4 text-[13px] text-muted-foreground">
         {explanation.seasonallyPaused.length > 0 && (
           <div>
-            <span className="font-medium text-orange-700">Seasonally paused:</span>{' '}
+            <span className="font-medium text-foreground">Seasonally paused:</span>{' '}
             {explanation.seasonallyPaused.join(', ')}
           </div>
         )}
         {explanation.pausedFacilities.length > 0 && (
           <div>
-            <span className="font-medium text-yellow-700">Paused:</span>{' '}
+            <span className="font-medium text-foreground">Paused:</span>{' '}
             {explanation.pausedFacilities.join(', ')}
           </div>
         )}
         {explanation.pendingApproval.length > 0 && (
           <div>
-            <span className="font-medium text-warm-700 dark:text-cream-300">Pending approval:</span>{' '}
+            <span className="font-medium text-foreground">Pending approval:</span>{' '}
             {explanation.pendingApproval.join(', ')}
           </div>
         )}
         {explanation.closedFacilities.length > 0 && (
           <div>
-            <span className="font-medium text-red-700">Closed:</span>{' '}
+            <span className="font-medium text-foreground">Closed:</span>{' '}
             {explanation.closedFacilities.join(', ')}
           </div>
         )}
         {explanation.overrides.length > 0 && (
           <div>
-            <span className="font-medium text-orange-700">Overrides this month:</span>
-            <ul className="mt-1 ml-4 list-disc space-y-0.5">
+            <span className="font-medium text-foreground">Overrides this month:</span>
+            <ul className="ml-4 mt-1 list-disc space-y-0.5">
               {explanation.overrides.map((o, i) => (
                 <li key={i}>{o}</li>
               ))}
@@ -644,8 +630,8 @@ function ExplanationPanel({ preview }: { preview: BillingPreview }) {
           </div>
         )}
         {explanation.deltaReason && (
-          <div className="pt-1 border-t border-warm-200 dark:border-charcoal-700">
-            <span className="font-medium text-warm-700 dark:text-cream-300">Month-over-month:</span>{' '}
+          <div className="border-t border-teal-600/30 pt-1 dark:border-teal-300/25">
+            <span className="font-medium text-foreground">Month-over-month:</span>{' '}
             {explanation.deltaReason}
           </div>
         )}
@@ -676,16 +662,14 @@ function ServiceItemsSection({
   const serviceTax = items.reduce((s, si) => s + si.lineItemTax, 0)
 
   return (
-    <Card className="border-warm-200 dark:border-charcoal-700">
-      <CardHeader className="pb-3">
+    <Card className="gap-3">
+      <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Wrench className="h-4 w-4 text-warm-500" />
-            <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
-              Service Line Items
-            </CardTitle>
+            <Wrench className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-[15px]">Service Line Items</CardTitle>
             {items.length > 0 && (
-              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">
+              <Badge variant="neutral" className="font-mono">
                 {items.length}
               </Badge>
             )}
@@ -697,8 +681,8 @@ function ServiceItemsSection({
             defaultMonth={month}
             onSuccess={onRefresh}
           >
-            <Button variant="outline" size="sm" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 h-7 text-xs">
-              <Plus className="h-3 w-3 mr-1" />
+            <Button variant="outline" size="sm" className="h-7 text-xs">
+              <Plus className="h-3 w-3" />
               Add Service
             </Button>
           </ServiceLineItemForm>
@@ -706,56 +690,53 @@ function ServiceItemsSection({
       </CardHeader>
       <CardContent className="p-0">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center px-4">
-            <Wrench className="h-6 w-6 text-warm-300 mb-2" />
-            <p className="text-xs text-warm-500 dark:text-cream-400">
-              No ad-hoc services for this month
-            </p>
-            <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
-              Add one-time charges like deep cleaning, high dusting, etc.
-            </p>
-          </div>
+          <EmptyState
+            icon={Wrench}
+            title="No ad-hoc services this month"
+            description="Add one-time charges like deep cleaning, high dusting, etc."
+            className="py-8"
+          />
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Description</TableHead>
-                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium">Facility</TableHead>
-                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Qty</TableHead>
-                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Rate</TableHead>
-                  {!hideTax && <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Tax</TableHead>}
-                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium text-right">Total</TableHead>
-                  <TableHead className="text-warm-600 dark:text-cream-400 text-xs font-medium w-8"></TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="pl-6">Description</TableHead>
+                  <TableHead>Facility</TableHead>
+                  <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Rate</TableHead>
+                  {!hideTax && <TableHead className="text-right">Tax</TableHead>}
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="w-8 pr-6"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((si) => (
-                  <TableRow key={si.id} className="border-warm-200 dark:border-charcoal-700">
-                    <TableCell className="py-2">
-                      <span className="text-sm text-warm-800 dark:text-cream-200">{si.description}</span>
+                  <TableRow key={si.id}>
+                    <TableCell className="py-2 pl-6">
+                      <span className="text-sm text-foreground">{si.description}</span>
                       {si.notes && (
-                        <p className="text-[10px] text-warm-400 mt-0.5">{si.notes}</p>
+                        <p className="mt-0.5 text-[10px] text-muted-foreground">{si.notes}</p>
                       )}
                     </TableCell>
-                    <TableCell className="py-2 text-xs text-warm-600 dark:text-cream-400">
-                      {si.locationName || <span className="text-warm-400">-</span>}
+                    <TableCell className="py-2 text-xs text-muted-foreground">
+                      {si.locationName || <span aria-hidden>—</span>}
                     </TableCell>
-                    <TableCell className="py-2 text-right text-xs text-warm-700 dark:text-cream-300">
+                    <TableCell className="py-2 text-right font-mono text-xs tabular-nums text-muted-foreground">
                       {si.quantity !== 1 ? si.quantity : '1'}
                     </TableCell>
-                    <TableCell className="py-2 text-right text-sm text-warm-800 dark:text-cream-200">
+                    <TableCell className="py-2 text-right font-mono text-sm tabular-nums text-foreground">
                       {formatCurrency(si.unitRate)}
                     </TableCell>
                     {!hideTax && (
-                      <TableCell className="py-2 text-right text-xs text-warm-600 dark:text-cream-400">
+                      <TableCell className="py-2 text-right font-mono text-xs tabular-nums text-muted-foreground">
                         {formatCurrency(si.lineItemTax)}
                       </TableCell>
                     )}
-                    <TableCell className="py-2 text-right text-sm font-medium text-warm-800 dark:text-cream-200">
+                    <TableCell className="py-2 text-right font-mono text-sm font-medium tabular-nums text-foreground">
                       {formatCurrency(si.lineItemTotal)}
                     </TableCell>
-                    <TableCell className="py-2">
+                    <TableCell className="py-2 pr-6">
                       <ServiceLineItemForm
                         clientId={clientId}
                         facilities={facilities}
@@ -764,11 +745,7 @@ function ServiceItemsSection({
                         defaultMonth={month}
                         onSuccess={onRefresh}
                       >
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0 rounded-sm text-warm-400 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200"
-                        >
+                        <Button variant="ghost" size="icon-sm" aria-label={`Edit ${si.description}`}>
                           <Edit className="h-3 w-3" />
                         </Button>
                       </ServiceLineItemForm>
@@ -776,22 +753,22 @@ function ServiceItemsSection({
                   </TableRow>
                 ))}
                 {/* Service subtotal */}
-                <TableRow className="border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 font-medium">
-                  <TableCell colSpan={hideTax ? 3 : 4} className="text-sm text-warm-800 dark:text-cream-200">
+                <TableRow className="bg-secondary/50 font-medium hover:bg-secondary/50">
+                  <TableCell colSpan={hideTax ? 3 : 4} className="pl-6 text-sm text-foreground">
                     Service Subtotal
                   </TableCell>
-                  <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
+                  <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
                     {formatCurrency(serviceTotal)}
                   </TableCell>
                   {!hideTax && (
-                    <TableCell className="text-right text-sm text-warm-800 dark:text-cream-200">
+                    <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
                       {formatCurrency(serviceTax)}
                     </TableCell>
                   )}
-                  <TableCell className="text-right text-sm text-warm-900 dark:text-cream-100 font-semibold">
+                  <TableCell className="text-right font-mono text-sm font-semibold tabular-nums text-foreground">
                     {formatCurrency(hideTax ? serviceTotal : serviceTotal + serviceTax)}
                   </TableCell>
-                  <TableCell />
+                  <TableCell className="pr-6" />
                 </TableRow>
               </TableBody>
             </Table>
@@ -814,18 +791,18 @@ function BillingPreviewSkeleton() {
         </div>
         <Skeleton className="h-8 w-28" />
       </div>
-      <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {[1, 2, 3, 4].map(i => (
-          <Card key={i} className="border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-3">
-              <Skeleton className="h-3 w-16 mb-2" />
+          <Card key={i} className="gap-0 py-3">
+            <CardContent className="px-4">
+              <Skeleton className="mb-2 h-3 w-16" />
               <Skeleton className="h-6 w-24" />
             </CardContent>
           </Card>
         ))}
       </div>
-      <Card className="border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="pb-3">
+      <Card className="gap-3">
+        <CardHeader className="pb-0">
           <Skeleton className="h-4 w-40" />
         </CardHeader>
         <CardContent>

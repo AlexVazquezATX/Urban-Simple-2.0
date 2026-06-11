@@ -193,12 +193,13 @@ export function ChannelSettingsDialog({
               )}
             </div>
 
-            {/* Danger Zone */}
+            {/* Danger Zone — coral text trigger; true red lives only in the
+                confirm dialog below. */}
             {!isDM && (
               <div className="pt-4 border-t">
                 <Button
-                  variant="destructive"
-                  className="w-full justify-start gap-2"
+                  variant="outline"
+                  className="w-full justify-start gap-2 text-coral-600 hover:text-coral-600 dark:text-coral-300 dark:hover:text-coral-300"
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={isDeleting}
                 >

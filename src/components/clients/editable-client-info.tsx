@@ -200,12 +200,12 @@ export function EditableClientInfo({ client }: EditableClientInfoProps) {
                 </SelectContent>
               </Select>
             </Field>
-            <label className="flex cursor-pointer items-center gap-2 self-end rounded-sm border border-warm-200 bg-warm-50/50 p-2.5 dark:border-charcoal-700 dark:bg-charcoal-800/50">
+            <label className="flex cursor-pointer items-center gap-2 self-end rounded-[10px] border border-border bg-secondary/40 p-2.5">
               <Checkbox
                 checked={form.taxExempt}
                 onCheckedChange={(c) => set({ taxExempt: c === true })}
               />
-              <span className="text-sm text-warm-700 dark:text-cream-300">Tax exempt</span>
+              <span className="text-sm text-foreground">Tax exempt</span>
             </label>
           </div>
           <Field label="Parent Organization">
@@ -237,7 +237,7 @@ export function EditableClientInfo({ client }: EditableClientInfoProps) {
       ) : (
         <div className="space-y-4">
           {client.logoUrl && (
-            <div className="relative h-32 w-full overflow-hidden rounded-sm border border-warm-200 bg-warm-50 dark:border-charcoal-700 dark:bg-charcoal-800">
+            <div className="relative h-32 w-full overflow-hidden rounded-[10px] border border-border bg-secondary">
               <Image
                 src={client.logoUrl}
                 alt={client.name}
@@ -248,66 +248,55 @@ export function EditableClientInfo({ client }: EditableClientInfoProps) {
             </div>
           )}
           <div>
-            <p className="text-sm text-warm-500 dark:text-cream-400">Billing Email</p>
-            <p className="font-medium text-warm-900 dark:text-cream-100">
-              {client.billingEmail || '-'}
+            <p className="text-sm text-muted-foreground">Billing Email</p>
+            <p className="font-medium text-foreground">
+              {client.billingEmail || <span className="text-muted-foreground">—</span>}
             </p>
           </div>
           <div>
-            <p className="text-sm text-warm-500 dark:text-cream-400">Phone</p>
-            <p className="font-medium text-warm-900 dark:text-cream-100">{client.phone || '-'}</p>
+            <p className="text-sm text-muted-foreground">Phone</p>
+            <p className="font-medium text-foreground">
+              {client.phone || <span className="text-muted-foreground">—</span>}
+            </p>
           </div>
           <div>
-            <p className="text-sm text-warm-500 dark:text-cream-400">Payment Terms</p>
-            <p className="font-medium text-warm-900 dark:text-cream-100">{client.paymentTerms}</p>
+            <p className="text-sm text-muted-foreground">Payment Terms</p>
+            <p className="font-medium text-foreground">{client.paymentTerms}</p>
           </div>
           {client.preferredPaymentMethod && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Preferred Payment Method</p>
-              <p className="font-medium capitalize text-warm-900 dark:text-cream-100">
+              <p className="text-sm text-muted-foreground">Preferred Payment Method</p>
+              <p className="font-medium capitalize text-foreground">
                 {client.preferredPaymentMethod.replace('_', ' ')}
               </p>
             </div>
           )}
           <div className="flex items-center gap-4">
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Status</p>
-              <Badge
-                className={`rounded-sm px-1.5 py-0 text-[10px] ${
-                  client.status === 'active'
-                    ? 'border-lime-200 bg-lime-100 text-lime-700'
-                    : 'border-warm-200 bg-warm-100 text-warm-600'
-                }`}
-              >
+              <p className="text-sm text-muted-foreground">Status</p>
+              <Badge variant={client.status === 'active' ? 'green' : 'neutral'}>
                 {client.status}
               </Badge>
             </div>
-            {client.taxExempt && (
-              <Badge
-                variant="outline"
-                className="rounded-sm border-warm-300 px-1.5 py-0 text-[10px] text-warm-600 dark:border-charcoal-700 dark:text-cream-400"
-              >
-                Tax Exempt
-              </Badge>
-            )}
+            {client.taxExempt && <Badge variant="neutral">Tax Exempt</Badge>}
           </div>
           {client.healthScore !== null && client.healthScore !== undefined && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Health Score</p>
+              <p className="text-sm text-muted-foreground">Health Score</p>
               <div className="flex items-center gap-2">
-                <div className="h-2 flex-1 overflow-hidden rounded-sm bg-warm-100 dark:bg-charcoal-800">
+                <div className="h-2 flex-1 overflow-hidden rounded-full bg-secondary">
                   <div
                     className={`h-full ${
                       (client.healthScore || 0) >= 80
-                        ? 'bg-lime-500'
+                        ? 'bg-green-600 dark:bg-green-300'
                         : (client.healthScore || 0) >= 60
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
+                          ? 'bg-gold-600 dark:bg-gold-400'
+                          : 'bg-coral-600 dark:bg-coral-300'
                     }`}
                     style={{ width: `${client.healthScore || 0}%` }}
                   />
                 </div>
-                <span className="text-sm font-medium text-warm-700 dark:text-cream-300">
+                <span className="font-mono text-sm font-medium tabular-nums text-foreground">
                   {client.healthScore}/100
                 </span>
               </div>
@@ -315,15 +304,12 @@ export function EditableClientInfo({ client }: EditableClientInfoProps) {
           )}
           {(client.loyaltyPoints > 0 || client.loyaltyTier !== 'bronze') && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Loyalty</p>
+              <p className="text-sm text-muted-foreground">Loyalty</p>
               <div className="flex items-center gap-2">
-                <Badge
-                  variant="outline"
-                  className="rounded-sm border-warm-300 px-1.5 py-0 text-[10px] capitalize text-warm-600 dark:border-charcoal-700 dark:text-cream-400"
-                >
+                <Badge variant="neutral" className="capitalize">
                   {client.loyaltyTier}
                 </Badge>
-                <span className="text-sm text-warm-500 dark:text-cream-400">
+                <span className="text-sm text-muted-foreground">
                   {client.loyaltyPoints} points
                 </span>
               </div>
@@ -331,8 +317,8 @@ export function EditableClientInfo({ client }: EditableClientInfoProps) {
           )}
           {client.notes && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Notes</p>
-              <p className="text-sm text-warm-700 dark:text-cream-300">{client.notes}</p>
+              <p className="text-sm text-muted-foreground">Notes</p>
+              <p className="text-sm text-foreground">{client.notes}</p>
             </div>
           )}
         </div>

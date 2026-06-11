@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { PageHeader } from '@/components/layout/page-header'
 import Link from 'next/link'
 import { Key, Users, MessageSquare, Sparkles, FileText } from 'lucide-react'
 
@@ -18,31 +19,29 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="space-y-1">
-        <h1 className="text-4xl font-medium tracking-tight font-display text-warm-900 dark:text-cream-100">
-          Settings
-        </h1>
-        <p className="text-lg text-warm-500 dark:text-cream-400">
-          Platform configuration and admin tools
-        </p>
-      </div>
+      <PageHeader
+        kicker="ADMIN · PLATFORM"
+        title="Settings"
+        subtitle="Platform configuration and admin tools"
+        className="mb-0"
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {settingsLinks.map((item) => {
           const Icon = item.icon
           return (
             <Link key={item.href} href={item.href}>
-              <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900 hover:border-ocean-400 transition-colors h-full">
+              <Card className="hover:border-primary/40 transition-colors h-full">
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-lime-600 dark:text-lime-400" />
+                    <div className="h-10 w-10 rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12 flex items-center justify-center">
+                      <Icon className="h-5 w-5 text-gold-600 dark:text-gold-400" />
                     </div>
-                    <CardTitle className="text-warm-900 dark:text-cream-100 text-base font-medium">{item.label}</CardTitle>
+                    <CardTitle className="text-base">{item.label}</CardTitle>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <CardDescription className="text-warm-500 dark:text-cream-400">{item.description}</CardDescription>
+                  <CardDescription>{item.description}</CardDescription>
                 </CardContent>
               </Card>
             </Link>

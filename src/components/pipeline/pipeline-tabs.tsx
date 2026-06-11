@@ -35,21 +35,21 @@ export function PipelineTabs({ prospects, pipelineProspects }: PipelineTabsProps
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4">
-      <TabsList className="bg-warm-100 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
-        <TabsTrigger value="prospects" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
-          <Users className="h-3.5 w-3.5" />
+      <TabsList>
+        <TabsTrigger value="prospects">
+          <Users className="size-3.5" />
           Prospects
         </TabsTrigger>
-        <TabsTrigger value="board" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
-          <Kanban className="h-3.5 w-3.5" />
+        <TabsTrigger value="board">
+          <Kanban className="size-3.5" />
           Board
         </TabsTrigger>
-        <TabsTrigger value="outreach" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
-          <Mail className="h-3.5 w-3.5" />
+        <TabsTrigger value="outreach">
+          <Mail className="size-3.5" />
           Outreach
         </TabsTrigger>
-        <TabsTrigger value="discovery" className="gap-1.5 text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">
-          <Search className="h-3.5 w-3.5" />
+        <TabsTrigger value="discovery">
+          <Search className="size-3.5" />
           Discovery
         </TabsTrigger>
       </TabsList>
@@ -63,7 +63,7 @@ export function PipelineTabs({ prospects, pipelineProspects }: PipelineTabsProps
       </TabsContent>
 
       <TabsContent value="outreach" className="mt-0">
-        <Suspense fallback={<Skeleton className="h-96 rounded-sm" />}>
+        <Suspense fallback={<Skeleton className="h-96 rounded-[14px]" />}>
           <OutreachEmbed />
         </Suspense>
       </TabsContent>
@@ -81,11 +81,11 @@ function OutreachEmbed() {
   return (
     <div className="space-y-4">
       <Tabs value={outreachTab} onValueChange={setOutreachTab}>
-        <TabsList className="bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
-          <TabsTrigger value="messages" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">Messages</TabsTrigger>
-          <TabsTrigger value="compose" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">Compose</TabsTrigger>
-          <TabsTrigger value="sequences" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">Sequences</TabsTrigger>
-          <TabsTrigger value="templates" className="text-xs data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900">Templates</TabsTrigger>
+        <TabsList>
+          <TabsTrigger value="messages">Messages</TabsTrigger>
+          <TabsTrigger value="compose">Compose</TabsTrigger>
+          <TabsTrigger value="sequences">Sequences</TabsTrigger>
+          <TabsTrigger value="templates">Templates</TabsTrigger>
         </TabsList>
 
         <TabsContent value="messages"><MessagesHub /></TabsContent>

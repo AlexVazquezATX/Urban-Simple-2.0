@@ -1,3 +1,5 @@
+import { Building2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ClientCard } from './client-card'
 
 interface ClientCardGridProps {
@@ -8,19 +10,19 @@ interface ClientCardGridProps {
 export function ClientCardGrid({ clients, showFinancials = false }: ClientCardGridProps) {
   if (clients.length === 0) {
     return (
-      <div className="text-center py-12 text-warm-500 dark:text-cream-400">
-        <p>No clients found</p>
-      </div>
+      <EmptyState
+        icon={Building2}
+        title="No clients found"
+        description="Try a different search or clear your filters."
+      />
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {clients.map((client) => (
         <ClientCard key={client.id} client={client} showFinancials={showFinancials} />
       ))}
     </div>
   )
 }
-
-

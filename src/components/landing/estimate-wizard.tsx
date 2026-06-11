@@ -359,7 +359,7 @@ export function EstimateWizard({ isOpen, onClose }: EstimateWizardProps) {
                                 setData({ ...data, kitchenCount: count, kitchenSquareFootages: currentSqfts })
                               }}
                               className="flex-1 accent-bronze-600"
-                              style={{ accentColor: '#A67C52' }}
+                              style={{ accentColor: '#9C7418' }}
                             />
                             <div className="w-16 text-center">
                               <span className="text-2xl font-bold text-bronze-600">{data.kitchenCount}</span>
@@ -387,7 +387,7 @@ export function EstimateWizard({ isOpen, onClose }: EstimateWizardProps) {
                                       setData({ ...data, kitchenSquareFootages: newSqfts })
                                     }}
                                     className="flex-1 accent-bronze-600"
-                                    style={{ accentColor: '#A67C52' }}
+                                    style={{ accentColor: '#9C7418' }}
                                   />
                               <div className="w-24 text-center">
                                 <span className="text-lg font-semibold text-bronze-600">
@@ -475,7 +475,7 @@ export function EstimateWizard({ isOpen, onClose }: EstimateWizardProps) {
                                       setData({ ...data, diningAreaCount: count, diningAreaSquareFootages: currentSqfts })
                                     }}
                                     className="flex-1 accent-bronze-600"
-                                    style={{ accentColor: '#A67C52' }}
+                                    style={{ accentColor: '#9C7418' }}
                                   />
                                   <div className="w-16 text-center">
                                     <span className="text-xl font-bold text-bronze-600">{data.diningAreaCount}</span>
@@ -498,7 +498,7 @@ export function EstimateWizard({ isOpen, onClose }: EstimateWizardProps) {
                                         setData({ ...data, diningAreaSquareFootages: newSqfts })
                                       }}
                                       className="flex-1 accent-bronze-600"
-                                      style={{ accentColor: '#A67C52' }}
+                                      style={{ accentColor: '#9C7418' }}
                                     />
                                   <div className="w-24 text-center">
                                     <span className="text-base font-semibold text-bronze-600">
@@ -559,7 +559,7 @@ export function EstimateWizard({ isOpen, onClose }: EstimateWizardProps) {
                                       setData({ ...data, bathroomCount: count, bathroomSquareFootages: currentSqfts })
                                     }}
                                     className="flex-1 accent-bronze-600"
-                                    style={{ accentColor: '#A67C52' }}
+                                    style={{ accentColor: '#9C7418' }}
                                   />
                                   <div className="w-16 text-center">
                                     <span className="text-xl font-bold text-bronze-600">{data.bathroomCount}</span>
@@ -582,7 +582,7 @@ export function EstimateWizard({ isOpen, onClose }: EstimateWizardProps) {
                                         setData({ ...data, bathroomSquareFootages: newSqfts })
                                       }}
                                       className="flex-1 accent-bronze-600"
-                                      style={{ accentColor: '#A67C52' }}
+                                      style={{ accentColor: '#9C7418' }}
                                     />
                                   <div className="w-24 text-center">
                                     <span className="text-base font-semibold text-bronze-600">

@@ -138,14 +138,7 @@ export function RoleSwitcher({
 
   return (
     <div className="flex items-center gap-2">
-      <Badge
-        variant="outline"
-        className={
-          impersonating
-            ? 'bg-amber-100 text-amber-800 border-amber-300'
-            : 'bg-lime-100 text-lime-800 border-lime-300'
-        }
-      >
+      <Badge variant={impersonating ? 'coral' : 'gold'}>
         {impersonating ? 'Impersonating' : 'Dev Mode'}
       </Badge>
 
@@ -154,7 +147,7 @@ export function RoleSwitcher({
         onValueChange={handleRoleSelect}
         disabled={isLoading}
       >
-        <SelectTrigger className="w-[190px] bg-white border-lime-300 dark:bg-charcoal-900 dark:border-lime-700">
+        <SelectTrigger className="w-[190px] bg-background border-gold-600/30 dark:border-gold-400/25">
           <div className="flex items-center gap-2">
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -185,7 +178,7 @@ export function RoleSwitcher({
           variant="outline"
           onClick={exitImpersonation}
           disabled={isLoading}
-          className="h-9 border-amber-300 text-amber-800 hover:bg-amber-50"
+          className="h-9 border-coral-600/30 text-coral-600 hover:bg-coral-600/10 hover:text-coral-600 dark:border-coral-300/25 dark:text-coral-300 dark:hover:bg-coral-300/12 dark:hover:text-coral-300"
         >
           <X className="mr-1 h-3.5 w-3.5" />
           Exit
@@ -202,21 +195,21 @@ export function RoleSwitcher({
             if (e.target === e.currentTarget) setPickerOpen(false)
           }}
         >
-          <div className="w-full max-w-md rounded-sm border border-warm-200 bg-white p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-[18px] border border-border bg-card p-5 shadow-xl">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[11px] font-medium uppercase tracking-wider text-warm-500">
+                <p className="kicker text-muted-foreground">
                   Impersonate
                 </p>
-                <h3 className="mt-1 text-base font-medium text-warm-900">View portal as a client</h3>
-                <p className="mt-0.5 text-xs text-warm-500">
+                <h3 className="mt-1 font-display text-base font-medium text-foreground">View portal as a client</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
                   Pick a client to load their portal exactly the way they see it.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setPickerOpen(false)}
-                className="rounded-sm p-1 text-warm-500 hover:bg-warm-100 hover:text-warm-800"
+                className="rounded-[9px] p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -224,21 +217,21 @@ export function RoleSwitcher({
 
             <div className="mt-4">
               {clients === null ? (
-                <div className="flex items-center justify-center py-8 text-sm text-warm-500">
+                <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Loading clients…
                 </div>
               ) : clients.length === 0 ? (
-                <p className="py-6 text-center text-sm text-warm-500">
+                <p className="py-6 text-center text-sm text-muted-foreground">
                   No active clients to impersonate.
                 </p>
               ) : (
-                <div className="max-h-72 space-y-1 overflow-y-auto rounded-sm border border-warm-200 p-1">
+                <div className="max-h-72 space-y-1 overflow-y-auto rounded-[10px] border border-border p-1">
                   {clients.map((c) => (
                     <label
                       key={c.id}
-                      className={`flex cursor-pointer items-center justify-between rounded-sm px-2.5 py-2 text-sm hover:bg-warm-50 ${
-                        pendingClientId === c.id ? 'bg-lime-50' : ''
+                      className={`flex cursor-pointer items-center justify-between rounded-[8px] px-2.5 py-2 text-sm hover:bg-secondary/50 ${
+                        pendingClientId === c.id ? 'bg-gold-600/10 dark:bg-gold-400/12' : ''
                       }`}
                     >
                       <span className="flex items-center gap-2">
@@ -248,12 +241,12 @@ export function RoleSwitcher({
                           value={c.id}
                           checked={pendingClientId === c.id}
                           onChange={() => setPendingClientId(c.id)}
-                          className="accent-lime-600"
+                          className="accent-gold-600 dark:accent-gold-400"
                         />
-                        <span className="text-warm-900">{c.name}</span>
+                        <span className="text-foreground">{c.name}</span>
                       </span>
                       {c.isSelfServe && (
-                        <span className="rounded-sm bg-plum-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-plum-700">
+                        <span className="rounded-full border border-border bg-secondary px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                           Self-serve
                         </span>
                       )}

@@ -281,24 +281,24 @@ export function DiscoverySearch() {
 
   return (
     <div className="space-y-4">
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-lime-600" />
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Sparkles className="h-4 w-4 text-gold-600 dark:text-gold-400" />
             AI Discovery
           </CardTitle>
-          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+          <CardDescription className="text-xs">
             Find prospects using APIs or extract from web pages
           </CardDescription>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-4 rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1">
-              <TabsTrigger value="api" className="flex items-center gap-1.5 text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">
+            <TabsList className="mb-4">
+              <TabsTrigger value="api" className="text-xs">
                 <Globe className="h-3.5 w-3.5" />
                 API Search
               </TabsTrigger>
-              <TabsTrigger value="scraper" className="flex items-center gap-1.5 text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">
+              <TabsTrigger value="scraper" className="text-xs">
                 <Link2 className="h-3.5 w-3.5" />
                 URL Scraper
               </TabsTrigger>
@@ -308,31 +308,31 @@ export function DiscoverySearch() {
             <TabsContent value="api" className="space-y-4 mt-0">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs text-warm-700 dark:text-cream-300">City *</Label>
+                  <Label>City *</Label>
                   <Input
                     placeholder="e.g., Austin"
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+                    className="h-8 text-sm mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700 dark:text-cream-300">State</Label>
+                  <Label>State</Label>
                   <Input
                     placeholder="e.g., TX"
                     value={state}
                     onChange={(e) => setState(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+                    className="h-8 text-sm mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700 dark:text-cream-300">Facility Type</Label>
+                  <Label>Facility Type</Label>
                   <select
                     value={businessType}
                     onChange={(e) => setBusinessType(e.target.value)}
-                    className="w-full h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs mt-1"
+                    className="w-full h-8 px-2 border border-input rounded-[12px] bg-background text-xs mt-1"
                   >
                     {FACILITY_TYPES.map(type => (
                       <option key={type.value} value={type.value}>{type.label}</option>
@@ -343,11 +343,11 @@ export function DiscoverySearch() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div>
-                  <Label className="text-xs text-warm-700 dark:text-cream-300">Price Level</Label>
+                  <Label>Price Level</Label>
                   <select
                     value={priceLevel}
                     onChange={(e) => setPriceLevel(e.target.value)}
-                    className="w-full h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs mt-1"
+                    className="w-full h-8 px-2 border border-input rounded-[12px] bg-background text-xs mt-1"
                   >
                     {PRICE_LEVELS.map(level => (
                       <option key={level.value} value={level.value}>{level.label}</option>
@@ -355,7 +355,7 @@ export function DiscoverySearch() {
                   </select>
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700 dark:text-cream-300">Minimum Rating</Label>
+                  <Label>Minimum Rating</Label>
                   <Input
                     type="number"
                     min="0"
@@ -364,11 +364,11 @@ export function DiscoverySearch() {
                     placeholder="e.g., 4.0"
                     value={minRating}
                     onChange={(e) => setMinRating(e.target.value)}
-                    className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+                    className="h-8 text-sm mt-1"
                   />
                 </div>
                 <div>
-                  <Label className="text-xs text-warm-700 dark:text-cream-300">Data Sources</Label>
+                  <Label>Data Sources</Label>
                   <div className="flex gap-4 mt-2">
                     <div className="flex items-center gap-1.5">
                       <Checkbox
@@ -382,7 +382,7 @@ export function DiscoverySearch() {
                           }
                         }}
                       />
-                      <label htmlFor="google" className="text-xs text-warm-700 dark:text-cream-300">Google</label>
+                      <label htmlFor="google" className="text-xs text-foreground">Google</label>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <Checkbox
@@ -396,7 +396,7 @@ export function DiscoverySearch() {
                           }
                         }}
                       />
-                      <label htmlFor="yelp" className="text-xs text-warm-700 dark:text-cream-300">Yelp</label>
+                      <label htmlFor="yelp" className="text-xs text-foreground">Yelp</label>
                     </div>
                   </div>
                 </div>
@@ -405,8 +405,8 @@ export function DiscoverySearch() {
               <Button
                 onClick={handleSearch}
                 disabled={isSearching || !city.trim()}
-                variant="lime"
-                className="w-full rounded-sm"
+                variant="gold"
+                className="w-full"
               >
                 {isSearching ? (
                   <>
@@ -425,15 +425,15 @@ export function DiscoverySearch() {
             {/* URL Scraper Tab */}
             <TabsContent value="scraper" className="space-y-4 mt-0">
               <div className="space-y-1.5">
-                <Label className="text-xs text-warm-700 dark:text-cream-300">Article URL</Label>
+                <Label>Article URL</Label>
                 <Input
                   placeholder="e.g., https://austin.eater.com/maps/best-new-restaurants-austin"
                   value={scrapeUrl}
                   onChange={(e) => setScrapeUrl(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleScrape()}
-                  className="h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700"
+                  className="h-8 text-sm"
                 />
-                <p className="text-[10px] text-warm-500 dark:text-cream-400">
+                <p className="text-[10px] text-muted-foreground">
                   Paste a link to an article like &quot;Best Restaurants in Austin&quot; and we&apos;ll extract the business names
                 </p>
               </div>
@@ -441,8 +441,8 @@ export function DiscoverySearch() {
               <Button
                 onClick={handleScrape}
                 disabled={isScraping || !scrapeUrl.trim()}
-                variant="lime"
-                className="w-full rounded-sm"
+                variant="gold"
+                className="w-full"
               >
                 {isScraping ? (
                   <>
@@ -463,17 +463,17 @@ export function DiscoverySearch() {
 
       {/* API Search Results */}
       {results.length > 0 && activeTab === 'api' && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <Card>
           <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Search Results</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                <CardTitle className="text-base">Search Results</CardTitle>
+                <CardDescription className="text-xs">
                   Found {results.length} prospects. Select the ones you want to import.
                 </CardDescription>
               </div>
               {selectedResults.size > 0 && (
-                <Button onClick={handleAddSelected} variant="lime" size="sm" className="rounded-sm">
+                <Button onClick={handleAddSelected} variant="gold" size="sm">
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
                   Add {selectedResults.size} Selected
                 </Button>
@@ -485,38 +485,38 @@ export function DiscoverySearch() {
               {results.map((result, index) => (
                 <div
                   key={index}
-                  className={`rounded-sm border p-3 cursor-pointer transition-colors ${
+                  className={`rounded-[12px] border p-3 cursor-pointer transition-colors ${
                     selectedResults.has(index)
-                      ? 'border-lime-400 bg-lime-50'
-                      : 'border-warm-200 dark:border-charcoal-700 hover:border-ocean-400'
+                      ? 'border-gold-600/40 bg-gold-600/10 dark:border-gold-400/40 dark:bg-gold-400/12'
+                      : 'border-border hover:border-primary/40'
                   }`}
                   onClick={() => toggleResult(index)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">{result.name}</h3>
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
+                        <h3 className="text-sm font-medium text-foreground">{result.name}</h3>
+                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0">
                           {result.source}
                         </Badge>
                         {result.rating && (
                           <div className="flex items-center gap-0.5 text-xs">
-                            <Star className="h-3 w-3 fill-lime-500 text-lime-500" />
-                            <span className="text-warm-700 dark:text-cream-300">{result.rating}</span>
+                            <Star className="h-3 w-3 fill-gold-500 text-gold-500" />
+                            <span className="font-mono tabular-nums text-foreground">{result.rating}</span>
                             {result.reviewCount && (
-                              <span className="text-warm-500 dark:text-cream-400">
+                              <span className="font-mono tabular-nums text-muted-foreground">
                                 ({result.reviewCount})
                               </span>
                             )}
                           </div>
                         )}
                         {result.price && (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
+                          <Badge variant="gold" className="text-[10px] px-1.5 py-0">
                             {result.price}
                           </Badge>
                         )}
                       </div>
-                      <div className="space-y-0.5 text-xs text-warm-600 dark:text-cream-400">
+                      <div className="space-y-0.5 text-xs text-muted-foreground">
                         {result.address.street && (
                           <p>
                             {result.address.street}
@@ -531,7 +531,7 @@ export function DiscoverySearch() {
                             href={result.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-ocean-600 hover:text-ocean-700"
+                            className="flex items-center gap-1 text-teal-600 hover:underline dark:text-teal-300"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <ExternalLink className="h-3 w-3" />
@@ -541,7 +541,7 @@ export function DiscoverySearch() {
                         {(result.categories || result.types) && (
                           <div className="flex flex-wrap gap-1 mt-1.5">
                             {(result.categories || result.types || []).slice(0, 3).map((cat, i) => (
-                              <Badge key={i} className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
+                              <Badge key={i} variant="neutral" className="text-[10px] px-1.5 py-0">
                                 {cat}
                               </Badge>
                             ))}
@@ -566,17 +566,17 @@ export function DiscoverySearch() {
 
       {/* URL Scraper Results */}
       {scrapeResults.length > 0 && activeTab === 'scraper' && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <Card>
           <CardHeader className="p-4 pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Extracted Businesses</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+                <CardTitle className="text-base">Extracted Businesses</CardTitle>
+                <CardDescription className="text-xs">
                   Found {scrapeResults.length} businesses. Select the ones you want to import.
                 </CardDescription>
               </div>
               {selectedScrapeResults.size > 0 && (
-                <Button onClick={handleAddScrapeSelected} variant="lime" size="sm" className="rounded-sm">
+                <Button onClick={handleAddScrapeSelected} variant="gold" size="sm">
                   <Plus className="mr-1.5 h-3.5 w-3.5" />
                   Add {selectedScrapeResults.size} Selected
                 </Button>
@@ -588,27 +588,27 @@ export function DiscoverySearch() {
               {scrapeResults.map((result, index) => (
                 <div
                   key={index}
-                  className={`rounded-sm border p-3 cursor-pointer transition-colors ${
+                  className={`rounded-[12px] border p-3 cursor-pointer transition-colors ${
                     selectedScrapeResults.has(index)
-                      ? 'border-lime-400 bg-lime-50'
-                      : 'border-warm-200 dark:border-charcoal-700 hover:border-ocean-400'
+                      ? 'border-gold-600/40 bg-gold-600/10 dark:border-gold-400/40 dark:bg-gold-400/12'
+                      : 'border-border hover:border-primary/40'
                   }`}
                   onClick={() => toggleScrapeResult(index)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">{result.name}</h3>
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
+                        <h3 className="text-sm font-medium text-foreground">{result.name}</h3>
+                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0">
                           web_scraper
                         </Badge>
                         {result.categories && result.categories.length > 0 && (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
+                          <Badge variant="neutral" className="text-[10px] px-1.5 py-0">
                             {result.categories[0]}
                           </Badge>
                         )}
                       </div>
-                      <div className="space-y-0.5 text-xs text-warm-600 dark:text-cream-400">
+                      <div className="space-y-0.5 text-xs text-muted-foreground">
                         {result.address?.city && (
                           <p>
                             {result.address.street && `${result.address.street}, `}
@@ -622,7 +622,7 @@ export function DiscoverySearch() {
                             href={result.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-1 text-ocean-600 hover:text-ocean-700"
+                            className="flex items-center gap-1 text-teal-600 hover:underline dark:text-teal-300"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <ExternalLink className="h-3 w-3" />

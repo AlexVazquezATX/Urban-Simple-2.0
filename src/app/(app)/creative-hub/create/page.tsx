@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
+import { PageHeader } from '@/components/layout/page-header'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -50,10 +51,10 @@ interface InspirationData {
 }
 
 const PLATFORMS = {
-  linkedin: { label: 'LinkedIn', icon: Linkedin, color: 'bg-blue-500' },
-  instagram: { label: 'Instagram', icon: Instagram, color: 'bg-gradient-to-br from-purple-500 to-pink-500' },
-  facebook: { label: 'Facebook', icon: Facebook, color: 'bg-blue-600' },
-  twitter: { label: 'X', icon: Twitter, color: 'bg-sky-500' },
+  linkedin: { label: 'LinkedIn', icon: Linkedin, color: 'bg-foreground' },
+  instagram: { label: 'Instagram', icon: Instagram, color: 'bg-foreground' },
+  facebook: { label: 'Facebook', icon: Facebook, color: 'bg-foreground' },
+  twitter: { label: 'X', icon: Twitter, color: 'bg-foreground' },
 }
 
 const IMAGE_STYLES = [
@@ -470,15 +471,16 @@ export default function ContentStudioPage() {
     (generatedImage?.imageBase64 ? `data:image/png;base64,${generatedImage.imageBase64}` : undefined)
 
   return (
-    <div className="min-h-screen bg-charcoal-50 dark:bg-charcoal-950">
+    <div className="min-h-screen bg-background">
       {/* Batch Progress Bar */}
       {isBatchMode && (
-        <div className="bg-gradient-to-r from-ocean-500 to-ocean-600 px-6 py-2">
+        <div className="bg-gold-600/10 border-b border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 px-6 py-2">
           <div className="flex items-center justify-between max-w-7xl mx-auto">
-            <div className="flex items-center gap-3 text-white">
+            <div className="flex items-center gap-3 text-gold-600 dark:text-gold-400">
               <Layers className="w-4 h-4" />
               <span className="text-sm font-medium">
-                Topic {batchIndex + 1} of {batchQueue.length}
+                Topic <span className="font-mono tabular-nums">{batchIndex + 1}</span> of{' '}
+                <span className="font-mono tabular-nums">{batchQueue.length}</span>
               </span>
               <div className="flex gap-1 ml-2">
                 {batchQueue.map((_, idx) => (
@@ -486,10 +488,10 @@ export default function ContentStudioPage() {
                     key={idx}
                     className={`w-2 h-2 rounded-full transition-colors ${
                       idx < batchIndex
-                        ? 'bg-white'
+                        ? 'bg-gold-600 dark:bg-gold-400'
                         : idx === batchIndex
-                        ? 'bg-white ring-2 ring-white/50'
-                        : 'bg-white/30'
+                        ? 'bg-gold-600 ring-2 ring-gold-600/40 dark:bg-gold-400 dark:ring-gold-400/40'
+                        : 'bg-gold-600/30 dark:bg-gold-400/30'
                     }`}
                   />
                 ))}
@@ -500,7 +502,6 @@ export default function ContentStudioPage() {
                 size="sm"
                 variant="ghost"
                 onClick={handleSkipTopic}
-                className="text-white hover:bg-white/20"
               >
                 <SkipForward className="w-4 h-4 mr-1" />
                 Skip
@@ -509,7 +510,6 @@ export default function ContentStudioPage() {
                 size="sm"
                 variant="ghost"
                 onClick={handleExitBatch}
-                className="text-white/70 hover:text-white hover:bg-white/20"
               >
                 Exit Batch
               </Button>
@@ -519,45 +519,54 @@ export default function ContentStudioPage() {
       )}
 
       {/* Header */}
-      <div className="bg-white dark:bg-charcoal-900 border-b border-charcoal-100 dark:border-charcoal-700 px-6 py-4">
-        <div className="flex items-center justify-between max-w-7xl mx-auto">
-          <Button variant="ghost" onClick={isBatchMode ? handleExitBatch : () => router.push('/creative-hub/inspiration')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {isBatchMode ? 'Exit Batch' : 'Back to Inspiration'}
-          </Button>
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleCopyContent} disabled={generatingContent}>
-              <Copy className="w-4 h-4 mr-2" />
-              Copy
-            </Button>
-            <Button variant="outline" onClick={() => handleSave('draft')} disabled={saving || generatingContent}>
-              Save as Draft
-            </Button>
-            <Button
-              onClick={() => handleSave('approved')}
-              disabled={saving || generatingContent}
-              className="bg-ocean-600 hover:bg-ocean-700 text-white"
-            >
-              {saving ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : isBatchMode && batchIndex < batchQueue.length - 1 ? (
-                <ChevronRight className="w-4 h-4 mr-2" />
-              ) : (
-                <Check className="w-4 h-4 mr-2" />
-              )}
-              {isBatchMode && batchIndex < batchQueue.length - 1 ? 'Save & Next' : 'Publish'}
-            </Button>
-          </div>
+      <div className="px-6 pt-6">
+        <div className="max-w-7xl mx-auto">
+          <PageHeader
+            kicker="CREATIVE HUB · CREATE"
+            title="Create Content"
+            className="mb-0"
+            actions={
+              <>
+                <Button variant="ghost" onClick={isBatchMode ? handleExitBatch : () => router.push('/creative-hub/inspiration')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  {isBatchMode ? 'Exit Batch' : 'Back to Inspiration'}
+                </Button>
+                <Button variant="outline" onClick={handleCopyContent} disabled={generatingContent}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy
+                </Button>
+                <Button variant="outline" onClick={() => handleSave('draft')} disabled={saving || generatingContent}>
+                  Save as Draft
+                </Button>
+                <Button
+                  variant="gold"
+                  onClick={() => handleSave('approved')}
+                  disabled={saving || generatingContent}
+                >
+                  {saving ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : isBatchMode && batchIndex < batchQueue.length - 1 ? (
+                    <ChevronRight className="w-4 h-4 mr-2" />
+                  ) : (
+                    <Check className="w-4 h-4 mr-2" />
+                  )}
+                  {isBatchMode && batchIndex < batchQueue.length - 1 ? 'Save & Next' : 'Publish'}
+                </Button>
+              </>
+            }
+          />
         </div>
       </div>
 
       {/* Topic Context Banner */}
       {topicContext && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200 px-6 py-3">
-          <div className="flex items-center gap-2 max-w-7xl mx-auto text-sm">
-            <Sparkles className="w-4 h-4 text-amber-600" />
-            <span className="font-medium text-amber-700">Creating from:</span>
-            <span className="text-charcoal-700">{topicContext.title}</span>
+        <div className="px-6 pt-4">
+          <div className="max-w-7xl mx-auto rounded-[12px] bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 px-4 py-3">
+            <div className="flex items-center gap-2 text-sm">
+              <Sparkles className="w-4 h-4 text-gold-600 dark:text-gold-400" />
+              <span className="font-medium text-gold-600 dark:text-gold-400">Creating from:</span>
+              <span className="text-foreground">{topicContext.title}</span>
+            </div>
           </div>
         </div>
       )}
@@ -580,10 +589,10 @@ export default function ContentStudioPage() {
                     <button
                       key={p}
                       onClick={() => setPlatform(p)}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`flex items-center gap-2 px-4 py-2 rounded-[9px] border text-sm font-medium transition-all ${
                         isActive
-                          ? `${config.color} text-white`
-                          : 'bg-charcoal-100 text-charcoal-600 dark:text-cream-400 hover:bg-charcoal-200 dark:hover:bg-charcoal-700'
+                          ? 'text-gold-600 bg-gold-600/10 border-gold-600/30 dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25'
+                          : 'border-transparent bg-secondary text-muted-foreground hover:text-foreground'
                       }`}
                     >
                       <Icon className="w-4 h-4" />
@@ -597,9 +606,9 @@ export default function ContentStudioPage() {
             {/* Content Fields */}
             <Card className="p-5 space-y-5 relative">
               {generatingContent && (
-                <div className="absolute inset-0 bg-white/80 dark:bg-charcoal-900/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-lg">
-                  <Loader2 className="w-8 h-8 text-ocean-500 animate-spin mb-3" />
-                  <p className="text-sm font-medium text-charcoal-600 dark:text-cream-400">Generating content ideas...</p>
+                <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center rounded-[14px]">
+                  <Loader2 className="w-8 h-8 text-gold-600 dark:text-gold-400 animate-spin mb-3" />
+                  <p className="text-sm font-medium text-muted-foreground">Generating content ideas...</p>
                 </div>
               )}
               {/* Content Generation Options */}
@@ -610,17 +619,16 @@ export default function ContentStudioPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => setShowContentOptions(!showContentOptions)}
-                      className="text-charcoal-600 hover:text-charcoal-800 -ml-2"
+                      className="-ml-2"
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5 mr-1.5" />
                       Content Options
                       <ChevronDown className={`w-3.5 h-3.5 ml-1 transition-transform ${showContentOptions ? 'rotate-180' : ''}`} />
                     </Button>
                     <Button
-                      variant="default"
+                      variant="outline"
                       size="sm"
                       onClick={() => generateContentIdeas(topicId, platform, batchQueue[batchIndex]?.contentMode || 'community', true)}
-                      className="bg-ocean-600 hover:bg-ocean-700"
                     >
                       <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
                       Generate Content
@@ -629,23 +637,23 @@ export default function ContentStudioPage() {
 
                   {/* Expanded Options Panel */}
                   {showContentOptions && (
-                    <div className="p-4 bg-charcoal-50 rounded-lg border border-charcoal-200 space-y-4">
+                    <div className="p-4 bg-secondary/50 rounded-[12px] border border-border space-y-4">
                       {/* Tone */}
                       <div>
-                        <Label className="text-xs font-medium text-charcoal-600 mb-2 block">Tone</Label>
+                        <Label className="mb-2 block">Tone</Label>
                         <div className="grid grid-cols-2 gap-2">
                           {TONE_OPTIONS.map((option) => (
                             <button
                               key={option.value}
                               onClick={() => setContentTone(option.value)}
-                              className={`text-left px-3 py-2 rounded-lg border text-sm transition-all ${
+                              className={`text-left px-3 py-2 rounded-[10px] border text-sm transition-all ${
                                 contentTone === option.value
-                                  ? 'border-ocean-500 bg-ocean-50 text-ocean-700'
-                                  : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
+                                  ? 'text-gold-600 bg-gold-600/10 border-gold-600/30 dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25'
+                                  : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25'
                               }`}
                             >
                               <div className="font-medium">{option.label}</div>
-                              <div className="text-xs text-charcoal-500 dark:text-cream-400">{option.description}</div>
+                              <div className="text-xs text-muted-foreground">{option.description}</div>
                             </button>
                           ))}
                         </div>
@@ -653,20 +661,20 @@ export default function ContentStudioPage() {
 
                       {/* Length */}
                       <div>
-                        <Label className="text-xs font-medium text-charcoal-600 mb-2 block">Length</Label>
+                        <Label className="mb-2 block">Length</Label>
                         <div className="grid grid-cols-4 gap-2">
                           {LENGTH_OPTIONS.map((option) => (
                             <button
                               key={option.value}
                               onClick={() => setContentLength(option.value)}
-                              className={`text-center px-2 py-2 rounded-lg border text-sm transition-all ${
+                              className={`text-center px-2 py-2 rounded-[10px] border text-sm transition-all ${
                                 contentLength === option.value
-                                  ? 'border-ocean-500 bg-ocean-50 text-ocean-700'
-                                  : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
+                                  ? 'text-gold-600 bg-gold-600/10 border-gold-600/30 dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25'
+                                  : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25'
                               }`}
                             >
                               <div className="font-medium text-xs">{option.label}</div>
-                              <div className="text-[10px] text-charcoal-500">{option.description}</div>
+                              <div className="text-[10px] text-muted-foreground">{option.description}</div>
                             </button>
                           ))}
                         </div>
@@ -676,16 +684,16 @@ export default function ContentStudioPage() {
                       <div className="grid grid-cols-2 gap-4">
                         {/* Emoji Usage */}
                         <div>
-                          <Label className="text-xs font-medium text-charcoal-600 mb-2 block">Emojis</Label>
+                          <Label className="mb-2 block">Emojis</Label>
                           <div className="grid grid-cols-2 gap-1">
                             {EMOJI_OPTIONS.map((option) => (
                               <button
                                 key={option.value}
                                 onClick={() => setEmojiUsage(option.value)}
-                                className={`px-2 py-1.5 rounded border text-xs transition-all ${
+                                className={`px-2 py-1.5 rounded-[8px] border text-xs transition-all ${
                                   emojiUsage === option.value
-                                    ? 'border-ocean-500 bg-ocean-50 text-ocean-700 font-medium'
-                                    : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
+                                    ? 'text-gold-600 bg-gold-600/10 border-gold-600/30 font-medium dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25'
+                                    : 'border-border bg-card text-muted-foreground hover:border-gold-600/30 dark:hover:border-gold-400/25'
                                 }`}
                               >
                                 {option.label}
@@ -696,16 +704,16 @@ export default function ContentStudioPage() {
 
                         {/* CTA Style */}
                         <div>
-                          <Label className="text-xs font-medium text-charcoal-600 mb-2 block">Call to Action</Label>
+                          <Label className="mb-2 block">Call to Action</Label>
                           <div className="grid grid-cols-2 gap-1">
                             {CTA_OPTIONS.map((option) => (
                               <button
                                 key={option.value}
                                 onClick={() => setCtaStyle(option.value)}
-                                className={`px-2 py-1.5 rounded border text-xs transition-all ${
+                                className={`px-2 py-1.5 rounded-[8px] border text-xs transition-all ${
                                   ctaStyle === option.value
-                                    ? 'border-ocean-500 bg-ocean-50 text-ocean-700 font-medium'
-                                    : 'border-charcoal-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 hover:border-charcoal-300'
+                                    ? 'text-gold-600 bg-gold-600/10 border-gold-600/30 font-medium dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25'
+                                    : 'border-border bg-card text-muted-foreground hover:border-gold-600/30 dark:hover:border-gold-400/25'
                                 }`}
                               >
                                 {option.label}
@@ -780,13 +788,13 @@ export default function ContentStudioPage() {
                     {hashtags.map((tag) => (
                       <Badge
                         key={tag}
-                        variant="outline"
-                        className="cursor-pointer hover:bg-red-50 hover:border-red-200"
+                        variant="neutral"
+                        className="cursor-pointer hover:text-foreground"
                         onClick={() => handleRemoveHashtag(tag)}
                       >
                         <Hash className="w-3 h-3 mr-0.5" />
                         {tag}
-                        <span className="ml-1 text-charcoal-400">×</span>
+                        <span className="ml-1 text-muted-foreground">×</span>
                       </Badge>
                     ))}
                   </div>
@@ -799,7 +807,7 @@ export default function ContentStudioPage() {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <Label className="text-sm font-semibold">Image</Label>
-                  <p className="text-xs text-charcoal-500 mt-0.5">AI-generated or upload your own</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">AI-generated or upload your own</p>
                 </div>
                 <Select value={imageStyle} onValueChange={setImageStyle}>
                   <SelectTrigger className="w-[180px]">
@@ -816,18 +824,18 @@ export default function ContentStudioPage() {
               </div>
 
               {/* Image Preview */}
-              <div className="relative rounded-xl overflow-hidden bg-charcoal-100 aspect-square mb-4">
+              <div className="relative rounded-[12px] overflow-hidden bg-secondary aspect-square mb-4">
                 {generatingImage ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-ocean-500 animate-spin mb-3" />
-                    <p className="text-sm text-charcoal-600">Generating image...</p>
+                    <Loader2 className="w-8 h-8 text-gold-600 dark:text-gold-400 animate-spin mb-3" />
+                    <p className="text-sm text-muted-foreground">Generating image...</p>
                   </div>
                 ) : imageSrc ? (
                   <img src={imageSrc} alt="Content" className="w-full h-full object-cover" />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <ImageIcon className="w-12 h-12 text-charcoal-300 mb-2" />
-                    <p className="text-sm text-charcoal-400">No image yet</p>
+                    <ImageIcon className="w-12 h-12 text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground">No image yet</p>
                   </div>
                 )}
               </div>
@@ -857,7 +865,7 @@ export default function ContentStudioPage() {
 
               {/* Upload Options */}
               {showImageOptions && (
-                <div className="mt-4 p-4 bg-charcoal-50 rounded-lg border border-charcoal-200 space-y-3">
+                <div className="mt-4 p-4 bg-secondary/50 rounded-[12px] border border-border space-y-3">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -916,34 +924,34 @@ export default function ContentStudioPage() {
               <Label className="text-sm font-semibold mb-4 block">Live Preview</Label>
 
               {/* Platform Preview Frame */}
-              <div className="bg-white dark:bg-charcoal-900 border border-charcoal-200 dark:border-charcoal-700 rounded-xl overflow-hidden">
+              <div className="bg-card border border-border rounded-[12px] overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center gap-3 p-4 border-b border-charcoal-100 dark:border-charcoal-700">
+                <div className="flex items-center gap-3 p-4 border-b border-border">
                   <div className={`w-10 h-10 rounded-full ${PLATFORMS[platform].color} flex items-center justify-center`}>
-                    <PlatformIcon className="w-5 h-5 text-white" />
+                    <PlatformIcon className="w-5 h-5 text-background" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm">Urban Simple</p>
-                    <p className="text-xs text-charcoal-400">Just now</p>
+                    <p className="font-semibold text-sm text-foreground">Urban Simple</p>
+                    <p className="text-xs text-muted-foreground">Just now</p>
                   </div>
                 </div>
 
                 {/* Content */}
                 <div className="p-4">
                   {headline && (
-                    <h3 className="font-semibold text-charcoal-900 dark:text-cream-100 mb-2">{headline}</h3>
+                    <h3 className="font-semibold text-foreground mb-2">{headline}</h3>
                   )}
                   {primaryText ? (
-                    <p className="text-sm text-charcoal-700 whitespace-pre-wrap mb-3">
+                    <p className="text-sm text-foreground whitespace-pre-wrap mb-3">
                       {primaryText}
                     </p>
                   ) : (
-                    <p className="text-sm text-charcoal-400 italic mb-3">
+                    <p className="text-sm text-muted-foreground italic mb-3">
                       Your content will appear here...
                     </p>
                   )}
                   {hashtags.length > 0 && (
-                    <p className="text-sm text-ocean-600">
+                    <p className="text-sm text-teal-600 dark:text-teal-300">
                       {hashtags.map((h) => '#' + h).join(' ')}
                     </p>
                   )}
@@ -955,13 +963,13 @@ export default function ContentStudioPage() {
                     <img
                       src={imageSrc}
                       alt="Preview"
-                      className="w-full rounded-lg"
+                      className="w-full rounded-[10px]"
                     />
                   </div>
                 )}
 
                 {/* Engagement Bar */}
-                <div className="px-4 py-3 border-t border-charcoal-100 dark:border-charcoal-700 flex items-center gap-6 text-charcoal-400 dark:text-cream-400 text-sm">
+                <div className="px-4 py-3 border-t border-border flex items-center gap-6 text-muted-foreground text-sm">
                   <span>❤️ Like</span>
                   <span>💬 Comment</span>
                   <span>↗️ Share</span>
@@ -970,12 +978,12 @@ export default function ContentStudioPage() {
             </Card>
 
             {/* Quick Tips */}
-            <Card className="p-5 bg-gradient-to-br from-ocean-50 to-ocean-100 border-ocean-200">
+            <Card className="p-5 bg-teal-600/10 border-teal-600/30 dark:bg-teal-300/12 dark:border-teal-300/25">
               <div className="flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-ocean-600 flex-shrink-0 mt-0.5" />
+                <Sparkles className="w-5 h-5 text-teal-600 dark:text-teal-300 flex-shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-semibold text-ocean-900 text-sm mb-1">Quick Tips</h4>
-                  <ul className="text-xs text-ocean-700 space-y-1">
+                  <h4 className="font-semibold text-teal-600 dark:text-teal-300 text-sm mb-1">Quick Tips</h4>
+                  <ul className="text-[13px] text-foreground/80 space-y-1">
                     <li>• Keep headlines under 60 characters</li>
                     <li>• Use 3-5 relevant hashtags</li>
                     <li>• Include a clear call-to-action</li>

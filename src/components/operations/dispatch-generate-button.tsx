@@ -63,7 +63,7 @@ export function DispatchGenerateButton({ rangeStart }: DispatchGenerateButtonPro
   }
 
   return (
-    <Button onClick={handleGenerate} disabled={loading} variant="outline" className="rounded-sm">
+    <Button onClick={handleGenerate} disabled={loading} variant="gold">
       {loading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />

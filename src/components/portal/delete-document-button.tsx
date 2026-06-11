@@ -38,7 +38,7 @@ export function DeleteDocumentButton({
       onClick={handleDelete}
       disabled={loading}
       title={`Delete ${docName}`}
-      className="flex h-8 w-8 items-center justify-center rounded-sm text-warm-500 hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+      className="grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-coral-600/10 hover:text-coral-600 disabled:opacity-50"
     >
       {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
     </button>

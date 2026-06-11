@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Mail } from 'lucide-react'
+import { CheckCircle2, Inbox } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -15,10 +15,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EmptyState } from '@/components/ui/empty-state'
 import { SendReminderButton } from '@/components/billing/send-reminder-button'
+import {
+  agingChipVariant,
+  agingDangerChipClass,
+  agingTextClass,
+  type AgingBucket,
+} from '@/components/billing/aging'
+import { formatMoneyExact } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 interface ARagingTableProps {
   initialData: any
+}
+
+function TabCount({ count }: { count: number }) {
+  return (
+    <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+      {count}
+    </span>
+  )
 }
 
 export function ARagingTable({ initialData }: ARagingTableProps) {
@@ -47,134 +64,138 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
     }
   }
 
-  const getBucketColor = (bucket: string) => {
-    switch (bucket) {
-      case 'current':
-        return 'default'
-      case 'overdue_31_60':
-        return 'secondary'
-      case 'overdue_61_90':
-        return 'outline'
-      case 'overdue_90_plus':
-        return 'destructive'
-      default:
-        return 'default'
-    }
-  }
-
   if (data.invoices.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">AR Aging Report</CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">No outstanding invoices</CardDescription>
+          <CardTitle>AR Aging Report</CardTitle>
+          <CardDescription>No outstanding invoices</CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-warm-500 dark:text-cream-400 text-center py-8">
-            All invoices are paid up!
-          </p>
+          <EmptyState
+            icon={CheckCircle2}
+            title="All caught up — every invoice is paid"
+            description="New unpaid invoices will land here grouped by how long they've been waiting."
+          />
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+    <Card>
       <CardHeader>
-        <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">AR Aging Report</CardTitle>
-        <CardDescription className="text-warm-500 dark:text-cream-400">
+        <CardTitle>AR Aging Report</CardTitle>
+        <CardDescription>
           Outstanding invoices grouped by days past due
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs value={selectedBucket} onValueChange={setSelectedBucket}>
-          <TabsList className="grid w-full grid-cols-5 rounded-sm">
-            <TabsTrigger value="all" className="rounded-sm text-xs">All</TabsTrigger>
-            <TabsTrigger value="current" className="rounded-sm text-xs">Current</TabsTrigger>
-            <TabsTrigger value="overdue_31_60" className="rounded-sm text-xs">31-60</TabsTrigger>
-            <TabsTrigger value="overdue_61_90" className="rounded-sm text-xs">61-90</TabsTrigger>
-            <TabsTrigger value="overdue_90_plus" className="rounded-sm text-xs">90+</TabsTrigger>
+          <TabsList>
+            <TabsTrigger value="all">
+              All <TabCount count={data.counts.total} />
+            </TabsTrigger>
+            <TabsTrigger value="current">
+              Current <TabCount count={data.counts.current} />
+            </TabsTrigger>
+            <TabsTrigger value="overdue_31_60">
+              31-60 <TabCount count={data.counts.overdue_31_60} />
+            </TabsTrigger>
+            <TabsTrigger value="overdue_61_90">
+              61-90 <TabCount count={data.counts.overdue_61_90} />
+            </TabsTrigger>
+            <TabsTrigger value="overdue_90_plus">
+              90+ <TabCount count={data.counts.overdue_90_plus} />
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={selectedBucket} className="mt-4">
             {filteredInvoices.length === 0 ? (
-              <p className="text-center py-8 text-warm-500 dark:text-cream-400">
-                No invoices in this bucket
-              </p>
+              <EmptyState
+                icon={Inbox}
+                title="Nothing in this bucket"
+                description="No outstanding invoices have aged into this range."
+              />
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Invoice #</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Due Date</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Days Past Due</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Balance Due</TableHead>
-                    <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
-                    <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
+                  <TableRow>
+                    <TableHead>Invoice #</TableHead>
+                    <TableHead>Client</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead>Days Past Due</TableHead>
+                    <TableHead className="text-right">Balance Due</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredInvoices.map((invoice: any) => (
-                    <TableRow key={invoice.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                      <TableCell className="font-medium text-warm-900 dark:text-cream-100">
-                        <Link
-                          href={`/app/invoices/${invoice.id}`}
-                          className="hover:text-ocean-600 transition-colors"
-                        >
-                          {invoice.invoiceNumber}
-                        </Link>
-                      </TableCell>
-                      <TableCell className="text-warm-600 dark:text-cream-400">{invoice.client.name}</TableCell>
-                      <TableCell className="text-warm-600 dark:text-cream-400">
-                        {new Date(invoice.dueDate).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {invoice.daysPastDue > 0 ? (
-                          <span className="text-red-600">
-                            {invoice.daysPastDue} days
-                          </span>
-                        ) : (
-                          <span className="text-warm-500 dark:text-cream-400">
-                            {Math.abs(invoice.daysPastDue)} days until due
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-warm-900 dark:text-cream-100 font-medium">
-                        ${Number(invoice.balanceDue).toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                            invoice.agingBucket === 'current'
-                              ? 'bg-ocean-100 text-ocean-700 border-ocean-200'
-                              : invoice.agingBucket === 'overdue_31_60'
-                                ? 'bg-yellow-100 text-yellow-700 border-yellow-200'
-                                : invoice.agingBucket === 'overdue_61_90'
-                                  ? 'bg-orange-100 text-orange-700 border-orange-200'
-                                  : 'bg-red-100 text-red-700 border-red-200'
-                          }`}
-                        >
-                          {getBucketLabel(invoice.agingBucket)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link href={`/app/invoices/${invoice.id}`}>
-                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                              View
-                            </Button>
+                  {filteredInvoices.map((invoice: any) => {
+                    const bucket = invoice.agingBucket as AgingBucket
+                    return (
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-mono tabular-nums font-medium text-foreground">
+                          <Link
+                            href={`/invoices/${invoice.id}`}
+                            className="transition-colors hover:text-primary"
+                          >
+                            {invoice.invoiceNumber}
                           </Link>
-                          {invoice.daysPastDue > 0 && (
-                            <SendReminderButton invoiceId={invoice.id} />
+                        </TableCell>
+                        <TableCell className="text-foreground">
+                          {invoice.client.name}
+                        </TableCell>
+                        <TableCell className="font-mono tabular-nums text-muted-foreground">
+                          {new Date(invoice.dueDate).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          {invoice.daysPastDue > 0 ? (
+                            <span
+                              className={cn(
+                                'font-mono tabular-nums',
+                                agingTextClass[bucket]
+                              )}
+                            >
+                              {invoice.daysPastDue} days
+                            </span>
+                          ) : (
+                            <span className="font-mono tabular-nums text-muted-foreground">
+                              {Math.abs(invoice.daysPastDue)} days until due
+                            </span>
                           )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell className="text-right font-mono tabular-nums text-foreground">
+                          {formatMoneyExact(Number(invoice.balanceDue))}
+                        </TableCell>
+                        <TableCell>
+                          {bucket === 'overdue_90_plus' ? (
+                            <Badge className={agingDangerChipClass}>
+                              {getBucketLabel(bucket)}
+                            </Badge>
+                          ) : (
+                            <Badge variant={agingChipVariant[bucket]}>
+                              {getBucketLabel(bucket)}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button asChild variant="ghost" size="sm">
+                              <Link href={`/invoices/${invoice.id}`}>
+                                View
+                              </Link>
+                            </Button>
+                            {invoice.daysPastDue > 0 && (
+                              <SendReminderButton invoiceId={invoice.id} />
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
                 </TableBody>
               </Table>
             )}
@@ -184,7 +205,3 @@ export function ARagingTable({ initialData }: ARagingTableProps) {
     </Card>
   )
 }
-
-
-
-

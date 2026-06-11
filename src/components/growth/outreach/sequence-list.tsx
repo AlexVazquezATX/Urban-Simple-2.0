@@ -4,7 +4,14 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Play, Pause, Trash2, Loader2, Zap } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { Plus, Play, Pause, Trash2, Loader2, Zap, MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -70,13 +77,13 @@ export function SequenceList() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">Active</Badge>
+        return <Badge variant="green">Active</Badge>
       case 'paused':
-        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">Paused</Badge>
+        return <Badge variant="neutral">Paused</Badge>
       case 'completed':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">Completed</Badge>
+        return <Badge variant="neutral">Completed</Badge>
       default:
-        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">{status}</Badge>
+        return <Badge variant="neutral">{status}</Badge>
     }
   }
 
@@ -84,14 +91,14 @@ export function SequenceList() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Automated Sequences</h2>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
+          <h2 className="font-display text-lg font-bold tracking-[-0.2px] text-foreground">Automated Sequences</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Multi-step outreach campaigns that run automatically
           </p>
         </div>
         <Link href="/growth/outreach/sequences/new">
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
+          <Button variant="gold">
+            <Plus className="size-3.5" />
             New Sequence
           </Button>
         </Link>
@@ -99,43 +106,48 @@ export function SequenceList() {
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-warm-400 dark:text-cream-500" />
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       ) : sequences.length === 0 ? (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="py-12 text-center">
-            <Zap className="h-10 w-10 text-warm-300 dark:text-charcoal-500 mx-auto mb-3" />
-            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">No sequences created yet</p>
-            <Link href="/growth/outreach/sequences/new">
-              <Button variant="lime" className="rounded-sm">
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Create Your First Sequence
-              </Button>
-            </Link>
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={Zap}
+              title="No sequences yet — put follow-up on autopilot"
+              description="Build a multi-step campaign once and let it nurture prospects for you."
+              action={
+                <Link href="/growth/outreach/sequences/new">
+                  <Button variant="outline">
+                    <Plus className="size-3.5" />
+                    Create Your First Sequence
+                  </Button>
+                </Link>
+              }
+            />
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-1.5">
+        <div className="space-y-2.5">
           {sequences.map((sequence) => (
-            <Card key={sequence.id} className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
-              <CardHeader className="p-4 pb-3">
+            <Card key={sequence.id} className="transition-colors hover:border-primary/40">
+              <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm font-medium text-warm-900 dark:text-cream-100">{sequence.name}</CardTitle>
-                    <CardDescription className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-sm">{sequence.name}</CardTitle>
+                    <CardDescription className="mt-0.5 text-xs">
                       {sequence.description || 'No description'}
                     </CardDescription>
                   </div>
                   {getStatusBadge(sequence.status)}
                 </div>
               </CardHeader>
-              <CardContent className="p-4 pt-0">
+              <CardContent>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
+                  <div className="flex items-center gap-3 font-mono text-xs tabular-nums text-muted-foreground">
                     <span>{sequence._count?.messages || 0} steps</span>
                     {sequence.startDate && (
                       <>
-                        <span className="text-warm-300 dark:text-charcoal-500">•</span>
+                        <span>·</span>
                         <span>
                           Started {new Date(sequence.startDate).toLocaleDateString()}
                         </span>
@@ -144,7 +156,7 @@ export function SequenceList() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Link href={`/growth/outreach/sequences/${sequence.id}`}>
-                      <Button variant="outline" size="sm" className="rounded-sm h-7 px-2 text-xs">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
                         View Details
                       </Button>
                     </Link>
@@ -153,29 +165,42 @@ export function SequenceList() {
                         variant="outline"
                         size="sm"
                         onClick={() => handleToggleStatus(sequence.id, sequence.status)}
-                        className="rounded-sm h-7 px-2 text-xs"
+                        className="h-7 px-2 text-xs"
                       >
                         {sequence.status === 'active' ? (
                           <>
-                            <Pause className="h-3 w-3 mr-1" />
+                            <Pause className="size-3" />
                             Pause
                           </>
                         ) : (
                           <>
-                            <Play className="h-3 w-3 mr-1 text-lime-600" />
+                            <Play className="size-3" />
                             Resume
                           </>
                         )}
                       </Button>
                     )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(sequence.id)}
-                      className="rounded-sm h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-red-600"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="size-7 text-muted-foreground hover:text-foreground"
+                          aria-label="More actions"
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(sequence.id)}
+                        >
+                          <Trash2 className="size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>

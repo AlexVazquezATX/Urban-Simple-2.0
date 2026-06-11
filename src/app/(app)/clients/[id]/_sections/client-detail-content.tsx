@@ -96,28 +96,26 @@ export async function ClientDetailContent({ id }: { id: string }) {
   return (
     <div className="space-y-6">
       {childClients.length > 0 && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Child Clients ({childClients.length})
-            </CardTitle>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
+        <Card className="gap-2 py-4">
+          <CardHeader className="px-4">
+            <CardTitle>Child Clients ({childClients.length})</CardTitle>
+            <p className="text-xs text-muted-foreground">
               {showFinancials
                 ? 'The financials above roll up every child client.'
                 : 'Properties owned by this parent organization.'}
             </p>
           </CardHeader>
-          <CardContent className="space-y-2 p-4 pt-2">
+          <CardContent className="space-y-2 px-4">
             {childClients.map((c) => (
               <Link
                 key={c.id}
                 href={`/clients/${c.id}`}
-                className="flex items-center justify-between rounded-sm border border-warm-200 px-3 py-2 transition-colors hover:border-ocean-400 hover:bg-warm-50/40 dark:border-charcoal-700 dark:hover:bg-charcoal-800"
+                className="flex items-center justify-between rounded-[10px] border border-border px-3 py-2 transition-colors hover:border-primary/40 hover:bg-secondary/40"
               >
                 <div>
-                  <p className="font-medium text-warm-900 dark:text-cream-100">{c.name}</p>
-                  <p className="text-xs text-warm-500 dark:text-cream-400">
-                    {c._count.locations} {c._count.locations === 1 ? 'location' : 'locations'} •{' '}
+                  <p className="font-medium text-foreground">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {c._count.locations} {c._count.locations === 1 ? 'location' : 'locations'} ·{' '}
                     {c.status}
                   </p>
                 </div>

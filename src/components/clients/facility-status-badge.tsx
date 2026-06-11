@@ -2,35 +2,22 @@
 
 import { Badge } from '@/components/ui/badge'
 
-const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  ACTIVE: {
-    label: 'Active',
-    className: 'bg-lime-100 text-lime-700 border-lime-200',
-  },
-  PAUSED: {
-    label: 'Paused',
-    className: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-  },
-  SEASONAL_PAUSED: {
-    label: 'Seasonal',
-    className: 'bg-orange-100 text-orange-700 border-orange-200',
-  },
-  PENDING_APPROVAL: {
-    label: 'Pending',
-    className: 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700',
-  },
-  CLOSED: {
-    label: 'Closed',
-    className: 'bg-red-100 text-red-700 border-red-200',
-  },
+// Facility status → chip tone mapping: success is green, paused needs a
+// glance (gold), seasonal pause is informational (teal), pending is neutral,
+// closed is attention (coral — never red outside confirm dialogs).
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; variant: 'neutral' | 'gold' | 'teal' | 'coral' | 'green' }
+> = {
+  ACTIVE: { label: 'Active', variant: 'green' },
+  PAUSED: { label: 'Paused', variant: 'gold' },
+  SEASONAL_PAUSED: { label: 'Seasonal', variant: 'teal' },
+  PENDING_APPROVAL: { label: 'Pending', variant: 'neutral' },
+  CLOSED: { label: 'Closed', variant: 'coral' },
 }
 
 export function FacilityStatusBadge({ status }: { status: string }) {
   const config = STATUS_CONFIG[status] || STATUS_CONFIG.PENDING_APPROVAL
 
-  return (
-    <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${config.className}`}>
-      {config.label}
-    </Badge>
-  )
+  return <Badge variant={config.variant}>{config.label}</Badge>
 }

@@ -43,32 +43,31 @@ export function OutputFormatSelector({
             onClick={() => onChange(format.id)}
             disabled={disabled}
             className={cn(
-              'p-3 rounded-xl border transition-all text-left',
+              'rounded-[12px] border p-3 text-left transition-all',
               isSelected
-                ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
-                : 'border-cream-300 hover:border-bronze-200 bg-white',
-              disabled && 'opacity-50 cursor-not-allowed'
+                ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+              disabled && 'cursor-not-allowed opacity-50'
             )}
           >
             <div className="flex items-center gap-2.5">
               <div
                 className={cn(
-                  'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                  isSelected ? 'bg-bronze-100 text-bronze-700' : 'bg-cream-200 text-warm-500'
+                  'grid size-8 shrink-0 place-items-center rounded-[8px]',
+                  isSelected
+                    ? 'bg-gold-600/15 text-gold-600 dark:bg-gold-400/15 dark:text-gold-400'
+                    : 'bg-secondary text-muted-foreground'
                 )}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="size-4" />
               </div>
               <div className="min-w-0">
-                <h4
-                  className={cn(
-                    'text-sm font-semibold truncate',
-                    isSelected ? 'text-charcoal-900' : 'text-charcoal-800'
-                  )}
-                >
+                <h4 className="truncate text-sm font-semibold text-foreground">
                   {format.title}
                 </h4>
-                <p className="text-xs text-warm-500 truncate">{format.aspectRatio}</p>
+                <p className="truncate font-mono text-xs tabular-nums text-muted-foreground">
+                  {format.aspectRatio}
+                </p>
               </div>
             </div>
           </button>

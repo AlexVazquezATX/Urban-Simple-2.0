@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { PulseBriefingView } from '@/components/pulse/pulse-briefing-view'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ArrowLeft, Calendar } from 'lucide-react'
 
 interface PageProps {
@@ -64,27 +66,22 @@ export default async function ArchiveDatePage({ params }: PageProps) {
     return (
       <div className="container mx-auto py-8 max-w-4xl">
         <div className="space-y-6">
-          <div className="flex items-center gap-4">
-            <Link href="/pulse/archive">
-              <Button variant="ghost" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">
-                {format(date, 'EEEE, MMMM d, yyyy')}
-              </h1>
-              <p className="text-muted-foreground">Archive</p>
-            </div>
-          </div>
-          <div className="text-center py-16 text-muted-foreground">
-            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-            <h2 className="text-xl font-semibold mb-2">No Briefing Found</h2>
-            <p>There is no briefing for {format(date, 'MMMM d, yyyy')}</p>
-            <Link href="/pulse/archive" className="mt-4 inline-block">
-              <Button variant="outline">Back to Archive</Button>
-            </Link>
-          </div>
+          <PageHeader
+            kicker="PULSE · ARCHIVE"
+            title={format(date, 'EEEE, MMMM d, yyyy')}
+            backHref="/pulse/archive"
+          />
+          <EmptyState
+            icon={Calendar}
+            title="No briefing that day"
+            description={`There is no briefing for ${format(date, 'MMMM d, yyyy')}.`}
+            action={
+              <Link href="/pulse/archive">
+                <Button variant="outline">Back to Archive</Button>
+              </Link>
+            }
+            className="py-16"
+          />
         </div>
       </div>
     )

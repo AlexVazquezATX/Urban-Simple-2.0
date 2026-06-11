@@ -1,6 +1,7 @@
 'use client'
 
 import { Download, RefreshCw, Bookmark, Loader2, ImageIcon, Wand2 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 interface PreviewPanelProps {
   imageBase64?: string | null
@@ -51,28 +52,28 @@ export function PreviewPanel({
   }
 
   return (
-    <div className="bg-white rounded-3xl border border-cream-300 shadow-elevated overflow-hidden">
+    <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none">
       {/* Preview Header */}
-      <div className="px-5 py-3.5 border-b border-cream-200 flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-[0.14em] text-warm-500 font-semibold">Preview</p>
+      <div className="flex items-center justify-between border-b border-border px-5 py-3.5">
+        <p className="kicker text-muted-foreground">Preview</p>
         {aspectRatio && (
-          <span className="text-xs font-medium text-bronze-700 bg-bronze-50 border border-bronze-100 px-2.5 py-0.5 rounded-full">
+          <Badge variant="neutral" className="font-mono tabular-nums">
             {aspectRatio}
-          </span>
+          </Badge>
         )}
       </div>
 
       {/* Preview Area */}
       <div className="p-4">
         <div
-          className="relative w-full bg-cream-100 rounded-xl overflow-hidden"
+          className="relative w-full overflow-hidden rounded-[12px] bg-secondary"
           style={{ paddingBottom: getAspectRatioPadding(aspectRatio) }}
         >
           {isGenerating ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <Loader2 className="w-10 h-10 text-bronze-600 animate-spin mb-3" />
-              <p className="text-sm font-medium text-charcoal-800">Generating...</p>
-              <p className="text-xs text-warm-500 mt-1">This may take 20-30 seconds</p>
+              <Loader2 className="mb-3 size-10 animate-spin text-gold-600 dark:text-gold-400" />
+              <p className="text-sm font-medium text-foreground">Generating...</p>
+              <p className="mt-1 text-xs text-muted-foreground">This may take 20-30 seconds</p>
             </div>
           ) : imageBase64 ? (
             <img
@@ -82,15 +83,15 @@ export function PreviewPanel({
                   : `data:image/png;base64,${imageBase64}`
               }
               alt="Generated"
-              className="absolute inset-0 w-full h-full object-contain"
+              className="absolute inset-0 h-full w-full object-contain"
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 rounded-2xl bg-cream-200 flex items-center justify-center mb-3">
-                <ImageIcon className="w-7 h-7 text-cream-400" />
+              <div className="mb-3 grid size-16 place-items-center rounded-[12px] bg-background">
+                <ImageIcon className="size-7 text-muted-foreground/60" />
               </div>
-              <p className="text-sm text-warm-500">Your generated image will appear here</p>
-              <p className="text-xs text-warm-400 mt-1">Upload a photo and generate</p>
+              <p className="text-sm text-muted-foreground">Your generated image will appear here</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">Upload a photo and generate</p>
             </div>
           )}
         </div>
@@ -98,22 +99,22 @@ export function PreviewPanel({
 
       {/* Actions */}
       {imageBase64 && (
-        <div className="px-4 pb-4 space-y-3">
+        <div className="space-y-3 px-4 pb-4">
           <div className="grid grid-cols-2 gap-3">
             <button
               onClick={onSave}
               disabled={disabled || isSaving}
-              className="rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-cream-50 text-sm font-semibold py-2.5 inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center justify-center gap-2 rounded-[9px] bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
             >
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bookmark className="w-4 h-4" />}
+              {isSaving ? <Loader2 className="size-4 animate-spin" /> : <Bookmark className="size-4" />}
               Save to gallery
             </button>
             <button
               onClick={handleDownload}
               disabled={disabled}
-              className="rounded-xl border border-cream-300 bg-white hover:bg-cream-50 text-charcoal-800 text-sm font-semibold py-2.5 inline-flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center justify-center gap-2 rounded-[9px] border border-input bg-transparent py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary/60 disabled:pointer-events-none disabled:opacity-50"
             >
-              <Download className="w-4 h-4" />
+              <Download className="size-4" />
               Download
             </button>
           </div>
@@ -122,9 +123,9 @@ export function PreviewPanel({
             <button
               onClick={onRegenerate}
               disabled={disabled || isGenerating}
-              className="text-sm text-warm-600 hover:text-charcoal-900 inline-flex items-center gap-1.5 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+              className="inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
             >
-              <RefreshCw className="w-4 h-4" /> Regenerate
+              <RefreshCw className="size-4" /> Regenerate
             </button>
 
             {/* Send to Branded Posts - only in food_photo mode */}
@@ -132,9 +133,9 @@ export function PreviewPanel({
               <button
                 onClick={onSendToBrandedPosts}
                 disabled={disabled}
-                className="text-sm text-bronze-700 hover:text-bronze-800 inline-flex items-center gap-1.5 font-medium transition-colors disabled:opacity-50 disabled:pointer-events-none"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-gold-600 transition-colors hover:text-gold-700 dark:text-gold-400 dark:hover:text-gold-300 disabled:pointer-events-none disabled:opacity-50"
               >
-                <Wand2 className="w-4 h-4" /> Turn into branded post
+                <Wand2 className="size-4" /> Turn into branded post
               </button>
             )}
           </div>

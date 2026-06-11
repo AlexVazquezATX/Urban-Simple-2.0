@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Select,
   SelectContent,
@@ -15,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Mail, Phone, MessageSquare, Sparkles, Send, Loader2, RefreshCw } from 'lucide-react'
+import { Mail, Phone, MessageSquare, Sparkles, Send, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Prospect {
@@ -89,7 +91,7 @@ export function OutreachCenter() {
       }
 
       const data = await response.json()
-      
+
       if (channel === 'email') {
         setSubject(data.content.subject || '')
         setBody(data.content.body || '')
@@ -171,8 +173,12 @@ export function OutreachCenter() {
   if (!prospectId) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-muted-foreground">
-          <p>Please select a prospect to start outreach</p>
+        <CardContent>
+          <EmptyState
+            icon={Send}
+            title="Pick a prospect to get started"
+            description="Choose a prospect from the pipeline and their contact details will load here."
+          />
         </CardContent>
       </Card>
     )
@@ -180,53 +186,55 @@ export function OutreachCenter() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Outreach Center</h1>
-        <p className="text-muted-foreground mt-1">
-          {prospect ? `Contacting ${prospect.companyName}` : 'Select a prospect to get started'}
-        </p>
-      </div>
+      <PageHeader
+        kicker="GROWTH · OUTREACH"
+        title="Outreach Center"
+        subtitle={
+          prospect ? `Contacting ${prospect.companyName}` : 'Select a prospect to get started'
+        }
+      />
 
       {prospect && (
         <Card>
           <CardHeader>
             <CardTitle>New {channel === 'email' ? 'Email' : channel === 'phone' ? 'Call' : 'Message'}</CardTitle>
             <CardDescription>
-              {prospect.companyName} • {prospect.contacts[0]?.firstName} {prospect.contacts[0]?.lastName}
+              {prospect.companyName} · {prospect.contacts[0]?.firstName} {prospect.contacts[0]?.lastName}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Tabs value={channel} onValueChange={setChannel}>
-              <TabsList>
+              <TabsList className="w-full justify-start gap-5 overflow-x-auto">
                 <TabsTrigger value="email">
-                  <Mail className="h-4 w-4 mr-2" />
+                  <Mail className="size-4" />
                   Email
                 </TabsTrigger>
                 <TabsTrigger value="phone">
-                  <Phone className="h-4 w-4 mr-2" />
+                  <Phone className="size-4" />
                   Phone
                 </TabsTrigger>
                 <TabsTrigger value="sms">
-                  <MessageSquare className="h-4 w-4 mr-2" />
+                  <MessageSquare className="size-4" />
                   SMS
                 </TabsTrigger>
                 <TabsTrigger value="linkedin">
-                  <MessageSquare className="h-4 w-4 mr-2" />
+                  <MessageSquare className="size-4" />
                   LinkedIn
                 </TabsTrigger>
                 <TabsTrigger value="instagram_dm">
-                  <MessageSquare className="h-4 w-4 mr-2" />
+                  <MessageSquare className="size-4" />
                   Instagram DM
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="email" className="space-y-4">
+              <TabsContent value="email" className="mt-4 space-y-4">
                 <div>
                   <Label>To</Label>
                   <Input
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
                     placeholder="email@example.com"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -235,6 +243,7 @@ export function OutreachCenter() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder="Email subject"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -244,17 +253,19 @@ export function OutreachCenter() {
                     onChange={(e) => setBody(e.target.value)}
                     rows={10}
                     placeholder="Email body..."
+                    className="mt-1"
                   />
                 </div>
               </TabsContent>
 
-              <TabsContent value="phone" className="space-y-4">
+              <TabsContent value="phone" className="mt-4 space-y-4">
                 <div>
                   <Label>Phone Number</Label>
                   <Input
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
                     placeholder="(555) 123-4567"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -264,17 +275,19 @@ export function OutreachCenter() {
                     onChange={(e) => setBody(e.target.value)}
                     rows={6}
                     placeholder="Call notes and talking points..."
+                    className="mt-1"
                   />
                 </div>
               </TabsContent>
 
-              <TabsContent value="sms" className="space-y-4">
+              <TabsContent value="sms" className="mt-4 space-y-4">
                 <div>
                   <Label>Phone Number</Label>
                   <Input
                     value={to}
                     onChange={(e) => setTo(e.target.value)}
                     placeholder="(555) 123-4567"
+                    className="mt-1"
                   />
                 </div>
                 <div>
@@ -285,14 +298,15 @@ export function OutreachCenter() {
                     rows={4}
                     maxLength={160}
                     placeholder="SMS message..."
+                    className="mt-1"
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
                     {body.length}/160 characters
                   </p>
                 </div>
               </TabsContent>
 
-              <TabsContent value="linkedin" className="space-y-4">
+              <TabsContent value="linkedin" className="mt-4 space-y-4">
                 <div>
                   <Label>LinkedIn Message</Label>
                   <Textarea
@@ -300,11 +314,12 @@ export function OutreachCenter() {
                     onChange={(e) => setBody(e.target.value)}
                     rows={8}
                     placeholder="LinkedIn message..."
+                    className="mt-1"
                   />
                 </div>
               </TabsContent>
 
-              <TabsContent value="instagram_dm" className="space-y-4">
+              <TabsContent value="instagram_dm" className="mt-4 space-y-4">
                 <div>
                   <Label>Instagram DM</Label>
                   <Textarea
@@ -312,20 +327,21 @@ export function OutreachCenter() {
                     onChange={(e) => setBody(e.target.value)}
                     rows={8}
                     placeholder="Instagram DM message..."
+                    className="mt-1"
                   />
                 </div>
               </TabsContent>
             </Tabs>
 
             {/* AI Content Generator */}
-            <div className="border-t pt-4">
-              <div className="flex items-center justify-between mb-4">
+            <div className="border-t border-border pt-4">
+              <div className="mb-4 flex items-center justify-between">
                 <div>
                   <Label className="flex items-center gap-2">
-                    <Sparkles className="h-4 w-4" />
+                    <Sparkles className="size-4 text-gold-600 dark:text-gold-400" />
                     AI Content Assistant
                   </Label>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="mt-0.5 text-sm text-muted-foreground">
                     Generate personalized outreach content
                   </p>
                 </div>
@@ -337,12 +353,12 @@ export function OutreachCenter() {
                 >
                   {isGenerating ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="size-4 animate-spin" />
                       Generating...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
+                      <Sparkles className="size-4" />
                       Generate Content
                     </>
                   )}
@@ -352,7 +368,7 @@ export function OutreachCenter() {
                 <div>
                   <Label>Tone</Label>
                   <Select value={tone} onValueChange={setTone}>
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -366,7 +382,7 @@ export function OutreachCenter() {
                 <div>
                   <Label>Purpose</Label>
                   <Select value={purpose} onValueChange={setPurpose}>
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-1">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -381,19 +397,20 @@ export function OutreachCenter() {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-4 pt-4 border-t">
+            <div className="flex items-center gap-4 border-t border-border pt-4">
               <Button
+                variant="gold"
                 onClick={handleSend}
                 disabled={isSending || !to || !body || (channel === 'email' && !subject)}
               >
                 {isSending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Sending...
                   </>
                 ) : (
                   <>
-                    <Send className="mr-2 h-4 w-4" />
+                    <Send className="size-4" />
                     {channel === 'email' ? 'Send Email' : channel === 'phone' ? 'Log Call' : 'Send'}
                   </>
                 )}
@@ -411,4 +428,3 @@ export function OutreachCenter() {
     </div>
   )
 }
-

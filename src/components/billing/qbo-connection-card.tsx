@@ -54,27 +54,27 @@ export function QboConnectionCard() {
   if (!status || !status.configured) return null
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+    <Card>
       <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
         <div className="flex items-center gap-3">
           <span
             className={`inline-block h-2.5 w-2.5 rounded-full ${
               status.connected && !status.reconnectNeeded
                 ? status.lastSyncStatus === 'error'
-                  ? 'bg-yellow-500'
-                  : 'bg-lime-500'
-                : 'bg-warm-300 dark:bg-charcoal-600'
+                  ? 'bg-gold-500'
+                  : 'bg-green-600 dark:bg-green-300'
+                : 'bg-muted-foreground/40'
             }`}
           />
           <div>
-            <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
+            <p className="text-sm font-medium text-foreground">
               {status.connected
                 ? status.reconnectNeeded
                   ? 'QuickBooks connection expired'
                   : 'QuickBooks connected'
                 : 'QuickBooks not connected'}
             </p>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
+            <p className="text-xs text-muted-foreground">
               {status.lastSyncStatus === 'error' && status.lastSyncError
                 ? `Last sync failed: ${status.lastSyncError}`
                 : status.lastSyncAt
@@ -88,17 +88,16 @@ export function QboConnectionCard() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-sm"
               onClick={handleSync}
               disabled={syncing}
             >
-              <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
               {syncing ? 'Syncing...' : 'Sync now'}
             </Button>
           ) : (
-            <Button variant="outline" size="sm" className="rounded-sm" asChild>
+            <Button variant="outline" size="sm" asChild>
               <a href="/api/qbo/connect">
-                <Link2 className="mr-2 h-4 w-4" />
+                <Link2 className="size-4" />
                 {status.reconnectNeeded ? 'Reconnect QuickBooks' : 'Connect QuickBooks'}
               </a>
             </Button>

@@ -249,12 +249,12 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-sm">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
+          <DialogTitle>
             {shift ? 'Edit Shift' : managerId ? 'Schedule Manager' : 'Create Shift'}
           </DialogTitle>
-          <DialogDescription className="text-sm text-warm-500 dark:text-cream-400">
+          <DialogDescription className="text-sm text-muted-foreground">
             {shift
               ? 'Update shift details'
               : managerId
@@ -272,14 +272,14 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                   <FormLabel>
                     {managerId ? 'Locations to Visit *' : 'Location *'}
                   </FormLabel>
-                  <FormDescription className="text-xs text-warm-500 dark:text-cream-400">
+                  <FormDescription className="text-xs text-muted-foreground">
                     {managerId
                       ? 'Select all locations this manager will visit (typically 5-10)'
                       : 'Select the location for this shift'}
                   </FormDescription>
-                  <div className="border border-warm-200 dark:border-charcoal-700 rounded-sm p-4 max-h-64 overflow-y-auto space-y-2">
+                  <div className="border border-border rounded-[12px] p-4 max-h-64 overflow-y-auto space-y-2">
                     {locations.length === 0 ? (
-                      <p className="text-sm text-warm-500 dark:text-cream-400">Loading locations...</p>
+                      <p className="text-sm text-muted-foreground">Loading locations...</p>
                     ) : (
                       locations.map((location) => (
                         <div key={location.id} className="flex items-center space-x-2">
@@ -302,7 +302,7 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                             <div className="flex flex-col gap-1">
                               <span>{location.client?.name} - {location.name}</span>
                               {location.serviceProfile && (
-                                <span className="text-xs text-warm-500 dark:text-cream-400">
+                                <span className="text-xs text-muted-foreground">
                                   {location.serviceProfile.autoSchedule ? 'Auto route' : 'Manual'} • {formatServiceDays(normalizeServiceProfile(location.serviceProfile).serviceDays)}
                                 </span>
                               )}
@@ -314,7 +314,7 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                   </div>
                   <FormMessage />
                   {field.value && field.value.length > 0 && (
-                    <p className="text-xs text-warm-500 dark:text-cream-400">
+                    <p className="text-xs text-muted-foreground">
                       {field.value.length} location{field.value.length === 1 ? '' : 's'}{' '}
                       selected
                     </p>
@@ -341,11 +341,11 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                       value={field.value || '__none__'}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select manager" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm">
+                      <SelectContent>
                         <SelectItem value="__none__">None</SelectItem>
                         {managers.map((manager) => (
                           <SelectItem key={manager.id} value={manager.id}>
@@ -354,7 +354,7 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription className="text-xs text-warm-500 dark:text-cream-400">
+                    <FormDescription className="text-xs text-muted-foreground">
                       Select manager for multi-location review route
                     </FormDescription>
                     <FormMessage />
@@ -380,11 +380,11 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                       disabled={!!managerId}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select associate" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm">
+                      <SelectContent>
                         <SelectItem value="__none__">None</SelectItem>
                         {availableAssociates.map((associate) => (
                           <SelectItem key={associate.id} value={associate.id}>
@@ -393,7 +393,7 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription className="text-xs text-warm-500 dark:text-cream-400">
+                    <FormDescription className="text-xs text-muted-foreground">
                       Select associate for single-location shift
                     </FormDescription>
                     <FormMessage />
@@ -408,9 +408,9 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                 name="date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-warm-700 dark:text-cream-300">Date *</FormLabel>
+                    <FormLabel>Date *</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} className="rounded-sm border-warm-200 dark:border-charcoal-700" />
+                      <Input type="date" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -422,9 +422,9 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                 name="startTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-warm-700 dark:text-cream-300">Start Time *</FormLabel>
+                    <FormLabel>Start Time *</FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} className="rounded-sm border-warm-200 dark:border-charcoal-700" />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -436,9 +436,9 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                 name="endTime"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-warm-700 dark:text-cream-300">End Time *</FormLabel>
+                    <FormLabel>End Time *</FormLabel>
                     <FormControl>
-                      <Input type="time" {...field} className="rounded-sm border-warm-200 dark:border-charcoal-700" />
+                      <Input type="time" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -468,7 +468,7 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
             />
 
             {isRecurring && (
-              <div className="space-y-4 p-4 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50 dark:bg-charcoal-800">
+              <div className="space-y-4 p-4 border border-border rounded-[12px] bg-secondary/50">
                 <FormLabel>Recurring Pattern</FormLabel>
                 <FormField
                   control={form.control}
@@ -578,11 +578,11 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-xs font-medium text-warm-700 dark:text-cream-300">Notes</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       placeholder="Additional notes about this shift..."
-                      className="resize-none rounded-sm border-warm-200"
+                      className="resize-none"
                       {...field}
                     />
                   </FormControl>
@@ -591,14 +591,14 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
               )}
             />
 
-            <DialogFooter className={shift ? "justify-between" : ""}>
+            <DialogFooter className={shift ? "sm:justify-between" : ""}>
               {shift && (
                 <Button
                   type="button"
-                  variant="destructive"
+                  variant="ghost"
                   onClick={onDelete}
                   disabled={loading}
-                  className="rounded-sm"
+                  className="text-coral-600 hover:bg-coral-600/10 hover:text-coral-600 dark:text-coral-300 dark:hover:bg-coral-300/12 dark:hover:text-coral-300"
                 >
                   Delete
                 </Button>
@@ -609,11 +609,10 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
                   variant="outline"
                   onClick={() => setOpen(false)}
                   disabled={loading}
-                  className="rounded-sm"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading} variant="lime" className="rounded-sm">
+                <Button type="submit" disabled={loading} variant="gold">
                   {loading ? 'Saving...' : shift ? 'Update Shift' : 'Create Shift'}
                 </Button>
               </div>

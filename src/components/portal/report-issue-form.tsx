@@ -66,11 +66,14 @@ export function ReportIssueForm({ locations }: { locations: Array<{ id: string; 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3 rounded-sm border border-warm-200 bg-white p-4">
-      <div className="space-y-1.5">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 rounded-[18px] border border-border bg-card p-6 shadow-soft"
+    >
+      <div className="space-y-2">
         <Label htmlFor="location">Location</Label>
         <Select value={locationId} onValueChange={setLocationId}>
-          <SelectTrigger id="location">
+          <SelectTrigger id="location" className="rounded-xl bg-cream-50">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -81,7 +84,7 @@ export function ReportIssueForm({ locations }: { locations: Array<{ id: string; 
         </Select>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label htmlFor="title">What&apos;s going on?</Label>
         <Input
           id="title"
@@ -90,14 +93,15 @@ export function ReportIssueForm({ locations }: { locations: Array<{ id: string; 
           placeholder="Stained carpet in dining room corner"
           maxLength={120}
           required
+          className="rounded-xl bg-cream-50"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger id="category">
+            <SelectTrigger id="category" className="rounded-xl bg-cream-50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -107,10 +111,10 @@ export function ReportIssueForm({ locations }: { locations: Array<{ id: string; 
             </SelectContent>
           </Select>
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <Label htmlFor="severity">Severity</Label>
           <Select value={severity} onValueChange={setSeverity}>
-            <SelectTrigger id="severity">
+            <SelectTrigger id="severity" className="rounded-xl bg-cream-50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -122,7 +126,7 @@ export function ReportIssueForm({ locations }: { locations: Array<{ id: string; 
         </div>
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Label htmlFor="description">More detail (optional)</Label>
         <Textarea
           id="description"
@@ -130,12 +134,12 @@ export function ReportIssueForm({ locations }: { locations: Array<{ id: string; 
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Where exactly, how big, when you noticed it, etc."
           rows={4}
-          className="resize-none"
+          className="resize-none rounded-[13px] bg-cream-50"
         />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" disabled={submitting} className="rounded-sm">
+        <Button type="submit" variant="gold" disabled={submitting} className="rounded-full px-6">
           {submitting ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -6,6 +6,7 @@ interface GoalProgressProps {
   progress: number
   size?: 'sm' | 'md' | 'lg'
   showLabel?: boolean
+  /** Legacy per-goal hex color — ignored; bars are track-secondary/fill-gold per the design system. */
   color?: string
   className?: string
 }
@@ -14,7 +15,6 @@ export function GoalProgress({
   progress,
   size = 'md',
   showLabel = true,
-  color = '#3B82F6',
   className,
 }: GoalProgressProps) {
   const sizeClasses = {
@@ -31,23 +31,26 @@ export function GoalProgress({
 
   // Clamp progress between 0 and 100
   const clampedProgress = Math.min(100, Math.max(0, progress))
-
-  // Get color based on progress if no custom color
-  const progressColor = progress >= 100 ? '#22C55E' : progress >= 50 ? color : color
+  const complete = clampedProgress >= 100
 
   return (
     <div className={cn('flex items-center gap-2', className)}>
-      <div className={cn('flex-1 bg-charcoal-100 rounded-full overflow-hidden', sizeClasses[size])}>
+      <div className={cn('flex-1 overflow-hidden rounded-full bg-secondary', sizeClasses[size])}>
         <div
-          className="h-full rounded-full transition-all duration-500"
-          style={{
-            width: `${clampedProgress}%`,
-            backgroundColor: progressColor,
-          }}
+          className={cn(
+            'h-full rounded-full transition-all duration-500',
+            complete ? 'bg-green-600 dark:bg-green-300' : 'bg-primary'
+          )}
+          style={{ width: `${clampedProgress}%` }}
         />
       </div>
       {showLabel && (
-        <span className={cn('font-medium text-charcoal-600 tabular-nums', textSizeClasses[size])}>
+        <span
+          className={cn(
+            'font-mono font-medium tabular-nums text-muted-foreground',
+            textSizeClasses[size]
+          )}
+        >
           {clampedProgress}%
         </span>
       )}

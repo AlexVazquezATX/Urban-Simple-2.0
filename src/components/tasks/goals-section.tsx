@@ -1,8 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Target, CalendarDays, ChevronDown, ChevronRight, Plus, MoreHorizontal, Pencil, Trash2, Link2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Check, Plus, MoreHorizontal, Pencil, Trash2, Link2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
-import { GoalProgress } from './goal-progress'
 import { GoalForm } from './goal-form'
 
 interface Goal {
@@ -72,12 +70,14 @@ function getMonthEnd(date: Date = new Date()): Date {
   return d
 }
 
+function isGoalDone(goal: Goal) {
+  return goal.status === 'completed' || goal.progress >= 100
+}
+
 export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
   const [weeklyGoals, setWeeklyGoals] = useState<Goal[]>([])
   const [monthlyGoals, setMonthlyGoals] = useState<Goal[]>([])
   const [loading, setLoading] = useState(true)
-  const [weeklyExpanded, setWeeklyExpanded] = useState(true)
-  const [monthlyExpanded, setMonthlyExpanded] = useState(false)
   const [showGoalForm, setShowGoalForm] = useState(false)
   const [editingGoal, setEditingGoal] = useState<Goal | null>(null)
   const [defaultPeriod, setDefaultPeriod] = useState<'weekly' | 'monthly'>('weekly')
@@ -156,20 +156,25 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
   const formatWeekRange = () => {
     const startStr = weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     const endStr = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    return `${startStr} - ${endStr}`
+    return `${startStr} – ${endStr}`
   }
 
   const formatMonthRange = () => {
     return monthStart.toLocaleDateString('en-US', { month: 'long' })
   }
 
+  const weeklyDone = weeklyGoals.filter(isGoalDone).length
+
   if (loading) {
     return (
-      <div className={cn('bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm p-4', className)}>
+      <div className={cn('rounded-[14px] border border-border bg-card p-[18px] shadow-soft dark:shadow-none', className)}>
         <div className="animate-pulse space-y-3">
-          <div className="h-5 bg-warm-200 dark:bg-charcoal-700 rounded-sm w-32" />
-          <div className="h-10 bg-warm-100 dark:bg-charcoal-800 rounded-sm" />
-          <div className="h-10 bg-warm-100 dark:bg-charcoal-800 rounded-sm" />
+          <div className="h-5 w-40 rounded-md bg-secondary" />
+          <div className="flex gap-2">
+            <div className="h-9 w-40 rounded-full bg-secondary" />
+            <div className="h-9 w-32 rounded-full bg-secondary" />
+            <div className="h-9 w-44 rounded-full bg-secondary" />
+          </div>
         </div>
       </div>
     )
@@ -177,115 +182,94 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
 
   return (
     <>
-      <div className={cn('bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm overflow-hidden', className)}>
-        {/* Weekly Goals Section */}
-        <div className="border-b border-warm-200 dark:border-charcoal-700">
-          <div className="px-4 py-3 flex items-center justify-between hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors">
-            <button
-              onClick={() => setWeeklyExpanded(!weeklyExpanded)}
-              className="flex items-center gap-2 flex-1"
-            >
-              {weeklyExpanded ? (
-                <ChevronDown className="w-4 h-4 text-warm-400" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-warm-400" />
-              )}
-              <Target className="w-4 h-4 text-lime-600" />
-              <span className="font-medium text-warm-900 dark:text-cream-100">This Week's Goals</span>
-              <span className="text-xs text-warm-500 dark:text-cream-400">({formatWeekRange()})</span>
-            </button>
+      <div className={cn('rounded-[14px] border border-border bg-card p-[18px] shadow-soft dark:shadow-none', className)}>
+        {/* Header — title · mono week range · gold progress bar + mono count · add */}
+        <div className="mb-3 flex flex-wrap items-center gap-2.5">
+          <span className="font-display text-base font-bold tracking-[-0.3px] text-foreground">
+            This week&apos;s goals
+          </span>
+          <span className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+            {formatWeekRange()}
+          </span>
+          <span className="flex-1" />
+          {weeklyGoals.length > 0 && (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-warm-500 dark:text-cream-400">
-                {weeklyGoals.length}/5
+              <div className="h-[5px] w-[90px] overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  style={{ width: `${(weeklyDone / weeklyGoals.length) * 100}%` }}
+                />
+              </div>
+              <span className="font-mono text-[11.5px] tabular-nums text-gold-600 dark:text-gold-400">
+                {weeklyDone}/{weeklyGoals.length}
               </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => handleAddGoal('weekly')}
-                disabled={weeklyGoals.length >= 5}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
             </div>
-          </div>
+          )}
+          <button
+            onClick={() => handleAddGoal('weekly')}
+            disabled={weeklyGoals.length >= 5}
+            title={weeklyGoals.length >= 5 ? 'Five goals is plenty for one week' : 'Add a weekly goal'}
+            className="grid size-7 place-items-center rounded-[8px] text-gold-600 transition-colors hover:bg-gold-600/10 disabled:opacity-40 dark:text-gold-400 dark:hover:bg-gold-400/12"
+          >
+            <Plus className="size-[15px]" />
+          </button>
+        </div>
 
-          {weeklyExpanded && (
-            <div className="px-4 pb-4 space-y-2">
-              {weeklyGoals.length === 0 ? (
-                <button
-                  onClick={() => handleAddGoal('weekly')}
-                  className="w-full p-3 border-2 border-dashed border-warm-300 dark:border-charcoal-700 rounded-sm text-sm text-warm-500 dark:text-cream-400 hover:border-ocean-400 hover:text-ocean-600 transition-colors"
-                >
-                  + Add your first goal for this week
-                </button>
-              ) : (
-                weeklyGoals.map((goal) => (
-                  <GoalCard
-                    key={goal.id}
-                    goal={goal}
-                    onEdit={() => handleEditGoal(goal)}
-                    onDelete={() => handleDeleteGoal(goal.id)}
-                    onClick={() => onGoalClick?.(goal.id)}
-                  />
-                ))
-              )}
-            </div>
+        {/* Weekly goal chips */}
+        <div className="flex flex-wrap gap-2">
+          {weeklyGoals.length === 0 ? (
+            <button
+              onClick={() => handleAddGoal('weekly')}
+              className="w-full rounded-[12px] border border-dashed border-border px-3 py-3 text-sm text-muted-foreground transition-colors hover:border-gold-600/30 hover:text-gold-600 dark:hover:border-gold-400/25 dark:hover:text-gold-400"
+            >
+              + Set your first goal for the week
+            </button>
+          ) : (
+            weeklyGoals.map((goal) => (
+              <GoalChip
+                key={goal.id}
+                goal={goal}
+                onEdit={() => handleEditGoal(goal)}
+                onDelete={() => handleDeleteGoal(goal.id)}
+                onClick={onGoalClick ? () => onGoalClick(goal.id) : undefined}
+              />
+            ))
           )}
         </div>
 
-        {/* Monthly Goals Section */}
-        <div>
-          <div className="px-4 py-3 flex items-center justify-between hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors">
+        {/* Monthly goals */}
+        <div className="mt-4 border-t border-border pt-3">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="kicker text-muted-foreground">{formatMonthRange()} goals</span>
+            <span className="flex-1" />
             <button
-              onClick={() => setMonthlyExpanded(!monthlyExpanded)}
-              className="flex items-center gap-2 flex-1"
+              onClick={() => handleAddGoal('monthly')}
+              title="Add a monthly goal"
+              className="grid size-6 place-items-center rounded-[8px] text-muted-foreground transition-colors hover:bg-secondary/60 hover:text-foreground"
             >
-              {monthlyExpanded ? (
-                <ChevronDown className="w-4 h-4 text-warm-400" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-warm-400" />
-              )}
-              <CalendarDays className="w-4 h-4 text-ocean-600" />
-              <span className="font-medium text-warm-900 dark:text-cream-100">{formatMonthRange()} Goals</span>
+              <Plus className="size-3.5" />
             </button>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-warm-500 dark:text-cream-400">
-                {monthlyGoals.length}
-              </span>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2"
-                onClick={() => handleAddGoal('monthly')}
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
           </div>
-
-          {monthlyExpanded && (
-            <div className="px-4 pb-4 space-y-2">
-              {monthlyGoals.length === 0 ? (
-                <button
-                  onClick={() => handleAddGoal('monthly')}
-                  className="w-full p-3 border-2 border-dashed border-warm-300 dark:border-charcoal-700 rounded-sm text-sm text-warm-500 dark:text-cream-400 hover:border-ocean-400 hover:text-ocean-600 transition-colors"
-                >
-                  + Add a monthly goal
-                </button>
-              ) : (
-                monthlyGoals.map((goal) => (
-                  <GoalCard
-                    key={goal.id}
-                    goal={goal}
-                    onEdit={() => handleEditGoal(goal)}
-                    onDelete={() => handleDeleteGoal(goal.id)}
-                    onClick={() => onGoalClick?.(goal.id)}
-                  />
-                ))
-              )}
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {monthlyGoals.length === 0 ? (
+              <button
+                onClick={() => handleAddGoal('monthly')}
+                className="rounded-full border border-dashed border-border px-3.5 py-1.5 text-xs text-muted-foreground transition-colors hover:border-gold-600/30 hover:text-gold-600 dark:hover:border-gold-400/25 dark:hover:text-gold-400"
+              >
+                + Add a monthly goal
+              </button>
+            ) : (
+              monthlyGoals.map((goal) => (
+                <GoalChip
+                  key={goal.id}
+                  goal={goal}
+                  onEdit={() => handleEditGoal(goal)}
+                  onDelete={() => handleDeleteGoal(goal.id)}
+                  onClick={onGoalClick ? () => onGoalClick(goal.id) : undefined}
+                />
+              ))
+            )}
+          </div>
         </div>
       </div>
 
@@ -310,8 +294,9 @@ export function GoalsSection({ onGoalClick, className }: GoalsSectionProps) {
   )
 }
 
-// Goal Card Component
-function GoalCard({
+// Goal pill-chip — check circle + title; done = green dim treatment.
+// Edit/Delete live behind the chip's kebab menu (never inline red).
+function GoalChip({
   goal,
   onEdit,
   onDelete,
@@ -322,73 +307,67 @@ function GoalCard({
   onDelete: () => void
   onClick?: () => void
 }) {
+  const done = isGoalDone(goal)
+
   return (
     <div
       className={cn(
-        'p-3 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-warm-300 dark:hover:border-charcoal-600 transition-colors group',
+        'inline-flex items-center gap-2 rounded-full border py-1.5 pl-3.5 pr-1.5 text-[12.5px] font-medium transition-colors',
+        done
+          ? 'border-green-600/30 bg-green-600/12 text-green-600 dark:border-green-300/25 dark:bg-green-300/12 dark:text-green-300'
+          : 'border-border bg-secondary/60 text-foreground/80',
         onClick && 'cursor-pointer'
       )}
       onClick={onClick}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <span
-            className="w-3 h-3 rounded-full shrink-0 mt-1"
-            style={{ backgroundColor: goal.color }}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-warm-900 dark:text-cream-100 text-sm truncate">
-              {goal.title}
-            </p>
-            {goal.taskCount !== undefined && (
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
-                {goal.completedTaskCount || 0}/{goal.taskCount} tasks
-              </p>
-            )}
-          </div>
-        </div>
+      <span
+        className={cn(
+          'grid size-3.5 shrink-0 place-items-center rounded-full border-[1.5px]',
+          done
+            ? 'border-green-600 dark:border-green-300'
+            : 'border-muted-foreground/60'
+        )}
+      >
+        {done && <Check className="size-2 text-green-600 dark:text-green-300" strokeWidth={3} />}
+      </span>
 
-        <div className="flex items-center gap-2">
-          <div className="w-20">
-            <GoalProgress progress={goal.progress} size="sm" color={goal.color} />
-          </div>
+      <span className="max-w-[220px] truncate">{goal.title}</span>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <MoreHorizontal className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
-                <Pencil className="w-4 h-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                className="text-red-600"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-
-      {/* Parent goal indicator */}
-      {goal.parent && (
-        <div className="mt-2 flex items-center gap-1 text-xs text-warm-400">
-          <Link2 className="w-3 h-3" />
-          <span>{goal.parent.title}</span>
-        </div>
+      {goal.taskCount !== undefined && (
+        <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+          {goal.completedTaskCount || 0}/{goal.taskCount}
+        </span>
       )}
+
+      {goal.parent && (
+        <Link2
+          className="size-3 shrink-0 text-muted-foreground"
+          aria-label={`Supports: ${goal.parent.title}`}
+        />
+      )}
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            className="grid size-5 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            onClick={(e) => e.stopPropagation()}
+            title="Goal options"
+          >
+            <MoreHorizontal className="size-3" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(); }}>
+            <Pencil className="mr-2 size-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }}>
+            <Trash2 className="mr-2 size-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Select,
   SelectContent,
@@ -94,27 +95,50 @@ export function TemplateEditor({ templateId }: TemplateEditorProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">
+    <div className="mx-auto max-w-4xl space-y-6 p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · OUTREACH"
+        title={
+          <span className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Back"
+              className="grid size-8 shrink-0 place-items-center rounded-[9px] border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" />
+            </button>
             {templateId ? 'Edit Template' : 'New Template'}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Create a reusable message template
-          </p>
-        </div>
-      </div>
+          </span>
+        }
+        subtitle="Create a reusable message template"
+        actions={
+          <>
+            <Button variant="outline" onClick={() => router.back()}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  Save Template
+                </>
+              )}
+            </Button>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -131,12 +155,13 @@ export function TemplateEditor({ templateId }: TemplateEditorProps) {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="e.g., Cold Outreach Email"
+                className="mt-1"
               />
             </div>
             <div>
               <Label>Channel *</Label>
               <Select value={formData.channel} onValueChange={(v) => setFormData({ ...formData, channel: v })}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -156,6 +181,7 @@ export function TemplateEditor({ templateId }: TemplateEditorProps) {
                 value={formData.subject}
                 onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                 placeholder="Email subject (use {{company_name}} for personalization)"
+                className="mt-1"
               />
             </div>
           )}
@@ -167,26 +193,8 @@ export function TemplateEditor({ templateId }: TemplateEditorProps) {
               onChange={(e) => setFormData({ ...formData, body: e.target.value })}
               rows={12}
               placeholder="Message body (use {{company_name}}, {{contact_first_name}}, {{your_name}} for personalization)"
+              className="mt-1"
             />
-          </div>
-
-          <div className="flex items-center gap-4 pt-4 border-t">
-            <Button onClick={handleSave} disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Template
-                </>
-              )}
-            </Button>
-            <Button variant="outline" onClick={() => router.back()}>
-              Cancel
-            </Button>
           </div>
         </CardContent>
       </Card>

@@ -83,30 +83,30 @@ export default function ProspectsPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
+        <div className="mx-auto max-w-7xl p-4 md:p-6">
           {/* Header skeleton */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <div>
-              <Skeleton className="h-7 w-32 rounded-sm" />
-              <Skeleton className="h-4 w-64 mt-2 rounded-sm" />
+              <Skeleton className="h-8 w-32" />
+              <Skeleton className="mt-2 h-4 w-64" />
             </div>
             <div className="flex gap-2">
-              <Skeleton className="h-8 w-24 rounded-sm" />
-              <Skeleton className="h-8 w-28 rounded-sm" />
+              <Skeleton className="h-9 w-24" />
+              <Skeleton className="h-9 w-28" />
             </div>
           </div>
-          {/* Stats cards skeleton */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {/* KPI row skeleton */}
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-sm" />
+              <Skeleton key={i} className="h-24 rounded-[14px]" />
             ))}
           </div>
           {/* Filters skeleton */}
-          <Skeleton className="h-14 rounded-sm mb-4" />
+          <Skeleton className="mb-4 h-14 rounded-[14px]" />
           {/* Tabs skeleton */}
-          <Skeleton className="h-10 w-96 rounded-sm mb-4" />
+          <Skeleton className="mb-4 h-9 w-96" />
           {/* Table skeleton */}
-          <Skeleton className="h-[400px] rounded-sm" />
+          <Skeleton className="h-[400px] rounded-[14px]" />
         </div>
       }
     >

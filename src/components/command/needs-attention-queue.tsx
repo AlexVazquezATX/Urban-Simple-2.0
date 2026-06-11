@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { DollarSign, AlertTriangle, MessageSquare, Calendar, CheckCircle, Inbox, Loader2 } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { DollarSign, AlertTriangle, MessageSquare, Calendar, CheckCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -19,16 +20,16 @@ interface AttentionItem {
 }
 
 const typeConfig = {
-  overdue_invoice: { icon: DollarSign, label: 'Invoice', color: 'text-amber-600 dark:text-amber-400' },
-  quality_issue: { icon: AlertTriangle, label: 'Quality', color: 'text-red-500 dark:text-red-400' },
-  prospect_reply: { icon: MessageSquare, label: 'Reply', color: 'text-ocean-600 dark:text-ocean-400' },
-  unassigned_shift: { icon: Calendar, label: 'Shift', color: 'text-purple-600 dark:text-purple-400' },
+  overdue_invoice: { icon: DollarSign, label: 'Invoice', color: 'text-gold-600 dark:text-gold-400' },
+  quality_issue: { icon: AlertTriangle, label: 'Quality', color: 'text-coral-600 dark:text-coral-300' },
+  prospect_reply: { icon: MessageSquare, label: 'Reply', color: 'text-teal-600 dark:text-teal-300' },
+  unassigned_shift: { icon: Calendar, label: 'Shift', color: 'text-muted-foreground' },
 }
 
-const urgencyBadge = {
-  high: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800',
-  medium: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
-  low: 'bg-warm-50 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700',
+const urgencyVariant: Record<AttentionItem['urgency'], 'coral' | 'gold' | 'neutral'> = {
+  high: 'coral',
+  medium: 'gold',
+  low: 'neutral',
 }
 
 export function NeedsAttentionQueue() {
@@ -63,17 +64,12 @@ export function NeedsAttentionQueue() {
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-      <CardHeader className="pb-3">
+    <Card className="gap-4">
+      <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-            Needs Attention
-          </CardTitle>
+          <CardTitle>Needs Attention</CardTitle>
           {!loading && (
-            <Badge variant="outline" className={cn(
-              'text-xs',
-              visibleItems.length === 0 ? 'border-lime-300 text-lime-700 dark:border-lime-700 dark:text-lime-400' : 'border-warm-300 text-warm-600 dark:border-charcoal-600 dark:text-cream-400'
-            )}>
+            <Badge variant={visibleItems.length === 0 ? 'green' : 'neutral'}>
               {visibleItems.length === 0 ? 'All clear' : `${visibleItems.length} items`}
             </Badge>
           )}
@@ -81,18 +77,19 @@ export function NeedsAttentionQueue() {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-4 text-warm-400 dark:text-cream-500">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          <div className="flex items-center justify-center py-4 text-muted-foreground">
+            <Loader2 className="mr-2 size-5 animate-spin" />
             Loading...
           </div>
         ) : visibleItems.length === 0 ? (
-          <div className="text-center py-4 text-warm-400 dark:text-cream-500">
-            <CheckCircle className="h-6 w-6 mx-auto mb-1.5 text-lime-400 dark:text-lime-500" />
-            <p className="text-sm font-medium text-lime-600 dark:text-lime-400">Inbox zero</p>
-            <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">Nothing needs your attention right now</p>
-          </div>
+          <EmptyState
+            icon={CheckCircle}
+            title="Inbox zero — nice work"
+            description="Nothing needs your attention right now."
+            className="py-6"
+          />
         ) : (
-          <div className="space-y-2 max-h-[400px] overflow-y-auto">
+          <div className="max-h-[400px] space-y-2 overflow-y-auto">
             {visibleItems.map((item) => {
               const config = typeConfig[item.type]
               const Icon = config.icon
@@ -100,31 +97,29 @@ export function NeedsAttentionQueue() {
               return (
                 <div
                   key={item.id}
-                  className="flex items-start gap-3 p-3 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-warm-300 dark:hover:border-charcoal-600 transition-colors group"
+                  className="group flex items-start gap-3 rounded-[12px] border border-border p-3 transition-colors hover:bg-secondary/50"
                 >
                   <div className={cn('mt-0.5 shrink-0', config.color)}>
-                    <Icon className="h-4 w-4" />
+                    <Icon className="size-4" />
                   </div>
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-warm-800 dark:text-cream-200 truncate">{item.title}</p>
-                        <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{item.subtitle}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">{item.subtitle}</p>
                       </div>
-                      <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0 shrink-0', urgencyBadge[item.urgency])}>
+                      <Badge variant={urgencyVariant[item.urgency]} className="shrink-0">
                         {item.urgency}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Link href={item.actionUrl}>
-                        <Button variant="outline" size="sm" className="h-7 text-xs px-2">
-                          View
-                        </Button>
-                      </Link>
+                    <div className="mt-2 flex items-center gap-2">
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" asChild>
+                        <Link href={item.actionUrl}>View</Link>
+                      </Button>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs px-2 text-warm-400 hover:text-warm-600 dark:text-cream-500 dark:hover:text-cream-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-7 px-2 text-xs text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
                         onClick={() => handleDismiss(item.id)}
                       >
                         Dismiss

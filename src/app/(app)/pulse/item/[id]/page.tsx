@@ -92,7 +92,7 @@ export default async function PulseItemPage({ params }: PageProps) {
   const readTime = Math.max(1, Math.ceil(wordCount / 200))
 
   return (
-    <div className="min-h-screen bg-background dark:bg-charcoal-950">
+    <div className="min-h-screen bg-background">
       {/* Hero Section with Image */}
       <div className={`relative h-[50vh] min-h-[400px] bg-gradient-to-br ${gradient}`}>
         {item.imageBase64 ? (
@@ -131,20 +131,20 @@ export default async function PulseItemPage({ params }: PageProps) {
                 </Badge>
               )}
               {item.sentiment === 'positive' && (
-                <Badge className="bg-green-500/30 text-green-100 border-green-400/30 backdrop-blur-sm">
+                <Badge className="bg-green-300/20 text-green-300 border-green-300/40 backdrop-blur-sm">
                   Positive Outlook
                 </Badge>
               )}
               {item.sentiment === 'negative' && (
-                <Badge className="bg-red-500/30 text-red-100 border-red-400/30 backdrop-blur-sm">
+                <Badge className="bg-coral-300/20 text-coral-300 border-coral-300/40 backdrop-blur-sm">
                   Attention Required
                 </Badge>
               )}
             </div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif font-bold text-white leading-tight mb-6">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-white leading-tight mb-6">
               {item.title}
             </h1>
-            <p className="text-lg md:text-xl text-white/80 font-serif italic max-w-3xl">
+            <p className="text-lg md:text-xl text-white/80 italic max-w-3xl">
               {item.summary}
             </p>
           </div>
@@ -164,12 +164,12 @@ export default async function PulseItemPage({ params }: PageProps) {
           {/* Main Content - 8 columns */}
           <article className="lg:col-span-8">
             {/* Meta info bar */}
-            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8 pb-6 border-b">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8 pb-6 border-b border-border">
+              <div className="flex items-center gap-2 font-mono tabular-nums">
                 <Calendar className="h-4 w-4" />
                 {format(new Date(item.briefing.date), 'MMMM d, yyyy')}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 font-mono tabular-nums">
                 <Clock className="h-4 w-4" />
                 {readTime} min read
               </div>
@@ -196,14 +196,14 @@ export default async function PulseItemPage({ params }: PageProps) {
 
             {/* Tags section */}
             {item.topic?.keywords && item.topic.keywords.length > 0 && (
-              <div className="mt-12 pt-8 border-t">
+              <div className="mt-12 pt-8 border-t border-border">
                 <div className="flex items-center gap-2 mb-4 text-muted-foreground">
                   <Tag className="h-4 w-4" />
-                  <span className="text-sm font-medium">Related Topics</span>
+                  <span className="kicker">Related Topics</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {item.topic.keywords.slice(0, 6).map((keyword) => (
-                    <Badge key={keyword} variant="secondary" className="px-3 py-1">
+                    <Badge key={keyword} variant="neutral">
                       {keyword}
                     </Badge>
                   ))}
@@ -212,7 +212,7 @@ export default async function PulseItemPage({ params }: PageProps) {
             )}
 
             {/* Bottom navigation */}
-            <div className="mt-12 pt-8 border-t flex flex-wrap items-center justify-between gap-4">
+            <div className="mt-12 pt-8 border-t border-border flex flex-wrap items-center justify-between gap-4">
               <Link href="/pulse">
                 <Button variant="outline">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -231,20 +231,20 @@ export default async function PulseItemPage({ params }: PageProps) {
           {/* Sidebar - 4 columns */}
           <aside className="lg:col-span-4">
             {/* Author/AI info widget */}
-            <div className="bg-muted/30 rounded-2xl p-6 mb-8">
+            <div className="bg-secondary/50 rounded-2xl p-6 mb-8">
               <div className="flex items-center gap-4 mb-4">
                 <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                  <Sparkles className="h-6 w-6 text-white" />
+                  <Sparkles className="h-6 w-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <p className="font-semibold">Pulse AI</p>
+                  <p className="font-display font-semibold">Pulse AI</p>
                   <p className="text-sm text-muted-foreground">Your Daily Intelligence</p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 This article was curated and synthesized by Pulse AI based on your interests and the latest developments in {item.topic?.name || 'this area'}.
               </p>
-              <div className="flex items-center gap-3 mt-4 pt-4 border-t">
+              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
                 <span className="text-sm text-muted-foreground">Share:</span>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
                   <Twitter className="h-4 w-4" />
@@ -260,8 +260,8 @@ export default async function PulseItemPage({ params }: PageProps) {
 
             {/* Read Next section */}
             {relatedItems.length > 0 && (
-              <div className="bg-muted/30 rounded-2xl p-6">
-                <h3 className="font-semibold mb-4 flex items-center gap-2">
+              <div className="bg-secondary/50 rounded-2xl p-6">
+                <h3 className="font-display font-semibold mb-4 flex items-center gap-2">
                   <span className="text-lg">Read Next</span>
                 </h3>
                 <div className="space-y-4">
@@ -273,7 +273,7 @@ export default async function PulseItemPage({ params }: PageProps) {
                     >
                       <div className="border-b border-border/50 pb-4 last:border-0 last:pb-0">
                         {related.topic && (
-                          <p className="text-xs text-primary mb-1 uppercase tracking-wide">
+                          <p className="kicker mb-1 text-primary">
                             {related.topic.name}
                           </p>
                         )}
@@ -288,9 +288,9 @@ export default async function PulseItemPage({ params }: PageProps) {
             )}
 
             {/* Why This Matters box */}
-            <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20">
-              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2 uppercase tracking-wide">
-                <Sparkles className="h-4 w-4 text-primary" />
+            <div className="mt-8 p-6 rounded-2xl bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25">
+              <h3 className="kicker mb-3 flex items-center gap-2 text-gold-600 dark:text-gold-400">
+                <Sparkles className="h-4 w-4" />
                 Why This Matters
               </h3>
               <p className="text-sm text-muted-foreground leading-relaxed">

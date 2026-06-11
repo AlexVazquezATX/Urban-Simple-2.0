@@ -6,14 +6,13 @@ import {
   CheckSquare,
   Plus,
   Filter,
-  Calendar,
   Loader2,
   ChevronDown,
   Sparkles,
   Circle,
   CheckCircle2,
+  Check,
   Clock,
-  AlertTriangle,
   MoreHorizontal,
   Pencil,
   Trash2,
@@ -24,10 +23,10 @@ import {
   CalendarDays,
   Search,
   X,
-  ChevronRight,
   ArrowUpRight,
   Star,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -38,6 +37,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
 import { cn } from '@/lib/utils'
 import { TaskForm } from '@/components/tasks/task-form'
 import { TaskDetailPanel } from '@/components/tasks/task-detail-panel'
@@ -104,28 +105,105 @@ interface TaskStats {
   total: number
 }
 
-const PRIORITY_COLORS: Record<string, string> = {
-  urgent: 'text-red-600 bg-red-50 border-red-200',
-  high: 'text-amber-700 bg-amber-50 border-amber-200',
-  medium: 'text-ocean-700 bg-ocean-50 border-ocean-200',
-  low: 'text-warm-500 bg-warm-50 border-warm-200',
+/* Priority → 3px color bar (high/urgent → coral, medium → gold, low → muted) */
+const PRIORITY_BAR_COLORS: Record<string, string> = {
+  urgent: 'bg-coral-600 dark:bg-coral-300',
+  high: 'bg-coral-600 dark:bg-coral-300',
+  medium: 'bg-gold-600 dark:bg-gold-400',
+  low: 'bg-muted-foreground/40',
 }
 
 const PRIORITY_DOT_COLORS: Record<string, string> = {
-  urgent: 'bg-red-500',
-  high: 'bg-amber-500',
-  medium: 'bg-ocean-500',
-  low: 'bg-warm-400',
+  urgent: 'bg-coral-600 dark:bg-coral-300',
+  high: 'bg-coral-600 dark:bg-coral-300',
+  medium: 'bg-gold-600 dark:bg-gold-400',
+  low: 'bg-muted-foreground/40',
 }
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
-  todo: <Circle className="w-4 h-4 text-warm-400" />,
-  in_progress: <Clock className="w-4 h-4 text-ocean-500" />,
-  done: <CheckCircle2 className="w-4 h-4 text-lime-600" />,
-  cancelled: <Circle className="w-4 h-4 text-warm-300 line-through" />,
+  todo: <Circle className="size-4 text-muted-foreground" />,
+  in_progress: <Clock className="size-4 text-teal-600 dark:text-teal-300" />,
+  done: <CheckCircle2 className="size-4 text-green-600 dark:text-green-300" />,
+  cancelled: <Circle className="size-4 text-muted-foreground/50" />,
 }
 
 type ViewMode = 'list' | 'board' | 'calendar'
+
+const VIEW_OPTIONS: Array<{ mode: ViewMode; label: string; icon: LucideIcon }> = [
+  { mode: 'list', label: 'List', icon: LayoutList },
+  { mode: 'board', label: 'Board', icon: Columns3 },
+  { mode: 'calendar', label: 'Calendar', icon: CalendarDays },
+]
+
+function formatDueDate(date: string | null) {
+  if (!date) return null
+  const d = new Date(date)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const taskDate = new Date(d)
+  taskDate.setHours(0, 0, 0, 0)
+
+  if (taskDate.getTime() === today.getTime()) return 'Today'
+  if (taskDate.getTime() === tomorrow.getTime()) return 'Tomorrow'
+  if (taskDate < today) return `${Math.floor((today.getTime() - taskDate.getTime()) / (1000 * 60 * 60 * 24))}d overdue`
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+function isOverdue(date: string | null) {
+  if (!date) return false
+  const d = new Date(date)
+  d.setHours(0, 0, 0, 0)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return d < today
+}
+
+/* Group tasks into mockup's kicker-divided sections: Today (incl. overdue),
+   This week, Later, No due date. Presentation only. */
+function groupTasksByDue(tasks: Task[]) {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const weekOut = new Date(today)
+  weekOut.setDate(weekOut.getDate() + 7)
+
+  const buckets: Record<'today' | 'week' | 'later' | 'nodate', Task[]> = {
+    today: [],
+    week: [],
+    later: [],
+    nodate: [],
+  }
+
+  for (const task of tasks) {
+    if (!task.dueDate) {
+      buckets.nodate.push(task)
+      continue
+    }
+    const d = new Date(task.dueDate)
+    d.setHours(0, 0, 0, 0)
+    if (d.getTime() <= today.getTime()) buckets.today.push(task)
+    else if (d < weekOut) buckets.week.push(task)
+    else buckets.later.push(task)
+  }
+
+  return [
+    { key: 'today', label: 'Today', gold: true, tasks: buckets.today },
+    { key: 'week', label: 'This week', gold: false, tasks: buckets.week },
+    { key: 'later', label: 'Later', gold: false, tasks: buckets.later },
+    { key: 'nodate', label: 'No due date', gold: false, tasks: buckets.nodate },
+  ].filter((group) => group.tasks.length > 0)
+}
+
+/* Projects-rail row — active = gold dim fill + gold border + gold text */
+function projectRowClass(active: boolean) {
+  return cn(
+    'flex w-full items-center gap-2.5 rounded-[8px] border px-2.5 py-[7px] text-[13.5px] transition-colors',
+    active
+      ? 'border-gold-600/30 bg-gold-600/10 font-semibold text-gold-600 dark:border-gold-400/25 dark:bg-gold-400/12 dark:text-gold-400'
+      : 'border-transparent text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+  )
+}
 
 export default function TasksPage() {
   return (
@@ -420,31 +498,6 @@ function TasksContent() {
     }
   }
 
-  const formatDueDate = (date: string | null) => {
-    if (!date) return null
-    const d = new Date(date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const taskDate = new Date(d)
-    taskDate.setHours(0, 0, 0, 0)
-
-    if (taskDate.getTime() === today.getTime()) return 'Today'
-    if (taskDate.getTime() === tomorrow.getTime()) return 'Tomorrow'
-    if (taskDate < today) return `${Math.floor((today.getTime() - taskDate.getTime()) / (1000 * 60 * 60 * 24))}d overdue`
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
-
-  const isOverdue = (date: string | null) => {
-    if (!date) return false
-    const d = new Date(date)
-    d.setHours(0, 0, 0, 0)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return d < today
-  }
-
   // Filter tasks by search query
   const filteredTasks = tasks.filter(task =>
     searchQuery === '' ||
@@ -459,99 +512,97 @@ function TasksContent() {
     done: filteredTasks.filter(t => t.status === 'done'),
   }
 
+  // Header figures — N open · N done today
+  const openCount = (stats?.byStatus?.todo || 0) + (stats?.byStatus?.in_progress || 0)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const doneTodayCount = tasks.filter(
+    t => t.status === 'done' && t.completedAt && new Date(t.completedAt) >= todayStart
+  ).length
+
+  const viewTitle =
+    projectFilter === null
+      ? 'All tasks'
+      : projectFilter === 'null'
+        ? 'Inbox'
+        : projectFilter === 'starred'
+          ? 'Starred'
+          : projects.find(p => p.id === projectFilter)?.name || 'Tasks'
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50 dark:bg-charcoal-950">
-        <Loader2 className="w-6 h-6 animate-spin text-ocean-500" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-6 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
     <div className="flex h-[calc(100vh-4rem)] md:h-[calc(100vh-4rem)]">
-      {/* Left Sidebar - Projects (hidden on mobile by default) */}
+      {/* Projects rail (hidden on mobile by default) */}
       {showProjectSidebar && (
-        <div className="hidden md:flex w-64 border-r border-warm-200 dark:border-charcoal-700 bg-warm-100 dark:bg-charcoal-800 flex-col">
-          {/* Sidebar Header */}
-          <div className="p-4 border-b border-warm-200 dark:border-charcoal-700">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100">Projects</h2>
-              <button
-                className="h-9 w-9 flex items-center justify-center rounded-sm text-ocean-600 hover:text-ocean-700 hover:bg-ocean-100 transition-colors"
-                onClick={() => setShowProjectForm(true)}
-                title="Create new project"
-              >
-                <span className="text-3xl font-black leading-none">+</span>
-              </button>
-            </div>
-
-            {/* Focus Section */}
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-3 px-3 py-2 rounded-sm text-sm text-lime-700 bg-lime-100 hover:bg-lime-200 transition-colors"
+        <div className="hidden w-[218px] shrink-0 flex-col gap-4 overflow-y-auto border-r border-border px-3.5 py-6 md:flex">
+          {/* Rail header */}
+          <div className="flex items-center px-2">
+            <h2 className="flex-1 font-display text-base font-bold tracking-[-0.3px] text-foreground">
+              Projects
+            </h2>
+            <button
+              onClick={() => setShowProjectForm(true)}
+              title="Create new project"
+              className="grid size-7 place-items-center rounded-[8px] text-gold-600 transition-colors hover:bg-gold-600/10 dark:text-gold-400 dark:hover:bg-gold-400/12"
             >
-              <Target className="w-4 h-4" />
-              <span className="flex-1 text-left font-medium">Today's Focus</span>
-              <ArrowUpRight className="w-3 h-3" />
+              <Plus className="size-[15px]" />
+            </button>
+          </div>
+
+          {/* Pinned rows */}
+          <div className="flex flex-col gap-px">
+            <Link href="/dashboard" className={projectRowClass(false)}>
+              <Target className="size-3.5 shrink-0" />
+              <span className="flex-1 truncate text-left">Today&apos;s Focus</span>
+              <ArrowUpRight className="size-3 shrink-0" />
             </Link>
 
-            {/* Starred Tasks */}
             <button
               onClick={() => setProjectFilter('starred')}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors mt-1',
-                projectFilter === 'starred'
-                  ? 'bg-lime-100 text-lime-700'
-                  : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
-              )}
+              className={projectRowClass(projectFilter === 'starred')}
             >
-              <Star className="w-4 h-4" />
-              <span className="flex-1 text-left">Starred</span>
-              <span className="text-xs text-warm-500 dark:text-cream-400">
+              <Star className="size-3.5 shrink-0" />
+              <span className="flex-1 truncate text-left">Starred</span>
+              <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
                 {tasks.filter(t => t.isStarred && statusFilter.includes(t.status)).length}
               </span>
             </button>
 
-            <div className="border-t border-warm-200 dark:border-charcoal-700 my-3" />
-
-            {/* All Tasks */}
             <button
               onClick={() => setProjectFilter(null)}
-              className={cn(
-                'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
-                projectFilter === null
-                  ? 'bg-warm-200 dark:bg-charcoal-700 text-warm-900 dark:text-cream-100'
-                  : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
-              )}
+              className={projectRowClass(projectFilter === null)}
             >
-              <LayoutList className="w-4 h-4" />
-              <span className="flex-1 text-left">All Tasks</span>
-              <span className="text-xs text-warm-500 dark:text-cream-400">
+              <LayoutList className="size-3.5 shrink-0" />
+              <span className="flex-1 truncate text-left">All tasks</span>
+              <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
                 {stats?.byStatus?.todo || 0}
               </span>
             </button>
           </div>
 
-          {/* Project List */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="space-y-1">
+          {/* Project list */}
+          <div>
+            <div className="kicker px-2 pb-2 text-muted-foreground">By project</div>
+            <div className="flex flex-col gap-px">
               {projects.map((project) => (
                 <button
                   key={project.id}
                   onClick={() => setProjectFilter(project.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
-                    projectFilter === project.id
-                      ? 'bg-warm-200 dark:bg-charcoal-700 text-warm-900 dark:text-cream-100'
-                      : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
-                  )}
+                  className={projectRowClass(projectFilter === project.id)}
                 >
                   <span
-                    className="w-3 h-3 rounded-full shrink-0"
+                    className="size-2 shrink-0 rounded-full"
                     style={{ backgroundColor: project.color }}
                   />
-                  <span className="flex-1 text-left truncate">{project.name}</span>
-                  <span className="text-xs text-warm-500 dark:text-cream-400">
+                  <span className="flex-1 truncate text-left">{project.name}</span>
+                  <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
                     {project.openTaskCount || 0}
                   </span>
                 </button>
@@ -560,146 +611,119 @@ function TasksContent() {
               {/* No Project */}
               <button
                 onClick={() => setProjectFilter('null')}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-sm text-sm transition-colors',
-                  projectFilter === 'null'
-                    ? 'bg-warm-200 dark:bg-charcoal-700 text-warm-900 dark:text-cream-100'
-                    : 'text-warm-600 dark:text-cream-300 hover:bg-warm-200 dark:hover:bg-charcoal-700'
-                )}
+                className={projectRowClass(projectFilter === 'null')}
               >
-                <span className="w-3 h-3 rounded-full shrink-0 border-2 border-dashed border-warm-300" />
-                <span className="flex-1 text-left">No Project</span>
+                <span className="size-2 shrink-0 rounded-full border border-dashed border-muted-foreground" />
+                <span className="flex-1 truncate text-left">No project</span>
               </button>
             </div>
           </div>
-
         </div>
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-warm-50 dark:bg-charcoal-950">
+      <div className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-4 md:px-6 py-3 md:py-4 border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-          {/* Title Row */}
-          <div className="flex items-center justify-between mb-3 md:mb-4">
-            <div className="flex items-center gap-2 md:gap-3">
-              {!showProjectSidebar && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowProjectSidebar(true)}
-                  className="mr-2 hidden md:flex"
-                >
-                  <FolderKanban className="w-4 h-4" />
-                </Button>
-              )}
-              <div>
-                <h1 className="text-lg md:text-xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-                  {projectFilter === null
-                    ? 'All Tasks'
-                    : projectFilter === 'null'
-                      ? 'Inbox'
-                      : projectFilter === 'starred'
-                        ? 'Starred Tasks'
-                        : projects.find(p => p.id === projectFilter)?.name || 'Tasks'}
-                </h1>
-                <p className="text-xs md:text-sm text-warm-500 dark:text-cream-400">
-                  {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 md:gap-4">
-              {/* Quick Stats - Inline in header */}
-              <div className="hidden md:flex items-center gap-3 text-sm">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-warm-900 dark:text-cream-100">
-                    {(stats?.byStatus?.todo || 0) + (stats?.byStatus?.in_progress || 0)}
-                  </span>
-                  <span className="text-warm-500 dark:text-cream-400">Open</span>
-                </div>
-                {(stats?.overdue || 0) > 0 && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-red-600">
-                      {stats?.overdue || 0}
-                    </span>
-                    <span className="text-red-500">Overdue</span>
-                  </div>
-                )}
-              </div>
-
-              {/* View Mode Toggle - Hidden on mobile for list, shown for board toggle */}
-              <div className="hidden md:flex items-center bg-warm-100 dark:bg-charcoal-800 rounded-sm p-1">
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    'p-1.5 rounded-sm transition-colors',
-                    viewMode === 'list' ? 'bg-white dark:bg-charcoal-700 shadow-sm' : 'hover:bg-warm-200 dark:hover:bg-charcoal-700'
-                  )}
-                >
-                  <LayoutList className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('board')}
-                  className={cn(
-                    'p-1.5 rounded-sm transition-colors',
-                    viewMode === 'board' ? 'bg-white dark:bg-charcoal-700 shadow-sm' : 'hover:bg-warm-200 dark:hover:bg-charcoal-700'
-                  )}
-                >
-                  <Columns3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('calendar')}
-                  className={cn(
-                    'p-1.5 rounded-sm transition-colors',
-                    viewMode === 'calendar' ? 'bg-white dark:bg-charcoal-700 shadow-sm' : 'hover:bg-warm-200 dark:hover:bg-charcoal-700'
-                  )}
-                >
-                  <CalendarDays className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* New Task Button - Icon only on mobile */}
+        <div className="shrink-0 px-4 pt-5 md:px-7 md:pt-6">
+          <div className="flex items-start gap-2">
+            {!showProjectSidebar && (
               <Button
-                onClick={() => setShowTaskForm(true)}
-                variant="lime"
-                size="sm"
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setShowProjectSidebar(true)}
+                className="mt-1 hidden md:flex"
               >
-                <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">New Task</span>
+                <FolderKanban className="size-4" />
               </Button>
-            </div>
+            )}
+            <PageHeader
+              className="mb-4 flex-1"
+              kicker="TODAY · TASKS"
+              title={viewTitle}
+              subtitle={
+                <>
+                  <span className="font-mono tabular-nums">{openCount}</span> open ·{' '}
+                  <span className="font-mono tabular-nums">{doneTodayCount}</span> done today
+                  {(stats?.overdue || 0) > 0 && (
+                    <span className="text-coral-600 dark:text-coral-300">
+                      {' '}· <span className="font-mono tabular-nums">{stats?.overdue}</span> overdue
+                    </span>
+                  )}
+                </>
+              }
+              actions={
+                <>
+                  {/* List / Board / Calendar segmented control */}
+                  <div className="hidden items-center overflow-hidden rounded-[9px] border border-border md:flex">
+                    {VIEW_OPTIONS.map((opt, i) => {
+                      const Icon = opt.icon
+                      return (
+                        <button
+                          key={opt.mode}
+                          onClick={() => setViewMode(opt.mode)}
+                          className={cn(
+                            'flex items-center gap-1.5 px-3 py-[7px] text-[12.5px] transition-colors',
+                            i < VIEW_OPTIONS.length - 1 && 'border-r border-border',
+                            viewMode === opt.mode
+                              ? 'bg-secondary font-semibold text-foreground'
+                              : 'text-muted-foreground hover:text-foreground'
+                          )}
+                        >
+                          <Icon className="size-3.5" />
+                          {opt.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  {/* New Task Button - Icon only on mobile */}
+                  <Button onClick={() => setShowTaskForm(true)} variant="gold" size="sm">
+                    <Plus className="size-4" />
+                    <span className="hidden sm:inline">New task</span>
+                  </Button>
+                </>
+              }
+            />
           </div>
 
           {/* Mobile: Project Filter Dropdown */}
-          <div className="md:hidden mb-3">
+          <div className="mb-3 md:hidden">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="w-full justify-between">
                   <span className="flex items-center gap-2">
-                    {projectFilter === 'starred' ? <Star className="w-4 h-4 text-lime-600" /> : <FolderKanban className="w-4 h-4" />}
+                    {projectFilter === 'starred' ? (
+                      <Star className="size-4 text-gold-600 dark:text-gold-400" />
+                    ) : (
+                      <FolderKanban className="size-4" />
+                    )}
                     {projectFilter === null
-                      ? 'All Tasks'
+                      ? 'All tasks'
                       : projectFilter === 'null'
-                        ? 'No Project'
+                        ? 'No project'
                         : projectFilter === 'starred'
                           ? 'Starred'
                           : projects.find(p => p.id === projectFilter)?.name || 'Project'}
                   </span>
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="size-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
                 <DropdownMenuItem onClick={() => setProjectFilter('starred')}>
-                  <Star className={cn('w-4 h-4 mr-2', projectFilter === 'starred' && 'fill-lime-500 text-lime-600')} />
+                  <Star
+                    className={cn(
+                      'mr-2 size-4',
+                      projectFilter === 'starred' && 'fill-current text-gold-600 dark:text-gold-400'
+                    )}
+                  />
                   Starred
-                  {projectFilter === 'starred' && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                  {projectFilter === 'starred' && <CheckCircle2 className="ml-auto size-3 text-primary" />}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setProjectFilter(null)}>
-                  <LayoutList className="w-4 h-4 mr-2" />
-                  All Tasks
-                  {projectFilter === null && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                  <LayoutList className="mr-2 size-4" />
+                  All tasks
+                  {projectFilter === null && <CheckCircle2 className="ml-auto size-3 text-primary" />}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {projects.map((project) => (
@@ -708,31 +732,33 @@ function TasksContent() {
                     onClick={() => setProjectFilter(project.id)}
                   >
                     <span
-                      className="w-3 h-3 rounded-full mr-2"
+                      className="mr-2 size-3 rounded-full"
                       style={{ backgroundColor: project.color }}
                     />
                     {project.name}
-                    <span className="ml-auto text-xs text-warm-500">{project.openTaskCount || 0}</span>
-                    {projectFilter === project.id && <CheckCircle2 className="w-3 h-3 ml-2 text-ocean-500" />}
+                    <span className="ml-auto font-mono text-xs tabular-nums text-muted-foreground">
+                      {project.openTaskCount || 0}
+                    </span>
+                    {projectFilter === project.id && <CheckCircle2 className="ml-2 size-3 text-primary" />}
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => setProjectFilter('null')}>
-                  <span className="w-3 h-3 rounded-full mr-2 border-2 border-dashed border-warm-300" />
-                  No Project
-                  {projectFilter === 'null' && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                  <span className="mr-2 size-3 rounded-full border border-dashed border-muted-foreground" />
+                  No project
+                  {projectFilter === 'null' && <CheckCircle2 className="ml-auto size-3 text-primary" />}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
 
-          {/* Search and Filters Row - Responsive layout */}
-          <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3">
+          {/* Search + quick-add + filters row */}
+          <div className="flex flex-col gap-2 pb-4 md:flex-row md:items-center md:gap-2.5">
             {/* Search - Full width on mobile */}
-            <div className="relative flex-1 md:max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search tasks..."
+                placeholder="Search tasks…"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-8"
@@ -740,28 +766,28 @@ function TasksContent() {
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-warm-400 hover:text-warm-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  <X className="w-4 h-4" />
+                  <X className="size-4" />
                 </button>
               )}
             </div>
 
-            {/* Quick Add - Hidden on mobile (they use the bottom nav + button) */}
-            <form onSubmit={handleQuickAdd} className="hidden md:flex items-center gap-2">
-              <div className="relative">
-                <Plus className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
+            {/* Quick Add — dashed row, type and hit return (hidden on mobile) */}
+            <form onSubmit={handleQuickAdd} className="hidden flex-1 items-center gap-2 md:flex">
+              <div className="relative flex-1">
+                <Plus className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-gold-600 dark:text-gold-400" />
                 <Input
-                  placeholder="Quick add task..."
+                  placeholder="Quick add — type and hit return"
                   value={quickAddTitle}
                   onChange={(e) => setQuickAddTitle(e.target.value)}
-                  className="pl-9 w-64"
+                  className="border-dashed pl-9"
                   disabled={addingTask}
                 />
               </div>
               {quickAddTitle && (
-                <Button type="submit" size="sm" variant="lime" disabled={addingTask}>
-                  {addingTask ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Add'}
+                <Button type="submit" size="sm" variant="outline" disabled={addingTask}>
+                  {addingTask ? <Loader2 className="size-4 animate-spin" /> : 'Add'}
                 </Button>
               )}
             </form>
@@ -771,11 +797,11 @@ function TasksContent() {
               {/* Status Filter */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
-                    <Filter className="w-4 h-4" />
+                  <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
+                    <Filter className="size-4" />
                     <span className="hidden sm:inline">Status</span>
                     {statusFilter.length > 0 && statusFilter.length < 4 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                      <Badge variant="default" className="ml-1 h-5 px-1.5 font-mono tabular-nums">
                         {statusFilter.length}
                       </Badge>
                     )}
@@ -799,7 +825,7 @@ function TasksContent() {
                       )}>
                         {STATUS_ICONS[status]}
                         {status.replace('_', ' ')}
-                        {statusFilter.includes(status) && <CheckCircle2 className="w-3 h-3 ml-auto text-ocean-500" />}
+                        {statusFilter.includes(status) && <CheckCircle2 className="ml-auto size-3 text-primary" />}
                       </span>
                     </DropdownMenuItem>
                   ))}
@@ -809,20 +835,20 @@ function TasksContent() {
               {/* Priority Filter */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5 shrink-0">
+                  <Button variant="outline" size="sm" className="shrink-0 gap-1.5">
                     <span className="hidden sm:inline">Priority</span>
                     <span className="sm:hidden">Pri</span>
                     {priorityFilter && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 capitalize">
+                      <Badge variant="neutral" className="ml-1 h-5 px-1.5 capitalize">
                         {priorityFilter}
                       </Badge>
                     )}
-                    <ChevronDown className="w-3 h-3" />
+                    <ChevronDown className="size-3" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => setPriorityFilter(null)}>
-                    All Priorities
+                    All priorities
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   {['urgent', 'high', 'medium', 'low'].map((priority) => (
@@ -831,7 +857,7 @@ function TasksContent() {
                       onClick={() => setPriorityFilter(priority)}
                     >
                       <span className="flex items-center gap-2 capitalize">
-                        <span className={cn('w-2 h-2 rounded-full', PRIORITY_DOT_COLORS[priority])} />
+                        <span className={cn('size-2 rounded-full', PRIORITY_DOT_COLORS[priority])} />
                         {priority}
                       </span>
                     </DropdownMenuItem>
@@ -843,7 +869,7 @@ function TasksContent() {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-auto p-3 md:p-6 scrollbar-elegant">
+        <div className="scrollbar-elegant flex-1 overflow-auto px-4 pb-8 md:px-7">
           {/* Goals Section - shown only when not filtering by project */}
           {(projectFilter === null || projectFilter === 'starred') && (
             <GoalsSection className="mb-4" />
@@ -852,176 +878,60 @@ function TasksContent() {
           {viewMode === 'list' && (
             <div>
               {filteredTasks.length === 0 ? (
-                <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm p-12 text-center">
-                  <div className="w-16 h-16 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-4">
-                    <CheckSquare className="w-7 h-7 text-ocean-600" />
-                  </div>
-                  <h3 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100 mb-2">No tasks found</h3>
-                  <p className="text-warm-500 dark:text-cream-400 mb-6 max-w-sm mx-auto">
-                    {searchQuery
-                      ? 'No tasks match your search'
-                      : statusFilter.length === 0
-                        ? 'Create your first task to get started'
-                        : 'No tasks match your current filters'}
-                  </p>
-                  <Button onClick={() => setShowTaskForm(true)} variant="lime">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Create Task
-                  </Button>
+                <div className="rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none">
+                  <EmptyState
+                    icon={CheckSquare}
+                    title={
+                      searchQuery
+                        ? 'Nothing matches that search'
+                        : statusFilter.length === 0
+                          ? 'Pick a status to see your tasks'
+                          : 'All clear — nothing on the list'
+                    }
+                    description={
+                      searchQuery
+                        ? 'Try a different word, or clear the search to see everything.'
+                        : statusFilter.length === 0
+                          ? 'Choose at least one status filter above and your tasks will show up here.'
+                          : 'Add the next thing on your mind and it will land right here.'
+                    }
+                    action={
+                      <Button onClick={() => setShowTaskForm(true)} variant="outline">
+                        <Plus className="size-4" />
+                        New task
+                      </Button>
+                    }
+                  />
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {filteredTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      onClick={() => setSelectedTask(task)}
-                      className={cn(
-                        'bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm px-3 md:px-4 py-3 md:py-3 flex items-start md:items-center gap-3 md:gap-4 hover:border-ocean-400 transition-colors group cursor-pointer',
-                        task.status === 'done' && 'opacity-60'
-                      )}
-                    >
-                      {/* Star Toggle */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleStarToggle(task.id, task.isStarred)
-                        }}
-                        className={cn(
-                          'shrink-0 hover:scale-110 transition-all p-1 -m-1',
-                          task.isStarred ? 'text-lime-600' : 'text-warm-300 hover:text-lime-500'
-                        )}
-                        title={task.isStarred ? 'Unstar task' : 'Star task'}
-                      >
-                        <Star className={cn('w-4 h-4', task.isStarred && 'fill-current')} />
-                      </button>
-
-                      {/* Status Toggle - Larger touch target on mobile */}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleStatusChange(
-                            task.id,
-                            task.status === 'done' ? 'todo' : 'done'
-                          )
-                        }}
-                        className="shrink-0 hover:scale-110 transition-transform p-1 -m-1"
-                      >
-                        {STATUS_ICONS[task.status]}
-                      </button>
-
-                      {/* Priority Indicator */}
-                      <span className={cn('w-1.5 h-6 md:h-8 rounded-full shrink-0 mt-1 md:mt-0', PRIORITY_DOT_COLORS[task.priority])} />
-
-                      {/* Task Content */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start md:items-center gap-2 flex-wrap">
-                          <span className={cn(
-                            'font-medium text-warm-900 dark:text-cream-100 text-sm md:text-base',
-                            task.status === 'done' && 'line-through text-warm-500 dark:text-cream-400'
-                          )}>
-                            {task.title}
-                          </span>
-                          {task.isFocusTask && (
-                            <Badge variant="secondary" className="gap-1 text-xs bg-lime-50 text-lime-700 border-lime-200">
-                              <Sparkles className="w-3 h-3" />
-                              <span className="hidden sm:inline">Focus</span>
-                            </Badge>
+                <div className="flex flex-col gap-4">
+                  {groupTasksByDue(filteredTasks).map((group) => (
+                    <div key={group.key} className="flex flex-col gap-2">
+                      {/* Group divider — mono uppercase kicker (Today = gold) */}
+                      <div className="flex items-center gap-2 px-0.5">
+                        <span
+                          className={cn(
+                            'font-mono text-[11px] uppercase tracking-[1.6px]',
+                            group.gold
+                              ? 'text-gold-600 dark:text-gold-400'
+                              : 'text-muted-foreground'
                           )}
-                        </div>
-
-                        <div className="flex items-center gap-2 md:gap-3 mt-1 text-xs text-warm-500 dark:text-cream-400 flex-wrap">
-                          {/* Project */}
-                          {task.project && (
-                            <span className="flex items-center gap-1">
-                              <span
-                                className="w-2 h-2 rounded-full"
-                                style={{ backgroundColor: task.project.color }}
-                              />
-                              <span className="hidden sm:inline">{task.project.name}</span>
-                            </span>
-                          )}
-
-                          {/* Due Date */}
-                          {task.dueDate && (
-                            <span className={cn(
-                              'flex items-center gap-1',
-                              isOverdue(task.dueDate) && task.status !== 'done' && 'text-red-600 font-medium'
-                            )}>
-                              {isOverdue(task.dueDate) && task.status !== 'done' && (
-                                <AlertTriangle className="w-3 h-3" />
-                              )}
-                              <Calendar className="w-3 h-3" />
-                              {formatDueDate(task.dueDate)}
-                            </span>
-                          )}
-
-                          {/* Tags - Hide on mobile to save space */}
-                          {task.tags.length > 0 && (
-                            <div className="hidden sm:flex items-center gap-1">
-                              {task.tags.slice(0, 2).map(({ tag }) => (
-                                <span
-                                  key={tag.id}
-                                  className="px-1.5 py-0.5 rounded-sm text-xs"
-                                  style={{
-                                    backgroundColor: `${tag.color}20`,
-                                    color: tag.color,
-                                  }}
-                                >
-                                  {tag.name}
-                                </span>
-                              ))}
-                              {task.tags.length > 2 && (
-                                <span className="text-warm-400">+{task.tags.length - 2}</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        >
+                          {group.label}
+                        </span>
+                        <span className="h-px flex-1 bg-border" />
                       </div>
 
-                      {/* Actions - Always visible on mobile for touch access */}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleStarToggle(task.id, task.isStarred)}>
-                            <Star className={cn('w-4 h-4 mr-2', task.isStarred && 'fill-lime-500 text-lime-600')} />
-                            {task.isStarred ? 'Unstar' : 'Star'}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => setSelectedTask(task)}>
-                            <Pencil className="w-4 h-4 mr-2" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'todo')}>
-                            {STATUS_ICONS.todo}
-                            <span className="ml-2">To Do</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'in_progress')}>
-                            {STATUS_ICONS.in_progress}
-                            <span className="ml-2">In Progress</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(task.id, 'done')}>
-                            {STATUS_ICONS.done}
-                            <span className="ml-2">Done</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteTask(task.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {group.tasks.map((task) => (
+                        <TaskListRow
+                          key={task.id}
+                          task={task}
+                          onSelect={setSelectedTask}
+                          onStarToggle={handleStarToggle}
+                          onStatusChange={handleStatusChange}
+                          onDelete={handleDeleteTask}
+                        />
+                      ))}
                     </div>
                   ))}
                 </div>
@@ -1030,62 +940,54 @@ function TasksContent() {
           )}
 
           {viewMode === 'board' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:h-full">
-              {/* To Do Column */}
-              <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {STATUS_ICONS.todo}
-                    <span className="font-medium text-warm-900 dark:text-cream-100">To Do</span>
-                    <Badge variant="secondary" className="ml-1">{tasksByStatus.todo.length}</Badge>
+            <div className="grid grid-cols-1 gap-4 md:h-full md:grid-cols-3">
+              {([
+                ['todo', 'To do'],
+                ['in_progress', 'In progress'],
+                ['done', 'Done'],
+              ] as const).map(([statusKey, label]) => (
+                <div
+                  key={statusKey}
+                  className="flex flex-col rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none"
+                >
+                  <div className="flex items-center gap-2 border-b border-border px-4 py-3">
+                    {STATUS_ICONS[statusKey]}
+                    <span className="font-mono text-[11px] uppercase tracking-[1.6px] text-muted-foreground">
+                      {label}
+                    </span>
+                    <Badge variant="default" className="ml-1 font-mono tabular-nums">
+                      {tasksByStatus[statusKey].length}
+                    </Badge>
+                  </div>
+                  <div className="max-h-64 space-y-2 overflow-y-auto p-3 md:max-h-none md:flex-1">
+                    {tasksByStatus[statusKey].length === 0 ? (
+                      <div className="rounded-[12px] border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground">
+                        Nothing here yet
+                      </div>
+                    ) : (
+                      tasksByStatus[statusKey].map((task) => (
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          onStatusChange={handleStatusChange}
+                          onStarToggle={handleStarToggle}
+                          onEdit={() => setSelectedTask(task)}
+                        />
+                      ))
+                    )}
                   </div>
                 </div>
-                <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
-                  {tasksByStatus.todo.map((task) => (
-                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onStarToggle={handleStarToggle} onEdit={() => setSelectedTask(task)} />
-                  ))}
-                </div>
-              </div>
-
-              {/* In Progress Column */}
-              <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {STATUS_ICONS.in_progress}
-                    <span className="font-medium text-warm-900 dark:text-cream-100">In Progress</span>
-                    <Badge variant="secondary" className="ml-1">{tasksByStatus.in_progress.length}</Badge>
-                  </div>
-                </div>
-                <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
-                  {tasksByStatus.in_progress.map((task) => (
-                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onStarToggle={handleStarToggle} onEdit={() => setSelectedTask(task)} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Done Column */}
-              <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm flex flex-col">
-                <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {STATUS_ICONS.done}
-                    <span className="font-medium text-warm-900 dark:text-cream-100">Done</span>
-                    <Badge variant="secondary" className="ml-1">{tasksByStatus.done.length}</Badge>
-                  </div>
-                </div>
-                <div className="md:flex-1 md:overflow-y-auto p-3 space-y-2 max-h-64 md:max-h-none overflow-y-auto">
-                  {tasksByStatus.done.map((task) => (
-                    <TaskCard key={task.id} task={task} onStatusChange={handleStatusChange} onStarToggle={handleStarToggle} onEdit={() => setSelectedTask(task)} />
-                  ))}
-                </div>
-              </div>
+              ))}
             </div>
           )}
 
           {viewMode === 'calendar' && (
-            <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm p-8 text-center">
-              <CalendarDays className="w-12 h-12 text-warm-300 mx-auto mb-4" />
-              <h3 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100 mb-2">Calendar View</h3>
-              <p className="text-warm-500 dark:text-cream-400">Calendar view coming soon</p>
+            <div className="rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none">
+              <EmptyState
+                icon={CalendarDays}
+                title="Calendar view is on the way"
+                description="Until it lands, the list view keeps everything sorted by due date."
+              />
             </div>
           )}
         </div>
@@ -1178,6 +1080,190 @@ function TasksContent() {
   )
 }
 
+// Task row — list view (per USTaskRow: focus star · check circle · 3px
+// priority bar · title + chips · project dot + tag · mono due date · kebab)
+function TaskListRow({
+  task,
+  onSelect,
+  onStarToggle,
+  onStatusChange,
+  onDelete,
+}: {
+  task: Task
+  onSelect: (task: Task) => void
+  onStarToggle: (id: string, isStarred: boolean) => void
+  onStatusChange: (id: string, status: string) => void
+  onDelete: (id: string) => void
+}) {
+  const due = formatDueDate(task.dueDate)
+  const overdue = isOverdue(task.dueDate) && task.status !== 'done'
+
+  return (
+    <div
+      onClick={() => onSelect(task)}
+      className={cn(
+        'group flex cursor-pointer items-center gap-3 rounded-[12px] border border-border bg-card px-3 py-3 transition-colors hover:border-cream-500 dark:hover:border-ink-600 md:gap-3.5 md:px-[18px]',
+        task.status === 'done' && 'opacity-60'
+      )}
+    >
+      {/* Focus star */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onStarToggle(task.id, task.isStarred)
+        }}
+        className={cn(
+          '-m-1 shrink-0 p-1 transition-all hover:scale-110',
+          task.isStarred
+            ? 'text-gold-600 dark:text-gold-400'
+            : 'text-muted-foreground/45 hover:text-gold-600 dark:hover:text-gold-400'
+        )}
+        title={task.isStarred ? 'Unstar task' : 'Star task'}
+      >
+        <Star className={cn('size-3.5', task.isStarred && 'fill-current')} />
+      </button>
+
+      {/* Check circle */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onStatusChange(task.id, task.status === 'done' ? 'todo' : 'done')
+        }}
+        className={cn(
+          'grid size-[19px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors',
+          task.status === 'done'
+            ? 'border-green-600 bg-green-600/12 dark:border-green-300 dark:bg-green-300/12'
+            : task.status === 'in_progress'
+              ? 'border-teal-600 dark:border-teal-300'
+              : 'border-muted-foreground/60 hover:border-green-600 dark:hover:border-green-300'
+        )}
+        title={task.status === 'done' ? 'Mark as to do' : 'Mark as done'}
+      >
+        {task.status === 'done' && (
+          <Check className="size-2.5 text-green-600 dark:text-green-300" strokeWidth={3} />
+        )}
+      </button>
+
+      {/* 3px priority bar */}
+      <span
+        className={cn(
+          'w-[3px] self-stretch rounded-[2px]',
+          PRIORITY_BAR_COLORS[task.priority] || PRIORITY_BAR_COLORS.low
+        )}
+      />
+
+      {/* Task content */}
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={cn(
+              'text-sm font-semibold text-foreground',
+              task.status === 'done' && 'text-muted-foreground line-through'
+            )}
+          >
+            {task.title}
+          </span>
+          {task.isFocusTask && (
+            <Badge variant="gold">
+              <Sparkles className="size-2.5" />
+              <span className="hidden sm:inline">Focus</span>
+            </Badge>
+          )}
+        </div>
+
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          {/* Project dot + name */}
+          {task.project && (
+            <span className="inline-flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
+              <span
+                className="inline-block size-[7px] rounded-full"
+                style={{ backgroundColor: task.project.color }}
+              />
+              <span className="hidden sm:inline">{task.project.name}</span>
+            </span>
+          )}
+
+          {/* Tag chips */}
+          {task.tags.slice(0, 2).map(({ tag }) => (
+            <span
+              key={tag.id}
+              className="rounded-[6px] border border-border bg-secondary px-[7px] py-px text-[11px] text-muted-foreground"
+            >
+              {tag.name}
+            </span>
+          ))}
+          {task.tags.length > 2 && (
+            <span className="text-[11px] text-muted-foreground">+{task.tags.length - 2}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Due date — mono, Today = gold, overdue = coral */}
+      {due && (
+        <span
+          className={cn(
+            'shrink-0 font-mono text-[11.5px] tabular-nums',
+            overdue
+              ? 'text-coral-600 dark:text-coral-300'
+              : due === 'Today' && task.status !== 'done'
+                ? 'text-gold-600 dark:text-gold-400'
+                : 'text-muted-foreground'
+          )}
+        >
+          {due}
+        </span>
+      )}
+
+      {/* Kebab - always visible on mobile for touch access */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="shrink-0 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onStarToggle(task.id, task.isStarred)}>
+            <Star
+              className={cn(
+                'mr-2 size-4',
+                task.isStarred && 'fill-current text-gold-600 dark:text-gold-400'
+              )}
+            />
+            {task.isStarred ? 'Unstar' : 'Star'}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onSelect(task)}>
+            <Pencil className="mr-2 size-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onStatusChange(task.id, 'todo')}>
+            {STATUS_ICONS.todo}
+            <span className="ml-2">To Do</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onStatusChange(task.id, 'in_progress')}>
+            {STATUS_ICONS.in_progress}
+            <span className="ml-2">In Progress</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onStatusChange(task.id, 'done')}>
+            {STATUS_ICONS.done}
+            <span className="ml-2">Done</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => onDelete(task.id)}>
+            <Trash2 className="mr-2 size-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  )
+}
+
 // Task Card Component for Board View
 function TaskCard({
   task,
@@ -1190,36 +1276,14 @@ function TaskCard({
   onStarToggle: (id: string, isStarred: boolean) => void
   onEdit: () => void
 }) {
-  const isOverdue = (date: string | null) => {
-    if (!date) return false
-    const d = new Date(date)
-    d.setHours(0, 0, 0, 0)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return d < today
-  }
-
-  const formatDueDate = (date: string | null) => {
-    if (!date) return null
-    const d = new Date(date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const taskDate = new Date(d)
-    taskDate.setHours(0, 0, 0, 0)
-
-    if (taskDate.getTime() === today.getTime()) return 'Today'
-    if (taskDate < today) {
-      const days = Math.floor((today.getTime() - taskDate.getTime()) / (1000 * 60 * 60 * 24))
-      return `${days}d overdue`
-    }
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-  }
+  const overdue = isOverdue(task.dueDate) && task.status !== 'done'
 
   return (
     <div
       className={cn(
-        'p-3 bg-warm-50 dark:bg-charcoal-800 hover:bg-warm-100 dark:hover:bg-charcoal-700 rounded-sm border border-warm-200 dark:border-charcoal-700 cursor-pointer group transition-colors',
-        task.isStarred && 'bg-lime-50/50 border-lime-200'
+        'group cursor-pointer rounded-[12px] border border-border bg-background p-3 transition-colors hover:bg-secondary/50',
+        task.isStarred &&
+          'border-gold-600/30 bg-gold-600/10 dark:border-gold-400/25 dark:bg-gold-400/12'
       )}
       onClick={onEdit}
     >
@@ -1231,10 +1295,12 @@ function TaskCard({
           }}
           className={cn(
             'mt-0.5 shrink-0 transition-colors',
-            task.isStarred ? 'text-lime-600' : 'text-warm-300 hover:text-lime-500'
+            task.isStarred
+              ? 'text-gold-600 dark:text-gold-400'
+              : 'text-muted-foreground/45 hover:text-gold-600 dark:hover:text-gold-400'
           )}
         >
-          <Star className={cn('w-3.5 h-3.5', task.isStarred && 'fill-current')} />
+          <Star className={cn('size-3.5', task.isStarred && 'fill-current')} />
         </button>
         <button
           onClick={(e) => {
@@ -1245,33 +1311,39 @@ function TaskCard({
         >
           {STATUS_ICONS[task.status]}
         </button>
-        <div className="flex-1 min-w-0">
-          <p className={cn(
-            'text-sm font-medium text-warm-900 dark:text-cream-100',
-            task.status === 'done' && 'line-through text-warm-500 dark:text-cream-400'
-          )}>
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              'text-sm font-medium text-foreground',
+              task.status === 'done' && 'text-muted-foreground line-through'
+            )}
+          >
             {task.title}
           </p>
 
-          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
             {/* Priority */}
-            <span className={cn('w-2 h-2 rounded-full', PRIORITY_DOT_COLORS[task.priority])} />
+            <span className={cn('size-2 rounded-full', PRIORITY_DOT_COLORS[task.priority])} />
 
             {/* Project */}
             {task.project && (
-              <span className="text-xs text-warm-500 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: task.project.color }} />
+              <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span
+                  className="size-1.5 rounded-full"
+                  style={{ backgroundColor: task.project.color }}
+                />
                 {task.project.name}
               </span>
             )}
 
             {/* Due Date */}
             {task.dueDate && (
-              <span className={cn(
-                'text-xs flex items-center gap-1',
-                isOverdue(task.dueDate) && task.status !== 'done' ? 'text-red-600' : 'text-warm-500'
-              )}>
-                <Calendar className="w-3 h-3" />
+              <span
+                className={cn(
+                  'font-mono text-[11px] tabular-nums',
+                  overdue ? 'text-coral-600 dark:text-coral-300' : 'text-muted-foreground'
+                )}
+              >
                 {formatDueDate(task.dueDate)}
               </span>
             )}

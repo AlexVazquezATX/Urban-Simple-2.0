@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Select,
   SelectContent,
@@ -222,27 +223,50 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold">
+    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · OUTREACH"
+        title={
+          <span className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Back"
+              className="grid size-8 shrink-0 place-items-center rounded-[9px] border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+            >
+              <ArrowLeft className="size-4" />
+            </button>
             {sequenceId ? 'Edit Sequence' : 'New Sequence'}
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Create a multi-step automated outreach sequence
-          </p>
-        </div>
-      </div>
+          </span>
+        }
+        subtitle="Create a multi-step automated outreach sequence"
+        actions={
+          <>
+            <Button variant="outline" onClick={() => router.back()}>
+              Cancel
+            </Button>
+            <Button variant="gold" onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="size-4" />
+                  Save Sequence
+                </>
+              )}
+            </Button>
+          </>
+        }
+      />
 
       <Card>
         <CardHeader>
@@ -255,6 +279,7 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Cold Outreach Sequence"
+              className="mt-1"
             />
           </div>
           <div>
@@ -264,12 +289,13 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
               placeholder="Optional description"
+              className="mt-1"
             />
           </div>
           <div>
             <Label>AI Tone</Label>
             <Select value={tone} onValueChange={(v: any) => setTone(v)}>
-              <SelectTrigger>
+              <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -279,7 +305,7 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                 <SelectItem value="warm">Warm</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="mt-1 text-xs text-muted-foreground">
               Sets the tone for AI-generated content
             </p>
           </div>
@@ -302,11 +328,11 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                 size="sm"
                 disabled={!!generatingStepId || !name}
               >
-                <Sparkles className="h-4 w-4 mr-2" />
+                <Sparkles className="size-4" />
                 Generate All with AI
               </Button>
               <Button onClick={addStep} variant="outline" size="sm">
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="size-4" />
                 Add Step
               </Button>
             </div>
@@ -317,7 +343,7 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
             <Card key={step.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Step {step.step}</CardTitle>
+                  <CardTitle className="text-base">Step {step.step}</CardTitle>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
@@ -327,12 +353,12 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                     >
                       {generatingStepId === step.id ? (
                         <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                           Generating...
                         </>
                       ) : (
                         <>
-                          <Sparkles className="h-4 w-4 mr-2" />
+                          <Sparkles className="size-4" />
                           Generate with AI
                         </>
                       )}
@@ -340,10 +366,12 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                     {steps.length > 1 && (
                       <Button
                         variant="ghost"
-                        size="sm"
+                        size="icon-sm"
                         onClick={() => removeStep(step.id)}
+                        aria-label={`Remove step ${step.step}`}
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="size-4" />
                       </Button>
                     )}
                   </div>
@@ -360,6 +388,7 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                       onChange={(e) =>
                         updateStep(step.id, 'delayDays', parseInt(e.target.value) || 0)
                       }
+                      className="mt-1 font-mono tabular-nums"
                     />
                   </div>
                   <div>
@@ -368,7 +397,7 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                       value={step.channel}
                       onValueChange={(v) => updateStep(step.id, 'channel', v)}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="mt-1">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -388,12 +417,13 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
                       value={step.subject}
                       onChange={(e) => updateStep(step.id, 'subject', e.target.value)}
                       placeholder="Email subject"
+                      className="mt-1"
                     />
                   </div>
                 )}
 
                 <div>
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <Label>Message Body</Label>
                     <p className="text-xs text-muted-foreground">
                       Use {'{{company_name}}'}, {'{{contact_name}}'}, {'{{location}}'} for personalization
@@ -411,25 +441,6 @@ export function SequenceBuilder({ sequenceId }: SequenceBuilderProps) {
           ))}
         </CardContent>
       </Card>
-
-      <div className="flex items-center gap-4">
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
-            </>
-          ) : (
-            <>
-              <Save className="mr-2 h-4 w-4" />
-              Save Sequence
-            </>
-          )}
-        </Button>
-        <Button variant="outline" onClick={() => router.back()}>
-          Cancel
-        </Button>
-      </div>
     </div>
   )
 }

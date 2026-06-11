@@ -42,12 +42,26 @@ interface ExpenseFormDialogProps {
     isActive: boolean
     notes: string | null
   } | null
-  children: React.ReactNode
+  // Trigger element. Optional when the dialog is controlled via open/onOpenChange
+  // (e.g. opened from a row kebab menu).
+  children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps) {
+export function ExpenseFormDialog({
+  expense,
+  children,
+  open: controlledOpen,
+  onOpenChange,
+}: ExpenseFormDialogProps) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = controlledOpen ?? internalOpen
+  const setOpen = (next: boolean) => {
+    if (controlledOpen === undefined) setInternalOpen(next)
+    onOpenChange?.(next)
+  }
   const [saving, setSaving] = useState(false)
 
   const [name, setName] = useState(expense?.name ?? '')
@@ -124,7 +138,7 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{expense ? 'Edit Recurring Expense' : 'New Recurring Expense'}</DialogTitle>
@@ -151,7 +165,7 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
                 ))}
               </SelectContent>
             </Select>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
+            <p className="text-xs text-muted-foreground">
               Owner draws are distributions to the owners — kept out of operating profit.
             </p>
           </div>
@@ -237,10 +251,10 @@ export function ExpenseFormDialog({ expense, children }: ExpenseFormDialogProps)
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving} className="rounded-sm">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave} disabled={saving} className="rounded-sm">
+          <Button type="button" onClick={handleSave} disabled={saving}>
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

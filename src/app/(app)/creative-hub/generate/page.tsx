@@ -3,8 +3,9 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Sparkles, Loader2, ImageIcon, X, LayoutGrid, RotateCcw } from 'lucide-react'
+import { Sparkles, Loader2, ImageIcon, X, LayoutGrid, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   PromptInput,
   StylePresetSelector,
@@ -184,42 +185,31 @@ function GenerateContent() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/creative-hub"
-              className="text-warm-400 hover:text-warm-600 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-semibold text-warm-900 dark:text-cream-100">Generate</h1>
-              <p className="text-xs text-warm-500 dark:text-cream-400">
-                Create any type of visual — photorealistic, illustrated, animated, anything
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
+      <PageHeader
+        kicker="CREATIVE HUB · GENERATE"
+        title="Generate"
+        subtitle="Create any type of visual — photorealistic, illustrated, animated, anything"
+        backHref="/creative-hub"
+        actions={
+          <>
             <Button
               variant="ghost"
               size="sm"
-              className="text-warm-500 hover:text-warm-700"
               onClick={clearAll}
               disabled={isGenerating}
             >
               <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
               Clear All
             </Button>
-            <Link href="/creative-hub/images">
-              <Button variant="outline" size="sm" className="rounded-sm">
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/creative-hub/images">
                 <LayoutGrid className="w-3.5 h-3.5 mr-1.5" />
                 Gallery
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
       {/* Two-Column Layout */}
       <div className="grid lg:grid-cols-2 gap-6">
@@ -252,18 +242,17 @@ function GenerateContent() {
           />
 
           {/* Brand Assets */}
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
+          <div className="bg-card rounded-[14px] border border-border p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <label className="text-sm font-medium text-warm-900 dark:text-cream-100">Brand Assets</label>
-                <p className="text-xs text-warm-400 dark:text-cream-400 mt-0.5">
+                <label className="text-sm font-medium text-foreground">Brand Assets</label>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   Drop in logos, products, or objects to include in the image
                 </p>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-sm"
                 onClick={() => setAssetSelectorOpen(true)}
                 disabled={isGenerating}
               >
@@ -280,7 +269,7 @@ function GenerateContent() {
                 {selectedAssets.map((asset) => (
                   <div
                     key={asset.id}
-                    className="relative group w-16 h-16 rounded-sm overflow-hidden border border-warm-200 dark:border-charcoal-700"
+                    className="relative group w-16 h-16 rounded-[10px] overflow-hidden border border-border"
                   >
                     {asset.imageUrl ? (
                       <img
@@ -289,26 +278,26 @@ function GenerateContent() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-warm-100 flex items-center justify-center">
-                        <ImageIcon className="w-4 h-4 text-warm-400" />
+                      <div className="w-full h-full bg-secondary flex items-center justify-center">
+                        <ImageIcon className="w-4 h-4 text-muted-foreground" />
                       </div>
                     )}
                     <button
                       onClick={() => removeAsset(asset.id)}
-                      className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute inset-0 bg-ink-950/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-3.5 h-3.5 text-white" />
                     </button>
-                    <p className="absolute bottom-0 left-0 right-0 bg-black/50 text-[9px] text-white px-1 py-0.5 truncate">
+                    <p className="absolute bottom-0 left-0 right-0 bg-ink-950/50 text-[9px] text-white px-1 py-0.5 truncate">
                       {asset.name}
                     </p>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-xs text-warm-400 dark:text-cream-400 italic">
+              <p className="text-xs text-muted-foreground italic">
                 No assets selected.{' '}
-                <Link href="/creative-hub/assets" className="text-ocean-600 hover:text-ocean-700 underline">
+                <Link href="/creative-hub/assets" className="text-primary underline hover:opacity-80">
                   Upload assets
                 </Link>{' '}
                 to your library first.
@@ -326,7 +315,8 @@ function GenerateContent() {
 
           {/* Generate Button */}
           <Button
-            className="w-full rounded-sm h-12 text-base bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-white"
+            variant="gold"
+            className="w-full h-12 text-base"
             onClick={handleGenerate}
             disabled={!canGenerate}
           >

@@ -16,7 +16,7 @@ interface UsageData {
   currentPeriodEnd: string | null
 }
 
-export function UsageBar() {
+export function UsageBar({ className }: { className?: string }) {
   const router = useRouter()
   const pathname = usePathname()
   const isStudio = pathname.startsWith('/studio')
@@ -79,42 +79,45 @@ export function UsageBar() {
   return (
     <div className={cn(
       'border-b px-4 md:px-6 py-2.5',
-      isPaused ? 'bg-red-50 border-red-200' :
-      isAtLimit ? 'bg-amber-50 border-amber-200' :
-      isNearLimit ? 'bg-amber-50/50 border-amber-100' :
-      'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700'
+      isPaused || isAtLimit
+        ? 'bg-coral-600/10 border-coral-600/30 dark:bg-coral-300/12 dark:border-coral-300/25' :
+      isNearLimit
+        ? 'bg-gold-600/10 border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25' :
+      'bg-card border-border',
+      className
     )}>
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {isPaused ? (
-            <div className="flex items-center gap-2 text-red-700">
+            <div className="flex items-center gap-2 text-coral-600 dark:text-coral-300">
               <AlertTriangle className="w-4 h-4 shrink-0" />
               <span className="text-sm font-medium">Payment failed. Update your payment method to continue generating.</span>
             </div>
           ) : (
             <>
-              <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">
+              <span className="font-mono text-xs tabular-nums text-muted-foreground shrink-0">
                 {usage.generationsUsed} / {usage.generationsLimit}
               </span>
-              <div className="flex-1 max-w-[200px] h-1.5 bg-cream-300 rounded-full overflow-hidden">
+              <div className="flex-1 max-w-[200px] h-1.5 bg-secondary rounded-full overflow-hidden">
                 <div
                   className={cn(
                     'h-full rounded-full transition-all',
-                    isAtLimit ? 'bg-status-error' :
-                    isNearLimit ? 'bg-honey-500' :
-                    'bg-gradient-to-r from-honey-400 to-bronze-500'
+                    isAtLimit ? 'bg-coral-600 dark:bg-coral-300' : 'bg-primary'
                   )}
                   style={{ width: `${Math.min(percent, 100)}%` }}
                 />
               </div>
               {isAtLimit && (
-                <span className="text-xs text-red-600 font-medium shrink-0">
+                <span className="font-mono text-xs font-medium text-coral-600 dark:text-coral-300 shrink-0">
                   Limit reached
                 </span>
               )}
               {usage.cancelledAt && usage.currentPeriodEnd && (
-                <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">
-                  Plan ends {new Date(usage.currentPeriodEnd).toLocaleDateString()}
+                <span className="text-xs text-muted-foreground shrink-0">
+                  Plan ends{' '}
+                  <span className="font-mono tabular-nums">
+                    {new Date(usage.currentPeriodEnd).toLocaleDateString()}
+                  </span>
                 </span>
               )}
             </>
@@ -128,7 +131,7 @@ export function UsageBar() {
               size="sm"
               onClick={handleManageBilling}
               disabled={portalLoading}
-              className="h-7 text-xs border-red-300 text-red-700 hover:bg-red-100"
+              className="h-7 text-xs border-coral-600/30 text-coral-600 hover:bg-coral-600/10 dark:border-coral-300/25 dark:text-coral-300 dark:hover:bg-coral-300/12"
             >
               Update Payment
             </Button>
@@ -139,7 +142,7 @@ export function UsageBar() {
               variant="outline"
               size="sm"
               onClick={handleUpgrade}
-              className="h-7 text-xs border-bronze-300 text-bronze-700 hover:bg-bronze-50"
+              className="h-7 text-xs border-gold-600/30 text-gold-600 hover:bg-gold-600/10 dark:border-gold-400/25 dark:text-gold-400 dark:hover:bg-gold-400/12"
             >
               <ArrowUpCircle className="w-3 h-3 mr-1" />
               Upgrade
@@ -152,7 +155,7 @@ export function UsageBar() {
               size="sm"
               onClick={handleManageBilling}
               disabled={portalLoading}
-              className="h-7 text-xs text-warm-500 dark:text-cream-400 hover:text-warm-700 dark:hover:text-cream-200"
+              className="h-7 text-xs"
             >
               Billing
             </Button>

@@ -1,5 +1,5 @@
-import { Breadcrumb } from '@/components/ui/breadcrumb'
-import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
+import { PageHeader } from '@/components/layout/page-header'
+import { ClientActionsMenu } from '@/components/clients/client-actions-menu'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
@@ -24,52 +24,44 @@ export async function ClientHeader({ id }: { id: string }) {
   })
   if (!client) return null
 
-  const breadcrumbItems = client.parentClient
-    ? [
-        { label: 'Clients', href: '/clients' },
-        { label: client.parentClient.name, href: `/clients/${client.parentClient.id}` },
-        { label: client.name },
-      ]
-    : [{ label: 'Clients', href: '/clients' }, { label: client.name }]
+  // Children navigate back to their parent; everyone else back to the list.
+  const backHref = client.parentClient ? `/clients/${client.parentClient.id}` : '/clients'
 
   return (
-    <div className="space-y-3">
-      <Breadcrumb items={breadcrumbItems} />
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-            {client.name}
-          </h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            {client.legalName && `${client.legalName} • `}
-            {client.branch.name}
-            {client._count.locations > 0 && (
-              <span className="ml-1">
-                • {client._count.locations}{' '}
-                {client._count.locations === 1 ? 'location' : 'locations'}
-              </span>
-            )}
-            {client._count.childClients > 0 && (
-              <span className="ml-1">
-                • {client._count.childClients} child
-                {client._count.childClients === 1 ? '' : 'ren'}
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <ConfirmDeleteButton
-            endpoint={`/api/clients/${id}`}
-            entityLabel={client.name}
-            entityKind="client"
-            redirectTo="/clients"
-            buttonLabel="Delete"
-            variant="outline"
-            size="default"
-            className="rounded-sm border-red-200 text-red-600 hover:border-red-300 hover:bg-red-50 dark:hover:bg-red-950/30"
-          />
-        </div>
-      </div>
-    </div>
+    <PageHeader
+      className="mb-0"
+      kicker={`CLIENTS · ${client.branch.code || client.branch.name}`}
+      backHref={backHref}
+      title={client.name}
+      subtitle={
+        <>
+          {client.legalName && `${client.legalName} · `}
+          {client.branch.name}
+          {client._count.locations > 0 && (
+            <>
+              {' '}
+              · {client._count.locations}{' '}
+              {client._count.locations === 1 ? 'location' : 'locations'}
+            </>
+          )}
+          {client._count.childClients > 0 && (
+            <>
+              {' '}
+              · {client._count.childClients} child
+              {client._count.childClients === 1 ? '' : 'ren'}
+            </>
+          )}
+          {client.parentClient && <> · part of {client.parentClient.name}</>}
+        </>
+      }
+      actions={
+        <ClientActionsMenu
+          endpoint={`/api/clients/${id}`}
+          entityLabel={client.name}
+          entityKind="client"
+          redirectTo="/clients"
+        />
+      }
+    />
   )
 }

@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
 import {
-  ArrowLeft,
   Sparkles,
   Loader2,
   FileText,
@@ -32,6 +31,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
@@ -94,9 +95,9 @@ const CONTENT_TYPES = [
 ]
 
 const STATUSES = [
-  { value: 'draft', label: 'Draft', icon: Clock, color: 'text-yellow-600' },
-  { value: 'approved', label: 'Approved', icon: CheckCircle, color: 'text-green-600' },
-  { value: 'rejected', label: 'Rejected', icon: XCircle, color: 'text-red-600' },
+  { value: 'draft', label: 'Draft', icon: Clock, color: 'text-muted-foreground' },
+  { value: 'approved', label: 'Approved', icon: CheckCircle, color: 'text-green-600 dark:text-green-300' },
+  { value: 'rejected', label: 'Rejected', icon: XCircle, color: 'text-coral-600 dark:text-coral-300' },
 ]
 
 export default function ContentGalleryPage() {
@@ -380,59 +381,49 @@ function ContentGalleryContent() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/creative-hub">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-charcoal-900">
-              Content Gallery
-            </h1>
-            <p className="text-charcoal-600">
-              Browse and manage your marketing content
-            </p>
-          </div>
-        </div>
+      <PageHeader
+        kicker="CREATIVE HUB · GALLERY"
+        title="Content Gallery"
+        subtitle="Browse and manage your marketing content"
+        backHref="/creative-hub"
+        className="mb-0"
+        actions={
+          <>
+            {/* View Toggle */}
+            <div className="flex border border-border rounded-[9px] overflow-hidden">
+              <Button
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="rounded-none border-0"
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-none border-0"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
 
-        <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="flex border rounded-lg overflow-hidden">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="rounded-none"
-            >
-              <Grid className="w-4 h-4" />
+            <Button variant="gold" asChild>
+              <Link href="/creative-hub/create">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Create New
+              </Link>
             </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="rounded-none"
-            >
-              <List className="w-4 h-4" />
-            </Button>
-          </div>
-
-          <Link href="/creative-hub/create">
-            <Button className="bg-gradient-to-br from-ocean-500 to-ocean-600">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Create New
-            </Button>
-          </Link>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <Filter className="w-5 h-5 text-charcoal-400" />
+            <Filter className="w-5 h-5 text-muted-foreground" />
 
             <Select
               value={filter.platform}
@@ -500,25 +491,23 @@ function ContentGalleryContent() {
       {/* Content Grid/List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-ocean-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : contents.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <FileText className="w-12 h-12 mx-auto text-charcoal-300 mb-4" />
-            <h3 className="text-lg font-semibold text-charcoal-900 mb-2">
-              No content yet
-            </h3>
-            <p className="text-charcoal-600 mb-4">
-              Create your first marketing content
-            </p>
-            <Link href="/creative-hub/create">
-              <Button>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Create Content
+          <EmptyState
+            icon={FileText}
+            title="No content yet — the gallery is ready when you are"
+            description="Create your first marketing post and it will land here."
+            action={
+              <Button variant="outline" asChild>
+                <Link href="/creative-hub/create">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Create Content
+                </Link>
               </Button>
-            </Link>
-          </CardContent>
+            }
+          />
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -531,7 +520,7 @@ function ContentGalleryContent() {
             return (
               <Card key={content.id} className="group overflow-hidden">
                 {imageSrc && (
-                  <div className="aspect-video relative bg-charcoal-100">
+                  <div className="aspect-video relative bg-secondary">
                     <img
                       src={imageSrc}
                       alt=""
@@ -543,14 +532,14 @@ function ContentGalleryContent() {
                   {/* Header */}
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="p-1.5 bg-charcoal-100 rounded">
+                      <div className="p-1.5 bg-secondary rounded-[8px] text-muted-foreground">
                         <PlatformIcon className="w-4 h-4" />
                       </div>
                       <div>
-                        <p className="text-sm font-medium capitalize">
+                        <p className="text-sm font-medium text-foreground capitalize">
                           {content.platform.replace('_', ' ')}
                         </p>
-                        <p className="text-xs text-charcoal-500 capitalize">
+                        <p className="text-xs text-muted-foreground capitalize">
                           {content.contentType.replace('_', ' ')}
                         </p>
                       </div>
@@ -560,7 +549,7 @@ function ContentGalleryContent() {
                         className={`w-4 h-4 ${statusInfo.color}`}
                       />
                       {content.isAiGenerated && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="gold">
                           <Sparkles className="w-3 h-3 mr-1" />
                           AI
                         </Badge>
@@ -570,11 +559,11 @@ function ContentGalleryContent() {
 
                   {/* Content Preview */}
                   {content.headline && (
-                    <p className="font-semibold text-sm line-clamp-1">
+                    <p className="font-semibold text-sm text-foreground line-clamp-1">
                       {content.headline}
                     </p>
                   )}
-                  <p className="text-sm text-charcoal-600 line-clamp-3">
+                  <p className="text-sm text-muted-foreground line-clamp-3">
                     {content.primaryText}
                   </p>
 
@@ -584,13 +573,13 @@ function ContentGalleryContent() {
                       {content.hashtags.slice(0, 3).map((tag, i) => (
                         <span
                           key={i}
-                          className="text-xs text-ocean-600 bg-ocean-50 px-2 py-0.5 rounded"
+                          className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full"
                         >
                           #{tag}
                         </span>
                       ))}
                       {content.hashtags.length > 3 && (
-                        <span className="text-xs text-charcoal-400">
+                        <span className="text-xs text-muted-foreground">
                           +{content.hashtags.length - 3} more
                         </span>
                       )}
@@ -598,13 +587,13 @@ function ContentGalleryContent() {
                   )}
 
                   {/* Actions */}
-                  <div className="flex items-center justify-between pt-2 border-t">
-                    <span className="text-xs text-charcoal-400">
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <span className="text-xs font-mono tabular-nums text-muted-foreground">
                       {new Date(content.createdAt).toLocaleDateString()}
                     </span>
                     <div className="flex items-center gap-1">
                       <Button
-                        size="sm"
+                        size="icon-sm"
                         variant="ghost"
                         onClick={() => {
                           setSelectedContent(content)
@@ -614,7 +603,7 @@ function ContentGalleryContent() {
                         <Eye className="w-4 h-4" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-sm"
                         variant="ghost"
                         onClick={() => copyToClipboard(content)}
                       >
@@ -622,7 +611,7 @@ function ContentGalleryContent() {
                       </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button size="sm" variant="ghost">
+                          <Button size="icon-sm" variant="ghost">
                             <MoreHorizontal className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -657,7 +646,6 @@ function ContentGalleryContent() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(content.id)}
-                            className="text-red-600"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
                             Delete
@@ -683,7 +671,7 @@ function ContentGalleryContent() {
               <Card key={content.id} className="p-4">
                 <div className="flex items-start gap-4">
                   {imageSrc && (
-                    <div className="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-charcoal-100">
+                    <div className="w-24 h-24 rounded-[10px] overflow-hidden flex-shrink-0 bg-secondary">
                       <img
                         src={imageSrc}
                         alt=""
@@ -694,11 +682,11 @@ function ContentGalleryContent() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <PlatformIcon className="w-5 h-5" />
-                        <span className="font-medium capitalize">
+                        <PlatformIcon className="w-5 h-5 text-muted-foreground" />
+                        <span className="font-medium text-foreground capitalize">
                           {content.platform.replace('_', ' ')}
                         </span>
-                        <Badge variant="outline" className="capitalize">
+                        <Badge variant="neutral" className="capitalize">
                           {content.contentType.replace('_', ' ')}
                         </Badge>
                         <div className={`flex items-center gap-1 ${statusInfo.color}`}>
@@ -707,17 +695,17 @@ function ContentGalleryContent() {
                         </div>
                       </div>
                       {content.isAiGenerated && (
-                        <Badge className="bg-ocean-500">
+                        <Badge variant="gold">
                           <Sparkles className="w-3 h-3 mr-1" />
-                          AI Generated
+                          AI
                         </Badge>
                       )}
                     </div>
 
                     {content.headline && (
-                      <p className="font-semibold mb-1">{content.headline}</p>
+                      <p className="font-semibold text-foreground mb-1">{content.headline}</p>
                     )}
-                    <p className="text-charcoal-600 line-clamp-2 mb-2">
+                    <p className="text-muted-foreground line-clamp-2 mb-2">
                       {content.primaryText}
                     </p>
 
@@ -726,13 +714,13 @@ function ContentGalleryContent() {
                         {content.hashtags.slice(0, 5).map((tag, i) => (
                           <span
                             key={i}
-                            className="text-xs text-ocean-600 bg-ocean-50 px-2 py-0.5 rounded"
+                            className="text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-full"
                           >
                             #{tag}
                           </span>
                         ))}
                         {content.hashtags.length > 5 && (
-                          <span className="text-xs text-charcoal-400">
+                          <span className="text-xs text-muted-foreground">
                             +{content.hashtags.length - 5} more
                           </span>
                         )}
@@ -740,13 +728,16 @@ function ContentGalleryContent() {
                     )}
 
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-charcoal-400">
-                        Created {new Date(content.createdAt).toLocaleDateString()}
+                      <span className="text-sm text-muted-foreground">
+                        Created{' '}
+                        <span className="font-mono tabular-nums">
+                          {new Date(content.createdAt).toLocaleDateString()}
+                        </span>
                       </span>
                       <div className="flex items-center gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => {
                             setSelectedContent(content)
                             setShowPreview(true)
@@ -771,14 +762,19 @@ function ContentGalleryContent() {
                           <Download className="w-4 h-4 mr-2" />
                           Export
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-red-600 hover:bg-red-50"
-                          onClick={() => handleDelete(content.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon-sm" variant="ghost">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleDelete(content.id)}>
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   </div>
@@ -813,7 +809,7 @@ function ContentGalleryContent() {
 
               {/* Image */}
               {getImageSrc(selectedContent) && (
-                <div className="rounded-lg overflow-hidden bg-charcoal-100">
+                <div className="rounded-[12px] overflow-hidden bg-secondary">
                   <img
                     src={getImageSrc(selectedContent)!}
                     alt=""
@@ -826,7 +822,7 @@ function ContentGalleryContent() {
               <div className="space-y-3">
                 {selectedContent.headline && (
                   <div>
-                    <label className="text-sm font-medium text-charcoal-500">
+                    <label className="text-sm font-medium text-muted-foreground">
                       Headline
                     </label>
                     <p className="text-lg font-semibold">
@@ -836,7 +832,7 @@ function ContentGalleryContent() {
                 )}
 
                 <div>
-                  <label className="text-sm font-medium text-charcoal-500">
+                  <label className="text-sm font-medium text-muted-foreground">
                     Primary Text
                   </label>
                   <p className="whitespace-pre-wrap">
@@ -846,7 +842,7 @@ function ContentGalleryContent() {
 
                 {selectedContent.description && (
                   <div>
-                    <label className="text-sm font-medium text-charcoal-500">
+                    <label className="text-sm font-medium text-muted-foreground">
                       Description
                     </label>
                     <p>{selectedContent.description}</p>
@@ -855,10 +851,10 @@ function ContentGalleryContent() {
 
                 {selectedContent.callToAction && (
                   <div>
-                    <label className="text-sm font-medium text-charcoal-500">
+                    <label className="text-sm font-medium text-muted-foreground">
                       Call to Action
                     </label>
-                    <p className="font-medium text-ocean-600">
+                    <p className="font-medium text-foreground">
                       {selectedContent.callToAction}
                     </p>
                   </div>
@@ -867,14 +863,14 @@ function ContentGalleryContent() {
                 {selectedContent.hashtags &&
                   selectedContent.hashtags.length > 0 && (
                     <div>
-                      <label className="text-sm font-medium text-charcoal-500">
+                      <label className="text-sm font-medium text-muted-foreground">
                         Hashtags
                       </label>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {selectedContent.hashtags.map((tag, i) => (
                           <span
                             key={i}
-                            className="text-sm text-ocean-600 bg-ocean-50 px-2 py-1 rounded"
+                            className="text-sm text-muted-foreground bg-secondary px-2 py-1 rounded-full"
                           >
                             #{tag}
                           </span>
@@ -972,13 +968,13 @@ function ContentGalleryContent() {
                 <div className="space-y-4">
                   <div>
                     <Label className="text-lg font-semibold">Image</Label>
-                    <p className="text-sm text-charcoal-500 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       Swap out the AI-generated image with your own
                     </p>
                   </div>
 
                   {/* Current/New Image Preview */}
-                  <div className="relative rounded-lg overflow-hidden bg-charcoal-100 aspect-square">
+                  <div className="relative rounded-[12px] overflow-hidden bg-secondary aspect-square">
                     {editImageUrl ? (
                       <img
                         src={editImageUrl}
@@ -993,11 +989,11 @@ function ContentGalleryContent() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-12 h-12 text-charcoal-300" />
+                        <ImageIcon className="w-12 h-12 text-muted-foreground/50" />
                       </div>
                     )}
                     {editImageUrl && (
-                      <Badge className="absolute top-2 right-2 bg-green-500">
+                      <Badge variant="green" className="absolute top-2 right-2 bg-cream-50/90 dark:bg-ink-950/80">
                         New Image
                       </Badge>
                     )}
@@ -1015,7 +1011,7 @@ function ContentGalleryContent() {
                     </Button>
 
                     {showImageOptions && (
-                      <div className="p-4 bg-charcoal-50 rounded-lg border space-y-3">
+                      <div className="p-4 bg-secondary/50 rounded-[12px] border border-border space-y-3">
                         {/* Upload */}
                         <div>
                           <input
@@ -1058,7 +1054,7 @@ function ContentGalleryContent() {
                           </Button>
                         </div>
 
-                        <p className="text-xs text-charcoal-500">
+                        <p className="text-xs text-muted-foreground">
                           Tip: Use a real photo of the business or location for authenticity
                         </p>
                       </div>
@@ -1068,7 +1064,7 @@ function ContentGalleryContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="text-red-600"
+                        className="text-muted-foreground"
                         onClick={() => setEditImageUrl('')}
                       >
                         Remove new image
@@ -1089,7 +1085,7 @@ function ContentGalleryContent() {
                 <Button
                   onClick={handleSaveEdit}
                   disabled={saving}
-                  className="bg-ocean-600 hover:bg-ocean-700"
+                  variant="gold"
                 >
                   {saving ? (
                     <>

@@ -2,11 +2,11 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp } from 'lucide-react'
+import { Loader2, Sparkles, ChevronDown, ChevronRight, ImageIcon, X, Stamp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   DishPhotoUpload,
   ModeSelector,
@@ -38,6 +38,9 @@ interface BrandKit {
 }
 
 type LogoChoice = 'none' | 'logo' | 'icon'
+
+const selectClassName =
+  'w-full rounded-[12px] border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30 disabled:opacity-50'
 
 export default function GeneratePage() {
   return (
@@ -276,387 +279,371 @@ function GenerateContent() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      {/* Header */}
-      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/creative-studio"
-              className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-                Create Content
-              </h1>
-              <p className="text-sm text-warm-500 dark:text-cream-400">
-                {mode === 'food_photo'
-                  ? 'Transform your dish photos'
-                  : 'Generate branded graphics'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div className="mx-auto max-w-7xl">
+      <PageHeader
+        backHref="/creative-studio"
+        kicker="STUDIO · BACKHAUS"
+        title="Create Content"
+        subtitle={
+          mode === 'food_photo'
+            ? 'Transform your dish photos'
+            : 'Generate branded graphics'
+        }
+      />
 
       {/* Usage Bar */}
-      <UsageBar />
+      <UsageBar className="mb-6 rounded-[12px] border border-border" />
 
       {/* Main Content - Two Column Layout */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left Column - Form */}
-          <div className="space-y-5">
-            {/* Mode Selector */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Generation Mode</Label>
-              <ModeSelector
-                value={mode}
-                onChange={setMode}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Left Column - Form */}
+        <div className="space-y-5">
+          {/* Mode Selector */}
+          <div className="rounded-[14px] border border-border bg-card p-4">
+            <Label className="mb-3 block">Generation Mode</Label>
+            <ModeSelector
+              value={mode}
+              onChange={setMode}
+              disabled={isGenerating}
+            />
+          </div>
+
+          {/* Food Photo Mode Form */}
+          {mode === 'food_photo' && (
+            <>
+              {/* Photo Upload */}
+              <div className="rounded-[14px] border border-border bg-card p-4">
+                <Label className="mb-3 block">Dish Photo</Label>
+                <DishPhotoUpload
+                  value={dishPhoto}
+                  onImageSelect={setDishPhoto}
+                  disabled={isGenerating}
+                  className="aspect-[4/3]"
+                />
+              </div>
+
+              {/* Output Format */}
+              <div className="rounded-[14px] border border-border bg-card p-4">
+                <Label className="mb-3 block">Output Format</Label>
+                <OutputFormatSelector
+                  value={outputFormat}
+                  onChange={setOutputFormat}
+                  disabled={isGenerating}
+                />
+              </div>
+
+              {/* Optional Details */}
+              <div className="space-y-4 rounded-[14px] border border-border bg-card p-4">
+                <div>
+                  <Label htmlFor="description" className="mb-2 block">
+                    Dish Description (optional)
+                  </Label>
+                  <Input
+                    id="description"
+                    value={dishDescription}
+                    onChange={(e) => setDishDescription(e.target.value)}
+                    placeholder="e.g., Grilled salmon with lemon butter sauce"
+                    disabled={isGenerating}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cuisine" className="mb-2 block">
+                    Cuisine Type (optional)
+                  </Label>
+                  <select
+                    id="cuisine"
+                    value={cuisineType}
+                    onChange={(e) => setCuisineType(e.target.value)}
+                    disabled={isGenerating}
+                    className={selectClassName}
+                  >
+                    <option value="">Select cuisine...</option>
+                    {CUISINE_TYPES.map((c) => (
+                      <option key={c.value} value={c.value}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="style" className="mb-2 block">
+                    Style (optional)
+                  </Label>
+                  <select
+                    id="style"
+                    value={foodStyle}
+                    onChange={(e) => setFoodStyle(e.target.value)}
+                    disabled={isGenerating}
+                    className={selectClassName}
+                  >
+                    <option value="">Select style...</option>
+                    {STYLE_PREFERENCES.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Style Reference (Collapsible) */}
+              <div className="overflow-hidden rounded-[14px] border border-border bg-card">
+                <button
+                  type="button"
+                  onClick={() => setShowStyleReference(!showStyleReference)}
+                  className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-secondary/60"
+                  disabled={isGenerating}
+                >
+                  <div>
+                    <span className="text-sm font-medium text-foreground">Style Reference</span>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Match the look of another dish photo (optional)
+                    </p>
+                  </div>
+                  {showStyleReference ? (
+                    <ChevronDown className="size-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="size-4 text-muted-foreground" />
+                  )}
+                </button>
+
+                {showStyleReference && (
+                  <div className="border-t border-border px-4 pb-4">
+                    <p className="mb-3 mt-3 text-xs text-muted-foreground">
+                      Upload a previously generated image to match its plates, background, and styling.
+                    </p>
+
+                    {styleReference ? (
+                      <div className="relative aspect-video overflow-hidden rounded-[12px] bg-secondary">
+                        <img
+                          src={styleReference}
+                          alt="Style reference"
+                          className="h-full w-full object-cover"
+                        />
+                        <button
+                          onClick={() => setStyleReference(null)}
+                          className="absolute right-2 top-2 rounded-full bg-ink-950/70 p-1.5 text-white transition-colors hover:bg-ink-950/90"
+                          title="Remove reference"
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="block cursor-pointer">
+                        <div className="flex aspect-video flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-secondary/40 transition-colors hover:border-gold-600/40 dark:hover:border-gold-400/40">
+                          <ImageIcon className="mb-2 size-8 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">Upload reference image</span>
+                          <span className="mt-1 text-xs text-muted-foreground/70">JPG, PNG</span>
+                        </div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onload = (ev) => {
+                                setStyleReference(ev.target?.result as string)
+                              }
+                              reader.readAsDataURL(file)
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {/* Branded Post Mode Form */}
+          {mode === 'branded_post' && (
+            <>
+            {/* Source Image Picker */}
+            <div className="rounded-[14px] border border-border bg-card p-4">
+              <Label className="mb-3 block">Source Image</Label>
+              <ImageSourcePicker
+                value={sourceImage}
+                onChange={setSourceImage}
+                sourceType={sourceImageType}
+                onSourceTypeChange={setSourceImageType}
                 disabled={isGenerating}
               />
             </div>
 
-            {/* Food Photo Mode Form */}
-            {mode === 'food_photo' && (
-              <>
-                {/* Photo Upload */}
-                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-                  <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Dish Photo</Label>
-                  <DishPhotoUpload
-                    value={dishPhoto}
-                    onImageSelect={setDishPhoto}
-                    disabled={isGenerating}
-                    className="aspect-[4/3]"
-                  />
+            <div className="rounded-[14px] border border-border bg-card p-4">
+              <BrandedPostForm
+                postType={postType}
+                onPostTypeChange={setPostType}
+                headline={headline}
+                onHeadlineChange={setHeadline}
+                style={brandedStyle}
+                onStyleChange={setBrandedStyle}
+                aspectRatio={aspectRatio}
+                onAspectRatioChange={setAspectRatio}
+                brandKit={brandKit}
+                applyBrandColors={applyBrandColors}
+                onApplyBrandColorsChange={setApplyBrandColors}
+                disabled={isGenerating}
+              />
+            </div>
+
+            {/* Logo Picker - only show if brand kit has at least one logo */}
+            {brandKit && (brandKit.logoUrl || brandKit.iconUrl) && (
+              <div className="rounded-[14px] border border-border bg-card p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <Stamp className="size-4 text-muted-foreground" />
+                  <Label>Include Logo</Label>
                 </div>
-
-                {/* Output Format */}
-                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-                  <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Output Format</Label>
-                  <OutputFormatSelector
-                    value={outputFormat}
-                    onChange={setOutputFormat}
-                    disabled={isGenerating}
-                  />
-                </div>
-
-                {/* Optional Details */}
-                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4 space-y-4">
-                  <div>
-                    <Label htmlFor="description" className="text-warm-700 dark:text-cream-300 mb-2 block">
-                      Dish Description (optional)
-                    </Label>
-                    <Input
-                      id="description"
-                      value={dishDescription}
-                      onChange={(e) => setDishDescription(e.target.value)}
-                      placeholder="e.g., Grilled salmon with lemon butter sauce"
-                      disabled={isGenerating}
-                      className="rounded-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="cuisine" className="text-warm-700 dark:text-cream-300 mb-2 block">
-                      Cuisine Type (optional)
-                    </Label>
-                    <select
-                      id="cuisine"
-                      value={cuisineType}
-                      onChange={(e) => setCuisineType(e.target.value)}
-                      disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-warm-900 dark:text-cream-100 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
-                    >
-                      <option value="">Select cuisine...</option>
-                      {CUISINE_TYPES.map((c) => (
-                        <option key={c.value} value={c.value}>
-                          {c.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="style" className="text-warm-700 dark:text-cream-300 mb-2 block">
-                      Style (optional)
-                    </Label>
-                    <select
-                      id="style"
-                      value={foodStyle}
-                      onChange={(e) => setFoodStyle(e.target.value)}
-                      disabled={isGenerating}
-                      className="w-full px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-warm-900 dark:text-cream-100 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
-                    >
-                      <option value="">Select style...</option>
-                      {STYLE_PREFERENCES.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Style Reference (Collapsible) */}
-                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden">
+                <div className="flex gap-2">
+                  {/* No Logo */}
                   <button
-                    type="button"
-                    onClick={() => setShowStyleReference(!showStyleReference)}
-                    className="w-full p-4 flex items-center justify-between text-left hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors"
+                    onClick={() => setLogoChoice('none')}
                     disabled={isGenerating}
-                  >
-                    <div>
-                      <span className="text-sm font-medium text-warm-700 dark:text-cream-300">Style Reference</span>
-                      <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
-                        Match the look of another dish photo (optional)
-                      </p>
-                    </div>
-                    {showStyleReference ? (
-                      <ChevronDown className="w-4 h-4 text-warm-500 dark:text-cream-400" />
-                    ) : (
-                      <ChevronRight className="w-4 h-4 text-warm-500 dark:text-cream-400" />
+                    className={cn(
+                      'flex-1 rounded-[12px] border p-2.5 text-center transition-all',
+                      logoChoice === 'none'
+                        ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                        : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+                      isGenerating && 'cursor-not-allowed opacity-50'
                     )}
+                  >
+                    <div className="mx-auto mb-1.5 flex size-10 items-center justify-center rounded-[10px] bg-secondary">
+                      <X className="size-4 text-muted-foreground" />
+                    </div>
+                    <p className={cn(
+                      'text-xs font-medium',
+                      logoChoice === 'none' ? 'text-gold-600 dark:text-gold-400' : 'text-muted-foreground'
+                    )}>
+                      No Logo
+                    </p>
                   </button>
 
-                  {showStyleReference && (
-                    <div className="px-4 pb-4 border-t border-warm-100 dark:border-charcoal-700">
-                      <p className="text-xs text-warm-500 dark:text-cream-400 mt-3 mb-3">
-                        Upload a previously generated image to match its plates, background, and styling.
-                      </p>
-
-                      {styleReference ? (
-                        <div className="relative aspect-video rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800">
-                          <img
-                            src={styleReference}
-                            alt="Style reference"
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            onClick={() => setStyleReference(null)}
-                            className="absolute top-2 right-2 p-1.5 bg-warm-900/80 hover:bg-warm-900 rounded-sm text-white transition-colors"
-                            title="Remove reference"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label className="block cursor-pointer">
-                          <div className="aspect-video rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-700 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800 flex flex-col items-center justify-center transition-colors">
-                            <ImageIcon className="w-8 h-8 text-warm-400 dark:text-cream-400 mb-2" />
-                            <span className="text-sm text-warm-600 dark:text-cream-400">Upload reference image</span>
-                            <span className="text-xs text-warm-400 dark:text-cream-400 mt-1">JPG, PNG</span>
-                          </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0]
-                              if (file) {
-                                const reader = new FileReader()
-                                reader.onload = (ev) => {
-                                  setStyleReference(ev.target?.result as string)
-                                }
-                                reader.readAsDataURL(file)
-                              }
-                            }}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Branded Post Mode Form */}
-            {mode === 'branded_post' && (
-              <>
-              {/* Source Image Picker */}
-              <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-                <Label className="text-warm-700 dark:text-cream-300 mb-3 block">Source Image</Label>
-                <ImageSourcePicker
-                  value={sourceImage}
-                  onChange={setSourceImage}
-                  sourceType={sourceImageType}
-                  onSourceTypeChange={setSourceImageType}
-                  disabled={isGenerating}
-                />
-              </div>
-
-              <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-                <BrandedPostForm
-                  postType={postType}
-                  onPostTypeChange={setPostType}
-                  headline={headline}
-                  onHeadlineChange={setHeadline}
-                  style={brandedStyle}
-                  onStyleChange={setBrandedStyle}
-                  aspectRatio={aspectRatio}
-                  onAspectRatioChange={setAspectRatio}
-                  brandKit={brandKit}
-                  applyBrandColors={applyBrandColors}
-                  onApplyBrandColorsChange={setApplyBrandColors}
-                  disabled={isGenerating}
-                />
-              </div>
-
-              {/* Logo Picker - only show if brand kit has at least one logo */}
-              {brandKit && (brandKit.logoUrl || brandKit.iconUrl) && (
-                <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Stamp className="w-4 h-4 text-warm-500 dark:text-cream-400" />
-                    <Label className="text-warm-700">Include Logo</Label>
-                  </div>
-                  <div className="flex gap-2">
-                    {/* No Logo */}
+                  {/* Full Logo */}
+                  {brandKit.logoUrl && (
                     <button
-                      onClick={() => setLogoChoice('none')}
+                      onClick={() => setLogoChoice('logo')}
                       disabled={isGenerating}
                       className={cn(
-                        'flex-1 p-2.5 rounded-sm border text-center transition-all',
-                        logoChoice === 'none'
-                          ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                          : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
-                        isGenerating && 'opacity-50 cursor-not-allowed'
+                        'flex-1 rounded-[12px] border p-2.5 text-center transition-all',
+                        logoChoice === 'logo'
+                          ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                          : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+                        isGenerating && 'cursor-not-allowed opacity-50'
                       )}
                     >
-                      <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-1.5">
-                        <X className="w-4 h-4 text-warm-400" />
+                      <div className="mx-auto mb-1.5 flex size-10 items-center justify-center overflow-hidden rounded-[10px] border border-border bg-secondary">
+                        <img
+                          src={brandKit.logoUrl}
+                          alt="Logo"
+                          className="h-full w-full object-contain p-0.5"
+                        />
                       </div>
                       <p className={cn(
                         'text-xs font-medium',
-                        logoChoice === 'none' ? 'text-plum-700' : 'text-warm-600 dark:text-cream-400'
+                        logoChoice === 'logo' ? 'text-gold-600 dark:text-gold-400' : 'text-muted-foreground'
                       )}>
-                        No Logo
+                        Full Logo
                       </p>
                     </button>
+                  )}
 
-                    {/* Full Logo */}
-                    {brandKit.logoUrl && (
-                      <button
-                        onClick={() => setLogoChoice('logo')}
-                        disabled={isGenerating}
-                        className={cn(
-                          'flex-1 p-2.5 rounded-sm border text-center transition-all',
-                          logoChoice === 'logo'
-                            ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                            : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
-                          isGenerating && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-100 dark:border-charcoal-700 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
-                          <img
-                            src={brandKit.logoUrl}
-                            alt="Logo"
-                            className="w-full h-full object-contain p-0.5"
-                          />
-                        </div>
-                        <p className={cn(
-                          'text-xs font-medium',
-                          logoChoice === 'logo' ? 'text-plum-700' : 'text-warm-600 dark:text-cream-400'
-                        )}>
-                          Full Logo
-                        </p>
-                      </button>
-                    )}
-
-                    {/* Icon / Mark */}
-                    {brandKit.iconUrl && (
-                      <button
-                        onClick={() => setLogoChoice('icon')}
-                        disabled={isGenerating}
-                        className={cn(
-                          'flex-1 p-2.5 rounded-sm border text-center transition-all',
-                          logoChoice === 'icon'
-                            ? 'border-plum-500 bg-plum-50 ring-1 ring-plum-500'
-                            : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
-                          isGenerating && 'opacity-50 cursor-not-allowed'
-                        )}
-                      >
-                        <div className="w-10 h-10 rounded-sm bg-warm-50 dark:bg-charcoal-800 border border-warm-100 dark:border-charcoal-700 flex items-center justify-center mx-auto mb-1.5 overflow-hidden">
-                          <img
-                            src={brandKit.iconUrl}
-                            alt="Icon"
-                            className="w-full h-full object-contain p-0.5"
-                          />
-                        </div>
-                        <p className={cn(
-                          'text-xs font-medium',
-                          logoChoice === 'icon' ? 'text-plum-700' : 'text-warm-600 dark:text-cream-400'
-                        )}>
-                          Icon
-                        </p>
-                      </button>
-                    )}
-                  </div>
+                  {/* Icon / Mark */}
+                  {brandKit.iconUrl && (
+                    <button
+                      onClick={() => setLogoChoice('icon')}
+                      disabled={isGenerating}
+                      className={cn(
+                        'flex-1 rounded-[12px] border p-2.5 text-center transition-all',
+                        logoChoice === 'icon'
+                          ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                          : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+                        isGenerating && 'cursor-not-allowed opacity-50'
+                      )}
+                    >
+                      <div className="mx-auto mb-1.5 flex size-10 items-center justify-center overflow-hidden rounded-[10px] border border-border bg-secondary">
+                        <img
+                          src={brandKit.iconUrl}
+                          alt="Icon"
+                          className="h-full w-full object-contain p-0.5"
+                        />
+                      </div>
+                      <p className={cn(
+                        'text-xs font-medium',
+                        logoChoice === 'icon' ? 'text-gold-600 dark:text-gold-400' : 'text-muted-foreground'
+                      )}>
+                        Icon
+                      </p>
+                    </button>
+                  )}
                 </div>
-              )}
+              </div>
+            )}
+            </>
+          )}
+
+          {/* Additional Instructions (both modes) */}
+          <div className="rounded-[14px] border border-border bg-card p-4">
+            <Label htmlFor="instructions" className="mb-2 block">
+              Additional Directions (optional)
+            </Label>
+            <textarea
+              id="instructions"
+              value={additionalInstructions}
+              onChange={(e) => setAdditionalInstructions(e.target.value)}
+              placeholder={
+                mode === 'food_photo'
+                  ? 'e.g., Add a bottle of sake and shot glasses next to the dish, warm candlelight ambiance'
+                  : 'e.g., Use bold red text, add confetti elements, make it feel festive and celebratory'
+              }
+              disabled={isGenerating}
+              rows={3}
+              className="w-full resize-none rounded-[12px] border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30 disabled:opacity-50"
+            />
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              Guide the AI with specific details about what you want in the final image
+            </p>
+          </div>
+
+          {/* Generate Button */}
+          <Button
+            variant="gold"
+            size="lg"
+            className="w-full"
+            onClick={handleGenerate}
+            disabled={!canGenerate || isGenerating}
+          >
+            {isGenerating ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <Sparkles className="size-4" />
+                Generate Image
               </>
             )}
+          </Button>
+        </div>
 
-            {/* Additional Instructions (both modes) */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <Label htmlFor="instructions" className="text-warm-700 dark:text-cream-300 mb-2 block">
-                Additional Directions (optional)
-              </Label>
-              <textarea
-                id="instructions"
-                value={additionalInstructions}
-                onChange={(e) => setAdditionalInstructions(e.target.value)}
-                placeholder={
-                  mode === 'food_photo'
-                    ? 'e.g., Add a bottle of sake and shot glasses next to the dish, warm candlelight ambiance'
-                    : 'e.g., Use bold red text, add confetti elements, make it feel festive and celebratory'
-                }
-                disabled={isGenerating}
-                rows={3}
-                className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-warm-900 text-sm placeholder:text-warm-400 focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500 resize-none disabled:opacity-50"
-              />
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1.5">
-                Guide the AI with specific details about what you want in the final image
-              </p>
-            </div>
-
-            {/* Generate Button */}
-            <Button
-              variant="lime"
-              size="lg"
-              className="w-full rounded-sm"
-              onClick={handleGenerate}
-              disabled={!canGenerate || isGenerating}
-            >
-              {isGenerating ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Image
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Right Column - Preview */}
-          <div className="lg:sticky lg:top-6 lg:self-start">
-            <PreviewPanel
-              imageBase64={generatedImage}
-              aspectRatio={generatedAspectRatio}
-              isGenerating={isGenerating}
-              onRegenerate={handleGenerate}
-              onSave={handleSave}
-              onSendToBrandedPosts={handleSendToBrandedPosts}
-              isSaving={isSaving}
-              disabled={isGenerating}
-              mode={mode}
-            />
-          </div>
+        {/* Right Column - Preview */}
+        <div className="lg:sticky lg:top-6 lg:self-start">
+          <PreviewPanel
+            imageBase64={generatedImage}
+            aspectRatio={generatedAspectRatio}
+            isGenerating={isGenerating}
+            onRegenerate={handleGenerate}
+            onSave={handleSave}
+            onSendToBrandedPosts={handleSendToBrandedPosts}
+            isSaving={isSaving}
+            disabled={isGenerating}
+            mode={mode}
+          />
         </div>
       </div>
     </div>

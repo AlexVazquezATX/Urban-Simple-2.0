@@ -7,10 +7,10 @@ export function PrintButton() {
   return (
     <Button
       variant="outline"
-      className="rounded-sm"
+      className="rounded-full px-5"
       onClick={() => window.print()}
     >
-      <Printer className="mr-1.5 h-4 w-4" />
+      <Printer className="h-3.5 w-3.5 text-gold-600" />
       Print / Save as PDF
     </Button>
   )

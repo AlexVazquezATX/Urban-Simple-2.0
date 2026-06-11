@@ -33,16 +33,16 @@ export function SnapshotNowButton() {
   }
 
   return (
-    <Button variant="outline" className="rounded-sm" onClick={handleSnapshot} disabled={loading}>
+    <Button variant="outline" onClick={handleSnapshot} disabled={loading}>
       {loading ? (
         <>
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 className="size-4 animate-spin" />
           Capturing...
         </>
       ) : (
         <>
-          <Camera className="mr-2 h-4 w-4" />
-          Snapshot Now
+          <Camera className="size-4" />
+          Snapshot now
         </>
       )}
     </Button>

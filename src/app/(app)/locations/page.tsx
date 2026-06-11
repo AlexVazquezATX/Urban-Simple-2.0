@@ -157,10 +157,10 @@ function LocationsListSkeleton() {
         </div>
         <Skeleton className="h-10 w-32" />
       </div>
-      {/* Financials band */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Financial KPI row */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-[72px] w-full rounded-sm" />
+          <Skeleton key={i} className="h-[104px] w-full rounded-[14px]" />
         ))}
       </div>
       {/* Search toolbar */}

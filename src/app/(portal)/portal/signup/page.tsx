@@ -5,10 +5,14 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Loader2, ShieldCheck } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { LivePhotoPanel } from '@/components/portal/live-shell'
+
+// Portal signup — same split-photo treatment as LiveLogin, with the trial
+// form on the right. All signup + auto sign-in logic preserved.
 
 export default function PortalSignupPage() {
   return (
@@ -75,120 +79,141 @@ function PortalSignupContent() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-cream-50 p-4">
-      <div className="w-full max-w-lg">
-        <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-sm bg-lime-100 text-lime-700">
-            <ShieldCheck className="h-5 w-5" />
+    <div className="flex min-h-screen w-full bg-cream-50 font-sans text-foreground">
+      <LivePhotoPanel
+        photoUrl={null}
+        photoAlt="Your kitchen at its best"
+        brandName="Urban Simple"
+        pill="Inspection-ready in under 60 seconds"
+      />
+
+      <div className="flex min-w-0 flex-1 flex-col justify-center px-7 py-14 sm:px-[clamp(48px,7vw,120px)]">
+        <div className="w-full max-w-[440px]">
+          <div className="mb-3.5 font-mono text-[11px] uppercase tracking-[2.4px] text-gold-600">
+            Urban Simple · Client Portal
           </div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900">
-            Start your 14-day free trial
+          <h1 className="font-display text-[38px] font-bold leading-[1.06] tracking-[-1.2px] text-foreground">
+            Start your 14-day free trial.
           </h1>
-          <p className="mt-1 text-sm text-warm-500">
+          <p className="mt-3.5 text-[15px] leading-relaxed text-cream-700">
             No credit card required. Get your hospitality ops binder in under 60 seconds.
           </p>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-sm border border-warm-200 bg-white p-6">
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="business-name">Business name *</Label>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="business-name">Business name *</Label>
+                <Input
+                  id="business-name"
+                  value={businessName}
+                  onChange={(e) => setBusinessName(e.target.value)}
+                  placeholder="Tarka Indian Kitchen"
+                  required
+                  className="h-11 rounded-xl bg-card"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="business-type">Type</Label>
+                <select
+                  id="business-type"
+                  value={businessType}
+                  onChange={(e) => setBusinessType(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-input bg-card px-3 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                >
+                  <option>Restaurant</option>
+                  <option>Bar</option>
+                  <option>Hotel</option>
+                  <option>Coffee Shop</option>
+                  <option>Event Space</option>
+                  <option>Multi-location group</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="first">First name *</Label>
+                <Input
+                  id="first"
+                  value={ownerFirstName}
+                  onChange={(e) => setOwnerFirstName(e.target.value)}
+                  required
+                  className="h-11 rounded-xl bg-card"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last">Last name</Label>
+                <Input
+                  id="last"
+                  value={ownerLastName}
+                  onChange={(e) => setOwnerLastName(e.target.value)}
+                  className="h-11 rounded-xl bg-card"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email *</Label>
               <Input
-                id="business-name"
-                value={businessName}
-                onChange={(e) => setBusinessName(e.target.value)}
-                placeholder="Tarka Indian Kitchen"
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@yourrestaurant.com"
                 required
+                className="h-11 rounded-xl bg-card"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="business-type">Type</Label>
-              <select
-                id="business-type"
-                value={businessType}
-                onChange={(e) => setBusinessType(e.target.value)}
-                className="h-10 w-full rounded-sm border border-warm-200 bg-white px-3 text-sm text-warm-900"
-              >
-                <option>Restaurant</option>
-                <option>Bar</option>
-                <option>Hotel</option>
-                <option>Coffee Shop</option>
-                <option>Event Space</option>
-                <option>Multi-location group</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="first">First name *</Label>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password *</Label>
               <Input
-                id="first"
-                value={ownerFirstName}
-                onChange={(e) => setOwnerFirstName(e.target.value)}
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                minLength={8}
                 required
+                className="h-11 rounded-xl bg-card"
               />
+              <p className="text-[10px] text-muted-foreground">8+ characters.</p>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="last">Last name</Label>
-              <Input
-                id="last"
-                value={ownerLastName}
-                onChange={(e) => setOwnerLastName(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="email">Email *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@yourrestaurant.com"
-              required
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              minLength={8}
-              required
-            />
-            <p className="text-[10px] text-warm-500">8+ characters.</p>
-          </div>
-
-          {error && (
-            <div className="rounded-sm border border-red-200 bg-red-50 p-2 text-sm text-red-700">
-              {error}
-            </div>
-          )}
-
-          <Button type="submit" disabled={submitting} className="w-full rounded-sm" size="lg">
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating your account...
-              </>
-            ) : (
-              'Start free trial'
+            {error && (
+              <div className="rounded-2xl border border-peach-line bg-peach-bg p-3 text-sm text-peach-deep">
+                {error}
+              </div>
             )}
-          </Button>
 
-          <p className="text-center text-[11px] text-warm-500">
-            By signing up you agree to our terms.{' '}
-            <Link href="/portal/login" className="text-ocean-600 hover:underline">
-              Already have an account?
-            </Link>
-          </p>
-        </form>
+            <Button
+              type="submit"
+              variant="gold"
+              disabled={submitting}
+              className="h-12 w-full rounded-full text-[15px] font-semibold"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating your account...
+                </>
+              ) : (
+                'Start free trial'
+              )}
+            </Button>
+
+            <p className="text-center text-[11px] text-muted-foreground">
+              By signing up you agree to our terms.{' '}
+              <Link href="/portal/login" className="font-semibold text-gold-600 hover:underline">
+                Already have an account?
+              </Link>
+            </p>
+          </form>
+
+          <div className="mt-12 border-t border-border pt-5 font-mono text-[10px] uppercase tracking-[1.8px] text-muted-foreground">
+            Urban Simple · We clean while you sleep
+          </div>
+        </div>
       </div>
     </div>
   )

@@ -1,10 +1,12 @@
 import { Suspense } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { formatMoney } from '@/lib/format'
 import { PipelineBoard } from '@/components/growth/pipeline-board'
 
 async function PipelineContent() {
@@ -51,25 +53,28 @@ async function PipelineContent() {
   const totalValue = serializedProspects.reduce((sum, p) => sum + (p.estimatedValue || 0), 0)
 
   return (
-    <div className="p-4 md:p-6 max-w-full mx-auto bg-warm-50 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900">Pipeline</h1>
-          <p className="text-sm text-warm-500 mt-0.5">
-            {totalProspects} prospects · ${totalValue.toLocaleString()} potential value
-          </p>
-        </div>
-        <Link href="/growth/prospects/new">
-          <Button variant="lime" size="sm" className="rounded-sm">
-            <Plus className="mr-1.5 h-3.5 w-3.5" />
-            Add Prospect
+    <div className="mx-auto max-w-full p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · PIPELINE"
+        title="Pipeline"
+        subtitle={
+          <>
+            <span className="font-mono tabular-nums">{totalProspects}</span> prospects ·{' '}
+            <span className="font-mono tabular-nums">{formatMoney(totalValue)}</span> potential value
+          </>
+        }
+        actions={
+          <Button asChild variant="gold" size="sm">
+            <Link href="/growth/prospects/new">
+              <Plus className="size-4" />
+              Add Prospect
+            </Link>
           </Button>
-        </Link>
-      </div>
+        }
+      />
 
       {/* Pipeline Board */}
-      <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6">
+      <div className="-mx-4 overflow-x-auto px-4 md:-mx-6 md:px-6">
         <PipelineBoard initialProspects={serializedProspects} />
       </div>
     </div>
@@ -80,22 +85,23 @@ export default function PipelinePage() {
   return (
     <Suspense
       fallback={
-        <div className="p-4 md:p-6 max-w-full mx-auto bg-warm-50 min-h-screen">
+        <div className="mx-auto max-w-full p-4 md:p-6">
           {/* Header skeleton */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-end justify-between">
             <div>
-              <Skeleton className="h-7 w-32 rounded-sm" />
-              <Skeleton className="h-4 w-48 mt-2 rounded-sm" />
+              <Skeleton className="h-3.5 w-40 rounded-md" />
+              <Skeleton className="mt-3 h-8 w-36 rounded-md" />
+              <Skeleton className="mt-2 h-4 w-64 rounded-md" />
             </div>
-            <Skeleton className="h-8 w-32 rounded-sm" />
+            <Skeleton className="h-8 w-32 rounded-[9px]" />
           </div>
           {/* Board skeleton */}
-          <div className="overflow-x-auto -mx-4 md:-mx-6 px-4 md:px-6">
-            <div className="flex gap-3 min-w-max">
+          <div className="-mx-4 overflow-x-auto px-4 md:-mx-6 md:px-6">
+            <div className="flex min-w-max gap-3">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="w-64 flex-shrink-0">
-                  <Skeleton className="h-10 w-full rounded-t-sm" />
-                  <Skeleton className="h-80 w-full rounded-b-sm" />
+                <div key={i} className="w-60 flex-shrink-0">
+                  <Skeleton className="mb-2 h-5 w-full rounded-md" />
+                  <Skeleton className="h-80 w-full rounded-[12px]" />
                 </div>
               ))}
             </div>

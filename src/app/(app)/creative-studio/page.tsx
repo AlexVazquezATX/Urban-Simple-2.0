@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
+  ArrowUpRight,
   Camera,
   Sparkles,
   ImageIcon,
@@ -10,10 +11,13 @@ import {
   Loader2,
   TrendingUp,
   Calendar,
-  ChevronRight,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { cn } from '@/lib/utils'
 
 interface StudioStats {
   totalGenerations: number
@@ -35,6 +39,125 @@ interface ContentItem {
     id: string
     restaurantName: string
   } | null
+}
+
+/* Gold/peach pastel action tile — pastel fill + 1px line border + deep-tone
+   icon circle + display title + arrow top-right. Dark mode swaps the pastel
+   for the dim/line accent recipe. */
+function ActionTile({
+  href,
+  icon: Icon,
+  title,
+  sub,
+  tone,
+}: {
+  href: string
+  icon: LucideIcon
+  title: string
+  sub: string
+  tone: 'gold' | 'peach'
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        'group relative block rounded-[18px] border p-5 transition-colors',
+        tone === 'gold'
+          ? 'bg-gold-100 border-gold-200 hover:border-gold-600/50 dark:bg-gold-400/12 dark:border-gold-400/25 dark:hover:border-gold-400/40'
+          : 'bg-peach-bg border-peach-line hover:border-peach-deep/50 dark:bg-coral-300/12 dark:border-coral-300/25 dark:hover:border-coral-300/40'
+      )}
+    >
+      <div className="mb-5 grid size-[42px] place-items-center rounded-full bg-white/75 dark:bg-white/10">
+        <Icon
+          className={cn(
+            'size-[18px]',
+            tone === 'gold'
+              ? 'text-gold-700 dark:text-gold-400'
+              : 'text-peach-deep dark:text-coral-300'
+          )}
+        />
+      </div>
+      <h2
+        className={cn(
+          'font-display text-lg font-bold tracking-[-0.4px]',
+          tone === 'gold' ? 'text-gold-700 dark:text-gold-400' : 'text-peach-deep dark:text-coral-300'
+        )}
+      >
+        {title}
+      </h2>
+      <p
+        className={cn(
+          'mt-0.5 text-[12.5px]',
+          tone === 'gold'
+            ? 'text-gold-700/80 dark:text-gold-400/80'
+            : 'text-peach-deep/80 dark:text-coral-300/80'
+        )}
+      >
+        {sub}
+      </p>
+      <ArrowUpRight
+        className={cn(
+          'absolute right-5 top-5 size-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5',
+          tone === 'gold' ? 'text-gold-700 dark:text-gold-400' : 'text-peach-deep dark:text-coral-300'
+        )}
+      />
+    </Link>
+  )
+}
+
+/* Quick tile per the nav-card spec — soft-gold icon tile + title + 13px sub
+   + display-font count + ghost arrow when the whole card is a link. */
+function QuickTile({
+  href,
+  icon: Icon,
+  title,
+  sub,
+  count,
+}: {
+  href?: string
+  icon: LucideIcon
+  title: string
+  sub: string
+  count?: number
+}) {
+  const inner = (
+    <>
+      <div className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12">
+        <Icon className="size-4 text-gold-600 dark:text-gold-400" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
+          {title}
+        </h3>
+        <p className="truncate text-[13px] text-muted-foreground">{sub}</p>
+      </div>
+      {count != null && (
+        <div className="font-display text-2xl font-bold tabular-nums tracking-[-0.5px] text-foreground">
+          {count}
+        </div>
+      )}
+      {href && (
+        <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+      )}
+    </>
+  )
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="group flex items-center gap-3 rounded-[14px] border border-border bg-card p-4 transition-colors hover:border-gold-600/30 dark:hover:border-gold-400/25"
+      >
+        {inner}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="flex items-center gap-3 rounded-[14px] border border-border bg-card p-4">
+      {inner}
+    </div>
+  )
 }
 
 export default function CreativeStudioPage() {
@@ -67,8 +190,8 @@ export default function CreativeStudioPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50 dark:bg-charcoal-950">
-        <Loader2 className="w-5 h-5 animate-spin text-warm-400" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
@@ -76,138 +199,81 @@ export default function CreativeStudioPage() {
   const hasContent = recentContent.length > 0
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
-      {/* Header with Stats */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-            Creative Studio
-          </h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
-            Professional food photography & branded content
-          </p>
-        </div>
-        <div className="flex items-center gap-4 text-sm">
-          <div className="text-right">
-            <p className="text-xl font-semibold text-warm-900 dark:text-cream-100">
-              {stats?.totalGenerations || 0}
-            </p>
-            <p className="text-xs text-warm-500 dark:text-cream-400">generated</p>
-          </div>
-          <div className="h-8 w-px bg-warm-200 dark:bg-charcoal-700" />
-          <div className="text-right">
-            <p className="text-xl font-semibold text-lime-600">
-              {stats?.savedContent || 0}
-            </p>
-            <p className="text-xs text-warm-500 dark:text-cream-400">saved</p>
-          </div>
-        </div>
+    <div className="mx-auto max-w-7xl">
+      <PageHeader
+        kicker="STUDIO · BACKHAUS"
+        title="Creative Studio"
+        subtitle="Professional food photography & branded content"
+        actions={
+          <>
+            <Badge variant="neutral">
+              <span className="font-mono tabular-nums">{stats?.totalGenerations || 0}</span>
+              generated
+            </Badge>
+            <Badge variant="gold">
+              <span className="font-mono tabular-nums">{stats?.savedContent || 0}</span>
+              saved
+            </Badge>
+          </>
+        }
+      />
+
+      {/* Action tiles - main CTAs */}
+      <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <ActionTile
+          href="/creative-studio/generate?mode=food_photo"
+          icon={Camera}
+          title="Food Photography"
+          sub="Transform dish photos into professional images"
+          tone="gold"
+        />
+        <ActionTile
+          href="/creative-studio/generate?mode=branded_post"
+          icon={Sparkles}
+          title="Branded Posts"
+          sub="Create promotional graphics with your brand"
+          tone="peach"
+        />
       </div>
 
-      {/* Action Cards - Main CTAs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        {/* Food Photography CTA */}
-        <Link href="/creative-studio/generate?mode=food_photo" className="group">
-          <div className="h-32 rounded-sm bg-gradient-to-br from-amber-500 to-orange-500 p-5 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between h-full">
-              <div className="text-white">
-                <div className="w-10 h-10 rounded-sm bg-white/20 flex items-center justify-center mb-3">
-                  <Camera className="w-5 h-5" />
-                </div>
-                <h2 className="text-lg font-medium">Food Photography</h2>
-                <p className="text-sm text-white/80 mt-0.5">
-                  Transform dish photos into professional images
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
-            </div>
-          </div>
-        </Link>
-
-        {/* Branded Posts CTA */}
-        <Link href="/creative-studio/generate?mode=branded_post" className="group">
-          <div className="h-32 rounded-sm bg-gradient-to-br from-purple-500 to-pink-500 p-5 hover:shadow-lg transition-shadow">
-            <div className="flex items-start justify-between h-full">
-              <div className="text-white">
-                <div className="w-10 h-10 rounded-sm bg-white/20 flex items-center justify-center mb-3">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <h2 className="text-lg font-medium">Branded Posts</h2>
-                <p className="text-sm text-white/80 mt-0.5">
-                  Create promotional graphics with your brand
-                </p>
-              </div>
-              <ChevronRight className="w-5 h-5 text-white/60 group-hover:text-white transition-colors" />
-            </div>
-          </div>
-        </Link>
-      </div>
-
-      {/* Secondary Navigation */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        {/* Gallery */}
-        <Link href="/creative-studio/gallery" className="group">
-          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-lime-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center shrink-0">
-              <Layers className="w-4 h-4 text-warm-600 dark:text-cream-400" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Gallery</h3>
-              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Browse saved</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* Brand Kit */}
-        <Link href="/creative-studio/brand-kit" className="group">
-          <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 hover:border-plum-400 transition-colors flex items-center gap-3">
-            <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center shrink-0">
-              <ImageIcon className="w-4 h-4 text-plum-600" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Brand Kit</h3>
-              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">Colors & logo</p>
-            </div>
-          </div>
-        </Link>
-
-        {/* This Month Stats */}
-        <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center shrink-0">
-            <Calendar className="w-4 h-4 text-ocean-600" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">This Month</h3>
-            <p className="text-xs text-ocean-600 font-medium">
-              {stats?.thisMonthGenerations || 0} created
-            </p>
-          </div>
-        </div>
-
-        {/* Food Photos Stats */}
-        <div className="h-20 rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 p-3 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-sm bg-amber-100 flex items-center justify-center shrink-0">
-            <TrendingUp className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="min-w-0">
-            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Food Photos</h3>
-            <p className="text-xs text-amber-600 font-medium">
-              {stats?.generationsByMode?.food_photo || 0} generated
-            </p>
-          </div>
-        </div>
+      {/* Quick nav tiles */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <QuickTile
+          href="/creative-studio/gallery"
+          icon={Layers}
+          title="Gallery"
+          sub="Browse saved"
+        />
+        <QuickTile
+          href="/creative-studio/brand-kit"
+          icon={ImageIcon}
+          title="Brand Kit"
+          sub="Colors & logo"
+        />
+        <QuickTile
+          icon={Calendar}
+          title="This Month"
+          sub="created"
+          count={stats?.thisMonthGenerations || 0}
+        />
+        <QuickTile
+          icon={TrendingUp}
+          title="Food Photos"
+          sub="generated"
+          count={stats?.generationsByMode?.food_photo || 0}
+        />
       </div>
 
       {/* Recent Content Section */}
-      <div className="rounded-sm bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700">
-        <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
-          <h2 className="text-base font-display font-medium text-warm-900 dark:text-cream-100">
+      <div className="rounded-[14px] border border-border bg-card">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <h2 className="font-display text-[17px] font-semibold tracking-[-0.2px] text-foreground">
             Recent Creations
           </h2>
           {hasContent && (
             <Link
               href="/creative-studio/gallery"
-              className="text-xs text-ocean-600 hover:text-ocean-700 font-medium"
+              className="text-xs font-medium text-primary hover:underline"
             >
               View all
             </Link>
@@ -215,46 +281,40 @@ export default function CreativeStudioPage() {
         </div>
 
         {hasContent ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 p-4">
+          <div className="grid grid-cols-2 gap-4 p-4 md:grid-cols-3">
             {recentContent.map((item) => (
               <Link
                 key={item.id}
                 href={`/creative-studio/gallery?view=${item.id}`}
                 className="group"
               >
-                <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden hover:border-lime-400 transition-colors">
+                <div className="overflow-hidden rounded-[14px] border border-border transition-colors hover:border-gold-600/30 dark:hover:border-gold-400/25">
                   {/* Image Preview */}
-                  <div className="aspect-square bg-warm-100 dark:bg-charcoal-800 relative">
+                  <div className="relative aspect-square bg-secondary">
                     {item.hasImage ? (
                       <img
                         src={`/api/creative-studio/content/image?id=${item.id}`}
                         alt={item.headline || 'Generated image'}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-8 h-8 text-warm-300 dark:text-charcoal-600" />
+                      <div className="flex h-full w-full items-center justify-center">
+                        <ImageIcon className="size-8 text-muted-foreground/50" />
                       </div>
                     )}
-                    {/* Mode Badge */}
-                    <Badge
-                      className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-sm ${
-                        item.mode === 'food_photo'
-                          ? 'bg-amber-100 text-amber-700 border-amber-200'
-                          : 'bg-purple-100 text-purple-700 border-purple-200'
-                      }`}
-                    >
+                    {/* Mode chip - neutral; the photography provides the color */}
+                    <Badge variant="neutral" className="absolute left-2 top-2">
                       {item.mode === 'food_photo' ? 'Food' : 'Branded'}
                     </Badge>
                   </div>
 
                   {/* Info */}
                   <div className="p-2.5">
-                    <p className="text-xs text-warm-900 dark:text-cream-100 font-medium truncate">
+                    <p className="truncate text-xs font-medium text-foreground">
                       {item.headline || item.outputFormat || 'Untitled'}
                     </p>
-                    <p className="text-[10px] text-warm-500 dark:text-cream-400 mt-0.5">
+                    <p className="mt-0.5 font-mono text-[10px] tabular-nums text-muted-foreground">
                       {new Date(item.createdAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -266,23 +326,19 @@ export default function CreativeStudioPage() {
             ))}
           </div>
         ) : (
-          <div className="px-4 py-12 text-center">
-            <div className="w-14 h-14 rounded-sm bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-3">
-              <Camera className="w-6 h-6 text-amber-600" />
-            </div>
-            <h3 className="text-sm font-medium text-warm-900 mb-1">
-              Start creating professional content
-            </h3>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4 max-w-sm mx-auto">
-              Transform your dish photos or generate branded graphics in seconds.
-            </p>
-            <Link href="/creative-studio/generate">
-              <Button variant="lime" size="sm" className="rounded-sm">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Create Your First Image
-              </Button>
-            </Link>
-          </div>
+          <EmptyState
+            icon={Camera}
+            title="Nothing here yet, and that's easy to fix"
+            description="Transform your dish photos or generate branded graphics in seconds."
+            action={
+              <Link href="/creative-studio/generate">
+                <Button variant="gold" size="sm">
+                  <Sparkles className="size-3.5" />
+                  Create Your First Image
+                </Button>
+              </Link>
+            }
+          />
         )}
       </div>
     </div>

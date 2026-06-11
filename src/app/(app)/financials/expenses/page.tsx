@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
-import { Plus, Lock } from 'lucide-react'
-import Link from 'next/link'
+import { Banknote, HandCoins, Lock, Plus, Receipt } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
 import {
   Table,
   TableBody,
@@ -13,13 +15,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ExpenseFormDialog } from '@/components/financials/expense-form-dialog'
-import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
+import { ExpenseRowActions } from '@/components/financials/expense-row-actions'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { formatMoney } from '@/lib/format'
 import {
   canSeeFinancials,
   expenseCategoryLabel,
-  formatCurrency,
   summarizeExpenses,
   EXPENSE_CATEGORIES,
 } from '@/lib/financials'
@@ -43,52 +45,39 @@ function ExpenseTable({ rows }: { rows: ExpenseRow[] }) {
   return (
     <Table>
       <TableHeader>
-        <TableRow className="border-warm-200 dark:border-charcoal-700">
-          <TableHead className="text-xs uppercase tracking-wider">Name</TableHead>
-          <TableHead className="text-xs uppercase tracking-wider">Category</TableHead>
-          <TableHead className="text-xs uppercase tracking-wider">Vendor</TableHead>
-          <TableHead className="text-xs uppercase tracking-wider text-right">Monthly</TableHead>
-          <TableHead className="text-xs uppercase tracking-wider text-center">Bill Day</TableHead>
-          <TableHead className="text-xs uppercase tracking-wider">Status</TableHead>
-          <TableHead className="text-xs uppercase tracking-wider text-right">Actions</TableHead>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Category</TableHead>
+          <TableHead>Vendor</TableHead>
+          <TableHead className="text-right">Monthly</TableHead>
+          <TableHead className="text-center">Bill day</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead className="text-right">
+            <span className="sr-only">Actions</span>
+          </TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {rows.map((e) => (
-          <TableRow key={e.id} className="border-warm-200 dark:border-charcoal-700">
-            <TableCell className="font-medium text-warm-900 dark:text-cream-100">{e.name}</TableCell>
+          <TableRow key={e.id}>
+            <TableCell className="font-medium text-foreground">{e.name}</TableCell>
             <TableCell>
-              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0">
-                {expenseCategoryLabel(e.category)}
-              </Badge>
+              <Badge variant="neutral">{expenseCategoryLabel(e.category)}</Badge>
             </TableCell>
-            <TableCell className="text-warm-600 dark:text-cream-400">{e.vendor || '—'}</TableCell>
-            <TableCell className="text-right font-mono">{formatCurrency(e.monthlyAmount)}</TableCell>
-            <TableCell className="text-center text-warm-600 dark:text-cream-400">{e.billingDay}</TableCell>
+            <TableCell className="text-muted-foreground">{e.vendor || '—'}</TableCell>
+            <TableCell className="text-right font-mono tabular-nums">
+              {formatMoney(e.monthlyAmount)}
+            </TableCell>
+            <TableCell className="text-center font-mono tabular-nums text-muted-foreground">
+              {e.billingDay}
+            </TableCell>
             <TableCell>
-              <Badge
-                className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                  e.isActive
-                    ? 'bg-lime-100 text-lime-700 border-lime-200'
-                    : 'bg-warm-100 text-warm-600 border-warm-200'
-                }`}
-              >
+              <Badge variant={e.isActive ? 'green' : 'neutral'}>
                 {e.isActive ? 'Active' : 'Paused'}
               </Badge>
             </TableCell>
             <TableCell className="text-right">
-              <div className="flex items-center justify-end gap-1">
-                <ExpenseFormDialog expense={e}>
-                  <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600">
-                    Edit
-                  </Button>
-                </ExpenseFormDialog>
-                <ConfirmDeleteButton
-                  endpoint={`/api/financials/expenses/${e.id}`}
-                  entityLabel={e.name}
-                  entityKind="expense"
-                />
-              </div>
+              <ExpenseRowActions expense={e} />
             </TableCell>
           </TableRow>
         ))}
@@ -130,130 +119,135 @@ export default async function ExpensesPage() {
   const ownerDrawRows = expenses.filter(e => e.expenseType === 'owner_draw')
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-              Recurring Expenses
-            </h1>
-            <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
-              <Lock className="mr-1 h-3 w-3" /> Super admin
+    <div>
+      <PageHeader
+        kicker="MONEY · RECURRING"
+        title={
+          <span className="inline-flex items-center gap-3">
+            Recurring Expenses
+            <Badge variant="neutral">
+              <Lock /> Super admin
             </Badge>
-          </div>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            Operating costs feed the dashboard&apos;s operating profit. Owner draws are tracked
-            separately — they come out of profit, not before it.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/financials">
-            <Button variant="outline" className="rounded-sm">Back to Dashboard</Button>
-          </Link>
+          </span>
+        }
+        subtitle="Operating costs feed the dashboard's operating profit. Owner draws are tracked separately — they come out of profit, not before it."
+        backHref="/financials"
+        actions={
           <ExpenseFormDialog>
-            <Button variant="lime" className="rounded-sm">
-              <Plus className="mr-2 h-4 w-4" />
+            <Button variant="gold">
+              <Plus className="size-4" />
               Add Expense
             </Button>
           </ExpenseFormDialog>
+        }
+      />
+
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          <StatCard
+            label="Operating expenses"
+            icon={Receipt}
+            value={formatMoney(summary.operatingTotal)}
+            sub={
+              <>
+                <span className="font-mono tabular-nums">
+                  {formatMoney(summary.operatingTotal * 12)}
+                </span>{' '}
+                annualized · counts against operating profit
+              </>
+            }
+          />
+          <StatCard
+            label="Owner draws"
+            icon={HandCoins}
+            value={formatMoney(summary.ownerDrawsTotal)}
+            sub={
+              <>
+                <span className="font-mono tabular-nums">
+                  {formatMoney(summary.ownerDrawsTotal * 12)}
+                </span>{' '}
+                annualized · taken from profit
+              </>
+            }
+          />
+          <StatCard
+            label="Total monthly outflow"
+            icon={Banknote}
+            value={formatMoney(summary.total)}
+            sub={
+              <>
+                <span className="font-mono tabular-nums">{formatMoney(summary.total * 12)}</span>{' '}
+                annualized
+              </>
+            }
+          />
         </div>
-      </div>
 
-      <div className="grid gap-3 md:grid-cols-3">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Operating Expenses</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.operatingTotal)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-              {formatCurrency(summary.operatingTotal * 12)} annualized · counts against operating profit
-            </p>
+        {/* Operating expenses */}
+        <Card className="gap-4">
+          <CardHeader>
+            <CardTitle>Operating Expenses</CardTitle>
+            <CardDescription className="text-xs">
+              {operatingRows.length} {operatingRows.length === 1 ? 'item' : 'items'} ·{' '}
+              <span className="font-mono tabular-nums">{formatMoney(summary.operatingTotal)}</span>
+              /mo active
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {operatingRows.length === 0 ? (
+              <EmptyState
+                icon={Receipt}
+                title="No operating expenses yet"
+                description="Add rent, software, insurance — anything the business pays monthly — and the Financials dashboard does the rest."
+                action={
+                  <ExpenseFormDialog>
+                    <Button variant="outline">
+                      <Plus className="size-4" />
+                      Add your first expense
+                    </Button>
+                  </ExpenseFormDialog>
+                }
+              />
+            ) : (
+              <ExpenseTable rows={operatingRows} />
+            )}
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Owner Draws</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.ownerDrawsTotal)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-              {formatCurrency(summary.ownerDrawsTotal * 12)} annualized · taken from profit
-            </p>
+
+        {/* Owner draws */}
+        <Card className="gap-4">
+          <CardHeader>
+            <CardTitle>Owner Draws</CardTitle>
+            <CardDescription className="text-xs">
+              {ownerDrawRows.length} {ownerDrawRows.length === 1 ? 'item' : 'items'} ·{' '}
+              <span className="font-mono tabular-nums">{formatMoney(summary.ownerDrawsTotal)}</span>
+              /mo active · subtracted after operating profit
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {ownerDrawRows.length === 0 ? (
+              <EmptyState
+                icon={HandCoins}
+                title="No owner draws tracked yet"
+                description={
+                  <>Edit an expense and set its type to &ldquo;Owner draw&rdquo; to track it here.</>
+                }
+              />
+            ) : (
+              <ExpenseTable rows={ownerDrawRows} />
+            )}
           </CardContent>
         </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Total Monthly Outflow</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.total)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-              {formatCurrency(summary.total * 12)} annualized
-            </p>
-          </CardContent>
-        </Card>
-      </div>
 
-      {/* Operating expenses */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-            Operating Expenses
-          </CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">
-            {operatingRows.length} {operatingRows.length === 1 ? 'item' : 'items'} ·{' '}
-            {formatCurrency(summary.operatingTotal)}/mo active
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {operatingRows.length === 0 ? (
-            <div className="py-8 text-center text-warm-500 dark:text-cream-400">
-              <p>No operating expenses yet.</p>
-              <ExpenseFormDialog>
-                <Button variant="outline" className="mt-3 rounded-sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add your first expense
-                </Button>
-              </ExpenseFormDialog>
-            </div>
-          ) : (
-            <ExpenseTable rows={operatingRows} />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Owner draws */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-            Owner Draws
-          </CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">
-            {ownerDrawRows.length} {ownerDrawRows.length === 1 ? 'item' : 'items'} ·{' '}
-            {formatCurrency(summary.ownerDrawsTotal)}/mo active · subtracted after operating profit
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {ownerDrawRows.length === 0 ? (
-            <p className="py-6 text-center text-sm text-warm-500 dark:text-cream-400">
-              No owner draws yet. Edit an expense and set its type to &ldquo;Owner draw&rdquo; to track
-              it here.
-            </p>
-          ) : (
-            <ExpenseTable rows={ownerDrawRows} />
-          )}
-        </CardContent>
-      </Card>
-
-      {expenses.some(e => !e.isActive) && (
-        <p className="text-xs text-warm-500 dark:text-cream-400">
-          Paused expenses are not counted in the monthly totals. Re-activate to include.
+        {expenses.some(e => !e.isActive) && (
+          <p className="text-xs text-muted-foreground">
+            Paused expenses are not counted in the monthly totals. Re-activate to include.
+          </p>
+        )}
+        <p className="text-[11px] text-muted-foreground">
+          Available categories: {EXPENSE_CATEGORIES.map(c => c.label).join(' · ')}
         </p>
-      )}
-      <p className="text-[11px] text-warm-400 dark:text-cream-500">
-        Available categories: {EXPENSE_CATEGORIES.map(c => c.label).join(' · ')}
-      </p>
+      </div>
     </div>
   )
 }

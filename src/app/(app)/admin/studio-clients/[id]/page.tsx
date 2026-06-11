@@ -16,8 +16,26 @@ import {
   Gift,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -147,115 +165,102 @@ export default function StudioClientDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   if (!client) {
     return (
-      <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-warm-600 dark:text-cream-400 mb-4">Client not found</p>
-          <Link href="/admin/studio-clients">
-            <Button variant="outline" className="rounded-sm">
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
+      <EmptyState
+        icon={Building2}
+        title="Client not found"
+        description="This studio client may have been removed."
+        action={
+          <Button asChild variant="outline">
+            <Link href="/admin/studio-clients">
+              <ArrowLeft className="size-4" />
               Back to Clients
-            </Button>
-          </Link>
-        </div>
-      </div>
+            </Link>
+          </Button>
+        }
+        className="py-24"
+      />
     )
   }
 
+  const overLimit = client.generationsUsed > client.generationsLimit
+
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      {/* Header */}
-      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/admin/studio-clients"
-                className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
-              </Link>
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center">
-                  <Building2 className="w-5 h-5 text-warm-500 dark:text-cream-400" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-                      {client.restaurantName || client.companyName}
-                    </h1>
-                    {client.isComplementary && (
-                      <Badge className="bg-purple-100 text-purple-700 text-xs rounded-sm">
-                        <Gift className="w-3 h-3 mr-1" />
-                        Comp
-                      </Badge>
-                    )}
-                  </div>
-                  {client.restaurantName && (
-                    <p className="text-sm text-warm-500 dark:text-cream-400">{client.companyName}</p>
-                  )}
-                </div>
-              </div>
-            </div>
+    <div>
+      <PageHeader
+        kicker="STUDIO · BACKHAUS"
+        backHref="/admin/studio-clients"
+        title={
+          <span className="inline-flex items-center gap-3">
+            {client.restaurantName || client.companyName}
+            {client.isComplementary && (
+              <Badge variant="teal">
+                <Gift />
+                Comp
+              </Badge>
+            )}
+          </span>
+        }
+        subtitle={client.restaurantName ? client.companyName : undefined}
+        actions={
+          <Button variant="gold" onClick={handleSave} disabled={!hasChanges || saving}>
+            {saving ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="size-4" />
+                Save Changes
+              </>
+            )}
+          </Button>
+        }
+      />
 
-            <Button
-              variant="lime"
-              size="sm"
-              className="rounded-sm"
-              onClick={handleSave}
-              disabled={!hasChanges || saving}
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4 mr-1.5" />
-                  Save Changes
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Details & Settings */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Contact Info */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Contact Information</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left Column - Details & Settings */}
+        <div className="space-y-6 lg:col-span-2">
+          {/* Contact Info */}
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Contact Information</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2">
                 {client.email && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Mail className="w-4 h-4 text-warm-400 dark:text-cream-400" />
-                    <a href={`mailto:${client.email}`} className="text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100">
+                    <Mail className="size-4 text-muted-foreground" />
+                    <a
+                      href={`mailto:${client.email}`}
+                      className="text-foreground transition-colors hover:text-primary"
+                    >
                       {client.email}
                     </a>
                   </div>
                 )}
                 {client.phone && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Phone className="w-4 h-4 text-warm-400 dark:text-cream-400" />
-                    <a href={`tel:${client.phone}`} className="text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100">
+                    <Phone className="size-4 text-muted-foreground" />
+                    <a
+                      href={`tel:${client.phone}`}
+                      className="text-foreground transition-colors hover:text-primary"
+                    >
                       {client.phone}
                     </a>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="w-4 h-4 text-warm-400 dark:text-cream-400" />
-                  <span className="text-warm-600 dark:text-cream-400">
+                  <Calendar className="size-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
                     Joined {new Date(client.createdAt).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -265,8 +270,8 @@ export default function StudioClientDetailPage({
                 </div>
                 {client.trialEndsAt && (
                   <div className="flex items-center gap-2 text-sm">
-                    <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span className="text-amber-700">
+                    <Sparkles className="size-4 text-gold-600 dark:text-gold-400" />
+                    <span className="text-gold-600 dark:text-gold-400">
                       Trial ends {new Date(client.trialEndsAt).toLocaleDateString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -275,225 +280,234 @@ export default function StudioClientDetailPage({
                   </div>
                 )}
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Subscription Settings */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Subscription Settings</h2>
-              <div className="grid sm:grid-cols-2 gap-4">
+          {/* Subscription Settings */}
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Subscription Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <Label htmlFor="planTier" className="text-warm-600 dark:text-cream-400 text-xs">
-                    Plan Tier
-                  </Label>
-                  <select
-                    id="planTier"
+                  <Label htmlFor="planTier">Plan Tier</Label>
+                  <Select
                     value={planTier}
-                    onChange={(e) => {
-                      setPlanTier(e.target.value)
-                      const plan = PLAN_OPTIONS.find((p) => p.value === e.target.value)
+                    onValueChange={(value) => {
+                      setPlanTier(value)
+                      const plan = PLAN_OPTIONS.find((p) => p.value === value)
                       if (plan) setGenerationsLimit(plan.limit)
                     }}
-                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100 text-sm"
                   >
-                    {PLAN_OPTIONS.map((plan) => (
-                      <option key={plan.value} value={plan.value}>
-                        {plan.label} (${plan.rate}/mo)
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger id="planTier" className="mt-1.5 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLAN_OPTIONS.map((plan) => (
+                        <SelectItem key={plan.value} value={plan.value}>
+                          {plan.label} (${plan.rate}/mo)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="status" className="text-warm-600 dark:text-cream-400 text-xs">
-                    Status
-                  </Label>
-                  <select
-                    id="status"
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100 text-sm"
-                  >
-                    {STATUS_OPTIONS.map((s) => (
-                      <option key={s} value={s}>
-                        {s.charAt(0).toUpperCase() + s.slice(1)}
-                      </option>
-                    ))}
-                  </select>
+                  <Label htmlFor="status">Status</Label>
+                  <Select value={status} onValueChange={setStatus}>
+                    <SelectTrigger id="status" className="mt-1.5 w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {s.charAt(0).toUpperCase() + s.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="limit" className="text-warm-600 dark:text-cream-400 text-xs">
+                  <Label htmlFor="limit">
                     {planTier === 'TRIAL' ? 'Total' : 'Monthly'} Generation Limit
                   </Label>
-                  <input
+                  <Input
                     id="limit"
                     type="number"
                     value={generationsLimit}
                     onChange={(e) => setGenerationsLimit(parseInt(e.target.value) || 0)}
-                    className="w-full mt-1.5 px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100 text-sm"
+                    className="mt-1.5 font-mono tabular-nums"
                   />
                 </div>
 
-                <div className="sm:col-span-2 pt-3 border-t border-warm-100 dark:border-charcoal-700 mt-2">
+                <div className="mt-2 border-t border-border pt-3 sm:col-span-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Gift className="w-4 h-4 text-purple-500" />
+                      <Gift className="size-4 text-teal-600 dark:text-teal-300" />
                       <div>
-                        <p className="text-sm font-medium text-warm-900 dark:text-cream-100">Complementary Access</p>
-                        <p className="text-xs text-warm-500 dark:text-cream-400">Grant free Pro tier access (bypasses Stripe billing)</p>
+                        <p className="text-sm font-medium text-foreground">
+                          Complementary Access
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Grant free Pro tier access (bypasses Stripe billing)
+                        </p>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={isComplementary}
-                      onClick={() => {
-                        const newValue = !isComplementary
-                        setIsComplementary(newValue)
-                        if (newValue) {
+                    <Switch
+                      checked={isComplementary}
+                      onCheckedChange={(checked) => {
+                        setIsComplementary(checked)
+                        if (checked) {
                           setPlanTier('PROFESSIONAL')
                           setGenerationsLimit(200)
                           setStatus('active')
                         }
                       }}
-                      className={cn(
-                        'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors',
-                        isComplementary ? 'bg-purple-500' : 'bg-warm-300'
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition-transform',
-                          isComplementary ? 'translate-x-5' : 'translate-x-0'
-                        )}
-                      />
-                    </button>
+                    />
                   </div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Recent Content */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Recent Content</h2>
+          {/* Recent Content */}
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Recent Content</CardTitle>
+            </CardHeader>
+            <CardContent>
               {client.recentContent.length > 0 ? (
-                <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
+                <div className="grid grid-cols-4 gap-3 sm:grid-cols-5">
                   {client.recentContent.map((content) => (
                     <div
                       key={content.id}
-                      className="aspect-square rounded-sm bg-warm-100 dark:bg-charcoal-800 overflow-hidden"
+                      className="aspect-square overflow-hidden rounded-[10px] bg-secondary"
                     >
                       {content.generatedImageUrl ? (
                         <img
                           src={content.generatedImageUrl}
                           alt="Generated"
-                          className="w-full h-full object-cover"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ImageIcon className="w-6 h-6 text-warm-300 dark:text-charcoal-600" />
+                        <div className="flex h-full w-full items-center justify-center">
+                          <ImageIcon className="size-6 text-muted-foreground" />
                         </div>
                       )}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-warm-500 dark:text-cream-400">No content generated yet</p>
+                <EmptyState
+                  icon={ImageIcon}
+                  title="No content yet"
+                  description="Generated images will show up here once this client starts creating."
+                  className="py-6"
+                />
               )}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Right Column - Usage Stats */}
-          <div className="space-y-6">
-            {/* Usage Card */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">{client.planTier === 'TRIAL' ? 'Usage (Lifetime)' : 'Usage This Month'}</h2>
-                <Badge
-                  className={cn(
-                    'text-xs rounded-sm',
-                    client.usagePercent >= 90
-                      ? 'bg-red-100 text-red-700'
-                      : client.usagePercent >= 70
-                        ? 'bg-amber-100 text-amber-700'
-                        : 'bg-green-100 text-green-700'
-                  )}
-                >
-                  {client.usagePercent}%
+        {/* Right Column - Usage Stats */}
+        <div className="space-y-6">
+          {/* Usage Card */}
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>
+                {client.planTier === 'TRIAL' ? 'Usage (Lifetime)' : 'Usage This Month'}
+              </CardTitle>
+              <CardAction>
+                <Badge variant={overLimit ? 'coral' : 'neutral'}>
+                  <span className="font-mono tabular-nums">{client.usagePercent}%</span>
                 </Badge>
-              </div>
-
+              </CardAction>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-3">
                 <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-warm-600 dark:text-cream-400">Generations</span>
-                    <span className="font-medium text-warm-900 dark:text-cream-100">
+                  <div className="mb-1 flex justify-between text-sm">
+                    <span className="text-muted-foreground">Generations</span>
+                    <span
+                      className={cn(
+                        'font-mono font-medium tabular-nums',
+                        overLimit ? 'text-coral-600 dark:text-coral-300' : 'text-foreground'
+                      )}
+                    >
                       {client.generationsUsed} / {client.generationsLimit}
                     </span>
                   </div>
-                  <div className="h-3 bg-warm-100 dark:bg-charcoal-800 rounded-full overflow-hidden">
+                  <div className="h-2 overflow-hidden rounded-full bg-secondary">
                     <div
                       className={cn(
                         'h-full rounded-full transition-all',
-                        client.usagePercent >= 90
-                          ? 'bg-red-500'
-                          : client.usagePercent >= 70
-                            ? 'bg-amber-500'
-                            : 'bg-lime-500'
+                        overLimit
+                          ? 'bg-coral-600 dark:bg-coral-300'
+                          : 'bg-gold-600 dark:bg-gold-400'
                       )}
                       style={{ width: `${Math.min(client.usagePercent, 100)}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-warm-100 dark:border-charcoal-700">
+                <div className="border-t border-border pt-2">
                   <div className="flex justify-between text-sm">
-                    <span className="text-warm-500 dark:text-cream-400">Remaining</span>
-                    <span className="text-warm-900 dark:text-cream-100">
+                    <span className="text-muted-foreground">Remaining</span>
+                    <span className="font-mono tabular-nums text-foreground">
                       {Math.max(0, client.generationsLimit - client.generationsUsed)} generations
                     </span>
                   </div>
                 </div>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Usage History Mini Chart */}
-            {client.usageHistory.length > 0 && (
-              <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-                <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Recent Activity</h2>
-                <div className="flex items-end gap-1 h-20">
-                  {client.usageHistory.slice(-14).map((day, i) => {
+          {/* Usage History Mini Chart */}
+          {client.usageHistory.length > 0 && (
+            <Card className="gap-4">
+              <CardHeader>
+                <CardTitle>Recent Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex h-20 items-end gap-1">
+                  {client.usageHistory.slice(-14).map((day) => {
                     const max = Math.max(...client.usageHistory.map((d) => d.count))
                     const height = max > 0 ? (day.count / max) * 100 : 0
                     return (
                       <div
                         key={day.date}
-                        className="flex-1 bg-lime-500 rounded-sm min-h-[4px]"
+                        className="min-h-[4px] flex-1 rounded-[5px] bg-gold-600 dark:bg-gold-400"
                         style={{ height: `${height}%` }}
                         title={`${day.date}: ${day.count} generations`}
                       />
                     )
                   })}
                 </div>
-                <p className="text-xs text-warm-500 dark:text-cream-400 mt-2 text-center">Last 14 days</p>
-              </div>
-            )}
+                <p className="kicker mt-3 text-center text-muted-foreground">Last 14 days</p>
+              </CardContent>
+            </Card>
+          )}
 
-            {/* Quick Actions */}
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-              <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-4">Quick Actions</h2>
+          {/* Quick Actions */}
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Quick Actions</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full rounded-sm justify-start">
-                  <Mail className="w-4 h-4 mr-2" />
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <Mail className="size-4" />
                   Send Usage Report
                 </Button>
-                <Button variant="outline" size="sm" className="w-full rounded-sm justify-start">
-                  <TrendingUp className="w-4 h-4 mr-2" />
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  <TrendingUp className="size-4" />
                   Upgrade Plan
                 </Button>
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

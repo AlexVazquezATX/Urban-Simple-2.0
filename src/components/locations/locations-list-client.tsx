@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Building2, Plus, Search } from 'lucide-react'
+import { Building2, Lock, Plus, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -24,14 +24,20 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ViewToggle, ViewMode } from '@/components/ui/view-toggle'
+import { EmptyState } from '@/components/ui/empty-state'
+import { StatCard } from '@/components/ui/stat-card'
+import { PageHeader } from '@/components/layout/page-header'
 import { LocationCard } from './location-card'
+import { LocationRowActions } from './location-row-actions'
+import { marginTone, reviewBadgeVariant } from './tones'
 import { LocationForm } from '@/components/forms/location-form'
-import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
-import { FinancialsSummaryBand } from '@/components/financials/financials-summary-band'
-import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary, type FinancialsBandData } from '@/lib/financials'
+import { FinancialKPIRow } from '@/components/shared/financial-kpi-row'
+import { formatMargin, type FinancialSummary, type FinancialsBandData } from '@/lib/financials'
+import { formatMoney, moneyClass } from '@/lib/format'
 import { formatServiceDays, normalizeServiceProfile } from '@/lib/operations/dispatch'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
 import { persistViewMode } from '@/lib/view-mode'
+import { cn } from '@/lib/utils'
 
 interface LocationsListClientProps {
   locations: LocationListItem[]
@@ -152,27 +158,26 @@ export function LocationsListClient({
   if (locations.length === 0) {
     return (
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-            Locations
-          </h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            View all service locations across all clients
-          </p>
-        </div>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <Building2 className="mb-4 h-12 w-12 text-warm-400 dark:text-cream-400" />
-            <p className="mb-2 text-warm-600 dark:text-cream-400">No locations yet</p>
-            <p className="mb-4 text-sm text-warm-500 dark:text-cream-400">
-              Create your first location and link it to a client
-            </p>
-            <LocationForm>
-              <Button variant="lime" className="rounded-sm">
-                <Plus className="mr-2 h-4 w-4" />
-                Add Location
-              </Button>
-            </LocationForm>
+        <PageHeader
+          kicker="CLIENTS · PORTFOLIO"
+          title="Locations"
+          subtitle="View all service locations across all clients"
+        />
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={Building2}
+              title="No locations yet — add your first stop"
+              description="Create a location and link it to a client to start scheduling service, checklists, and reviews."
+              action={
+                <LocationForm>
+                  <Button variant="outline">
+                    <Plus className="size-4" />
+                    Add Location
+                  </Button>
+                </LocationForm>
+              }
+            />
           </CardContent>
         </Card>
       </div>
@@ -181,46 +186,58 @@ export function LocationsListClient({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-            Locations
-          </h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            View all service locations across all clients
+      <PageHeader
+        kicker="CLIENTS · PORTFOLIO"
+        title="Locations"
+        subtitle="View all service locations across all clients"
+        actions={
+          <>
+            <ViewToggle value={viewMode} onChange={handleViewChange} />
+            <LocationForm>
+              <Button variant="gold">
+                <Plus className="size-4" />
+                Add Location
+              </Button>
+            </LocationForm>
+          </>
+        }
+      />
+
+      {showFinancials && bandData ? (
+        <div className="space-y-1.5">
+          <FinancialKPIRow
+            locationsServiced={bandData.locationsServiced}
+            mrr={bandData.mrr}
+            arr={bandData.arr}
+            monthlyProfit={bandData.monthlyProfit}
+            blendedMarginPct={bandData.blendedMarginPct}
+          />
+          <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Lock className="size-3 shrink-0" />
+            Gross P&amp;L from service agreements · All locations. Overhead-inclusive net lives on
+            the Financials dashboard.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <ViewToggle value={viewMode} onChange={handleViewChange} />
-          <LocationForm>
-            <Button variant="lime" className="rounded-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Add Location
-            </Button>
-          </LocationForm>
+      ) : (
+        // Non-admins: a single honest count, no money.
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
+          <StatCard label="Locations serviced" value={locationsServiced} icon={Building2} />
         </div>
-      </div>
-
-      <FinancialsSummaryBand
-        variant={showFinancials ? 'admin' : 'plain'}
-        locationsServiced={locationsServiced}
-        data={bandData}
-        scopeLabel="All locations"
-      />
+      )}
 
       {/* Search + client filter */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative w-full sm:max-w-sm">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-warm-400 dark:text-cream-500" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search locations by name or address…"
-            className="rounded-sm pl-8"
+            className="pl-8"
           />
         </div>
         <Select value={clientFilter} onValueChange={setClientFilter}>
-          <SelectTrigger className="w-full rounded-sm sm:w-60">
+          <SelectTrigger className="w-full sm:w-60">
             <SelectValue placeholder="Client" />
           </SelectTrigger>
           <SelectContent>
@@ -234,14 +251,12 @@ export function LocationsListClient({
         </Select>
       </div>
 
-      <Card className="rounded-sm border-warm-200">
+      <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-                All Locations
-              </CardTitle>
-              <CardDescription className="text-warm-500 dark:text-cream-400">
+              <CardTitle>All Locations</CardTitle>
+              <CardDescription>
                 {filtered.length}
                 {isFiltering ? ` of ${locations.length}` : ''}{' '}
                 {locations.length === 1 ? 'location' : 'locations'}
@@ -251,151 +266,151 @@ export function LocationsListClient({
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="py-12 text-center text-warm-500 dark:text-cream-400">
-              No locations match your search.
-            </div>
+            <EmptyState
+              icon={Search}
+              title="No locations match"
+              description="Try a different name or address, or clear the client filter."
+            />
           ) : viewMode === 'table' ? (
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                  <TableHead className="w-16 text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Logo</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Location</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Branch</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Address</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Checklist</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Dispatch</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Review Status</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Issues</TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Location</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead>Address</TableHead>
+                  <TableHead>Checklist</TableHead>
+                  <TableHead>Dispatch</TableHead>
+                  <TableHead>Review Status</TableHead>
+                  <TableHead>Issues</TableHead>
                   {showFinancials && (
                     <>
-                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">MRR</TableHead>
-                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Profit</TableHead>
-                      <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Margin</TableHead>
+                      <TableHead className="text-right">MRR</TableHead>
+                      <TableHead className="text-right">Profit</TableHead>
+                      <TableHead className="text-right">Margin</TableHead>
                     </>
                   )}
-                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((location) => {
                   const serviceProfile = normalizeServiceProfile(location.serviceProfile)
                   const reviewFreshness = getReviewFreshness(location.reviews?.[0])
-                  const addressStr = addressToString(location.address) || '-'
+                  const addressStr = addressToString(location.address)
                   return (
-                    <TableRow key={location.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50">
+                    <TableRow key={location.id}>
                       <TableCell>
-                        {location.logoUrl ? (
-                          <div className="relative h-10 w-10 rounded-sm overflow-hidden bg-warm-100">
-                            <Image
-                              src={location.logoUrl}
-                              alt={location.name}
-                              fill
-                              className="object-cover"
-                              unoptimized
-                            />
-                          </div>
-                        ) : (
-                          <div className="h-10 w-10 rounded-sm bg-warm-100 flex items-center justify-center">
-                            <Building2 className="h-5 w-5 text-warm-400" />
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell className="font-medium text-warm-900 dark:text-cream-100">
-                        <Link
-                          href={`/locations/${location.id}`}
-                          className="hover:text-ocean-600 transition-colors"
-                        >
-                          {location.name}
-                        </Link>
+                        <div className="flex items-center gap-2.5">
+                          {location.logoUrl ? (
+                            <div className="relative size-9 shrink-0 overflow-hidden rounded-[9px] bg-secondary">
+                              <Image
+                                src={location.logoUrl}
+                                alt={location.name}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            </div>
+                          ) : (
+                            <div className="grid size-9 shrink-0 place-items-center rounded-[9px] bg-secondary">
+                              <Building2 className="size-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <Link
+                            href={`/locations/${location.id}`}
+                            className="font-medium text-foreground transition-colors hover:text-primary"
+                          >
+                            {location.name}
+                          </Link>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Link
                           href={`/clients/${location.client.id}`}
-                          className="hover:text-ocean-600 text-warm-600 dark:text-cream-400 transition-colors"
+                          className="text-muted-foreground transition-colors hover:text-primary"
                         >
                           {location.client.name}
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">{location.branch.code}</Badge>
+                        <Badge variant="neutral">{location.branch.code}</Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-warm-500 dark:text-cream-400 max-w-xs truncate">
-                        {addressStr}
+                      <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
+                        {addressStr || '—'}
                       </TableCell>
                       <TableCell>
                         {location.checklistTemplate ? (
-                          <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
-                            {location.checklistTemplate.name}
-                          </Badge>
+                          <Badge variant="neutral">{location.checklistTemplate.name}</Badge>
                         ) : (
-                          <span className="text-warm-400 text-sm">-</span>
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <Badge
-                            variant="outline"
-                            className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600"
-                          >
+                          <Badge variant="neutral">
                             {serviceProfile.autoSchedule ? 'Auto Route' : 'Manual'}
                           </Badge>
-                          <p className="text-xs text-warm-500 dark:text-cream-400">
+                          <p className="font-mono text-xs text-muted-foreground">
                             {formatServiceDays(serviceProfile.serviceDays)}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <Badge
-                            className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                              reviewFreshness.isStale
-                                ? 'bg-red-100 text-red-700 border-red-200'
-                                : 'bg-lime-100 text-lime-700 border-lime-200'
-                            }`}
-                          >
+                          <Badge variant={reviewBadgeVariant(reviewFreshness)}>
                             {reviewFreshness.shortLabel}
                           </Badge>
-                          <p className="text-xs text-warm-500 dark:text-cream-400">
+                          <p className="text-xs text-muted-foreground">
                             {reviewFreshness.reviewedOnLabel || 'Needs manager review photos'}
                           </p>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          className={`rounded-sm text-[10px] px-1.5 py-0 ${
+                        <span
+                          className={cn(
+                            'font-mono tabular-nums',
                             location._count.issues > 0
-                              ? 'bg-red-100 text-red-700 border-red-200'
-                              : 'bg-warm-100 text-warm-600 border-warm-200'
-                          }`}
+                              ? 'font-medium text-coral-600 dark:text-coral-300'
+                              : 'text-muted-foreground'
+                          )}
                         >
                           {location._count.issues}
-                        </Badge>
+                        </span>
                       </TableCell>
                       {showFinancials && (
                         <>
-                          <TableCell className="text-right font-mono text-warm-700 dark:text-cream-300">
-                            {location.financials ? formatCurrency(location.financials.monthlyRevenue) : '—'}
+                          <TableCell className={cn('text-right text-foreground', moneyClass)}>
+                            {location.financials ? formatMoney(location.financials.monthlyRevenue) : '—'}
                           </TableCell>
-                          <TableCell className={`text-right font-mono ${location.financials ? marginToneClass(location.financials.marginPct) : ''}`}>
-                            {location.financials ? formatCurrency(location.financials.monthlyProfit) : '—'}
+                          <TableCell
+                            className={cn(
+                              'text-right',
+                              moneyClass,
+                              location.financials ? marginTone(location.financials.marginPct) : 'text-muted-foreground'
+                            )}
+                          >
+                            {location.financials ? formatMoney(location.financials.monthlyProfit) : '—'}
                           </TableCell>
-                          <TableCell className={`text-right font-mono ${location.financials ? marginToneClass(location.financials.marginPct) : ''}`}>
+                          <TableCell
+                            className={cn(
+                              'text-right',
+                              moneyClass,
+                              location.financials ? marginTone(location.financials.marginPct) : 'text-muted-foreground'
+                            )}
+                          >
                             {location.financials ? formatMargin(location.financials.marginPct) : '—'}
                           </TableCell>
                         </>
                       )}
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Link href={`/locations/${location.id}`}>
-                            <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50">
-                              View
-                            </Button>
-                          </Link>
-                          <ConfirmDeleteButton
-                            endpoint={`/api/locations/${location.id}`}
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/locations/${location.id}`}>View</Link>
+                          </Button>
+                          <LocationRowActions
+                            locationId={location.id}
                             entityLabel={`${location.client.name} - ${location.name}`}
-                            entityKind="location"
                           />
                         </div>
                       </TableCell>
@@ -408,14 +423,14 @@ export function LocationsListClient({
             <div className="space-y-6">
               {groups.map((group) => (
                 <div key={group.client.id} className="space-y-2.5">
-                  <div className="flex items-center gap-2 border-b border-warm-200 pb-1.5 dark:border-charcoal-700">
+                  <div className="flex items-baseline gap-2 border-b border-border pb-1.5">
                     <Link
                       href={`/clients/${group.client.id}`}
-                      className="text-sm font-medium text-warm-700 transition-colors hover:text-ocean-600 dark:text-cream-200"
+                      className="font-display text-sm font-semibold text-foreground transition-colors hover:text-primary"
                     >
                       {group.client.name}
                     </Link>
-                    <span className="text-xs text-warm-400 dark:text-cream-500">
+                    <span className="font-mono text-xs tabular-nums text-muted-foreground">
                       {group.items.length} {group.items.length === 1 ? 'location' : 'locations'}
                     </span>
                   </div>

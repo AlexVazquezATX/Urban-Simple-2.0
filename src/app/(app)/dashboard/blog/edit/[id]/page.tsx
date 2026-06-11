@@ -19,6 +19,7 @@ import {
   Type,
   FileText,
   Tag,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -41,6 +42,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import type { BlogPostWithRelations } from '@/lib/services/blog-service'
 import type { BlogCategory } from '@prisma/client'
 import { generateSlug, estimateReadingTime } from '@/lib/ai/blog-generator'
@@ -82,6 +99,9 @@ export default function BlogEditPage() {
 
   // Preview mode
   const [showPreview, setShowPreview] = useState(false)
+
+  // Delete confirmation
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -159,10 +179,6 @@ export default function BlogEditPage() {
   }
 
   async function handleDelete() {
-    if (!confirm('Are you sure you want to delete this post? This action cannot be undone.')) {
-      return
-    }
-
     try {
       await fetch(`/api/blog/admin/posts/${postId}`, {
         method: 'DELETE',
@@ -357,33 +373,29 @@ export default function BlogEditPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-ocean-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-charcoal-950">
+    <div className="min-h-screen">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-6 py-4">
+      <div className="sticky top-0 z-10 bg-card border-b border-border px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" onClick={() => router.push('/dashboard/blog')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <div className="h-6 w-px bg-cream-300 dark:bg-charcoal-700" />
-            <h1 className="text-xl font-semibold text-charcoal-900 dark:text-cream-100 truncate max-w-md">
+            <div className="h-6 w-px bg-border" />
+            <h1 className="font-display text-xl font-bold tracking-[-0.3px] text-foreground truncate max-w-md">
               {title || 'Untitled Post'}
             </h1>
-            {hasChanges && (
-              <Badge variant="outline" className="border-bronze-500 text-bronze-700">
-                Unsaved changes
-              </Badge>
-            )}
+            {hasChanges && <Badge variant="gold">Unsaved changes</Badge>}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <Button
               variant="outline"
               onClick={() => window.open(`/blog/${slug}`, '_blank')}
@@ -393,15 +405,7 @@ export default function BlogEditPage() {
               View
             </Button>
 
-            <Button
-              variant="outline"
-              onClick={handleTogglePublish}
-              className={
-                status === 'published'
-                  ? 'border-bronze-500 text-bronze-700 hover:bg-bronze-50'
-                  : 'border-ocean-500 text-ocean-700 hover:bg-ocean-50'
-              }
-            >
+            <Button variant="outline" onClick={handleTogglePublish}>
               {status === 'published' ? (
                 <>
                   <EyeOff className="w-4 h-4 mr-2" />
@@ -415,11 +419,7 @@ export default function BlogEditPage() {
               )}
             </Button>
 
-            <Button
-              onClick={handleSave}
-              disabled={saving || !hasChanges}
-              className="bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700"
-            >
+            <Button variant="gold" onClick={handleSave} disabled={saving || !hasChanges}>
               {saving ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : (
@@ -428,13 +428,41 @@ export default function BlogEditPage() {
               Save
             </Button>
 
-            <Button
-              variant="outline"
-              onClick={handleDelete}
-              className="text-red-600 hover:bg-red-50 border-red-200"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" aria-label="More actions">
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setShowDeleteConfirm(true)}>
+                  <Trash2 className="size-4" />
+                  Delete post
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="font-display">Delete this post?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    &ldquo;{title || 'Untitled Post'}&rdquo; will be permanently removed from the
+                    blog. This cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-white hover:bg-destructive/90"
+                    onClick={handleDelete}
+                  >
+                    <Trash2 className="size-4" />
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       </div>
@@ -489,7 +517,7 @@ export default function BlogEditPage() {
                               handleTitleChange(suggestion)
                               setShowTitleSuggestions(false)
                             }}
-                            className="w-full text-left p-3 rounded-lg hover:bg-cream-50 dark:hover:bg-charcoal-800 border border-cream-200 dark:border-charcoal-700 transition-colors"
+                            className="w-full text-left p-3 rounded-lg hover:bg-secondary/60 border border-border transition-colors"
                           >
                             {suggestion}
                           </button>
@@ -502,7 +530,7 @@ export default function BlogEditPage() {
                 <div>
                   <Label>URL Slug</Label>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-charcoal-500 dark:text-cream-400">/blog/</span>
+                    <span className="font-mono text-sm text-muted-foreground">/blog/</span>
                     <Input
                       value={slug}
                       onChange={(e) => {
@@ -550,7 +578,7 @@ export default function BlogEditPage() {
             {/* Content */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-lg font-semibold">Content</Label>
+                <h3 className="font-display text-[15px] font-bold tracking-[-0.2px] text-foreground">Content</h3>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -591,7 +619,7 @@ export default function BlogEditPage() {
 
               {showPreview ? (
                 <div
-                  className="prose prose-lg max-w-none p-4 bg-white dark:bg-charcoal-900 rounded-lg border border-cream-200 dark:border-charcoal-700"
+                  className="prose prose-lg dark:prose-invert max-w-none p-4 bg-card rounded-lg border border-border"
                   dangerouslySetInnerHTML={{ __html: content }}
                 />
               ) : (
@@ -616,10 +644,9 @@ export default function BlogEditPage() {
               <Label className="mb-3 block">Status</Label>
               <div className="flex gap-2">
                 <Badge
-                  className={`cursor-pointer ${
-                    status === 'draft'
-                      ? 'bg-bronze-500 text-white'
-                      : 'bg-cream-100 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700'
+                  variant="neutral"
+                  className={`cursor-pointer transition-opacity ${
+                    status === 'draft' ? 'ring-1 ring-ring' : 'opacity-50 hover:opacity-100'
                   }`}
                   onClick={() => {
                     setStatus('draft')
@@ -629,10 +656,9 @@ export default function BlogEditPage() {
                   Draft
                 </Badge>
                 <Badge
-                  className={`cursor-pointer ${
-                    status === 'published'
-                      ? 'bg-ocean-500 text-white'
-                      : 'bg-cream-100 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700'
+                  variant={status === 'published' ? 'teal' : 'neutral'}
+                  className={`cursor-pointer transition-opacity ${
+                    status === 'published' ? 'ring-1 ring-ring' : 'opacity-50 hover:opacity-100'
                   }`}
                   onClick={() => {
                     setStatus('published')
@@ -642,10 +668,9 @@ export default function BlogEditPage() {
                   Published
                 </Badge>
                 <Badge
-                  className={`cursor-pointer ${
-                    status === 'archived'
-                      ? 'bg-charcoal-500 text-white'
-                      : 'bg-cream-100 dark:bg-charcoal-800 text-charcoal-600 dark:text-cream-400 hover:bg-cream-200 dark:hover:bg-charcoal-700'
+                  variant="neutral"
+                  className={`cursor-pointer transition-opacity ${
+                    status === 'archived' ? 'ring-1 ring-ring' : 'opacity-50 hover:opacity-100'
                   }`}
                   onClick={() => {
                     setStatus('archived')
@@ -686,8 +711,8 @@ export default function BlogEditPage() {
                   )}
                 </div>
               ) : (
-                <div className="aspect-video bg-cream-100 dark:bg-charcoal-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-charcoal-400 dark:text-cream-400">
+                <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
                     <ImageIcon className="w-10 h-10 mx-auto mb-2" />
                     <p className="text-sm">No image selected</p>
                   </div>
@@ -696,8 +721,8 @@ export default function BlogEditPage() {
 
               {/* Image Options Panel */}
               {showImageOptions && (
-                <div className="mt-4 p-4 bg-cream-50 dark:bg-charcoal-800 rounded-lg border border-cream-200 dark:border-charcoal-700 space-y-4">
-                  <h4 className="text-sm font-semibold text-charcoal-900 dark:text-cream-100">Change Image</h4>
+                <div className="mt-4 p-4 bg-secondary/50 rounded-lg border border-border space-y-4">
+                  <h4 className="text-sm font-semibold text-foreground">Change Image</h4>
 
                   <Button
                     variant="outline"
@@ -752,7 +777,7 @@ export default function BlogEditPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full text-xs text-charcoal-500 dark:text-cream-400"
+                    className="w-full text-xs"
                     onClick={() => setShowImageOptions(false)}
                   >
                     Cancel
@@ -777,13 +802,7 @@ export default function BlogEditPage() {
                 <SelectContent>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.id}>
-                      <div className="flex items-center gap-2">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{ backgroundColor: cat.color || '#A67C52' }}
-                        />
-                        {cat.name}
-                      </div>
+                      {cat.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -797,8 +816,8 @@ export default function BlogEditPage() {
                 {keywords.map((keyword) => (
                   <Badge
                     key={keyword}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-red-50 hover:border-red-200"
+                    variant="neutral"
+                    className="cursor-pointer hover:text-coral-600 hover:border-coral-600/30 dark:hover:text-coral-300 dark:hover:border-coral-300/25"
                     onClick={() => handleRemoveKeyword(keyword)}
                   >
                     {keyword} ×
@@ -832,7 +851,7 @@ export default function BlogEditPage() {
             {/* SEO */}
             <Card className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <Label className="text-lg font-semibold">SEO Settings</Label>
+                <h3 className="font-display text-[15px] font-bold tracking-[-0.2px] text-foreground">SEO Settings</h3>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -851,7 +870,7 @@ export default function BlogEditPage() {
 
               <div className="space-y-4">
                 <div>
-                  <Label className="text-xs text-charcoal-500 dark:text-cream-400">Meta Title</Label>
+                  <Label className="text-xs text-muted-foreground">Meta Title</Label>
                   <Input
                     value={metaTitle}
                     onChange={(e) => {
@@ -860,13 +879,13 @@ export default function BlogEditPage() {
                     }}
                     placeholder={title || 'Meta title (defaults to post title)'}
                   />
-                  <p className="text-xs text-charcoal-400 dark:text-cream-400 mt-1">
+                  <p className="font-mono text-xs tabular-nums text-muted-foreground mt-1">
                     {(metaTitle || title).length}/60 characters
                   </p>
                 </div>
 
                 <div>
-                  <Label className="text-xs text-charcoal-500 dark:text-cream-400">Meta Description</Label>
+                  <Label className="text-xs text-muted-foreground">Meta Description</Label>
                   <Textarea
                     value={metaDescription}
                     onChange={(e) => {
@@ -876,7 +895,7 @@ export default function BlogEditPage() {
                     placeholder="SEO description for search results..."
                     rows={3}
                   />
-                  <p className="text-xs text-charcoal-400 dark:text-cream-400 mt-1">
+                  <p className="font-mono text-xs tabular-nums text-muted-foreground mt-1">
                     {metaDescription.length}/160 characters
                   </p>
                 </div>
@@ -886,28 +905,33 @@ export default function BlogEditPage() {
             {/* Post Info */}
             {post && (
               <Card className="p-6">
-                <Label className="mb-3 block text-charcoal-500 dark:text-cream-400">Post Info</Label>
-                <div className="space-y-2 text-sm text-charcoal-600 dark:text-cream-400">
+                <Label className="mb-3 block text-muted-foreground">Post Info</Label>
+                <div className="space-y-2 text-sm text-muted-foreground">
                   <p>
-                    <span className="font-medium">Created:</span>{' '}
-                    {new Date(post.createdAt).toLocaleDateString()}
+                    <span className="font-medium text-foreground">Created:</span>{' '}
+                    <span className="font-mono tabular-nums">
+                      {new Date(post.createdAt).toLocaleDateString()}
+                    </span>
                   </p>
                   {post.publishedAt && (
                     <p>
-                      <span className="font-medium">Published:</span>{' '}
-                      {new Date(post.publishedAt).toLocaleDateString()}
+                      <span className="font-medium text-foreground">Published:</span>{' '}
+                      <span className="font-mono tabular-nums">
+                        {new Date(post.publishedAt).toLocaleDateString()}
+                      </span>
                     </p>
                   )}
                   <p>
-                    <span className="font-medium">Views:</span> {post.viewCount}
+                    <span className="font-medium text-foreground">Views:</span>{' '}
+                    <span className="font-mono tabular-nums">{post.viewCount}</span>
                   </p>
                   <p>
-                    <span className="font-medium">Read Time:</span>{' '}
-                    {estimateReadingTime(content)} min
+                    <span className="font-medium text-foreground">Read Time:</span>{' '}
+                    <span className="font-mono tabular-nums">{estimateReadingTime(content)} min</span>
                   </p>
                   {post.isAiGenerated && (
-                    <Badge variant="outline" className="mt-2">
-                      <Sparkles className="w-3 h-3 mr-1" />
+                    <Badge variant="gold" className="mt-2">
+                      <Sparkles />
                       AI Generated
                     </Badge>
                   )}

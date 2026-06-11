@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   ClipboardCheck,
   MapPin,
@@ -15,6 +19,7 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
+  Moon,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -75,26 +80,28 @@ export default function NightlyReviewsPage() {
 
   const completedCount = locations.filter((l) => l.status === 'completed').length
   const pendingCount = locations.length - completedCount
+  const completionPct =
+    locations.length === 0 ? 0 : Math.round((completedCount / locations.length) * 100)
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle2 className="h-5 w-5 text-lime-600" />
+        return <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-300" />
       case 'in_progress':
-        return <AlertCircle className="h-5 w-5 text-orange-600" />
+        return <AlertCircle className="h-5 w-5 text-teal-600 dark:text-teal-300" />
       default:
-        return <Circle className="h-5 w-5 text-warm-400" />
+        return <Circle className="h-5 w-5 text-muted-foreground" />
     }
   }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">Completed</Badge>
+        return <Badge variant="green">Completed</Badge>
       case 'in_progress':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-100 text-orange-700 border-orange-200">In Progress</Badge>
+        return <Badge variant="teal">In Progress</Badge>
       default:
-        return <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">Pending</Badge>
+        return <Badge variant="neutral">Pending</Badge>
     }
   }
 
@@ -110,91 +117,115 @@ export default function NightlyReviewsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-warm-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
+  const emptyCopy =
+    filter === 'completed'
+      ? {
+          title: 'Nothing completed yet tonight',
+          description: 'Finished reviews will land here as the route gets worked.',
+        }
+      : filter === 'pending'
+        ? {
+            title: 'The route is clear',
+            description: 'Every stop on tonight’s route has been reviewed. Nice work.',
+          }
+        : {
+            title: 'No stops on tonight’s route',
+            description:
+              'Locations scheduled for service tonight will show up here, ready for review.',
+          }
+
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
-      {/* Header */}
-      <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Tonight&apos;s Route</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
-            Review locations scheduled for tonight&apos;s service
-          </p>
+      <PageHeader
+        kicker="OPERATIONS · NIGHTLY REVIEWS"
+        title="Tonight's Route"
+        subtitle="Review locations scheduled for tonight's service"
+        className="mb-0"
+      />
+
+      {/* Progress KPI strip */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label="Tonight's Stops"
+          value={locations.length}
+          icon={Building2}
+          sub="scheduled for service"
+        />
+        <StatCard
+          label="Completed"
+          value={completedCount}
+          icon={CheckCircle2}
+          tone={locations.length > 0 && completedCount === locations.length ? 'green' : 'neutral'}
+          sub={
+            <div className="flex items-center gap-2">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-secondary">
+                <div
+                  className="h-full rounded-full bg-gold-600 transition-all duration-300 dark:bg-gold-400"
+                  style={{ width: `${completionPct}%` }}
+                />
+              </div>
+              <span className="font-mono tabular-nums">{completionPct}%</span>
+            </div>
+          }
+        />
+        <StatCard
+          label="Pending"
+          value={pendingCount}
+          icon={Clock}
+          tone={pendingCount > 0 ? 'gold' : 'neutral'}
+          sub={pendingCount > 0 ? 'stops still need review' : 'all stops reviewed'}
+        />
       </div>
 
-      {/* Progress Summary */}
-      <Card className="rounded-sm border-ocean-200 bg-gradient-to-br from-ocean-50 to-ocean-100/50">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs text-warm-500 dark:text-cream-400">Progress</p>
-              <p className="text-2xl font-bold text-warm-900 dark:text-cream-100 mt-1">
-                {completedCount} / {locations.length}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-warm-500 dark:text-cream-400">Pending</p>
-              <p className="text-2xl font-bold mt-1 text-orange-600">{pendingCount}</p>
-            </div>
-            <div className="hidden sm:block w-32">
-              <div className="w-full bg-warm-200 dark:bg-charcoal-700 rounded-sm h-2">
-                 <div
-                   className="bg-ocean-600 h-2 rounded-sm transition-all duration-300"
-                   style={{
-                     width: `${locations.length === 0 ? 0 : (completedCount / locations.length) * 100}%`,
-                   }}
-                 />
-               </div>
-             </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Status filter tabs */}
+      <Tabs
+        value={filter}
+        onValueChange={(value) => setFilter(value as 'all' | 'pending' | 'completed')}
+      >
+        <TabsList>
+          <TabsTrigger value="all">
+            All
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              {locations.length}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            Pending
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              {pendingCount}
+            </span>
+          </TabsTrigger>
+          <TabsTrigger value="completed">
+            Completed
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              {completedCount}
+            </span>
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
-      {/* Filter Buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant={filter === 'all' ? 'lime' : 'outline'}
-          onClick={() => setFilter('all')}
-          className="flex-1 sm:flex-none rounded-sm"
-        >
-          All ({locations.length})
-        </Button>
-        <Button
-          variant={filter === 'pending' ? 'lime' : 'outline'}
-          onClick={() => setFilter('pending')}
-          className="flex-1 sm:flex-none rounded-sm"
-        >
-          Pending ({pendingCount})
-        </Button>
-        <Button
-          variant={filter === 'completed' ? 'lime' : 'outline'}
-          onClick={() => setFilter('completed')}
-          className="flex-1 sm:flex-none rounded-sm"
-        >
-          Completed ({completedCount})
-        </Button>
-      </div>
-
-      {/* Location Cards */}
+      {/* Review queue */}
       <div className="space-y-3">
         {filteredLocations.length === 0 ? (
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="py-12 text-center text-warm-500 dark:text-cream-400">
-              <Building2 className="h-12 w-12 mx-auto mb-4 text-warm-300" />
-              <p>No locations found for this filter</p>
+          <Card className="py-2">
+            <CardContent className="px-4">
+              <EmptyState
+                icon={Moon}
+                title={emptyCopy.title}
+                description={emptyCopy.description}
+              />
             </CardContent>
           </Card>
         ) : (
           filteredLocations.map((location) => (
             <Card
               key={location.id}
-              className={cn(
-                'rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors',
-                location.status === 'completed' && 'bg-lime-50/50 border-lime-200'
-              )}
+              className="gap-0 py-0 transition-colors hover:border-gold-600/30 dark:hover:border-gold-400/25"
             >
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
@@ -207,22 +238,26 @@ export default function NightlyReviewsPage() {
                   <div className="flex-1 min-w-0 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="font-medium text-warm-900 dark:text-cream-100">{location.locationName}</h3>
-                        <p className="text-xs text-warm-500 dark:text-cream-400">{location.clientName}</p>
+                        <h3 className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
+                          {location.locationName}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">{location.clientName}</p>
                       </div>
                       {getStatusBadge(location.status)}
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="truncate text-xs">{location.address}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400">
+                      <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="text-xs">{location.scheduledTime}</span>
+                        <span className="font-mono text-xs tabular-nums">
+                          {location.scheduledTime}
+                        </span>
                       </div>
-                      <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 sm:col-span-2">
+                      <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                         <ClipboardCheck className="h-3.5 w-3.5 flex-shrink-0" />
                         <span className="text-xs">{location.checklistName}</span>
                       </div>
@@ -230,27 +265,29 @@ export default function NightlyReviewsPage() {
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap gap-2 pt-2">
-                      <Button
-                        onClick={() => handleStartReview(location)}
-                        variant="lime"
-                        className="flex-1 sm:flex-none rounded-sm"
-                      >
-                        {location.status === 'completed' ? (
-                          <>
-                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                            View Review
-                          </>
-                        ) : (
-                          <>
-                            <ClipboardCheck className="h-4 w-4 mr-2" />
-                            {location.status === 'in_progress' ? 'Continue Review' : 'Start Review'}
-                          </>
-                        )}
-                      </Button>
+                      {location.status === 'completed' ? (
+                        <Button
+                          onClick={() => handleStartReview(location)}
+                          variant="ghost"
+                          className="flex-1 sm:flex-none"
+                        >
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          View Review
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => handleStartReview(location)}
+                          variant="gold"
+                          className="flex-1 sm:flex-none"
+                        >
+                          <ClipboardCheck className="h-4 w-4 mr-2" />
+                          {location.status === 'in_progress' ? 'Continue Review' : 'Start Review'}
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={() => handleGetDirections(location.address)}
-                        className="flex-1 sm:flex-none rounded-sm"
+                        className="flex-1 sm:flex-none"
                       >
                         <Navigation className="h-4 w-4 mr-2" />
                         Directions

@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Plus, Edit } from 'lucide-react'
+import { Plus, Edit, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -12,7 +12,10 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { AssignmentForm } from '@/components/forms/assignment-form'
+import { formatMoneyExact } from '@/lib/format'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
@@ -66,51 +69,59 @@ async function AssignmentsList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Location Assignments</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
-            Manage associate assignments to locations with pay rates
-          </p>
-        </div>
-        <AssignmentForm>
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="mr-2 h-4 w-4" />
-            New Assignment
-          </Button>
-        </AssignmentForm>
-      </div>
+      <PageHeader
+        kicker="OPERATIONS · ASSIGNMENTS"
+        title="Location Assignments"
+        subtitle="Manage associate assignments to locations with pay rates"
+        actions={
+          <AssignmentForm>
+            <Button variant="gold">
+              <Plus className="mr-2 h-4 w-4" />
+              New Assignment
+            </Button>
+          </AssignmentForm>
+        }
+        className="mb-0"
+      />
 
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">All Assignments</CardTitle>
-          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
-            {assignments.length}{' '}
-            {assignments.length === 1 ? 'assignment' : 'assignments'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          {assignments.length === 0 ? (
-            <div className="text-center py-12 text-warm-500 dark:text-cream-400">
-              <p>No assignments yet</p>
-              <AssignmentForm>
-                <Button variant="outline" className="mt-4 rounded-sm">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create First Assignment
-                </Button>
-              </AssignmentForm>
-            </div>
-          ) : (
+      {assignments.length === 0 ? (
+        <Card className="py-2">
+          <CardContent className="px-4">
+            <EmptyState
+              icon={Users}
+              title="No assignments yet"
+              description="Assign an associate to a location to set their monthly pay and start tracking coverage."
+              action={
+                <AssignmentForm>
+                  <Button variant="outline">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create First Assignment
+                  </Button>
+                </AssignmentForm>
+              }
+            />
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="gap-0 py-0">
+          <CardHeader className="px-5 pb-3 pt-5">
+            <CardTitle>All Assignments</CardTitle>
+            <CardDescription className="font-mono text-xs tabular-nums">
+              {assignments.length}{' '}
+              {assignments.length === 1 ? 'assignment' : 'assignments'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="px-5 pb-5">
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 dark:border-charcoal-700">
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Location</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Associate</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Monthly Pay</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Start Date</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">End Date</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400">Status</TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 text-right">Actions</TableHead>
+                <TableRow>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Associate</TableHead>
+                  <TableHead className="text-right">Monthly Pay</TableHead>
+                  <TableHead>Start Date</TableHead>
+                  <TableHead>End Date</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -118,36 +129,36 @@ async function AssignmentsList() {
                   const startDate = new Date(assignment.startDate).toLocaleDateString()
                   const endDate = assignment.endDate
                     ? new Date(assignment.endDate).toLocaleDateString()
-                    : '-'
+                    : '—'
                   const isActive =
                     assignment.isActive &&
                     (!assignment.endDate || new Date(assignment.endDate) >= new Date())
 
                   return (
-                    <TableRow key={assignment.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                      <TableCell className="font-medium text-sm text-warm-900 dark:text-cream-100">
+                    <TableRow key={assignment.id}>
+                      <TableCell className="font-medium text-sm text-foreground">
                         {assignment.location.client.name} - {assignment.location.name}
                       </TableCell>
-                      <TableCell className="text-sm text-warm-700 dark:text-cream-300">
+                      <TableCell className="text-sm text-foreground">
                         {assignment.user.firstName} {assignment.user.lastName}
                       </TableCell>
-                      <TableCell className="text-sm text-warm-700 dark:text-cream-300">
-                        ${parseFloat(assignment.monthlyPay.toString()).toFixed(2)}
+                      <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
+                        {formatMoneyExact(parseFloat(assignment.monthlyPay.toString()))}
                       </TableCell>
-                      <TableCell className="text-sm text-warm-600 dark:text-cream-400">{startDate}</TableCell>
-                      <TableCell className="text-sm text-warm-600 dark:text-cream-400">{endDate}</TableCell>
+                      <TableCell className="font-mono text-sm tabular-nums text-muted-foreground">
+                        {startDate}
+                      </TableCell>
+                      <TableCell className="font-mono text-sm tabular-nums text-muted-foreground">
+                        {endDate}
+                      </TableCell>
                       <TableCell>
-                        <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                          isActive
-                            ? 'bg-lime-100 text-lime-700 border-lime-200'
-                            : 'bg-warm-100 text-warm-600 border-warm-200'
-                        }`}>
+                        <Badge variant={isActive ? 'green' : 'neutral'}>
                           {isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <AssignmentForm assignment={assignment}>
-                          <Button variant="ghost" size="sm" className="rounded-sm h-7 px-2 text-xs">
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
                             <Edit className="h-3 w-3 mr-1" />
                             Edit
                           </Button>
@@ -158,9 +169,9 @@ async function AssignmentsList() {
                 })}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }
@@ -170,20 +181,20 @@ function AssignmentsListSkeleton() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Skeleton className="h-8 w-64 mb-2 rounded-sm" />
-          <Skeleton className="h-4 w-96 rounded-sm" />
+          <Skeleton className="h-8 w-64 mb-2" />
+          <Skeleton className="h-4 w-96" />
         </div>
-        <Skeleton className="h-10 w-40 rounded-sm" />
+        <Skeleton className="h-9 w-40" />
       </div>
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4 pb-3">
-          <Skeleton className="h-5 w-40 mb-2 rounded-sm" />
-          <Skeleton className="h-3 w-32 rounded-sm" />
+      <Card className="gap-0 py-0">
+        <CardHeader className="px-5 pb-3 pt-5">
+          <Skeleton className="h-5 w-40 mb-2" />
+          <Skeleton className="h-3 w-32" />
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent className="px-5 pb-5">
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <Skeleton key={i} className="h-12 w-full rounded-sm" />
+              <Skeleton key={i} className="h-12 w-full" />
             ))}
           </div>
         </CardContent>
@@ -199,4 +210,3 @@ export default function AssignmentsPage() {
     </Suspense>
   )
 }
-

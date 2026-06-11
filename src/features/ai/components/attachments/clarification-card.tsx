@@ -26,8 +26,8 @@ export function ClarificationCard({ data }: ClarificationCardProps) {
   }
 
   return (
-    <div className="rounded-sm border border-warm-200 bg-warm-50/60 p-2 dark:border-charcoal-700 dark:bg-charcoal-900">
-      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-warm-500 dark:text-cream-400">
+    <div className="rounded-sm border border-border bg-secondary/60 p-2">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
         <HelpCircle className="h-3 w-3" /> Quick choices
       </p>
       <div className="flex flex-wrap gap-2">
@@ -42,7 +42,7 @@ export function ClarificationCard({ data }: ClarificationCardProps) {
           >
             <span className="font-medium">{c.label}</span>
             {c.hint && (
-              <span className="ml-1.5 text-[10px] text-warm-500 dark:text-cream-400">
+              <span className="ml-1.5 text-[10px] text-muted-foreground">
                 {c.hint}
               </span>
             )}

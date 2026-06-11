@@ -30,7 +30,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Plus, Key, Copy, Check, MoreHorizontal, Trash2, Eye, EyeOff } from 'lucide-react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Plus, Key, Copy, Check, MoreHorizontal, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -166,224 +176,217 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-4xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">API Keys</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">Manage API keys for external agent access to the Growth API</p>
-        </div>
-        <Dialog open={createOpen} onOpenChange={(open) => {
-          setCreateOpen(open)
-          if (!open) {
-            setCreatedKey(null)
-            setCopied(false)
-            setNewKeyName('')
-            setNewKeyDescription('')
-          }
-        }}>
-          <DialogTrigger asChild>
-            <Button variant="lime" size="sm" className="rounded-sm">
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Create API Key
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md rounded-sm">
-            {!createdKey ? (
-              <>
-                <DialogHeader>
-                  <DialogTitle>Create API Key</DialogTitle>
-                  <DialogDescription>
-                    Create a new API key for an external agent or integration.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-2">
-                  <div>
-                    <label className="text-sm font-medium text-warm-700 dark:text-cream-300">Name</label>
-                    <Input
-                      value={newKeyName}
-                      onChange={(e) => setNewKeyName(e.target.value)}
-                      placeholder="e.g., Aria - Lead Builder"
-                      className="mt-1 rounded-sm"
-                      disabled={creating}
-                    />
+    <div className="p-4 md:p-6 max-w-4xl mx-auto bg-background min-h-screen">
+      <PageHeader
+        kicker="GROWTH · API ACCESS"
+        title="API Keys"
+        subtitle="Manage API keys for external agent access to the Growth API"
+        actions={
+          <Dialog open={createOpen} onOpenChange={(open) => {
+            setCreateOpen(open)
+            if (!open) {
+              setCreatedKey(null)
+              setCopied(false)
+              setNewKeyName('')
+              setNewKeyDescription('')
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button variant="gold" size="sm">
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                Create API Key
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              {!createdKey ? (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>Create API Key</DialogTitle>
+                    <DialogDescription>
+                      Create a new API key for an external agent or integration.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-2">
+                    <div>
+                      <label className="kicker text-muted-foreground">Name</label>
+                      <Input
+                        value={newKeyName}
+                        onChange={(e) => setNewKeyName(e.target.value)}
+                        placeholder="e.g., Aria - Lead Builder"
+                        className="mt-1"
+                        disabled={creating}
+                      />
+                    </div>
+                    <div>
+                      <label className="kicker text-muted-foreground">Description (optional)</label>
+                      <Input
+                        value={newKeyDescription}
+                        onChange={(e) => setNewKeyDescription(e.target.value)}
+                        placeholder="e.g., Used for automated lead discovery and outreach"
+                        className="mt-1"
+                        disabled={creating}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium text-warm-700 dark:text-cream-300">Description (optional)</label>
-                    <Input
-                      value={newKeyDescription}
-                      onChange={(e) => setNewKeyDescription(e.target.value)}
-                      placeholder="e.g., Used for automated lead discovery and outreach"
-                      className="mt-1 rounded-sm"
-                      disabled={creating}
-                    />
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreate} disabled={creating} variant="gold">
+                      {creating ? 'Creating...' : 'Create Key'}
+                    </Button>
+                  </DialogFooter>
+                </>
+              ) : (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>API Key Created</DialogTitle>
+                    <DialogDescription>
+                      Copy your API key now. You won&apos;t be able to see it again.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <div className="bg-ink-900 text-gold-400 p-3 rounded-[12px] font-mono text-xs break-all select-all dark:border dark:border-border">
+                      {createdKey}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopy}
+                      className="mt-3 w-full"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="mr-1.5 h-3.5 w-3.5" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="mr-1.5 h-3.5 w-3.5" />
+                          Copy to Clipboard
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-xs text-coral-600 dark:text-coral-300 mt-3 font-medium">
+                      Store this key securely. It cannot be displayed again after you close this dialog.
+                    </p>
                   </div>
-                </div>
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating} className="rounded-sm">
-                    Cancel
-                  </Button>
-                  <Button onClick={handleCreate} disabled={creating} variant="lime" className="rounded-sm">
-                    {creating ? 'Creating...' : 'Create Key'}
-                  </Button>
-                </DialogFooter>
-              </>
-            ) : (
-              <>
-                <DialogHeader>
-                  <DialogTitle>API Key Created</DialogTitle>
-                  <DialogDescription>
-                    Copy your API key now. You won&apos;t be able to see it again.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <div className="bg-warm-900 text-lime-400 p-3 rounded-sm font-mono text-xs break-all select-all">
-                    {createdKey}
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCopy}
-                    className="mt-3 rounded-sm w-full"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="mr-1.5 h-3.5 w-3.5" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="mr-1.5 h-3.5 w-3.5" />
-                        Copy to Clipboard
-                      </>
-                    )}
-                  </Button>
-                  <p className="text-xs text-red-600 mt-3 font-medium">
-                    Store this key securely. It cannot be displayed again after you close this dialog.
-                  </p>
-                </div>
-                <DialogFooter>
-                  <Button onClick={handleCloseCreated} variant="lime" className="rounded-sm">
-                    Done
-                  </Button>
-                </DialogFooter>
-              </>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+                  <DialogFooter>
+                    <Button onClick={handleCloseCreated} variant="gold">
+                      Done
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
       {/* Usage Info */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500 mb-6">
-        <CardContent className="p-4">
-          <p className="text-sm text-warm-700 dark:text-cream-300">
-            <strong>Usage:</strong> Include your API key in requests as{' '}
-            <code className="bg-warm-100 dark:bg-charcoal-800 px-1.5 py-0.5 rounded text-xs font-mono">
-              Authorization: Bearer us_live_...
-            </code>
-          </p>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-            API keys grant full access to Growth endpoints (prospects, discovery, outreach, email-prospecting, pipeline) scoped to your company.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="rounded-[14px] border bg-teal-600/10 border-teal-600/30 dark:bg-teal-300/12 dark:border-teal-300/25 p-4 mb-6">
+        <p className="text-[13px] text-foreground">
+          <strong>Usage:</strong> Include your API key in requests as{' '}
+          <code className="bg-secondary px-1.5 py-0.5 rounded text-xs font-mono">
+            Authorization: Bearer us_live_...
+          </code>
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          API keys grant full access to Growth endpoints (prospects, discovery, outreach, email-prospecting, pipeline) scoped to your company.
+        </p>
+      </div>
 
       {/* Keys Table */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardContent className="p-0">
           {apiKeys.length === 0 ? (
-            <div className="p-12 text-center">
-              <Key className="h-10 w-10 text-warm-300 dark:text-charcoal-500 mx-auto mb-3" />
-              <p className="text-sm text-warm-500 dark:text-cream-400">No API keys yet</p>
-              <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">Create one to start using the Growth API programmatically</p>
-            </div>
+            <EmptyState
+              icon={Key}
+              title="No API keys yet"
+              description="Create one to start using the Growth API programmatically"
+            />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-warm-100 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700">
-                  <tr>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Name</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Key</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Status</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Last Used</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Usage</th>
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Created</th>
-                    <th className="w-12 p-3"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-warm-100 dark:divide-charcoal-700">
-                  {apiKeys.map((key) => (
-                    <tr key={key.id} className="hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors">
-                      <td className="p-3">
-                        <div className="text-sm font-medium text-warm-900 dark:text-cream-100">{key.name}</div>
-                        {key.description && (
-                          <div className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{key.description}</div>
-                        )}
-                        <div className="text-xs text-warm-400 dark:text-cream-500 mt-0.5">
-                          by {key.user.firstName} {key.user.lastName}
-                        </div>
-                      </td>
-                      <td className="p-3">
-                        <code className="text-xs font-mono text-warm-600 dark:text-cream-400 bg-warm-100 dark:bg-charcoal-800 px-1.5 py-0.5 rounded">
-                          {key.keyPrefix}...
-                        </code>
-                      </td>
-                      <td className="p-3">
-                        {key.revokedAt ? (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">
-                            Revoked
-                          </Badge>
-                        ) : key.isActive ? (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
-                            Active
-                          </Badge>
-                        ) : (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
-                            Inactive
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                        {formatRelative(key.lastUsedAt)}
-                      </td>
-                      <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                        {key.usageCount.toLocaleString()} calls
-                      </td>
-                      <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                        {formatDate(key.createdAt)}
-                      </td>
-                      <td className="p-3">
-                        {key.isActive && !key.revokedAt && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100">
-                                <MoreHorizontal className="h-3.5 w-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="rounded-sm">
-                              <DropdownMenuItem
-                                className="text-red-600"
-                                onClick={() => setRevokeId(key.id)}
-                              >
-                                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                Revoke Key
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="px-3">Name</TableHead>
+                  <TableHead className="px-3">Key</TableHead>
+                  <TableHead className="px-3">Status</TableHead>
+                  <TableHead className="px-3">Last Used</TableHead>
+                  <TableHead className="px-3">Usage</TableHead>
+                  <TableHead className="px-3">Created</TableHead>
+                  <TableHead className="w-12 px-3" />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {apiKeys.map((key) => (
+                  <TableRow key={key.id}>
+                    <TableCell className="px-3">
+                      <div className="text-sm font-medium text-foreground">{key.name}</div>
+                      {key.description && (
+                        <div className="text-xs text-muted-foreground mt-0.5">{key.description}</div>
+                      )}
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        by {key.user.firstName} {key.user.lastName}
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-3">
+                      <code className="text-xs font-mono text-muted-foreground bg-secondary px-1.5 py-0.5 rounded">
+                        {key.keyPrefix}...
+                      </code>
+                    </TableCell>
+                    <TableCell className="px-3">
+                      {key.revokedAt ? (
+                        <Badge variant="coral" className="text-[10px] px-1.5 py-0">
+                          Revoked
+                        </Badge>
+                      ) : key.isActive ? (
+                        <Badge variant="green" className="text-[10px] px-1.5 py-0">
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="neutral" className="text-[10px] px-1.5 py-0">
+                          Inactive
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-3 text-xs font-mono tabular-nums text-muted-foreground">
+                      {formatRelative(key.lastUsedAt)}
+                    </TableCell>
+                    <TableCell className="px-3 text-xs font-mono tabular-nums text-muted-foreground">
+                      {key.usageCount.toLocaleString()} calls
+                    </TableCell>
+                    <TableCell className="px-3 text-xs font-mono tabular-nums text-muted-foreground">
+                      {formatDate(key.createdAt)}
+                    </TableCell>
+                    <TableCell className="px-3">
+                      {key.isActive && !key.revokedAt && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon-sm">
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setRevokeId(key.id)}>
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />
+                              Revoke Key
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
       {/* Revoke Confirmation */}
       <AlertDialog open={!!revokeId} onOpenChange={(open) => !open && setRevokeId(null)}>
-        <AlertDialogContent className="rounded-sm">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Revoke API Key?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -391,8 +394,11 @@ export function ApiKeysClient({ apiKeys: initialKeys }: ApiKeysClientProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="rounded-sm">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRevoke} className="rounded-sm bg-red-600 hover:bg-red-700">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRevoke}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
               Revoke
             </AlertDialogAction>
           </AlertDialogFooter>

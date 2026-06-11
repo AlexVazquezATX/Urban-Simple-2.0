@@ -1,14 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail, MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from 'sonner'
 
 interface SendReminderButtonProps {
   invoiceId: string
 }
 
+/**
+ * Row-level kebab holding the payment-reminder action — per the table
+ * rules, secondary row actions live behind the kebab, never inline.
+ */
 export function SendReminderButton({ invoiceId }: SendReminderButtonProps) {
   const [loading, setLoading] = useState(false)
 
@@ -40,18 +50,23 @@ export function SendReminderButton({ invoiceId }: SendReminderButtonProps) {
   }
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={handleSendReminder}
-      disabled={loading}
-    >
-      <Mail className="mr-2 h-4 w-4" />
-      {loading ? 'Sending...' : 'Remind'}
-    </Button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          disabled={loading}
+          aria-label="More actions"
+        >
+          <MoreHorizontal className="size-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleSendReminder} disabled={loading}>
+          <Mail className="size-4" />
+          {loading ? 'Sending reminder...' : 'Send payment reminder'}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
-
-
-
-

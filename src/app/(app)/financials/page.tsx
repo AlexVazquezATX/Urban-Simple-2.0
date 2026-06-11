@@ -1,21 +1,74 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowRight, Lock, TrendingUp, TrendingDown } from 'lucide-react'
+import { ArrowRight, BarChart3, Lock, TrendingDown, TrendingUp, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { StatCardEq } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
 import { SnapshotNowButton } from '@/components/financials/snapshot-now-button'
+import { FinancialsTrendChart } from '@/components/financials/financials-trend-chart'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { formatMoney } from '@/lib/format'
 import {
   canSeeFinancials,
   expenseCategoryLabel,
-  formatCurrency,
   formatMargin,
-  marginToneClass,
   summarizeAgreements,
   summarizeExpenses,
 } from '@/lib/financials'
+
+// Bar-list row (USBarRow): name + mono value + muted mono share % + 6px track.
+// "N others" / "Everything else" rows pass muted to drop the fill emphasis.
+function BarRow({
+  name,
+  value,
+  pct,
+  fill,
+  muted,
+  chip,
+}: {
+  name: React.ReactNode
+  value: string
+  pct: number
+  fill: 'teal' | 'gold'
+  muted?: boolean
+  chip?: React.ReactNode
+}) {
+  const fillClass = muted
+    ? 'bg-border'
+    : fill === 'teal'
+      ? 'bg-teal-600 dark:bg-teal-300'
+      : 'bg-gold-600 dark:bg-gold-400'
+  return (
+    <div className="flex flex-col gap-1.5 border-b border-border/60 py-2.5 last:border-0">
+      <div className="flex items-baseline gap-2.5">
+        <span
+          className={
+            muted
+              ? 'flex min-w-0 flex-1 items-center gap-2 text-[13.5px] font-medium text-muted-foreground'
+              : 'flex min-w-0 flex-1 items-center gap-2 text-[13.5px] font-semibold text-foreground'
+          }
+        >
+          <span className="truncate">{name}</span>
+          {chip}
+        </span>
+        <span className="font-mono text-[12.5px] tabular-nums text-foreground">{value}</span>
+        <span className="w-11 text-right font-mono text-[11px] tabular-nums text-muted-foreground">
+          {Math.round(pct)}%
+        </span>
+      </div>
+      <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+        <div
+          className={`h-full rounded-full ${fillClass}`}
+          style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+        />
+      </div>
+    </div>
+  )
+}
 
 export default async function FinancialsDashboardPage() {
   const user = await getCurrentUser()
@@ -110,7 +163,6 @@ export default async function FinancialsDashboardPage() {
 
   // Per-client revenue rollup (rolls children up into their parent).
   // Each client gets a row with its own revenue + the sum of children's revenue.
-  const clientById = new Map(clients.map(c => [c.id, c]))
   const directRevenueByClient = new Map<string, number>()
   const directCostByClient = new Map<string, number>()
   for (const a of agreementsRaw) {
@@ -203,301 +255,298 @@ export default async function FinancialsDashboardPage() {
   const categoriesByTotal = Array.from(overhead.operatingByCategory.entries())
     .sort((a, b) => b[1] - a[1])
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-              Financials
-            </h1>
-            <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
-              <Lock className="mr-1 h-3 w-3" /> Super admin
-            </Badge>
-          </div>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            Operating Profit is the business&apos;s earning power; Net Cash Flow is what&apos;s left after owner draws.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <SnapshotNowButton />
-          <Link href="/financials/expenses">
-            <Button variant="outline" className="rounded-sm">
-              Manage Recurring Expenses
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </div>
+  // Bar lists: top rows individually, the long tail as one muted row.
+  const TOP_ROWS = 4
+  const topClientRows = clientRows.slice(0, TOP_ROWS)
+  const otherClientRows = clientRows.slice(TOP_ROWS)
+  const othersRevenue = otherClientRows.reduce((sum, r) => sum + r.revenue, 0)
+  const topCategories = categoriesByTotal.slice(0, TOP_ROWS)
+  const otherCategories = categoriesByTotal.slice(TOP_ROWS)
+  const othersOpex = otherCategories.reduce((sum, [, total]) => sum + total, 0)
 
-      {/* Waterfall KPIs: Revenue − Client Costs − Operating Expenses = Operating
-          Profit; Operating Profit − Owner Draws = Net Cash Flow. */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Revenue</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(clientPnl.monthlyRevenue)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-              {formatCurrency(clientPnl.monthlyRevenue * 12)} annualized
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">− Client Costs</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(clientPnl.monthlyCost)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">labor + materials + other</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">− Operating Expenses</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(operatingExpenses)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+  // Trend data (chronological) for the chart + insight line.
+  const sortedSnapshots = [...snapshots].reverse()
+  const monthLabel = (s: typeof sortedSnapshots[number]) => {
+    const d = new Date(s.periodYear, s.periodMonth - 1, 1)
+    return d.toLocaleString('en-US', { month: 'short', year: '2-digit' })
+  }
+  const trendData = sortedSnapshots.map(s => ({
+    label: monthLabel(s),
+    revenue: Number(s.monthlyRevenue),
+    cost: Number(s.monthlyClientCost) + Number(s.monthlyOverhead),
+    net: Number(s.netCashFlow),
+  }))
+  const firstPoint = trendData[0]
+  const lastPoint = trendData[trendData.length - 1]
+  const revenueChangePct =
+    trendData.length >= 2 && firstPoint.revenue > 0
+      ? ((lastPoint.revenue - firstPoint.revenue) / firstPoint.revenue) * 100
+      : null
+
+  const monthYear = new Date()
+    .toLocaleString('en-US', { month: 'long', year: 'numeric' })
+    .toUpperCase()
+
+  return (
+    <div>
+      <PageHeader
+        kicker={`MONEY · ${monthYear}`}
+        title={
+          <span className="inline-flex items-center gap-3">
+            Financials
+            <Badge variant="neutral">
+              <Lock /> Super admin
+            </Badge>
+          </span>
+        }
+        actions={
+          <>
+            <SnapshotNowButton />
+            <Button asChild variant="outline">
+              <Link href="/financials/expenses">
+                Recurring expenses
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </>
+        }
+      />
+
+      <div className="flex flex-col gap-4">
+        {/* The money equation: revenue − client costs − operating expenses
+            = operating profit; operating profit − owner draws = net cash flow. */}
+        <p className="px-0.5 text-[12.5px] text-muted-foreground">
+          Operating profit is the business&apos;s earning power. Net cash flow is what&apos;s left
+          after owner draws.
+        </p>
+        {/* Single non-wrapping row (like the mockup) so the −/= operators
+            always land in the gutters between cards; scrolls horizontally
+            on narrow screens rather than wrapping (which would push a
+            leading card's operator off the left edge). pl/-ml gives the
+            first operator breathing room; pb leaves space for card shadows. */}
+        <div className="-ml-[22px] flex gap-x-[22px] overflow-x-auto pb-1 pl-[22px]">
+          <StatCardEq
+            label="Monthly revenue"
+            value={formatMoney(clientPnl.monthlyRevenue)}
+            sub={`${formatMoney(clientPnl.monthlyRevenue * 12)} annualized`}
+          />
+          <StatCardEq
+            op="−"
+            label="Client costs"
+            value={formatMoney(clientPnl.monthlyCost)}
+            sub="labor + materials + other"
+          />
+          <StatCardEq
+            op="−"
+            label="Operating expenses"
+            value={formatMoney(operatingExpenses)}
+            sub={
               <Link href="/financials/expenses" className="hover:underline">
                 rent, software, insurance, payroll…
               </Link>
-            </p>
-          </CardContent>
-        </Card>
-        <Card className={`rounded-sm border-2 ${operatingProfit < 0 ? 'border-red-300 bg-red-50/40 dark:bg-red-950/20' : 'border-lime-300 bg-lime-50/40 dark:bg-lime-950/20'}`}>
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">= Operating Profit</p>
-            <div className="mt-1 flex items-center gap-2">
-              {operatingProfit >= 0
-                ? <TrendingUp className="h-5 w-5 text-lime-600" />
-                : <TrendingDown className="h-5 w-5 text-red-600" />}
-              <p className={`text-2xl font-bold ${marginToneClass(operatingMarginPct)}`}>
-                {formatCurrency(operatingProfit)}
-              </p>
-            </div>
-            <p className={`mt-1 text-xs ${marginToneClass(operatingMarginPct)}`}>
-              {formatMargin(operatingMarginPct)} operating margin — before owner draws
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">− Owner Draws</p>
-            <p className="mt-1 text-2xl font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(ownerDraws)}
-            </p>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
-              what the owners take from profit
-            </p>
-          </CardContent>
-        </Card>
-        <Card className={`rounded-sm border-2 ${netCashFlow < 0 ? 'border-red-300 bg-red-50/40 dark:bg-red-950/20' : 'border-lime-300 bg-lime-50/40 dark:bg-lime-950/20'}`}>
-          <CardContent className="p-4">
-            <p className="text-xs text-warm-500 dark:text-cream-400 uppercase tracking-wider">= Net Cash Flow</p>
-            <div className="mt-1 flex items-center gap-2">
-              {netCashFlow >= 0
-                ? <TrendingUp className="h-5 w-5 text-lime-600" />
-                : <TrendingDown className="h-5 w-5 text-red-600" />}
-              <p className={`text-2xl font-bold ${marginToneClass(netMarginPct)}`}>
-                {formatCurrency(netCashFlow)}
-              </p>
-            </div>
-            <p className={`mt-1 text-xs ${marginToneClass(netMarginPct)}`}>
-              {formatMargin(netMarginPct)} net margin — after owner draws
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+            }
+          />
+          <StatCardEq
+            op="="
+            label="Operating profit"
+            value={formatMoney(operatingProfit)}
+            tone={operatingProfit < 0 ? 'coral' : 'teal'}
+            sub={`${formatMargin(operatingMarginPct)} operating margin`}
+          />
+          <StatCardEq
+            op="−"
+            label="Owner draws"
+            value={formatMoney(ownerDraws)}
+            sub="taken from profit"
+          />
+          <StatCardEq
+            op="="
+            label="Net cash flow"
+            value={formatMoney(netCashFlow)}
+            tone={netCashFlow < 0 ? 'coral' : 'gold'}
+            highlight
+            sub={`${formatMargin(netMarginPct)} net margin`}
+          />
+        </div>
 
-      {snapshots.length > 0 && (() => {
-        // Reverse to chronological order for the chart.
-        const sorted = [...snapshots].reverse()
-        const maxRev = Math.max(...sorted.map(s => Number(s.monthlyRevenue)))
-        const maxAbs = Math.max(maxRev, ...sorted.map(s => Math.abs(Number(s.netCashFlow))))
-        const monthLabel = (s: typeof sorted[number]) => {
-          const d = new Date(s.periodYear, s.periodMonth - 1, 1)
-          return d.toLocaleString('en-US', { month: 'short', year: '2-digit' })
-        }
-        return (
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-                Trend (last {sorted.length} {sorted.length === 1 ? 'month' : 'months'})
+        <div className="grid items-start gap-4 lg:grid-cols-[1.2fr_1fr_1fr]">
+          {/* Trend */}
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>
+                Trend · last {trendData.length} {trendData.length === 1 ? 'month' : 'months'}
               </CardTitle>
-              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
-                Captured monthly. Use the Snapshot now button to record the current month at any time.
-              </CardDescription>
+              <CardAction className="text-xs text-muted-foreground">Captured monthly</CardAction>
             </CardHeader>
-            <CardContent className="p-4 pt-2">
-              <div className="grid grid-cols-12 gap-1.5">
-                {sorted.map(s => {
-                  const rev = Number(s.monthlyRevenue)
-                  const cost = Number(s.monthlyClientCost) + Number(s.monthlyOverhead)
-                  const net = Number(s.netCashFlow)
-                  const revH = maxAbs > 0 ? (rev / maxAbs) * 80 : 0
-                  const costH = maxAbs > 0 ? (cost / maxAbs) * 80 : 0
-                  return (
-                    <div key={s.id} className="flex flex-col items-center gap-1">
-                      <div className="relative flex h-24 w-full items-end justify-center gap-0.5">
-                        <div
-                          title={`Revenue ${formatCurrency(rev)}`}
-                          className="w-2 rounded-sm bg-ocean-400 dark:bg-ocean-500 transition-all"
-                          style={{ height: `${revH}%` }}
-                        />
-                        <div
-                          title={`All costs ${formatCurrency(cost)}`}
-                          className="w-2 rounded-sm bg-plum-400 dark:bg-plum-500 transition-all"
-                          style={{ height: `${costH}%` }}
-                        />
-                      </div>
-                      <p className="text-[9px] text-warm-500 dark:text-cream-400">{monthLabel(s)}</p>
-                      <p className={`text-[10px] font-mono ${net < 0 ? 'text-red-600' : 'text-lime-700'}`}>
-                        {formatCurrency(net)}
-                      </p>
+            <CardContent>
+              {trendData.length === 0 ? (
+                <EmptyState
+                  icon={BarChart3}
+                  title="No trend yet"
+                  description="Capture your first snapshot with the button above and the monthly story starts here."
+                />
+              ) : (
+                <>
+                  <FinancialsTrendChart data={trendData} />
+                  {revenueChangePct !== null && (
+                    <div className="mt-4 flex items-center gap-2.5 rounded-[10px] border border-teal-600/30 bg-teal-600/10 px-3.5 py-3 dark:border-teal-300/25 dark:bg-teal-300/12">
+                      {revenueChangePct >= 0 ? (
+                        <TrendingUp className="size-[15px] shrink-0 text-teal-600 dark:text-teal-300" />
+                      ) : (
+                        <TrendingDown className="size-[15px] shrink-0 text-teal-600 dark:text-teal-300" />
+                      )}
+                      <span className="text-[12.5px] text-foreground/80">
+                        Revenue is {revenueChangePct >= 0 ? 'up' : 'down'}{' '}
+                        <span className="font-semibold text-teal-600 dark:text-teal-300">
+                          {Math.abs(revenueChangePct).toFixed(0)}%
+                        </span>{' '}
+                        since {firstPoint.label}.
+                      </span>
                     </div>
-                  )
-                })}
-              </div>
-              <div className="mt-3 flex items-center gap-4 text-[11px] text-warm-500 dark:text-cream-400">
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-sm bg-ocean-400" /> Revenue
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-sm bg-plum-400" /> All costs
-                </span>
-                <span className="text-warm-400">Bottom line below = net cash flow</span>
-              </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
-        )
-      })()}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Revenue by client */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Revenue by Client
-            </CardTitle>
-            <CardDescription className="text-warm-500 dark:text-cream-400 text-xs">
-              Top-level clients only. Children rolled up into their parent.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 pt-2 space-y-2">
-            {clientRows.length === 0 && (
-              <p className="text-sm text-warm-500 dark:text-cream-400">No active service agreements yet.</p>
-            )}
-            {clientRows.map(row => {
-              const sharePct = clientPnl.monthlyRevenue > 0 ? (row.revenue / clientPnl.monthlyRevenue) * 100 : 0
-              return (
-                <Link key={row.id} href={`/clients/${row.id}`} className="block group">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-warm-900 dark:text-cream-100 group-hover:text-ocean-600">{row.name}</span>
-                      {row.childCount > 0 && (
-                        <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-plum-200 text-plum-600">
-                          {row.childCount} child{row.childCount === 1 ? '' : 'ren'}
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="font-mono text-warm-700 dark:text-cream-300">{formatCurrency(row.revenue)}</span>
+          {/* Revenue by client */}
+          <Card className="gap-3">
+            <CardHeader>
+              <CardTitle>Revenue by client</CardTitle>
+              <CardDescription className="text-xs">
+                Top-level clients · children rolled up
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {clientRows.length === 0 ? (
+                <EmptyState
+                  icon={Users}
+                  title="No revenue to break down yet"
+                  description="Activate a service agreement and each client's share shows up here."
+                />
+              ) : (
+                <>
+                  {topClientRows.map(row => {
+                    const sharePct =
+                      clientPnl.monthlyRevenue > 0
+                        ? (row.revenue / clientPnl.monthlyRevenue) * 100
+                        : 0
+                    return (
+                      <Link key={row.id} href={`/clients/${row.id}`} className="group block">
+                        <BarRow
+                          name={row.name}
+                          value={formatMoney(row.revenue)}
+                          pct={sharePct}
+                          fill="teal"
+                          chip={
+                            row.childCount > 0 ? (
+                              <Badge variant="neutral" className="text-[10px]">
+                                {row.childCount} child{row.childCount === 1 ? '' : 'ren'}
+                              </Badge>
+                            ) : undefined
+                          }
+                        />
+                      </Link>
+                    )
+                  })}
+                  {otherClientRows.length > 0 && (
+                    <BarRow
+                      name={`${otherClientRows.length} other${otherClientRows.length === 1 ? '' : 's'}`}
+                      value={formatMoney(othersRevenue)}
+                      pct={
+                        clientPnl.monthlyRevenue > 0
+                          ? (othersRevenue / clientPnl.monthlyRevenue) * 100
+                          : 0
+                      }
+                      fill="teal"
+                      muted
+                    />
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Expenses by category */}
+          <Card className="gap-3">
+            <CardHeader>
+              <CardTitle>Operating expenses</CardTitle>
+              <CardDescription className="text-xs">Owner draws excluded</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {categoriesByTotal.length === 0 ? (
+                <EmptyState
+                  icon={BarChart3}
+                  title="No recurring expenses yet"
+                  description="Add rent, software, insurance and the breakdown builds itself."
+                  action={
+                    <Button asChild variant="outline" size="sm">
+                      <Link href="/financials/expenses">Add an expense</Link>
+                    </Button>
+                  }
+                />
+              ) : (
+                <>
+                  {topCategories.map(([cat, total]) => (
+                    <BarRow
+                      key={cat}
+                      name={expenseCategoryLabel(cat)}
+                      value={formatMoney(total)}
+                      pct={operatingExpenses > 0 ? (total / operatingExpenses) * 100 : 0}
+                      fill="gold"
+                    />
+                  ))}
+                  {otherCategories.length > 0 && (
+                    <BarRow
+                      name="Everything else"
+                      value={formatMoney(othersOpex)}
+                      pct={operatingExpenses > 0 ? (othersOpex / operatingExpenses) * 100 : 0}
+                      fill="gold"
+                      muted
+                    />
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Watchlist: negative-margin locations */}
+        {negativeMarginLocations.length > 0 && (
+          <Card className="gap-3 border-coral-600/30 bg-coral-600/10 dark:border-coral-300/25 dark:bg-coral-300/12">
+            <CardHeader>
+              <CardTitle>Watchlist · negative-margin locations</CardTitle>
+              <CardDescription className="text-xs">
+                Locations where current monthly costs exceed revenue. Click through to investigate
+                or adjust.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {negativeMarginLocations.map(loc => (
+                <Link
+                  key={loc.agreementId}
+                  href={`/locations/${loc.locationId}`}
+                  className="flex items-center justify-between rounded-[10px] border border-coral-600/30 bg-card px-3.5 py-2.5 text-sm transition-colors hover:bg-secondary/50 dark:border-coral-300/25"
+                >
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {loc.clientName} — {loc.locationName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Revenue{' '}
+                      <span className="font-mono tabular-nums">{formatMoney(loc.revenue)}</span> ·
+                      Cost <span className="font-mono tabular-nums">{formatMoney(loc.cost)}</span>
+                    </p>
                   </div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-sm bg-warm-100 dark:bg-charcoal-800 overflow-hidden">
-                      <div
-                        className="h-full bg-ocean-400 dark:bg-ocean-500"
-                        style={{ width: `${Math.min(100, sharePct)}%` }}
-                      />
-                    </div>
-                    <span className={`text-[10px] font-mono w-14 text-right ${marginToneClass(row.marginPct)}`}>
-                      {formatMargin(row.marginPct)}
-                    </span>
-                  </div>
+                  <span className="font-mono text-sm font-medium tabular-nums text-coral-600 dark:text-coral-300">
+                    {formatMargin(loc.margin)}
+                  </span>
                 </Link>
-              )
-            })}
-          </CardContent>
-        </Card>
-
-        {/* Overhead by category */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Operating Expenses by Category
-            </CardTitle>
-            <CardDescription className="text-warm-500 dark:text-cream-400 text-xs">
-              Operating costs only — owner draws are excluded here.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 pt-2 space-y-2">
-            {categoriesByTotal.length === 0 && (
-              <p className="text-sm text-warm-500 dark:text-cream-400">
-                No recurring expenses yet.{' '}
-                <Link href="/financials/expenses" className="text-ocean-600 hover:underline">Add one →</Link>
-              </p>
-            )}
-            {categoriesByTotal.map(([cat, total]) => {
-              const sharePct = operatingExpenses > 0 ? (total / operatingExpenses) * 100 : 0
-              return (
-                <div key={cat} className="block">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-warm-900 dark:text-cream-100">
-                      {expenseCategoryLabel(cat)}
-                    </span>
-                    <span className="font-mono text-warm-700 dark:text-cream-300">{formatCurrency(total)}</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-sm bg-warm-100 dark:bg-charcoal-800 overflow-hidden">
-                      <div
-                        className="h-full bg-plum-400 dark:bg-plum-500"
-                        style={{ width: `${Math.min(100, sharePct)}%` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-mono w-12 text-right text-warm-500">{sharePct.toFixed(0)}%</span>
-                  </div>
-                </div>
-              )
-            })}
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </div>
-
-      {/* Watchlist: negative-margin locations */}
-      {negativeMarginLocations.length > 0 && (
-        <Card className="rounded-sm border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20">
-          <CardHeader className="p-4 pb-2">
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Watchlist: Negative-Margin Locations
-            </CardTitle>
-            <CardDescription className="text-warm-500 dark:text-cream-400 text-xs">
-              Locations where current monthly costs exceed revenue. Click through to investigate or adjust.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 pt-2 space-y-2">
-            {negativeMarginLocations.map(loc => (
-              <Link
-                key={loc.agreementId}
-                href={`/locations/${loc.locationId}`}
-                className="flex items-center justify-between rounded-sm border border-red-200 bg-white/80 px-3 py-2 text-sm hover:border-red-300 dark:border-red-950 dark:bg-charcoal-900"
-              >
-                <div>
-                  <p className="font-medium text-warm-900 dark:text-cream-100">
-                    {loc.clientName} — {loc.locationName}
-                  </p>
-                  <p className="text-xs text-warm-500 dark:text-cream-400">
-                    Revenue {formatCurrency(loc.revenue)} · Cost {formatCurrency(loc.cost)}
-                  </p>
-                </div>
-                <span className={`text-sm font-mono font-medium ${marginToneClass(loc.margin)}`}>
-                  {formatMargin(loc.margin)}
-                </span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }

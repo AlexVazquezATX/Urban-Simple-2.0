@@ -1,10 +1,13 @@
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { Plus, ClipboardList, ThumbsUp, AlertTriangle, Camera } from 'lucide-react'
+import { Camera, ClipboardList, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
+import { LiveEmpty, LivePage, LivePageHead } from '@/components/portal/live-shell'
+
+// Walkthrough history — inner-page shell following the LiveLog card
+// language: white cards, display titles, mono meta, pastel status chips.
 
 export default async function WalkthroughsListPage() {
   const ctx = await requirePortalContext()
@@ -20,68 +23,71 @@ export default async function WalkthroughsListPage() {
   })
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-display font-medium text-warm-900">Walkthroughs</h1>
-          <p className="mt-1 text-sm text-warm-500">
-            Your daily condition logs. Builds your inspection-prep history.
-          </p>
-        </div>
-        <Link href="/portal/walkthrough/new">
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="mr-1.5 h-4 w-4" />
-            New
+    <LivePage>
+      <LivePageHead
+        kicker="Your inspection trail"
+        title="Walkthroughs"
+        sub="Your daily condition logs. Every one builds your inspection-prep history."
+        right={
+          <Button asChild variant="gold" className="rounded-full px-5">
+            <Link href="/portal/walkthrough/new">
+              <Plus className="h-3.5 w-3.5" />
+              New walkthrough
+            </Link>
           </Button>
-        </Link>
-      </div>
+        }
+      />
 
       {items.length === 0 ? (
-        <div className="rounded-sm border border-dashed border-warm-300 bg-white p-8 text-center">
-          <ClipboardList className="mx-auto h-8 w-8 text-warm-300" />
-          <p className="mt-2 text-sm text-warm-700">No walkthroughs yet.</p>
-          <p className="text-xs text-warm-500">
-            Start your first one — most take about 60 seconds.
-          </p>
-          <Link href="/portal/walkthrough/new">
-            <Button variant="outline" className="mt-3 rounded-sm">
-              <Camera className="mr-1.5 h-4 w-4" />
+        <LiveEmpty
+          icon={<ClipboardList className="h-4.5 w-4.5" />}
+          title="No walkthroughs yet — your trail starts here"
+          sub="Most take about 60 seconds: a photo or two per zone, a note if something needs attention."
+          action={
+            <Link
+              href="/portal/walkthrough/new"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-[18px] py-[9px] text-[13px] font-semibold text-foreground hover:bg-secondary/60"
+            >
+              <Camera className="h-3.5 w-3.5 text-gold-600" />
               Start a walkthrough
-            </Button>
-          </Link>
-        </div>
+            </Link>
+          }
+        />
       ) : (
-        <ul className="space-y-2">
-          {items.map((w) => {
-            const ratingIcon =
-              w.overallRating === 'issue' ? (
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-              ) : w.overallRating === 'ok' ? (
-                <ThumbsUp className="h-4 w-4 text-lime-600" />
-              ) : null
-
-            return (
-              <li key={w.id}>
-                <Link
-                  href={`/portal/walkthroughs/${w.id}`}
-                  className="flex items-start gap-3 rounded-sm border border-warm-200 bg-white p-3 hover:border-ocean-400 transition-colors"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ocean-50 text-ocean-700">
-                    <ClipboardList className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-warm-900 truncate">{w.location.name}</p>
-                    <p className="mt-0.5 text-[11px] text-warm-500">
-                      {format(w.capturedAt, 'EEE, MMM d · h:mm a')} · {w.completedBy.firstName} {w.completedBy.lastName} · {w.photoCount} {w.photoCount === 1 ? 'photo' : 'photos'}
-                    </p>
-                  </div>
-                  {ratingIcon}
-                </Link>
-              </li>
-            )
-          })}
-        </ul>
+        <div className="flex flex-col gap-3.5">
+          {items.map((w) => (
+            <Link
+              key={w.id}
+              href={`/portal/walkthroughs/${w.id}`}
+              className="block rounded-[18px] border border-border bg-card p-6 shadow-soft transition-colors hover:border-gold-600/30"
+            >
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="min-w-0 flex-1 font-display text-[16.5px] font-bold tracking-[-0.3px] text-foreground">
+                  {w.location.name}
+                </span>
+                {w.overallRating === 'issue' ? (
+                  <span className="shrink-0 rounded-full border border-peach-line bg-peach-bg px-3 py-[3px] text-[11.5px] font-semibold text-peach-deep">
+                    Issue flagged
+                  </span>
+                ) : w.overallRating === 'ok' ? (
+                  <span className="shrink-0 rounded-full border border-sage-line bg-sage-bg px-3 py-[3px] text-[11.5px] font-semibold text-sage-deep">
+                    All good
+                  </span>
+                ) : null}
+              </div>
+              <div className="mt-1.5 text-xs text-muted-foreground">
+                <span className="font-mono tabular-nums">
+                  {format(w.capturedAt, 'EEE, MMM d · h:mm a')}
+                </span>
+                {' · '}
+                {w.completedBy.firstName} {w.completedBy.lastName}
+                {' · '}
+                {w.photoCount} {w.photoCount === 1 ? 'photo' : 'photos'}
+              </div>
+            </Link>
+          ))}
+        </div>
       )}
-    </div>
+    </LivePage>
   )
 }

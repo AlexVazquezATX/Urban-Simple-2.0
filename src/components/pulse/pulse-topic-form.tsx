@@ -239,14 +239,14 @@ export function PulseTopicForm({ topic, children, onSuccess }: PulseTopicFormPro
                     {keywords.map((keyword) => (
                       <Badge
                         key={keyword}
-                        variant="secondary"
+                        variant="neutral"
                         className="flex items-center gap-1"
                       >
                         {keyword}
                         <button
                           type="button"
                           onClick={() => removeKeyword(keyword)}
-                          className="ml-1 hover:text-destructive"
+                          className="ml-1 hover:text-coral-600 dark:hover:text-coral-300"
                         >
                           <X className="h-3 w-3" />
                         </button>

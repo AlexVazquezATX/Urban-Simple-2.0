@@ -65,16 +65,10 @@ export default async function TeamHubPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-medium tracking-tight font-display text-warm-900 dark:text-cream-100">
-          Team
-        </h1>
-        <p className="text-warm-500 dark:text-cream-400">
-          Your people, schedules, and assignments
-        </p>
-      </div>
-
-      <Suspense fallback={<Skeleton className="h-150 rounded-sm" />}>
+      {/* The roster tab's TeamListClient renders the page header (kicker +
+          "Team" title + gold action) — a second page-level header here would
+          duplicate it. */}
+      <Suspense fallback={<Skeleton className="h-150 rounded-[14px]" />}>
         <TeamHubData />
       </Suspense>
     </div>

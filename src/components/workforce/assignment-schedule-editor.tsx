@@ -115,10 +115,10 @@ export function AssignmentScheduleEditor({
   else if (estWeeklyHours >= 32) hoursStatus = 'watch'
 
   const statusColors: Record<string, string> = {
-    safe: 'text-emerald-600 dark:text-emerald-400',
-    watch: 'text-sky-600 dark:text-sky-400',
-    warning: 'text-amber-600 dark:text-amber-400',
-    danger: 'text-red-600 dark:text-red-400',
+    safe: 'text-green-600 dark:text-green-300',
+    watch: 'text-teal-600 dark:text-teal-300',
+    warning: 'text-gold-600 dark:text-gold-400',
+    danger: 'text-coral-600 dark:text-coral-300',
   }
 
   return (
@@ -126,7 +126,7 @@ export function AssignmentScheduleEditor({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display text-lg">Edit Schedule</DialogTitle>
+          <DialogTitle>Edit Schedule</DialogTitle>
           <DialogDescription className="text-sm">
             {locationName}
           </DialogDescription>
@@ -135,7 +135,7 @@ export function AssignmentScheduleEditor({
         <div className="space-y-5 py-2">
           {/* Days of week */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Days of Service</Label>
+            <Label>Days of Service</Label>
             <div className="flex gap-1.5">
               {DAYS.map((day) => (
                 <button
@@ -143,24 +143,24 @@ export function AssignmentScheduleEditor({
                   type="button"
                   onClick={() => toggleDay(day.value)}
                   className={cn(
-                    'flex-1 h-9 rounded-sm text-xs font-medium transition-colors',
+                    'h-9 flex-1 cursor-pointer rounded-[9px] text-xs font-medium transition-colors',
                     selectedDays.includes(day.value)
-                      ? 'bg-lime-500 text-white dark:bg-lime-600'
-                      : 'bg-warm-100 text-warm-500 dark:bg-charcoal-700 dark:text-charcoal-400 hover:bg-warm-200 dark:hover:bg-charcoal-600'
+                      ? 'bg-primary font-semibold text-primary-foreground'
+                      : 'bg-secondary text-muted-foreground hover:bg-secondary/80 hover:text-foreground'
                   )}
                 >
                   {day.label}
                 </button>
               ))}
             </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
+            <p className="text-xs text-muted-foreground">
               {selectedDays.length} night{selectedDays.length !== 1 ? 's' : ''} per week
             </p>
           </div>
 
           {/* Hours per visit */}
           <div className="space-y-2">
-            <Label htmlFor="hoursPerVisit" className="text-sm font-medium">
+            <Label htmlFor="hoursPerVisit">
               Estimated Hours per Visit
             </Label>
             <Input
@@ -178,10 +178,10 @@ export function AssignmentScheduleEditor({
 
           {/* Cleaning window */}
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Cleaning Window</Label>
+            <Label>Cleaning Window</Label>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="windowStart" className="text-xs text-warm-500 dark:text-cream-400">Start</Label>
+                <Label htmlFor="windowStart" className="mb-1.5">Start</Label>
                 <Input
                   id="windowStart"
                   type="time"
@@ -191,7 +191,7 @@ export function AssignmentScheduleEditor({
                 />
               </div>
               <div>
-                <Label htmlFor="windowEnd" className="text-xs text-warm-500 dark:text-cream-400">End</Label>
+                <Label htmlFor="windowEnd" className="mb-1.5">End</Label>
                 <Input
                   id="windowEnd"
                   type="time"
@@ -205,7 +205,7 @@ export function AssignmentScheduleEditor({
 
           {/* Monthly pay */}
           <div className="space-y-2">
-            <Label htmlFor="monthlyPay" className="text-sm font-medium">
+            <Label htmlFor="monthlyPay">
               Monthly Pay ($)
             </Label>
             <Input
@@ -221,14 +221,14 @@ export function AssignmentScheduleEditor({
           </div>
 
           {/* Live preview */}
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800/50 p-3">
-            <div className="text-xs text-warm-500 dark:text-cream-400 mb-1">Weekly Hours for This Account</div>
-            <div className={cn('text-xl font-semibold tabular-nums', statusColors[hoursStatus])}>
-              {estWeeklyHours > 0 ? `${estWeeklyHours}h` : '-'}
-              <span className="text-sm font-normal text-warm-500 dark:text-cream-400 ml-1">/ week</span>
+          <div className="rounded-[12px] border border-border bg-secondary/50 p-3">
+            <div className="kicker mb-1.5 text-muted-foreground">Weekly Hours for This Account</div>
+            <div className={cn('font-display text-xl font-bold tabular-nums', statusColors[hoursStatus])}>
+              {estWeeklyHours > 0 ? `${estWeeklyHours}h` : '—'}
+              <span className="ml-1 font-sans text-sm font-normal text-muted-foreground">/ week</span>
             </div>
             {hoursStatus === 'danger' && (
-              <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+              <p className="mt-1 text-xs text-coral-600 dark:text-coral-300">
                 This account alone puts this associate at or over 40 hours
               </p>
             )}
@@ -240,14 +240,13 @@ export function AssignmentScheduleEditor({
             variant="outline"
             onClick={() => setOpen(false)}
             disabled={saving}
-            className="rounded-sm"
           >
             Cancel
           </Button>
           <Button
+            variant="gold"
             onClick={handleSave}
             disabled={saving}
-            className="rounded-sm"
           >
             {saving ? 'Saving...' : 'Save Changes'}
           </Button>

@@ -5,12 +5,21 @@ import {
   MessageSquare,
   Star,
   Loader2,
-  Filter,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -35,10 +44,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   feature_request: 'Feature Request',
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  general: 'bg-warm-100 text-warm-700',
-  bug: 'bg-red-100 text-red-700',
-  feature_request: 'bg-blue-100 text-blue-700',
+const CATEGORY_VARIANTS: Record<string, 'neutral' | 'teal' | 'coral'> = {
+  general: 'neutral',
+  bug: 'coral',
+  feature_request: 'teal',
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -48,10 +57,10 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={star}
           className={cn(
-            'w-4 h-4',
+            'size-4',
             star <= rating
-              ? 'fill-amber-400 text-amber-400'
-              : 'text-warm-200'
+              ? 'fill-gold-500 text-gold-500 dark:fill-gold-400 dark:text-gold-400'
+              : 'text-border'
           )}
         />
       ))}
@@ -93,162 +102,134 @@ export default function AdminFeedbackPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      {/* Header */}
-      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 rounded-sm">
-              <MessageSquare className="w-5 h-5 text-amber-700" />
-            </div>
-            <div>
-              <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-                Customer Feedback
-              </h1>
-              <p className="text-sm text-warm-500 dark:text-cream-400">
-                Review feedback from BackHaus users
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        kicker="STUDIO · BACKHAUS"
+        title="Customer Feedback"
+        subtitle="Review feedback from BackHaus users"
+      />
 
-      {/* Stats */}
+      {/* KPI row */}
       {stats && (
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
-                <MessageSquare className="w-3.5 h-3.5" />
-                Total Feedback
-              </div>
-              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                {stats.totalCount}
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
-                <Star className="w-3.5 h-3.5" />
-                Avg Rating
-              </div>
-              <div className="flex items-center gap-2">
-                <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                  {stats.averageRating}
-                </p>
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <StatCard
+            label="Total Feedback"
+            icon={MessageSquare}
+            value={stats.totalCount}
+          />
+          <StatCard
+            label="Avg Rating"
+            icon={Star}
+            value={
+              <span className="inline-flex items-center gap-2.5">
+                {stats.averageRating}
                 <StarRating rating={Math.round(stats.averageRating)} />
-              </div>
-            </div>
-          </div>
+              </span>
+            }
+          />
         </div>
       )}
 
       {/* Filter */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-warm-500" />
-          <select
-            value={filterCategory}
-            onChange={(e) => { setFilterCategory(e.target.value); setPage(1) }}
-            className="px-3 py-2 text-sm rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100"
-          >
-            <option value="">All Categories</option>
-            <option value="general">General</option>
-            <option value="bug">Bug Reports</option>
-            <option value="feature_request">Feature Requests</option>
-          </select>
-        </div>
+      <div className="mb-4 flex items-center gap-2">
+        <Select
+          value={filterCategory || 'all'}
+          onValueChange={(value) => {
+            setFilterCategory(value === 'all' ? '' : value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="All Categories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Categories</SelectItem>
+            <SelectItem value="general">General</SelectItem>
+            <SelectItem value="bug">Bug Reports</SelectItem>
+            <SelectItem value="feature_request">Feature Requests</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Feedback List */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
-          </div>
-        ) : feedback.length > 0 ? (
-          <div className="space-y-3">
-            {feedback.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <StarRating rating={item.rating} />
-                      <Badge
-                        className={cn(
-                          'text-xs rounded-sm',
-                          CATEGORY_COLORS[item.category] || CATEGORY_COLORS.general
-                        )}
-                      >
-                        {CATEGORY_LABELS[item.category] || item.category}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-warm-900 dark:text-cream-100 whitespace-pre-wrap mb-3">
-                      {item.message}
-                    </p>
-                    <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
-                      <span className="font-medium">
-                        {item.user.firstName} {item.user.lastName}
-                      </span>
-                      <span>{item.user.email}</span>
-                      <span>{item.company.name}</span>
-                    </div>
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : feedback.length > 0 ? (
+        <div className="space-y-3">
+          {feedback.map((item) => (
+            <div
+              key={item.id}
+              className="rounded-[14px] border border-border bg-card p-4 shadow-soft dark:shadow-none"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1">
+                  <div className="mb-2 flex items-center gap-3">
+                    <StarRating rating={item.rating} />
+                    <Badge variant={CATEGORY_VARIANTS[item.category] || 'neutral'}>
+                      {CATEGORY_LABELS[item.category] || item.category}
+                    </Badge>
                   </div>
-                  <p className="text-xs text-warm-400 shrink-0">
-                    {new Date(item.createdAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
+                  <p className="mb-3 whitespace-pre-wrap font-display text-[15px] leading-relaxed tracking-[-0.1px] text-foreground">
+                    {item.message}
                   </p>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="font-medium">
+                      {item.user.firstName} {item.user.lastName}
+                    </span>
+                    <span>{item.user.email}</span>
+                    <span>{item.company.name}</span>
+                  </div>
                 </div>
+                <p className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
+                  {new Date(item.createdAt).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </p>
               </div>
-            ))}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page <= 1}
-                  onClick={() => setPage(page - 1)}
-                  className="rounded-sm"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </Button>
-                <span className="text-sm text-warm-600 dark:text-cream-400">
-                  Page {page} of {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                  className="rounded-sm"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="text-center py-20 bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700">
-            <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
-              <MessageSquare className="w-7 h-7 text-warm-400" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">
-              No feedback yet
-            </h3>
-            <p className="text-sm text-warm-500 dark:text-cream-400">
-              Feedback from BackHaus users will appear here
-            </p>
-          </div>
-        )}
-      </div>
+          ))}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-4">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                disabled={page <= 1}
+                onClick={() => setPage(page - 1)}
+                aria-label="Previous page"
+              >
+                <ChevronLeft className="size-4" />
+              </Button>
+              <span className="font-mono text-sm tabular-nums text-muted-foreground">
+                Page {page} of {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                disabled={page >= totalPages}
+                onClick={() => setPage(page + 1)}
+                aria-label="Next page"
+              >
+                <ChevronRight className="size-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none">
+          <EmptyState
+            icon={MessageSquare}
+            title="No feedback yet"
+            description="When BackHaus users leave ratings and notes, they'll land here."
+            className="py-16"
+          />
+        </div>
+      )}
     </div>
   )
 }

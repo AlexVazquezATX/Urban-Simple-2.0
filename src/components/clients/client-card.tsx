@@ -4,9 +4,11 @@ import { MapPin, Mail, Phone } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
-import { formatCurrency, formatMargin, marginToneClass } from '@/lib/financials'
+import { formatMargin } from '@/lib/financials'
+import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { ClientActionsMenu } from './client-actions-menu'
+import { marginToneClass } from './margin-tone'
 
 interface ClientCardProps {
   client: any
@@ -24,41 +26,37 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
   return (
     <Card
       className={cn(
-        'flex h-full flex-col rounded-sm border-warm-200 p-0 transition-colors hover:border-ocean-300 dark:border-charcoal-700',
-        isChild && 'border-l-2 border-l-plum-300 dark:border-l-plum-700'
+        'flex h-full flex-col gap-0 p-0 py-0 transition-colors hover:border-primary/40',
+        isChild && 'border-l-2 border-l-primary/40'
       )}
     >
-      <CardContent className="flex flex-1 flex-col p-3">
+      <CardContent className="flex flex-1 flex-col p-4">
         {/* Header: compact logo/initial + name + status */}
         <div className="flex items-start gap-2.5">
           {client.logoUrl ? (
-            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-sm bg-warm-100 dark:bg-charcoal-800">
+            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[10px] bg-secondary">
               <Image src={client.logoUrl} alt={client.name} fill className="object-cover" unoptimized />
             </div>
           ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-warm-100 dark:bg-charcoal-800">
-              <span className="text-sm font-medium text-warm-500 dark:text-cream-400">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-[10px] bg-secondary">
+              <span className="text-sm font-medium text-muted-foreground">
                 {client.name.charAt(0).toUpperCase()}
               </span>
             </div>
           )}
           <div className="min-w-0 flex-1">
             <Link href={`/clients/${client.id}`}>
-              <h3 className="truncate text-base font-display font-medium leading-tight text-warm-900 transition-colors hover:text-ocean-600 dark:text-cream-100">
+              <h3 className="truncate font-display text-base font-bold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
                 {client.name}
               </h3>
             </Link>
             {client.legalName && (
-              <p className="truncate text-xs text-warm-500 dark:text-cream-400">{client.legalName}</p>
+              <p className="truncate text-xs text-muted-foreground">{client.legalName}</p>
             )}
           </div>
           <Badge
-            className={cn(
-              'shrink-0 rounded-sm px-1.5 py-0 text-[10px]',
-              client.status === 'active'
-                ? 'border-lime-200 bg-lime-100 text-lime-700'
-                : 'border-warm-200 bg-warm-100 text-warm-600'
-            )}
+            variant={client.status === 'active' ? 'green' : 'neutral'}
+            className="shrink-0"
           >
             {client.status}
           </Badge>
@@ -68,19 +66,19 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
         {(addressStr || client.billingEmail || client.phone) && (
           <div className="mt-2.5 space-y-1 text-xs">
             {addressStr && (
-              <div className="flex items-start gap-1.5 text-warm-500 dark:text-cream-400">
+              <div className="flex items-start gap-1.5 text-muted-foreground">
                 <MapPin className="mt-0.5 h-3 w-3 flex-shrink-0" />
                 <span className="line-clamp-1">{addressStr}</span>
               </div>
             )}
             {client.billingEmail && (
-              <div className="flex items-center gap-1.5 text-warm-500 dark:text-cream-400">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Mail className="h-3 w-3 flex-shrink-0" />
                 <span className="truncate">{client.billingEmail}</span>
               </div>
             )}
             {client.phone && (
-              <div className="flex items-center gap-1.5 text-warm-500 dark:text-cream-400">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
                 <Phone className="h-3 w-3 flex-shrink-0" />
                 <span>{client.phone}</span>
               </div>
@@ -88,55 +86,55 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
           </div>
         )}
 
-        {/* Badges */}
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
-          <Badge variant="outline" className="rounded-sm border-warm-300 px-1 py-0 text-[9px] text-warm-600 dark:border-charcoal-700 dark:text-cream-400">
-            {client.branch.code}
-          </Badge>
-          <Badge variant="outline" className="rounded-sm border-warm-300 px-1 py-0 text-[9px] text-warm-600 dark:border-charcoal-700 dark:text-cream-400">
-            {client.paymentTerms}
-          </Badge>
+        {/* Chips row */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          <Badge variant="neutral">{client.branch.code}</Badge>
+          <Badge variant="neutral">{client.paymentTerms}</Badge>
           {client.locations.length > 0 && (
-            <Badge className="rounded-sm border-ocean-200 bg-ocean-100 px-1 py-0 text-[9px] text-ocean-700">
+            <Badge variant="teal">
               {client.locations.length} {client.locations.length === 1 ? 'location' : 'locations'}
             </Badge>
           )}
           {childLocationCount > 0 && (
-            <Badge className="rounded-sm border-plum-200 bg-plum-100 px-1 py-0 text-[9px] text-plum-700">
-              +{childLocationCount} in group
-            </Badge>
+            <Badge variant="neutral">+{childLocationCount} in group</Badge>
           )}
           {client.parentClient && (
             <Link href={`/clients/${client.parentClient.id}`}>
-              <Badge variant="outline" className="rounded-sm border-plum-200 px-1 py-0 text-[9px] text-plum-600">
+              <Badge variant="neutral" className="hover:bg-secondary/70">
                 ↑ {client.parentClient.name}
               </Badge>
             </Link>
           )}
           {client._count?.childClients > 0 && (
-            <Badge className="rounded-sm border-plum-200 bg-plum-100 px-1 py-0 text-[9px] text-plum-700">
-              {client._count.childClients} {client._count.childClients === 1 ? 'child' : 'children'}
+            <Badge variant="neutral">
+              {client._count.childClients}{' '}
+              {client._count.childClients === 1 ? 'child' : 'children'}
             </Badge>
           )}
         </div>
 
+        {/* Mini financial table */}
         {showFinancials && client.financials && client.financials.agreementCount > 0 && (
-          <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-sm border border-warm-200 bg-warm-50/50 p-2 text-[10px] dark:border-charcoal-700 dark:bg-charcoal-900/40">
+          <div className="mt-2.5 grid grid-cols-3 gap-1.5 rounded-[10px] border border-border bg-secondary/40 p-2.5">
             <div>
-              <p className="uppercase tracking-wider text-warm-500 dark:text-cream-400">MRR</p>
-              <p className="font-mono font-medium text-warm-900 dark:text-cream-100">
-                {formatCurrency(client.financials.monthlyRevenue)}
+              <p className="kicker text-muted-foreground">MRR</p>
+              <p className="mt-0.5 font-mono text-xs font-medium tabular-nums text-foreground">
+                {formatMoney(client.financials.monthlyRevenue)}
               </p>
             </div>
             <div>
-              <p className="uppercase tracking-wider text-warm-500 dark:text-cream-400">Profit</p>
-              <p className={`font-mono font-medium ${marginToneClass(client.financials.marginPct)}`}>
-                {formatCurrency(client.financials.monthlyProfit)}
+              <p className="kicker text-muted-foreground">Profit</p>
+              <p
+                className={`mt-0.5 font-mono text-xs font-medium tabular-nums ${marginToneClass(client.financials.marginPct)}`}
+              >
+                {formatMoney(client.financials.monthlyProfit)}
               </p>
             </div>
             <div>
-              <p className="uppercase tracking-wider text-warm-500 dark:text-cream-400">Margin</p>
-              <p className={`font-mono font-medium ${marginToneClass(client.financials.marginPct)}`}>
+              <p className="kicker text-muted-foreground">Margin</p>
+              <p
+                className={`mt-0.5 font-mono text-xs font-medium tabular-nums ${marginToneClass(client.financials.marginPct)}`}
+              >
                 {formatMargin(client.financials.marginPct)}
               </p>
             </div>
@@ -146,17 +144,11 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
         {/* Spacer pushes the action row to the bottom */}
         <div className="min-h-2 flex-1" />
 
-        <div className="mt-2 flex items-center gap-1.5 border-t border-warm-200 pt-2 dark:border-charcoal-700">
-          <Link href={`/clients/${client.id}`} className="flex-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-full rounded-sm border-ocean-400 text-xs text-ocean-600 hover:border-ocean-500 hover:bg-ocean-50 dark:border-ocean-600 dark:text-ocean-400 dark:hover:bg-ocean-900/30"
-            >
-              View Details
-            </Button>
-          </Link>
-          <ConfirmDeleteButton
+        <div className="mt-2.5 flex items-center gap-1.5 border-t border-border pt-2.5">
+          <Button asChild variant="ghost" size="sm" className="flex-1">
+            <Link href={`/clients/${client.id}`}>View Details</Link>
+          </Button>
+          <ClientActionsMenu
             endpoint={`/api/clients/${client.id}`}
             entityLabel={client.name}
             entityKind="client"

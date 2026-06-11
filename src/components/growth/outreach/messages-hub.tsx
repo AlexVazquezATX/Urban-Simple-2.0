@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,7 +22,6 @@ import { ApprovalQueue } from './approval-queue'
 import {
   Send,
   CheckCircle2,
-  Inbox,
   Mail,
   MessageSquare,
   Linkedin,
@@ -374,78 +374,54 @@ export function MessagesHub() {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email':
-        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
+        return <Mail className="size-3" />
       case 'sms':
-        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
+        return <MessageSquare className="size-3" />
       case 'linkedin':
-        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
+        return <Linkedin className="size-3" />
       case 'instagram':
       case 'instagram_dm':
-        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
+        return <Instagram className="size-3" />
       default:
-        return <Mail className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
+        return <Mail className="size-3" />
     }
   }
 
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-warm-400 dark:text-cream-500" />
+        <Search className="absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" />
         <Input
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by prospect, contact, subject, or campaign..."
-          className="pl-8 h-8 text-xs rounded-sm border-warm-200 dark:border-charcoal-700"
+          className="h-9 pl-8 text-sm"
         />
       </div>
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-4 rounded-none bg-white dark:bg-charcoal-900 border-b border-warm-200 dark:border-charcoal-700 p-0 h-auto">
-          <TabsTrigger
-            value="pending"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
-          >
-            <Inbox className="h-3.5 w-3.5 text-ocean-500" />
-            <span>Pending Review</span>
+        <TabsList className="w-full justify-start gap-5 overflow-x-auto">
+          <TabsTrigger value="pending">
+            Pending Review
             {pendingCount > 0 && (
-              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
-                {pendingCount}
-              </Badge>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{pendingCount}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger
-            value="approved"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
-          >
-            <CheckCircle2 className="h-3.5 w-3.5 text-lime-600" />
-            <span>Ready to Send</span>
+          <TabsTrigger value="approved">
+            Ready to Send
             {approvedMessages.length > 0 && (
-              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
-                {approvedMessages.length}
-              </Badge>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{approvedMessages.length}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger
-            value="scheduled"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
-          >
-            <Clock className="h-3.5 w-3.5 text-amber-500" />
-            <span>Scheduled</span>
+          <TabsTrigger value="scheduled">
+            Scheduled
             {scheduledMessages.length > 0 && (
-              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200">
-                {scheduledMessages.length}
-              </Badge>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{scheduledMessages.length}</span>
             )}
           </TabsTrigger>
-          <TabsTrigger
-            value="sent"
-            className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800"
-          >
-            <Send className="h-3.5 w-3.5 text-plum-500" />
-            <span>Sent</span>
+          <TabsTrigger value="sent">
+            Sent
             {sentMessages.length > 0 && (
-              <Badge className="ml-0.5 rounded-full text-[10px] px-1.5 py-0 bg-warm-200 dark:bg-charcoal-700 text-warm-600 dark:text-cream-400">
-                {sentMessages.length}
-              </Badge>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{sentMessages.length}</span>
             )}
           </TabsTrigger>
         </TabsList>
@@ -457,46 +433,43 @@ export function MessagesHub() {
 
         {/* ── Ready to Send ── */}
         <TabsContent value="approved" className="mt-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
+          <Card>
+            <CardContent>
               {loadingApproved ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
               ) : approvedMessages.length === 0 ? (
-                <div className="text-center py-10">
-                  <CheckCircle2 className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
-                  <p className="text-sm text-warm-500 dark:text-cream-400">No approved messages waiting to send</p>
-                  <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
-                    Approve messages in the Pending Review tab first
-                  </p>
-                </div>
+                <EmptyState
+                  icon={CheckCircle2}
+                  title="Nothing waiting to send"
+                  description="Approve messages in the Pending Review tab and they'll line up here, ready to go."
+                />
               ) : (
                 <>
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="mb-4 flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-warm-600 dark:text-cream-400">
+                      <p className="text-sm text-foreground">
                         {filteredApproved.length}{searchQuery ? ` of ${approvedMessages.length}` : ''} message{filteredApproved.length !== 1 ? 's' : ''} ready
                       </p>
-                      <p className="text-[10px] text-warm-400 dark:text-cream-500">
+                      <p className="text-[11px] text-muted-foreground">
                         Your email signature will be appended automatically
                       </p>
                     </div>
                     <Button
                       size="sm"
-                      variant="lime"
+                      variant="gold"
                       onClick={handleSendAll}
                       disabled={sendingAll}
-                      className="rounded-sm"
                     >
                       {sendingAll ? (
                         <>
-                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                          <Loader2 className="size-3.5 animate-spin" />
                           Sending...
                         </>
                       ) : (
                         <>
-                          <Send className="h-3.5 w-3.5 mr-1.5" />
+                          <Send className="size-3.5" />
                           Send All ({filteredApproved.length})
                         </>
                       )}
@@ -509,8 +482,8 @@ export function MessagesHub() {
                       Ready-to-Send has no other multi-row operations beyond
                       Send All and Delete. */}
                   {selectedApprovedIds.size > 0 && (
-                    <div className="flex items-center justify-between gap-2 mb-3 px-3 py-2 rounded-sm bg-lime-50 dark:bg-lime-500/10 border border-lime-200 dark:border-lime-500/30">
-                      <span className="text-xs text-warm-700 dark:text-cream-200">
+                    <div className="mb-3 flex items-center justify-between gap-2 rounded-[10px] border border-gold-600/30 bg-gold-600/10 px-3 py-2 dark:border-gold-400/25 dark:bg-gold-400/12">
+                      <span className="text-xs text-foreground">
                         {selectedApprovedIds.size} message{selectedApprovedIds.size === 1 ? '' : 's'} selected
                       </span>
                       <div className="flex items-center gap-1">
@@ -518,13 +491,14 @@ export function MessagesHub() {
                           size="sm"
                           variant="ghost"
                           onClick={() => setSelectedApprovedIds(new Set())}
-                          className="h-7 px-2 text-xs rounded-sm"
+                          className="h-7 px-2 text-xs"
                         >
-                          <X className="h-3 w-3 mr-1" />
+                          <X className="size-3" />
                           Clear
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() =>
                             setDeleteConfirmOpen({
                               tab: 'approved',
@@ -533,12 +507,12 @@ export function MessagesHub() {
                             })
                           }
                           disabled={bulkDeleting}
-                          className="h-7 px-2 text-xs rounded-sm bg-red-600 hover:bg-red-700 text-white"
+                          className="h-7 px-2 text-xs"
                         >
                           {bulkDeleting ? (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            <Loader2 className="size-3 animate-spin" />
                           ) : (
-                            <Trash2 className="h-3 w-3 mr-1" />
+                            <Trash2 className="size-3" />
                           )}
                           Delete Selected ({selectedApprovedIds.size})
                         </Button>
@@ -548,7 +522,7 @@ export function MessagesHub() {
 
                   {/* Select-all row */}
                   {filteredApproved.length > 0 && (
-                    <div className="flex items-center gap-2 mb-2 px-1">
+                    <div className="mb-2 flex items-center gap-2 px-1">
                       <Checkbox
                         checked={
                           filteredApproved.length > 0 &&
@@ -563,13 +537,13 @@ export function MessagesHub() {
                         }}
                         aria-label="Select all"
                       />
-                      <span className="text-[11px] text-warm-500 dark:text-cream-400">
+                      <span className="text-[11px] text-muted-foreground">
                         Select all
                       </span>
                     </div>
                   )}
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-2.5">
                     {filteredApproved.map((msg) => (
                       <MessageCard
                         key={msg.id}
@@ -607,30 +581,28 @@ export function MessagesHub() {
 
         {/* ── Scheduled Follow-ups ── */}
         <TabsContent value="scheduled" className="mt-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
+          <Card>
+            <CardContent>
               {loadingScheduled ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
               ) : scheduledMessages.length === 0 ? (
-                <div className="text-center py-10">
-                  <Clock className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
-                  <p className="text-sm text-warm-500 dark:text-cream-400">No scheduled follow-ups</p>
-                  <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
-                    Follow-up steps from sequences will appear here before their send date
-                  </p>
-                </div>
+                <EmptyState
+                  icon={Clock}
+                  title="No follow-ups on the calendar"
+                  description="Follow-up steps from sequences will appear here before their send date."
+                />
               ) : (
                 <>
-                  <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">
+                  <p className="mb-4 text-sm text-foreground">
                     {filteredScheduled.length}{searchQuery ? ` of ${scheduledMessages.length}` : ''} follow-up{filteredScheduled.length !== 1 ? 's' : ''} scheduled
                   </p>
 
                   {/* Bulk action bar for Scheduled tab */}
                   {selectedScheduledIds.size > 0 && (
-                    <div className="flex items-center justify-between gap-2 mb-3 px-3 py-2 rounded-sm bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30">
-                      <span className="text-xs text-warm-700 dark:text-cream-200">
+                    <div className="mb-3 flex items-center justify-between gap-2 rounded-[10px] border border-gold-600/30 bg-gold-600/10 px-3 py-2 dark:border-gold-400/25 dark:bg-gold-400/12">
+                      <span className="text-xs text-foreground">
                         {selectedScheduledIds.size} follow-up{selectedScheduledIds.size === 1 ? '' : 's'} selected
                       </span>
                       <div className="flex items-center gap-1">
@@ -638,13 +610,14 @@ export function MessagesHub() {
                           size="sm"
                           variant="ghost"
                           onClick={() => setSelectedScheduledIds(new Set())}
-                          className="h-7 px-2 text-xs rounded-sm"
+                          className="h-7 px-2 text-xs"
                         >
-                          <X className="h-3 w-3 mr-1" />
+                          <X className="size-3" />
                           Clear
                         </Button>
                         <Button
                           size="sm"
+                          variant="outline"
                           onClick={() =>
                             setDeleteConfirmOpen({
                               tab: 'scheduled',
@@ -653,12 +626,12 @@ export function MessagesHub() {
                             })
                           }
                           disabled={bulkDeleting}
-                          className="h-7 px-2 text-xs rounded-sm bg-red-600 hover:bg-red-700 text-white"
+                          className="h-7 px-2 text-xs"
                         >
                           {bulkDeleting ? (
-                            <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                            <Loader2 className="size-3 animate-spin" />
                           ) : (
-                            <Trash2 className="h-3 w-3 mr-1" />
+                            <Trash2 className="size-3" />
                           )}
                           Delete Selected ({selectedScheduledIds.size})
                         </Button>
@@ -668,7 +641,7 @@ export function MessagesHub() {
 
                   {/* Select-all row */}
                   {filteredScheduled.length > 0 && (
-                    <div className="flex items-center gap-2 mb-2 px-1">
+                    <div className="mb-2 flex items-center gap-2 px-1">
                       <Checkbox
                         checked={
                           filteredScheduled.length > 0 &&
@@ -683,13 +656,13 @@ export function MessagesHub() {
                         }}
                         aria-label="Select all"
                       />
-                      <span className="text-[11px] text-warm-500 dark:text-cream-400">
+                      <span className="text-[11px] text-muted-foreground">
                         Select all
                       </span>
                     </div>
                   )}
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-2.5">
                     {filteredScheduled.map((msg) => (
                       <MessageCard
                         key={msg.id}
@@ -725,26 +698,24 @@ export function MessagesHub() {
 
         {/* ── Sent History ── */}
         <TabsContent value="sent" className="mt-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardContent className="p-4">
+          <Card>
+            <CardContent>
               {loadingSent ? (
                 <div className="flex items-center justify-center py-10">
-                  <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
+                  <Loader2 className="size-5 animate-spin text-muted-foreground" />
                 </div>
               ) : sentMessages.length === 0 ? (
-                <div className="text-center py-10">
-                  <Send className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
-                  <p className="text-sm text-warm-500 dark:text-cream-400">No sent messages yet</p>
-                  <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
-                    Messages will appear here after you send them
-                  </p>
-                </div>
+                <EmptyState
+                  icon={Send}
+                  title="Nothing sent yet"
+                  description="Once you send your first outreach message, its delivery and open tracking will show up here."
+                />
               ) : (
                 <>
-                  <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">
+                  <p className="mb-4 text-sm text-foreground">
                     {filteredSent.length}{searchQuery ? ` of ${sentMessages.length}` : ''} message{filteredSent.length !== 1 ? 's' : ''} sent
                   </p>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2.5">
                     {filteredSent.map((msg) => (
                       <MessageCard
                         key={msg.id}
@@ -804,11 +775,11 @@ export function MessagesHub() {
                       void handleDelete(deleteConfirmOpen.tab, deleteConfirmOpen.ids)
                     }
                   }}
-                  className="bg-red-600 hover:bg-red-700 text-white"
+                  className="bg-destructive text-white hover:bg-destructive/90"
                 >
                   {inFlight ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      <Loader2 className="size-3.5 animate-spin" />
                       Deleting...
                     </>
                   ) : (
@@ -863,15 +834,14 @@ function MessageCard({
   deleting?: boolean
 }) {
   const [editingEmail, setEditingEmail] = useState(false)
-  const borderHover = mode === 'approved' ? 'hover:border-lime-400' : mode === 'scheduled' ? 'hover:border-amber-300' : ''
   const effectiveEmail = emailOverride?.trim() || msg.contactEmail || ''
 
   return (
-    <div className={`rounded-sm border border-warm-200 dark:border-charcoal-700 p-3 transition-colors ${borderHover}`}>
+    <div className="rounded-[12px] border border-border bg-card p-4 transition-colors hover:border-primary/40">
       <div className="flex items-start justify-between gap-2">
         {/* Multi-select checkbox — leading the row when selectable */}
         {selectable && (
-          <div className="pt-0.5 shrink-0">
+          <div className="shrink-0 pt-0.5">
             <Checkbox
               checked={!!selected}
               onCheckedChange={() => onSelectToggle?.()}
@@ -880,67 +850,60 @@ function MessageCard({
             />
           </div>
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-1.5">
             <Link
               href={`/growth/prospects/${msg.prospectId}`}
-              className="text-sm font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600"
+              className="text-sm font-semibold text-foreground hover:text-primary"
             >
               {msg.prospectName}
             </Link>
             {msg.step && msg.step > 1 && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200">
-                Step {msg.step}
-              </Badge>
+              <Badge variant="neutral">Step {msg.step}</Badge>
             )}
             {msg.isAiGenerated && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">
-                <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+              <Badge variant="gold">
+                <Sparkles className="size-3" />
                 AI
               </Badge>
             )}
-            <Badge
-              variant="outline"
-              className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 flex items-center gap-1"
-            >
+            <Badge variant="neutral">
               {getChannelIcon(msg.channel)}
               {msg.channel}
             </Badge>
             {mode === 'sent' && msg.bouncedAt && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200 flex items-center gap-0.5">
-                <AlertTriangle className="h-2.5 w-2.5" />
+              <Badge variant="coral">
+                <AlertTriangle className="size-3" />
                 Bounced
               </Badge>
             )}
             {mode === 'sent' && !msg.bouncedAt && msg.openedAt && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200 flex items-center gap-0.5">
-                <Eye className="h-2.5 w-2.5" />
+              <Badge variant="teal">
+                <Eye className="size-3" />
                 Opened{msg.openCount && msg.openCount > 1 ? ` (${msg.openCount}x)` : ''}
               </Badge>
             )}
             {mode === 'sent' && msg.clickedAt && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700 border-amber-200 flex items-center gap-0.5">
-                <MousePointerClick className="h-2.5 w-2.5" />
+              <Badge variant="gold">
+                <MousePointerClick className="size-3" />
                 Clicked{msg.clickCount && msg.clickCount > 1 ? ` (${msg.clickCount}x)` : ''}
               </Badge>
             )}
             {mode === 'sent' && !msg.bouncedAt && msg.deliveredAt && !msg.openedAt && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200 flex items-center gap-0.5">
-                <CheckCircle className="h-2.5 w-2.5" />
+              <Badge variant="green">
+                <CheckCircle className="size-3" />
                 Delivered
               </Badge>
             )}
             {mode === 'sent' && !msg.bouncedAt && !msg.deliveredAt && !msg.openedAt && (
-              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700">
-                Sent
-              </Badge>
+              <Badge variant="neutral">Sent</Badge>
             )}
           </div>
 
           {/* Editable To field for approved messages */}
           {mode === 'approved' && msg.channel === 'email' ? (
-            <div className="flex items-center gap-1.5 mt-1">
-              <span className="text-xs text-warm-500 dark:text-cream-400 shrink-0">To:</span>
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className="shrink-0 text-xs text-muted-foreground">To:</span>
               {editingEmail ? (
                 <Input
                   type="email"
@@ -951,22 +914,22 @@ function MessageCard({
                     if (e.key === 'Enter') setEditingEmail(false)
                   }}
                   autoFocus
-                  className="h-6 text-xs rounded-sm border-warm-300 dark:border-charcoal-700 px-1.5 py-0 max-w-xs"
+                  className="h-6 max-w-xs px-1.5 py-0 text-xs"
                   placeholder="recipient@example.com"
                 />
               ) : (
                 <button
                   onClick={() => setEditingEmail(true)}
-                  className="flex items-center gap-1 text-xs text-warm-700 dark:text-cream-300 hover:text-ocean-600 group"
+                  className="group flex items-center gap-1 text-xs text-foreground hover:text-primary"
                 >
                   <span>{effectiveEmail || 'No email — click to add'}</span>
-                  <Pencil className="h-2.5 w-2.5 text-warm-400 dark:text-cream-500 group-hover:text-ocean-500" />
+                  <Pencil className="size-3 text-muted-foreground group-hover:text-primary" />
                 </button>
               )}
             </div>
           ) : (
             (msg.contactName || msg.contactEmail) && (
-              <p className="text-xs text-warm-500 dark:text-cream-400">
+              <p className="text-xs text-muted-foreground">
                 To:{' '}
                 {msg.contactName
                   ? `${msg.contactName}${msg.contactEmail ? ` <${msg.contactEmail}>` : ''}`
@@ -976,20 +939,19 @@ function MessageCard({
           )}
         </div>
 
-        <div className="flex items-center gap-2 ml-2">
+        <div className="ml-2 flex items-center gap-2">
           {mode === 'approved' && onSend && (
             <Button
               size="sm"
-              variant="lime"
+              variant="outline"
               onClick={onSend}
               disabled={sending}
-              className="rounded-sm"
             >
               {sending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
                 <>
-                  <Send className="h-3.5 w-3.5 mr-1" />
+                  <Send className="size-3.5" />
                   Send
                 </>
               )}
@@ -998,8 +960,8 @@ function MessageCard({
           {mode === 'scheduled' && (
             <div className="flex items-center gap-2">
               {msg.scheduledAt && (
-                <span className="text-[10px] text-amber-600 whitespace-nowrap">
-                  <Clock className="h-2.5 w-2.5 inline mr-0.5" />
+                <span className="whitespace-nowrap font-mono text-[10px] tabular-nums text-gold-600 dark:text-gold-400">
+                  <Clock className="mr-0.5 inline size-3" />
                   {format(new Date(msg.scheduledAt), 'MMM d, yyyy')}
                 </span>
               )}
@@ -1009,13 +971,13 @@ function MessageCard({
                   variant="outline"
                   onClick={onCancel}
                   disabled={cancelling}
-                  className="rounded-sm h-7 px-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  className="h-7 px-2"
                 >
                   {cancelling ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <Loader2 className="size-3 animate-spin" />
                   ) : (
                     <>
-                      <XCircle className="h-3 w-3 mr-1" />
+                      <XCircle className="size-3" />
                       Cancel
                     </>
                   )}
@@ -1024,16 +986,17 @@ function MessageCard({
             </div>
           )}
           {mode === 'sent' && msg.sentAt && (
-            <span className="text-[10px] text-warm-400 dark:text-cream-500 whitespace-nowrap">
+            <span className="whitespace-nowrap font-mono text-[10px] tabular-nums text-muted-foreground">
               {format(new Date(msg.sentAt), 'MMM d, h:mm a')}
             </span>
           )}
           {/* Per-row delete — only rendered when the parent passes onDelete.
               Sent mode never passes it (rows must stay for Resend webhook
-              tracking + analytics). */}
+              tracking + analytics). Confirmation happens in the shared
+              AlertDialog — this trigger stays muted, never red. */}
           {onDelete && (mode === 'approved' || mode === 'scheduled') && (
             <Button
-              size="sm"
+              size="icon-sm"
               variant="ghost"
               onClick={(e) => {
                 e.stopPropagation()
@@ -1041,12 +1004,12 @@ function MessageCard({
               }}
               disabled={deleting}
               aria-label="Delete message"
-              className="h-7 w-7 p-0 rounded-sm text-warm-400 dark:text-cream-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+              className="size-7 text-muted-foreground hover:text-foreground"
             >
               {deleting ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
-                <Trash2 className="h-3.5 w-3.5" />
+                <Trash2 className="size-3.5" />
               )}
             </Button>
           )}
@@ -1056,10 +1019,8 @@ function MessageCard({
       {/* Subject */}
       {msg.subject && (
         <div className="mt-2">
-          <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-0.5">
-            Subject
-          </p>
-          <p className="text-sm text-warm-900 dark:text-cream-100">{msg.subject}</p>
+          <p className="kicker mb-1 text-muted-foreground">Subject</p>
+          <p className="text-sm text-foreground">{msg.subject}</p>
         </div>
       )}
 
@@ -1067,49 +1028,49 @@ function MessageCard({
       <div className="mt-2">
         <button
           onClick={onToggleExpand}
-          className="flex items-center gap-1 text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide hover:text-warm-700 dark:hover:text-cream-300"
+          className="kicker flex items-center gap-1 text-muted-foreground hover:text-foreground"
         >
-          {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+          {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
           Message
         </button>
         {expanded && (
-          <div className="mt-1 text-sm whitespace-pre-wrap bg-warm-50 dark:bg-charcoal-800 p-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300">
+          <div className="mt-1 whitespace-pre-wrap rounded-[10px] border border-border bg-secondary/50 p-3 text-sm leading-relaxed text-foreground">
             {msg.body}
           </div>
         )}
       </div>
 
       {/* Footer */}
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
+      <div className="mt-2 flex items-center gap-2 border-t border-border pt-2">
         {mode === 'approved' && msg.approvedAt && (
-          <span className="text-[10px] text-warm-400 dark:text-cream-500">
+          <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
             Approved {format(new Date(msg.approvedAt), 'MMM d, h:mm a')}
           </span>
         )}
         {mode === 'scheduled' && msg.campaignName && (
-          <span className="text-[10px] text-warm-400 dark:text-cream-500">Sequence: {msg.campaignName}</span>
+          <span className="text-[10px] text-muted-foreground">Sequence: {msg.campaignName}</span>
         )}
         {mode === 'sent' && msg.campaignName && (
-          <span className="text-[10px] text-warm-400 dark:text-cream-500">Campaign: {msg.campaignName}</span>
+          <span className="text-[10px] text-muted-foreground">Campaign: {msg.campaignName}</span>
         )}
         {mode === 'sent' && (msg.deliveredAt || msg.openedAt || msg.clickedAt) && (
-          <span className="text-[10px] text-warm-400 dark:text-cream-500 ml-auto flex items-center gap-2">
+          <span className="ml-auto flex items-center gap-2 font-mono text-[10px] tabular-nums text-muted-foreground">
             {msg.deliveredAt && (
               <span title={`Delivered ${format(new Date(msg.deliveredAt), 'MMM d, h:mm a')}`}>
-                <CheckCircle className="h-2.5 w-2.5 inline mr-0.5 text-lime-500" />
+                <CheckCircle className="mr-0.5 inline size-3 text-green-600 dark:text-green-300" />
                 {format(new Date(msg.deliveredAt), 'MMM d')}
               </span>
             )}
             {msg.openedAt && (
               <span title={`First opened ${format(new Date(msg.openedAt), 'MMM d, h:mm a')}`}>
-                <Eye className="h-2.5 w-2.5 inline mr-0.5 text-plum-500" />
+                <Eye className="mr-0.5 inline size-3 text-teal-600 dark:text-teal-300" />
                 {format(new Date(msg.openedAt), 'MMM d')}
                 {msg.openCount && msg.openCount > 1 ? ` (${msg.openCount}x)` : ''}
               </span>
             )}
             {msg.clickedAt && (
               <span title={`First clicked ${format(new Date(msg.clickedAt), 'MMM d, h:mm a')}`}>
-                <MousePointerClick className="h-2.5 w-2.5 inline mr-0.5 text-amber-500" />
+                <MousePointerClick className="mr-0.5 inline size-3 text-gold-600 dark:text-gold-400" />
                 {format(new Date(msg.clickedAt), 'MMM d')}
                 {msg.clickCount && msg.clickCount > 1 ? ` (${msg.clickCount}x)` : ''}
               </span>

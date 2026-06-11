@@ -109,20 +109,20 @@ export function ChannelMembersDialog({
     switch (role) {
       case 'owner':
         return (
-          <Badge variant="default" className="gap-1">
+          <Badge variant="gold" className="gap-1">
             <Crown className="h-3 w-3" />
             Owner
           </Badge>
         )
       case 'admin':
         return (
-          <Badge variant="secondary" className="gap-1">
+          <Badge variant="teal" className="gap-1">
             <Shield className="h-3 w-3" />
             Admin
           </Badge>
         )
       default:
-        return <Badge variant="outline">Member</Badge>
+        return <Badge variant="neutral">Member</Badge>
     }
   }
 

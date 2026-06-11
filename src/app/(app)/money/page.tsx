@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageHeader } from '@/components/layout/page-header'
 import { MoneyTabs } from '@/components/money/money-tabs'
 
 async function MoneyData() {
@@ -125,16 +126,14 @@ export default async function MoneyPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-medium tracking-tight font-display text-warm-900 dark:text-cream-100">
-          Money
-        </h1>
-        <p className="text-warm-500 dark:text-cream-400">
-          Invoices, payments, and service agreements
-        </p>
-      </div>
+      <PageHeader
+        kicker="MONEY · OVERVIEW"
+        title="Money"
+        subtitle="Invoices, payments, and service agreements"
+        className="mb-0"
+      />
 
-      <Suspense fallback={<Skeleton className="h-150 rounded-sm" />}>
+      <Suspense fallback={<Skeleton className="h-150 rounded-[14px]" />}>
         <MoneyData />
       </Suspense>
     </div>

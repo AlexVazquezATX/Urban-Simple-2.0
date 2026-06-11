@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import {
   Megaphone,
   BadgePercent,
@@ -76,7 +75,7 @@ export function BrandedPostForm({
     <div className="space-y-5">
       {/* Post Type Selection */}
       <div>
-        <Label className="text-warm-700 dark:text-cream-300 mb-2 block">Post Type</Label>
+        <Label className="mb-2 block">Post Type</Label>
         <div className="grid grid-cols-2 gap-2">
           {BRANDED_POST_TYPE_LIST.map((type) => {
             const Icon = ICON_MAP[type.icon] || Megaphone
@@ -88,32 +87,34 @@ export function BrandedPostForm({
                 onClick={() => onPostTypeChange(type.id)}
                 disabled={disabled}
                 className={cn(
-                  'p-3 rounded-lg border transition-all text-left',
+                  'rounded-[12px] border p-3 text-left transition-all',
                   isSelected
-                    ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
-                    : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
-                  disabled && 'opacity-50 cursor-not-allowed'
+                    ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                    : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+                  disabled && 'cursor-not-allowed opacity-50'
                 )}
               >
                 <div className="flex items-center gap-2.5">
                   <div
                     className={cn(
-                      'w-8 h-8 rounded-lg flex items-center justify-center shrink-0',
-                      isSelected ? 'bg-bronze-100 text-bronze-700' : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
+                      'grid size-8 shrink-0 place-items-center rounded-[8px]',
+                      isSelected
+                        ? 'bg-gold-600/15 text-gold-600 dark:bg-gold-400/15 dark:text-gold-400'
+                        : 'bg-secondary text-muted-foreground'
                     )}
                   >
-                    <Icon className="w-4 h-4" />
+                    <Icon className="size-4" />
                   </div>
                   <div className="min-w-0">
                     <h4
                       className={cn(
-                        'text-sm font-medium truncate',
-                        isSelected ? 'text-bronze-700' : 'text-warm-900 dark:text-cream-100'
+                        'truncate text-sm font-medium',
+                        isSelected ? 'text-gold-600 dark:text-gold-400' : 'text-foreground'
                       )}
                     >
                       {type.title}
                     </h4>
-                    <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{type.description}</p>
+                    <p className="truncate text-xs text-muted-foreground">{type.description}</p>
                   </div>
                 </div>
               </button>
@@ -124,16 +125,16 @@ export function BrandedPostForm({
 
       {/* Custom mode hint */}
       {postType === 'custom' && (
-        <div className="p-3 rounded-lg bg-bronze-50 border border-bronze-200">
-          <p className="text-sm text-bronze-700">
-            Describe your vision in the <strong>Additional Directions</strong> box below. You have full creative control — tell the AI exactly what you want.
+        <div className="rounded-[12px] border border-teal-600/30 bg-teal-600/10 p-3 dark:border-teal-300/25 dark:bg-teal-300/12">
+          <p className="text-[13px] text-teal-600 dark:text-teal-300">
+            Describe your vision in the <strong>Additional Directions</strong> box below. You have full creative control. Tell the AI exactly what you want.
           </p>
         </div>
       )}
 
       {/* Headline Input */}
       <div>
-        <Label htmlFor="headline" className="text-warm-700 dark:text-cream-300 mb-2 block">
+        <Label htmlFor="headline" className="mb-2 block">
           {postType === 'custom' ? 'Text to Display (optional)' : 'Headline / Text'}
         </Label>
         <Input
@@ -142,30 +143,29 @@ export function BrandedPostForm({
           onChange={(e) => onHeadlineChange(e.target.value)}
           placeholder={postType === 'custom' ? 'Leave empty for a purely visual graphic' : 'e.g., 20% Off This Weekend!'}
           disabled={disabled}
-          className="rounded-lg"
         />
-        <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-          {postType === 'custom' ? 'Optional — only add if you want text on the graphic' : 'The main text to display on the graphic'}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {postType === 'custom' ? 'Optional. Only add if you want text on the graphic' : 'The main text to display on the graphic'}
         </p>
       </div>
 
       {/* Brand Kit Info (if selected) */}
       {brandKit && (
-        <div className="p-3 rounded-lg bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
+        <div className="rounded-[12px] border border-border bg-secondary/50 p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
                 className={cn(
-                  'w-8 h-8 rounded-lg transition-opacity',
+                  'size-8 rounded-[8px] transition-opacity',
                   !applyBrandColors && 'opacity-30'
                 )}
                 style={{ backgroundColor: brandKit.primaryColor }}
               />
               <div>
-                <p className="text-sm font-medium text-warm-900 dark:text-cream-100">
+                <p className="text-sm font-medium text-foreground">
                   {brandKit.restaurantName}
                 </p>
-                <p className="text-xs text-warm-500 dark:text-cream-400">
+                <p className="text-xs text-muted-foreground">
                   {applyBrandColors ? 'Brand colors applied' : 'Brand colors off'}
                 </p>
               </div>
@@ -176,8 +176,8 @@ export function BrandedPostForm({
                 disabled={disabled}
                 className={cn(
                   'relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors',
-                  applyBrandColors ? 'bg-bronze-500' : 'bg-warm-300',
-                  disabled && 'opacity-50 cursor-not-allowed'
+                  applyBrandColors ? 'bg-primary' : 'bg-muted-foreground/30',
+                  disabled && 'cursor-not-allowed opacity-50'
                 )}
               >
                 <span
@@ -194,7 +194,7 @@ export function BrandedPostForm({
 
       {/* Aspect Ratio */}
       <div>
-        <Label className="text-warm-700 dark:text-cream-300 mb-2 block">Aspect Ratio</Label>
+        <Label className="mb-2 block">Aspect Ratio</Label>
         <div className="flex flex-wrap gap-2">
           {ASPECT_RATIOS.map((ratio) => (
             <button
@@ -202,11 +202,11 @@ export function BrandedPostForm({
               onClick={() => onAspectRatioChange(ratio.value)}
               disabled={disabled}
               className={cn(
-                'px-3 py-2 rounded-lg border text-sm transition-all',
+                'rounded-[10px] border px-3 py-2 text-sm transition-all',
                 aspectRatio === ratio.value
-                  ? 'border-bronze-400 bg-bronze-50 text-bronze-700 font-medium'
-                  : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 text-warm-700 dark:text-cream-300',
-                disabled && 'opacity-50 cursor-not-allowed'
+                  ? 'border-gold-600/40 bg-gold-600/10 font-medium text-gold-600 dark:border-gold-400/30 dark:bg-gold-400/12 dark:text-gold-400'
+                  : 'border-border text-muted-foreground hover:border-gold-600/30 hover:text-foreground dark:hover:border-gold-400/25',
+                disabled && 'cursor-not-allowed opacity-50'
               )}
             >
               {ratio.label}
@@ -217,7 +217,7 @@ export function BrandedPostForm({
 
       {/* Style Preference */}
       <div>
-        <Label className="text-warm-700 dark:text-cream-300 mb-2 block">Style</Label>
+        <Label className="mb-2 block">Style</Label>
         <div className="space-y-2">
           {STYLE_PREFERENCES.map((pref) => (
             <button
@@ -225,22 +225,22 @@ export function BrandedPostForm({
               onClick={() => onStyleChange(pref.value)}
               disabled={disabled}
               className={cn(
-                'w-full p-3 rounded-lg border transition-all text-left',
+                'w-full rounded-[12px] border p-3 text-left transition-all',
                 style === pref.value
-                  ? 'border-bronze-400 bg-bronze-50'
-                  : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900',
-                disabled && 'opacity-50 cursor-not-allowed'
+                  ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                  : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+                disabled && 'cursor-not-allowed opacity-50'
               )}
             >
               <p
                 className={cn(
                   'text-sm font-medium',
-                  style === pref.value ? 'text-bronze-700' : 'text-warm-900 dark:text-cream-100'
+                  style === pref.value ? 'text-gold-600 dark:text-gold-400' : 'text-foreground'
                 )}
               >
                 {pref.label}
               </p>
-              <p className="text-xs text-warm-500 dark:text-cream-400">{pref.description}</p>
+              <p className="text-xs text-muted-foreground">{pref.description}</p>
             </button>
           ))}
         </div>

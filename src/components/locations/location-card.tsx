@@ -4,9 +4,12 @@ import { MapPin, Building2, CheckSquare, Users } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ConfirmDeleteButton } from '@/components/ui/confirm-delete-button'
+import { LocationRowActions } from './location-row-actions'
+import { marginTone, reviewBadgeVariant } from './tones'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
-import { formatCurrency, formatMargin, marginToneClass, type FinancialSummary } from '@/lib/financials'
+import { formatMargin, type FinancialSummary } from '@/lib/financials'
+import { formatMoney, moneyClass } from '@/lib/format'
+import { cn } from '@/lib/utils'
 
 interface LocationCardProps {
   location: LocationCardItem & { financials?: FinancialSummary | null }
@@ -53,41 +56,35 @@ export function LocationCard({ location, showFinancials = false }: LocationCardP
         : null
 
   return (
-    <Card className="flex h-full flex-col rounded-sm border-warm-200 p-0 transition-colors hover:border-ocean-300 dark:border-charcoal-700">
-      <CardContent className="flex flex-1 flex-col p-3">
+    <Card className="flex h-full flex-col p-0 transition-colors hover:border-primary/40">
+      <CardContent className="flex flex-1 flex-col p-4">
         {/* Header: compact logo/icon + name + client + status */}
         <div className="flex items-start gap-2.5">
           {location.logoUrl ? (
-            <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-sm bg-warm-100 dark:bg-charcoal-800">
+            <div className="relative size-11 shrink-0 overflow-hidden rounded-[10px] bg-secondary">
               <Image src={location.logoUrl} alt={location.name} fill className="object-cover" unoptimized />
             </div>
           ) : (
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-warm-100 dark:bg-charcoal-800">
-              <Building2 className="h-5 w-5 text-warm-400 dark:text-cream-500" />
+            <div className="grid size-11 shrink-0 place-items-center rounded-[10px] bg-secondary">
+              <Building2 className="size-5 text-muted-foreground" />
             </div>
           )}
           <div className="min-w-0 flex-1">
             <Link href={`/locations/${location.id}`}>
-              <h3 className="truncate text-base font-display font-medium leading-tight text-warm-900 transition-colors hover:text-ocean-600 dark:text-cream-100">
+              <h3 className="truncate font-display text-[15px] font-semibold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
                 {location.name}
               </h3>
             </Link>
             {location.client && (
               <Link href={`/clients/${location.client.id}`}>
-                <div className="mt-0.5 flex items-center gap-1 text-xs text-warm-500 transition-colors hover:text-ocean-600 dark:text-cream-400">
-                  <Users className="h-2.5 w-2.5 shrink-0" />
+                <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary">
+                  <Users className="size-2.5 shrink-0" />
                   <span className="truncate">{location.client.name}</span>
                 </div>
               </Link>
             )}
           </div>
-          <Badge
-            className={`shrink-0 rounded-sm px-1.5 py-0 text-[10px] ${
-              location.isActive
-                ? 'border-lime-200 bg-lime-100 text-lime-700'
-                : 'border-warm-200 bg-warm-100 text-warm-600'
-            }`}
-          >
+          <Badge variant={location.isActive ? 'green' : 'neutral'} className="shrink-0">
             {location.isActive ? 'Active' : 'Inactive'}
           </Badge>
         </div>
@@ -96,52 +93,57 @@ export function LocationCard({ location, showFinancials = false }: LocationCardP
         {(addressStr || location.checklistTemplate) && (
           <div className="mt-2.5 space-y-1 text-xs">
             {addressStr && (
-              <div className="flex items-start gap-1.5 text-warm-500 dark:text-cream-400">
-                <MapPin className="mt-0.5 h-3 w-3 flex-shrink-0" />
+              <div className="flex items-start gap-1.5 text-muted-foreground">
+                <MapPin className="mt-0.5 size-3 flex-shrink-0" />
                 <span className="line-clamp-1">{addressStr}</span>
               </div>
             )}
             {location.checklistTemplate && (
-              <div className="flex items-center gap-1.5 text-warm-500 dark:text-cream-400">
-                <CheckSquare className="h-3 w-3 flex-shrink-0" />
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <CheckSquare className="size-3 flex-shrink-0" />
                 <span className="truncate">{location.checklistTemplate.name}</span>
               </div>
             )}
           </div>
         )}
 
-        <div className="mt-2 flex items-center justify-between gap-2 rounded-sm border border-warm-200 bg-warm-50/60 px-2 py-1.5 dark:border-charcoal-700 dark:bg-charcoal-800/60">
-          <span className="text-[10px] uppercase tracking-wide text-warm-500 dark:text-cream-400">
-            Review
-          </span>
-          <Badge
-            className={`rounded-sm px-1.5 py-0 text-[10px] ${
-              reviewFreshness.isStale
-                ? 'border-red-200 bg-red-100 text-red-700'
-                : 'border-lime-200 bg-lime-100 text-lime-700'
-            }`}
-          >
+        {/* Review freshness */}
+        <div className="mt-2 flex items-center justify-between gap-2 rounded-[10px] border border-border bg-secondary/50 px-2.5 py-1.5">
+          <span className="kicker text-muted-foreground">Review</span>
+          <Badge variant={reviewBadgeVariant(reviewFreshness)}>
             {reviewFreshness.shortLabel}
           </Badge>
         </div>
 
         {showFinancials && location.financials && location.financials.agreementCount > 0 && (
-          <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-sm border border-warm-200 bg-warm-50/50 p-2 text-[10px] dark:border-charcoal-700 dark:bg-charcoal-900/40">
+          <div className="mt-2 grid grid-cols-3 gap-1.5 rounded-[10px] border border-border bg-secondary/40 p-2.5">
             <div>
-              <p className="uppercase tracking-wider text-warm-500 dark:text-cream-400">MRR</p>
-              <p className="font-mono font-medium text-warm-900 dark:text-cream-100">
-                {formatCurrency(location.financials.monthlyRevenue)}
+              <p className="kicker text-muted-foreground">MRR</p>
+              <p className={cn('mt-0.5 text-sm font-medium text-foreground', moneyClass)}>
+                {formatMoney(location.financials.monthlyRevenue)}
               </p>
             </div>
             <div>
-              <p className="uppercase tracking-wider text-warm-500 dark:text-cream-400">Profit</p>
-              <p className={`font-mono font-medium ${marginToneClass(location.financials.marginPct)}`}>
-                {formatCurrency(location.financials.monthlyProfit)}
+              <p className="kicker text-muted-foreground">Profit</p>
+              <p
+                className={cn(
+                  'mt-0.5 text-sm font-medium',
+                  moneyClass,
+                  marginTone(location.financials.marginPct)
+                )}
+              >
+                {formatMoney(location.financials.monthlyProfit)}
               </p>
             </div>
             <div>
-              <p className="uppercase tracking-wider text-warm-500 dark:text-cream-400">Margin</p>
-              <p className={`font-mono font-medium ${marginToneClass(location.financials.marginPct)}`}>
+              <p className="kicker text-muted-foreground">Margin</p>
+              <p
+                className={cn(
+                  'mt-0.5 text-sm font-medium',
+                  moneyClass,
+                  marginTone(location.financials.marginPct)
+                )}
+              >
                 {formatMargin(location.financials.marginPct)}
               </p>
             </div>
@@ -151,21 +153,11 @@ export function LocationCard({ location, showFinancials = false }: LocationCardP
         {/* Spacer pushes the action row to the bottom */}
         <div className="min-h-2 flex-1" />
 
-        <div className="mt-2 flex items-center gap-1.5 border-t border-warm-200 pt-2 dark:border-charcoal-700">
-          <Link href={`/locations/${location.id}`} className="flex-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 w-full rounded-sm border-ocean-400 text-xs text-ocean-600 hover:border-ocean-500 hover:bg-ocean-50 dark:border-ocean-600 dark:text-ocean-400 dark:hover:bg-ocean-900/30"
-            >
-              View Details
-            </Button>
-          </Link>
-          <ConfirmDeleteButton
-            endpoint={`/api/locations/${location.id}`}
-            entityLabel={location.name}
-            entityKind="location"
-          />
+        <div className="mt-2 flex items-center gap-1.5 border-t border-border pt-2">
+          <Button asChild variant="ghost" size="sm" className="h-7 flex-1 text-xs">
+            <Link href={`/locations/${location.id}`}>View Details</Link>
+          </Button>
+          <LocationRowActions locationId={location.id} entityLabel={location.name} />
         </div>
       </CardContent>
     </Card>

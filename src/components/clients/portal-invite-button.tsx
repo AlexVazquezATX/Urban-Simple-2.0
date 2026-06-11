@@ -47,10 +47,9 @@ export function PortalInviteButton({ clientId, contactId, contactEmail, isPortal
     <Button
       type="button"
       variant="ghost"
-      size="sm"
+      size="icon-sm"
       onClick={handleInvite}
       disabled={loading || !contactEmail}
-      className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800"
       title={isPortalUser ? 'Re-send portal invite' : 'Send portal invite'}
     >
       {loading ? (

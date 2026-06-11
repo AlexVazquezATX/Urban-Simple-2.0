@@ -4,9 +4,40 @@ import { useState, useMemo, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +46,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { formatMoney } from '@/lib/format'
 import {
   Plus,
   Search,
@@ -28,11 +63,12 @@ import {
   ArrowUp,
   ArrowDown,
   Settings2,
+  SlidersHorizontal,
+  Pencil,
   Zap,
   Calendar,
   Users,
   Target,
-  Eye,
   Trash2,
   RefreshCw,
   ArrowRight,
@@ -120,8 +156,10 @@ const ALL_COLUMNS = [
   { id: 'actions', label: 'Actions', alwaysVisible: true },
 ]
 
+// Column discipline: keep ≤9 columns visible by default — everything else
+// lives behind the Columns menu and the row detail panel.
 const DEFAULT_VISIBLE_COLUMNS = [
-  'companyName', 'contact', 'status', 'businessType', 'priceLevel', 'priority', 'address', 'email', 'estimatedValue', 'lastContacted', 'createdAt', 'actions'
+  'companyName', 'contact', 'status', 'priority', 'address', 'email', 'estimatedValue', 'lastContacted', 'actions'
 ]
 
 export function ProspectsListClient({ prospects: initialProspects }: ProspectsListClientProps) {
@@ -150,6 +188,8 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
   const [isApplyingSequence, setIsApplyingSequence] = useState(false)
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE_COLUMNS)
   const [selectedProspect, setSelectedProspect] = useState<Prospect | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Prospect | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Fetch available sequences for bulk apply
   useEffect(() => {
@@ -1080,6 +1120,53 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     }
   }
 
+  // Single-row delete (kebab menu → confirm dialog)
+  const handleDeleteProspect = async () => {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    try {
+      const res = await fetch(`/api/growth/prospects/${deleteTarget.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        throw new Error(body.error || 'Failed to delete lead')
+      }
+      setProspects(prev => prev.filter(p => p.id !== deleteTarget.id))
+      setSelectedIds(prev => {
+        const next = new Set(prev)
+        next.delete(deleteTarget.id)
+        return next
+      })
+      toast.success(`Deleted ${deleteTarget.companyName}`)
+      setDeleteTarget(null)
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to delete lead')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  // Presentational reset for the empty state's "Clear filters" action
+  const clearFilters = () => {
+    setSearchQuery('')
+    setStatusFilter('all')
+    setSourceFilter('all')
+    setPriorityFilter('all')
+    setFacilityFilter('all')
+    setPriceLevelFilter('all')
+    setTagFilter('all')
+    setSourceDetailFilter('all')
+    setHasEmailOnly(false)
+  }
+
+  // How many of the "More filters" popover controls are active
+  const moreFilterCount = [
+    priceLevelFilter !== 'all',
+    sourceFilter !== 'all',
+    sourceDetailFilter !== 'all',
+    tagFilter !== 'all',
+    hasEmailOnly,
+  ].filter(Boolean).length
+
   const SortIcon = ({ field }: { field: SortField }) => {
     if (sortField !== field) return <ArrowUpDown className="h-3 w-3 ml-1 opacity-50" />
     return sortDirection === 'asc'
@@ -1109,220 +1196,254 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
     { value: 'low', label: 'Cold' },
   ]
 
+  // Chip mapping: urgent→coral · HOT→gold · everything quieter→neutral
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30 dark:border-red-400/30 font-semibold uppercase tracking-wider">urgent</Badge>
+        return <Badge variant="coral" className="uppercase tracking-wider">urgent</Badge>
       case 'high':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30 dark:border-amber-400/40 font-semibold uppercase tracking-wider">hot</Badge>
+        return <Badge variant="gold" className="uppercase tracking-wider">hot</Badge>
       case 'medium':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700">warm</Badge>
+        return <Badge variant="neutral">warm</Badge>
       default:
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-500/15 text-ocean-700 dark:text-ocean-300 border-ocean-500/30 dark:border-ocean-400/30">cold</Badge>
+        return <Badge variant="neutral">cold</Badge>
     }
   }
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      prospect: 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700',
-      new: 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700',
-      researching: 'bg-plum-100 text-plum-700 border-plum-200',
-      contacted: 'bg-ocean-100 text-ocean-700 border-ocean-200',
-      engaged: 'bg-ocean-100 text-ocean-700 border-ocean-200',
-      qualified: 'bg-lime-100 text-lime-700 border-lime-200',
-      proposal_sent: 'bg-warm-200 dark:bg-charcoal-700 text-warm-700 dark:text-cream-300 border-warm-300 dark:border-charcoal-700',
-      won: 'bg-lime-100 text-lime-700 border-lime-200',
-      lost: 'bg-red-100 text-red-700 border-red-200',
-      nurturing: 'bg-plum-100 text-plum-700 border-plum-200',
+    const variants: Record<string, 'neutral' | 'gold' | 'teal' | 'coral' | 'green'> = {
+      prospect: 'neutral',
+      new: 'neutral',
+      researching: 'neutral',
+      contacted: 'teal',
+      engaged: 'teal',
+      qualified: 'green',
+      proposal_sent: 'gold',
+      won: 'green',
+      lost: 'coral',
+      nurturing: 'neutral',
     }
     return (
-      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700'}`}>
+      <Badge variant={variants[status] || 'neutral'}>
         {status.replace('_', ' ')}
       </Badge>
     )
   }
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Leads</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">AI-Native Lead Intelligence & Outreach OS</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/growth/prospects/import">
-            <Button variant="outline" size="sm" className="rounded-sm">
-              <Upload className="mr-1.5 h-3.5 w-3.5" />
-              Import
+    <div className="mx-auto max-w-7xl p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · PROSPECTS"
+        title="Leads"
+        subtitle="Lead intelligence and outreach, in one place"
+        actions={
+          <>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/growth/prospects/import">
+                <Upload className="h-3.5 w-3.5" />
+                Import
+              </Link>
             </Button>
-          </Link>
-          <ProspectForm>
-            <Button variant="lime" size="sm" className="rounded-sm">
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add Lead
-            </Button>
-          </ProspectForm>
-        </div>
+            <ProspectForm>
+              <Button variant="gold" size="sm">
+                <Plus className="h-3.5 w-3.5" />
+                Add Lead
+              </Button>
+            </ProspectForm>
+          </>
+        }
+      />
+
+      {/* KPI row */}
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard
+          label="Contact Today"
+          value={stats.contactToday}
+          sub="Need outreach"
+          icon={Calendar}
+          tone={stats.contactToday > 0 ? 'coral' : 'neutral'}
+        />
+        <StatCard
+          label="Hot Leads"
+          value={stats.hotLeads}
+          sub="High interest"
+          icon={Target}
+          tone={stats.hotLeads > 0 ? 'gold' : 'neutral'}
+        />
+        <StatCard label="Follow-Up" value={stats.followUp} sub="Awaiting response" icon={Mail} />
+        <StatCard label="Total Leads" value={stats.total} sub="In database" icon={Users} />
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Contact Today</div>
-          <div className="text-2xl font-semibold text-plum-600">{stats.contactToday}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Need outreach</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-red-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Hot Leads</div>
-          <div className="text-2xl font-semibold text-red-600">{stats.hotLeads}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">High priority</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Follow-Up</div>
-          <div className="text-2xl font-semibold text-ocean-600">{stats.followUp}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Awaiting response</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Leads</div>
-          <div className="text-2xl font-semibold text-lime-600">{stats.total}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">In database</p>
-        </Card>
-      </div>
-
-      {/* Filters Bar */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 mb-4">
-        <CardContent className="p-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative flex-1 min-w-[180px] max-w-sm">
-              <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-warm-400 dark:text-cream-500" />
-              <Input
-                placeholder="Search leads..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-sm rounded-sm border-warm-200 dark:border-charcoal-700"
-              />
-            </div>
-
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-            >
-              {statusOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-            >
-              {priorityOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-
-            <select
-              value={facilityFilter}
-              onChange={(e) => setFacilityFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-            >
-              <option value="all">All Facilities</option>
-              {uniqueFacilities.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-
-            <select
-              value={priceLevelFilter}
-              onChange={(e) => setPriceLevelFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-            >
-              <option value="all">All Prices</option>
-              <option value="$">$</option>
-              <option value="$$">$$</option>
-              <option value="$$$">$$$</option>
-              <option value="$$$$">$$$$</option>
-            </select>
-
-            <select
-              value={sourceFilter}
-              onChange={(e) => setSourceFilter(e.target.value)}
-              className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-            >
-              <option value="all">All Sources</option>
-              {uniqueSources.map((s) => (
-                <option key={s} value={s}>{s.replace('_', ' ')}</option>
-              ))}
-            </select>
-
-            {uniqueSourceDetails.length > 0 && (
-              <select
-                value={sourceDetailFilter}
-                onChange={(e) => setSourceDetailFilter(e.target.value)}
-                className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-              >
-                <option value="all">All Import Lists</option>
-                {uniqueSourceDetails.map((sd) => (
-                  <option key={sd} value={sd}>{sd}</option>
-                ))}
-              </select>
-            )}
-
-            {uniqueTags.length > 0 && (
-              <select
-                value={tagFilter}
-                onChange={(e) => setTagFilter(e.target.value)}
-                className="h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 text-xs"
-              >
-                <option value="all">All Tags</option>
-                {uniqueTags.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            )}
-
-            <label className="flex items-center gap-1.5 h-8 px-2 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-white dark:bg-charcoal-900 cursor-pointer">
-              <Switch
-                checked={hasEmailOnly}
-                onCheckedChange={setHasEmailOnly}
-                className="scale-75"
-              />
-              <span className="text-xs text-warm-700 dark:text-cream-300 whitespace-nowrap">Has email</span>
-            </label>
+      {/* Filter bar: search + 3 selects + More filters popover */}
+      <Card className="mb-4 py-0">
+        <CardContent className="flex flex-wrap items-center gap-2 p-3">
+          <div className="relative min-w-[180px] max-w-sm flex-1">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 pl-8 text-sm"
+            />
           </div>
+
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger size="sm" className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger size="sm" className="w-[130px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {priorityOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={facilityFilter} onValueChange={setFacilityFilter}>
+            <SelectTrigger size="sm" className="w-[150px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Facilities</SelectItem>
+              {uniqueFacilities.map((f) => (
+                <SelectItem key={f} value={f}>{f}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+                More filters
+                {moreFilterCount > 0 && (
+                  <Badge variant="default" className="font-mono tabular-nums">{moreFilterCount}</Badge>
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 space-y-4">
+              <div className="space-y-1.5">
+                <Label>Price Level</Label>
+                <Select value={priceLevelFilter} onValueChange={setPriceLevelFilter}>
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Prices</SelectItem>
+                    <SelectItem value="$">$</SelectItem>
+                    <SelectItem value="$$">$$</SelectItem>
+                    <SelectItem value="$$$">$$$</SelectItem>
+                    <SelectItem value="$$$$">$$$$</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label>Source</Label>
+                <Select value={sourceFilter} onValueChange={setSourceFilter}>
+                  <SelectTrigger size="sm" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sources</SelectItem>
+                    {uniqueSources.map((s) => (
+                      <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {uniqueSourceDetails.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label>Import List</Label>
+                  <Select value={sourceDetailFilter} onValueChange={setSourceDetailFilter}>
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Import Lists</SelectItem>
+                      {uniqueSourceDetails.map((sd) => (
+                        <SelectItem key={sd} value={sd}>{sd}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {uniqueTags.length > 0 && (
+                <div className="space-y-1.5">
+                  <Label>Tag</Label>
+                  <Select value={tagFilter} onValueChange={setTagFilter}>
+                    <SelectTrigger size="sm" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Tags</SelectItem>
+                      {uniqueTags.map((t) => (
+                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between rounded-[9px] border border-border px-3 py-2">
+                <span className="text-sm text-foreground">Has email only</span>
+                <Switch checked={hasEmailOnly} onCheckedChange={setHasEmailOnly} />
+              </div>
+            </PopoverContent>
+          </Popover>
         </CardContent>
       </Card>
 
-      {/* View Toggle & Tabs */}
-      <div className="flex items-center justify-between mb-4">
+      {/* Count tabs + column controls */}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1">
-            <TabsTrigger value="all" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">All ({stats.total})</TabsTrigger>
-            <TabsTrigger value="contact_today" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Contact Today ({stats.contactToday})</TabsTrigger>
-            <TabsTrigger value="hot_leads" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Hot ({stats.hotLeads})</TabsTrigger>
-            <TabsTrigger value="follow_up" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Follow-Up ({stats.followUp})</TabsTrigger>
+          <TabsList>
+            <TabsTrigger value="all">
+              All <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.total}</span>
+            </TabsTrigger>
+            <TabsTrigger value="contact_today">
+              Contact Today <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.contactToday}</span>
+            </TabsTrigger>
+            <TabsTrigger value="hot_leads">
+              Hot <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.hotLeads}</span>
+            </TabsTrigger>
+            <TabsTrigger value="follow_up">
+              Follow-Up <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.followUp}</span>
+            </TabsTrigger>
             {stats.withEmails > 0 && (
-              <TabsTrigger value="with_emails" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-green-700">Has Email ({stats.withEmails})</TabsTrigger>
+              <TabsTrigger value="with_emails">
+                Has Email <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.withEmails}</span>
+              </TabsTrigger>
             )}
-            <TabsTrigger value="with_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-blue-700">Has Website ({stats.withWebsite})</TabsTrigger>
-            <TabsTrigger value="no_website" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900 data-[state=active]:text-red-700">No Website ({stats.noWebsite})</TabsTrigger>
+            <TabsTrigger value="with_website">
+              Has Website <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.withWebsite}</span>
+            </TabsTrigger>
+            <TabsTrigger value="no_website">
+              No Website <span className="font-mono text-xs tabular-nums text-muted-foreground">{stats.noWebsite}</span>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="rounded-sm">
-              <Settings2 className="mr-1.5 h-3.5 w-3.5" />
+            <Button variant="outline" size="sm">
+              <Settings2 className="h-3.5 w-3.5" />
               Columns
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48 rounded-sm">
+          <DropdownMenuContent align="end" className="w-48">
             {ALL_COLUMNS.filter(c => !c.alwaysVisible).map((col) => (
               <DropdownMenuCheckboxItem
                 key={col.id}
@@ -1344,20 +1465,15 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <Card className="rounded-sm bg-lime-50 border-lime-200 mb-4">
-          <CardContent className="p-3 flex items-center justify-between">
-            <span className="text-sm font-medium text-lime-700">
+        <Card className="mb-4 border-gold-600/30 bg-gold-600/10 py-0 dark:border-gold-400/25 dark:bg-gold-400/12">
+          <CardContent className="flex flex-wrap items-center justify-between gap-2 p-3">
+            <span className="font-mono text-sm tabular-nums text-gold-600 dark:text-gold-400">
               {selectedIds.size} lead{selectedIds.size > 1 ? 's' : ''} selected
             </span>
-            <div className="flex items-center gap-2">
-              {/* Primary actions */}
-              <Button
-                size="sm"
-                onClick={handleMoveToPipeline}
-                variant="lime"
-                className="rounded-sm"
-              >
-                <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Primary action — the one gold button in this region */}
+              <Button size="sm" onClick={handleMoveToPipeline} variant="gold">
+                <ArrowRight className="h-3.5 w-3.5" />
                 Pipeline
               </Button>
               <Button
@@ -1365,12 +1481,11 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 variant="outline"
                 onClick={handleBulkEnrich}
                 disabled={isEnrichingBulk}
-                className="rounded-sm bg-white dark:bg-charcoal-900"
               >
                 {isEnrichingBulk ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+                  <Sparkles className="h-3.5 w-3.5" />
                 )}
                 Enrich
               </Button>
@@ -1379,26 +1494,25 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 variant="outline"
                 onClick={handleBulkDiscoverOwners}
                 disabled={isDiscoveringOwners}
-                className="rounded-sm bg-white dark:bg-charcoal-900"
                 title="Find owner names from Yelp & Google, then find their emails"
               >
                 {isDiscoveringOwners ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Target className="mr-1.5 h-3.5 w-3.5" />
+                  <Target className="h-3.5 w-3.5" />
                 )}
                 Discover Owners
               </Button>
               <Button
                 size="sm"
-                className="rounded-sm bg-green-700 hover:bg-green-800 text-white"
+                variant="outline"
                 onClick={handleBulkGenerateOutreach}
                 disabled={isGeneratingOutreach}
               >
                 {isGeneratingOutreach ? (
-                  <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
-                  <Mail className="mr-1.5 h-3.5 w-3.5" />
+                  <Mail className="h-3.5 w-3.5" />
                 )}
                 Outreach
               </Button>
@@ -1406,24 +1520,24 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
               {/* More actions dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="outline" className="rounded-sm bg-white dark:bg-charcoal-900">
-                    <MoreHorizontal className="mr-1.5 h-3.5 w-3.5" />
+                  <Button size="sm" variant="outline">
+                    <MoreHorizontal className="h-3.5 w-3.5" />
                     More
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="rounded-sm w-48">
+                <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
                     onClick={handleBulkFindContacts}
                     disabled={isFindingContacts}
                   >
-                    <UserPlus className="mr-2 h-4 w-4" />
+                    <UserPlus className="h-4 w-4" />
                     Find Contacts
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleBulkFindEmails}
                     disabled={isFindingEmails}
                   >
-                    <AtSign className="mr-2 h-4 w-4" />
+                    <AtSign className="h-4 w-4" />
                     Find Emails
                   </DropdownMenuItem>
                   {sequences.length > 0 && (
@@ -1435,7 +1549,7 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                           onClick={() => handleBulkApplySequence(seq.id)}
                           disabled={isApplyingSequence}
                         >
-                          <Zap className="mr-2 h-4 w-4" />
+                          <Zap className="h-4 w-4" />
                           {seq.name}
                         </DropdownMenuItem>
                       ))}
@@ -1447,16 +1561,13 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                       key={status.value}
                       onClick={() => handleBulkStatusUpdate(status.value)}
                     >
-                      <RefreshCw className="mr-2 h-4 w-4" />
+                      <RefreshCw className="h-4 w-4" />
                       {status.label}
                     </DropdownMenuItem>
                   ))}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={handleBulkDelete}
-                    className="text-red-600 focus:text-red-600"
-                  >
-                    <X className="mr-2 h-4 w-4" />
+                  <DropdownMenuItem onClick={handleBulkDelete}>
+                    <Trash2 className="h-4 w-4" />
                     Delete Prospects
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -1466,7 +1577,6 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                 size="sm"
                 variant="ghost"
                 onClick={() => setSelectedIds(new Set())}
-                className="rounded-sm text-gray-500 hover:text-gray-700"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -1475,130 +1585,118 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
         </Card>
       )}
 
-      {/* Spreadsheet Table */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-warm-100 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700">
-                <tr>
-                  <th className="w-10 p-3 text-left">
-                    <Checkbox
-                      checked={selectedIds.size === filteredProspects.length && filteredProspects.length > 0}
-                      onCheckedChange={toggleSelectAll}
-                    />
-                  </th>
-                  {visibleColumns.includes('companyName') && (
-                    <th className="p-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
-                        onClick={() => handleSort('companyName')}
-                      >
-                        Business Name
-                        <SortIcon field="companyName" />
-                      </button>
-                    </th>
-                  )}
-                  {visibleColumns.includes('contact') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Contact</th>
-                  )}
-                  {visibleColumns.includes('status') && (
-                    <th className="p-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
-                        onClick={() => handleSort('status')}
-                      >
-                        Status
-                        <SortIcon field="status" />
-                      </button>
-                    </th>
-                  )}
-                  {visibleColumns.includes('businessType') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Facility</th>
-                  )}
-                  {visibleColumns.includes('priceLevel') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Price</th>
-                  )}
-                  {visibleColumns.includes('priority') && (
-                    <th className="p-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
-                        onClick={() => handleSort('priority')}
-                      >
-                        Interest
-                        <SortIcon field="priority" />
-                      </button>
-                    </th>
-                  )}
-                  {visibleColumns.includes('address') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">City</th>
-                  )}
-                  {visibleColumns.includes('website') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Website</th>
-                  )}
-                  {visibleColumns.includes('email') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Email</th>
-                  )}
-                  {visibleColumns.includes('phone') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Phone</th>
-                  )}
-                  {visibleColumns.includes('estimatedValue') && (
-                    <th className="p-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
-                        onClick={() => handleSort('estimatedValue')}
-                      >
-                        Value
-                        <SortIcon field="estimatedValue" />
-                      </button>
-                    </th>
-                  )}
-                  {visibleColumns.includes('source') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Source</th>
-                  )}
-                  {visibleColumns.includes('sourceDetail') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Import List</th>
-                  )}
-                  {visibleColumns.includes('tags') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Tags</th>
-                  )}
-                  {visibleColumns.includes('aiEnriched') && (
-                    <th className="p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Enriched</th>
-                  )}
-                  {visibleColumns.includes('lastContacted') && (
-                    <th className="p-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
-                        onClick={() => handleSort('lastContactedAt')}
-                      >
-                        Last Contacted
-                        <SortIcon field="lastContactedAt" />
-                      </button>
-                    </th>
-                  )}
-                  {visibleColumns.includes('createdAt') && (
-                    <th className="p-3 text-left">
-                      <button
-                        className="flex items-center text-xs font-medium text-warm-700 dark:text-cream-300 hover:text-warm-900 dark:hover:text-cream-100"
-                        onClick={() => handleSort('createdAt')}
-                      >
-                        Date Added
-                        <SortIcon field="createdAt" />
-                      </button>
-                    </th>
-                  )}
-                  {visibleColumns.includes('actions') && (
-                    <th className="w-16 p-3 text-left text-xs font-medium text-warm-700 dark:text-cream-300">Actions</th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-warm-100 dark:divide-charcoal-700">
+      {/* Table */}
+      <Card className="overflow-hidden py-0">
+        <CardContent className="px-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-10 pl-4">
+                  <Checkbox
+                    checked={selectedIds.size === filteredProspects.length && filteredProspects.length > 0}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
+                {visibleColumns.includes('companyName') && (
+                  <TableHead>
+                    <button
+                      className="flex items-center transition-colors hover:text-foreground"
+                      onClick={() => handleSort('companyName')}
+                    >
+                      Business Name
+                      <SortIcon field="companyName" />
+                    </button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes('contact') && <TableHead>Contact</TableHead>}
+                {visibleColumns.includes('status') && (
+                  <TableHead>
+                    <button
+                      className="flex items-center transition-colors hover:text-foreground"
+                      onClick={() => handleSort('status')}
+                    >
+                      Status
+                      <SortIcon field="status" />
+                    </button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes('businessType') && <TableHead>Facility</TableHead>}
+                {visibleColumns.includes('priceLevel') && <TableHead>Price</TableHead>}
+                {visibleColumns.includes('priority') && (
+                  <TableHead>
+                    <button
+                      className="flex items-center transition-colors hover:text-foreground"
+                      onClick={() => handleSort('priority')}
+                    >
+                      Interest
+                      <SortIcon field="priority" />
+                    </button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes('address') && <TableHead>City</TableHead>}
+                {visibleColumns.includes('website') && <TableHead>Website</TableHead>}
+                {visibleColumns.includes('email') && <TableHead>Email</TableHead>}
+                {visibleColumns.includes('phone') && <TableHead>Phone</TableHead>}
+                {visibleColumns.includes('estimatedValue') && (
+                  <TableHead className="text-right">
+                    <button
+                      className="ml-auto flex items-center transition-colors hover:text-foreground"
+                      onClick={() => handleSort('estimatedValue')}
+                    >
+                      Value
+                      <SortIcon field="estimatedValue" />
+                    </button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes('source') && <TableHead>Source</TableHead>}
+                {visibleColumns.includes('sourceDetail') && <TableHead>Import List</TableHead>}
+                {visibleColumns.includes('tags') && <TableHead>Tags</TableHead>}
+                {visibleColumns.includes('aiEnriched') && <TableHead>Enriched</TableHead>}
+                {visibleColumns.includes('lastContacted') && (
+                  <TableHead>
+                    <button
+                      className="flex items-center transition-colors hover:text-foreground"
+                      onClick={() => handleSort('lastContactedAt')}
+                    >
+                      Last Contacted
+                      <SortIcon field="lastContactedAt" />
+                    </button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes('createdAt') && (
+                  <TableHead>
+                    <button
+                      className="flex items-center transition-colors hover:text-foreground"
+                      onClick={() => handleSort('createdAt')}
+                    >
+                      Date Added
+                      <SortIcon field="createdAt" />
+                    </button>
+                  </TableHead>
+                )}
+                {visibleColumns.includes('actions') && (
+                  <TableHead className="w-28 pr-4 text-right">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
+                )}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                 {paginatedProspects.length === 0 ? (
-                  <tr>
-                    <td colSpan={visibleColumns.length + 1} className="p-8 text-center text-warm-500 dark:text-cream-400 text-sm">
-                      No leads found matching your criteria
-                    </td>
-                  </tr>
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={visibleColumns.length + 1} className="p-0">
+                      <EmptyState
+                        icon={Search}
+                        title="No leads match these filters"
+                        description="Try widening the search or clearing a filter or two."
+                        action={
+                          <Button variant="outline" size="sm" onClick={clearFilters}>
+                            Clear filters
+                          </Button>
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
                 ) : (
                   paginatedProspects.map((prospect) => {
                     const primaryContact = prospect.contacts[0]
@@ -1606,49 +1704,60 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
 
                     const isWebsiteLead = prospect.tags?.includes('Website Lead')
                     const isNewWebsiteLead = isWebsiteLead && prospect.status === 'new'
+                    // Never render "Not provided" — fall back to the contact
+                    // name (plus the neutral Website Lead chip) or a muted dash.
+                    const hasRealName =
+                      !!prospect.companyName &&
+                      prospect.companyName.trim().toLowerCase() !== 'not provided'
+                    const contactFullName = primaryContact
+                      ? `${primaryContact.firstName} ${primaryContact.lastName}`.trim()
+                      : ''
+                    const displayName = hasRealName ? prospect.companyName : contactFullName
 
                     return (
-                      <tr
+                      <TableRow
                         key={prospect.id}
-                        className={`hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer transition-colors ${
-                          selectedIds.has(prospect.id) ? 'bg-lime-50 dark:bg-lime-500/10'
-                          : isNewWebsiteLead ? 'bg-ocean-50/60 dark:bg-ocean-500/5 border-l-2 border-l-ocean-500'
-                          : ''
+                        data-state={selectedIds.has(prospect.id) ? 'selected' : undefined}
+                        className={`cursor-pointer ${
+                          isNewWebsiteLead && !selectedIds.has(prospect.id)
+                            ? 'border-l-2 border-l-teal-600 bg-teal-600/5 dark:border-l-teal-300 dark:bg-teal-300/5'
+                            : ''
                         }`}
                         onClick={() => handleSelectProspect(prospect)}
                       >
-                        <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                        <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
                           <Checkbox
                             checked={selectedIds.has(prospect.id)}
                             onCheckedChange={() => toggleSelect(prospect.id)}
                           />
-                        </td>
+                        </TableCell>
                         {visibleColumns.includes('companyName') && (
-                          <td className="p-3">
+                          <TableCell>
                             <div className="flex items-center gap-1.5">
-                              <span className="text-sm font-medium text-warm-900 dark:text-cream-100">{prospect.companyName}</span>
+                              {displayName ? (
+                                <span className="text-sm font-medium text-foreground">{displayName}</span>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
                               {prospect.doNotContact && (
-                                <Badge variant="outline" className="text-[10px] px-1 py-0 border-red-300 dark:border-red-400/40 text-red-600 dark:text-red-300 bg-red-50 dark:bg-red-500/10">
-                                  <Ban className="h-2.5 w-2.5 mr-0.5" />DNC
+                                <Badge variant="coral">
+                                  <Ban className="h-2.5 w-2.5" />
+                                  DNC
                                 </Badge>
                               )}
-                              {isWebsiteLead && (
-                                <Badge className={`text-[10px] px-1.5 py-0 bg-ocean-500 text-white border-ocean-600 ${isNewWebsiteLead ? 'animate-pulse' : ''}`}>
-                                  Website Lead
-                                </Badge>
-                              )}
+                              {isWebsiteLead && <Badge variant="neutral">Website Lead</Badge>}
                             </div>
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('contact') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                          <TableCell className="text-xs text-muted-foreground">
                             {primaryContact ? (
                               <div className="flex items-center gap-1.5">
                                 <span>{primaryContact.firstName} {primaryContact.lastName}</span>
                                 {prospect.contacts.length > 1 && (
                                   <Badge
-                                    variant="outline"
-                                    className="rounded-sm text-[9px] px-1 py-0 h-4 bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700"
+                                    variant="neutral"
+                                    className="font-mono tabular-nums"
                                     title={`${prospect.contacts.length} contacts`}
                                   >
                                     +{prospect.contacts.length - 1}
@@ -1656,126 +1765,126 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                 )}
                               </div>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500">-</span>
+                              <span>—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('status') && (
-                          <td className="p-3">
+                          <TableCell>
                             {getStatusBadge(prospect.status)}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('businessType') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                            {prospect.businessType || <span className="text-warm-400 dark:text-cream-500">-</span>}
-                          </td>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {prospect.businessType || '—'}
+                          </TableCell>
                         )}
                         {visibleColumns.includes('priceLevel') && (
-                          <td className="p-3 text-xs">
+                          <TableCell className="font-mono text-xs tabular-nums">
                             {prospect.priceLevel ? (
-                              <span className="font-medium text-lime-700">{prospect.priceLevel}</span>
+                              <span className="text-foreground">{prospect.priceLevel}</span>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500">-</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('priority') && (
-                          <td className="p-3">
+                          <TableCell>
                             {getPriorityBadge(prospect.priority)}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('address') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                            {address?.city || <span className="text-warm-400 dark:text-cream-500">-</span>}
-                          </td>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {address?.city || '—'}
+                          </TableCell>
                         )}
                         {visibleColumns.includes('website') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                          <TableCell className="text-xs">
                             {prospect.website ? (
                               <a
                                 href={prospect.website.startsWith('http') ? prospect.website : `https://${prospect.website}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline truncate max-w-[160px] block"
+                                className="block max-w-[160px] truncate text-teal-600 hover:underline dark:text-teal-300"
                                 title={prospect.website}
                                 onClick={(e) => e.stopPropagation()}
                               >
                                 {prospect.website.replace(/^https?:\/\/(www\.)?/, '').split('/')[0]}
                               </a>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500">-</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('email') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                          <TableCell className="text-xs text-muted-foreground">
                             {primaryContact?.email ? (
-                              <span className="truncate max-w-[160px] block" title={primaryContact.email}>
+                              <span className="block max-w-[160px] truncate" title={primaryContact.email}>
                                 {primaryContact.email}
                               </span>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500">-</span>
+                              <span>—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('phone') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                            {prospect.phone || primaryContact?.phone || <span className="text-warm-400 dark:text-cream-500">-</span>}
-                          </td>
+                          <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
+                            {prospect.phone || primaryContact?.phone || '—'}
+                          </TableCell>
                         )}
                         {visibleColumns.includes('estimatedValue') && (
-                          <td className="p-3 text-xs">
+                          <TableCell className="text-right font-mono text-xs tabular-nums">
                             {prospect.estimatedValue ? (
-                              <span className="font-medium text-warm-900 dark:text-cream-100">${Number(prospect.estimatedValue).toLocaleString()}</span>
+                              <span className="font-medium text-foreground">{formatMoney(Number(prospect.estimatedValue))}</span>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500">-</span>
+                              <span className="text-muted-foreground">—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('source') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400 capitalize">
+                          <TableCell className="text-xs capitalize text-muted-foreground">
                             {prospect.source.replace('_', ' ')}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('sourceDetail') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
-                            {prospect.sourceDetail || <span className="text-warm-400 dark:text-cream-500">-</span>}
-                          </td>
+                          <TableCell className="text-xs text-muted-foreground">
+                            {prospect.sourceDetail || '—'}
+                          </TableCell>
                         )}
                         {visibleColumns.includes('tags') && (
-                          <td className="p-3">
+                          <TableCell>
                             {prospect.tags && prospect.tags.length > 0 ? (
-                              <div className="flex flex-wrap gap-1 max-w-[200px]">
+                              <div className="flex max-w-[200px] flex-wrap gap-1">
                                 {prospect.tags.slice(0, 3).map(tag => (
-                                  <Badge key={tag} className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
+                                  <Badge key={tag} variant="neutral">
                                     {tag}
                                   </Badge>
                                 ))}
                                 {prospect.tags.length > 3 && (
-                                  <Badge variant="outline" className="rounded-sm text-[10px] px-1 py-0 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400">
+                                  <Badge variant="neutral" className="font-mono tabular-nums">
                                     +{prospect.tags.length - 3}
                                   </Badge>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500 text-xs">-</span>
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('aiEnriched') && (
-                          <td className="p-3">
+                          <TableCell>
                             {prospect.aiEnriched ? (
-                              <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">
-                                <Sparkles className="h-2.5 w-2.5 mr-0.5" />
-                                Yes
+                              <Badge variant="gold">
+                                <Sparkles className="h-2.5 w-2.5" />
+                                AI
                               </Badge>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500 text-xs">-</span>
+                              <span className="text-xs text-muted-foreground">—</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('lastContacted') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                          <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
                             {prospect.lastContactedAt ? (
                               <div className="flex flex-col">
                                 <span>
@@ -1787,89 +1896,102 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
                                   })()}
                                 </span>
                                 {(prospect._count?.outreachMessages ?? 0) > 0 && (
-                                  <span className="text-warm-400 dark:text-cream-500 text-[10px]">
+                                  <span className="text-[10px]">
                                     {prospect._count!.outreachMessages} sent
                                   </span>
                                 )}
                               </div>
                             ) : (
-                              <span className="text-warm-400 dark:text-cream-500">Never</span>
+                              <span>Never</span>
                             )}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('createdAt') && (
-                          <td className="p-3 text-xs text-warm-600 dark:text-cream-400">
+                          <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
                             {new Date(prospect.createdAt).toLocaleDateString('en-US', {
                               month: 'short',
                               day: 'numeric',
                               year: 'numeric',
                             })}
-                          </td>
+                          </TableCell>
                         )}
                         {visibleColumns.includes('actions') && (
-                          <td className="p-3" onClick={(e) => e.stopPropagation()}>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-warm-900 dark:hover:text-cream-100">
-                                  <MoreHorizontal className="h-3.5 w-3.5" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="rounded-sm">
-                                <DropdownMenuItem onClick={() => handleSelectProspect(prospect)}>
-                                  <Eye className="mr-2 h-3.5 w-3.5" />
-                                  View Details
-                                </DropdownMenuItem>
-                                {primaryContact?.email && (
-                                  <DropdownMenuItem onClick={() => router.push(`/growth/outreach?prospect=${prospect.id}&channel=email`)}>
-                                    <Mail className="mr-2 h-3.5 w-3.5" />
-                                    Send Email
+                          <TableCell className="pr-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2 text-xs"
+                                onClick={() => handleSelectProspect(prospect)}
+                              >
+                                View
+                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon-sm">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => router.push(`/growth/prospects/${prospect.id}`)}>
+                                    <Pencil className="h-3.5 w-3.5" />
+                                    Edit
                                   </DropdownMenuItem>
-                                )}
-                                {(prospect.phone || primaryContact?.phone) && (
-                                  <DropdownMenuItem>
-                                    <Phone className="mr-2 h-3.5 w-3.5" />
-                                    Call
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={async () => {
-                                    try {
-                                      const response = await fetch(`/api/growth/prospects/${prospect.id}/enrich`, {
-                                        method: 'POST',
-                                      })
-                                      if (response.ok) {
-                                        const data = await response.json()
-                                        setProspects(prev => prev.map(p =>
-                                          p.id === prospect.id ? { ...p, ...data.prospect, aiEnriched: true } : p
-                                        ))
-                                        toast.success('Prospect enriched')
+                                  {primaryContact?.email && (
+                                    <DropdownMenuItem onClick={() => router.push(`/growth/outreach?prospect=${prospect.id}&channel=email`)}>
+                                      <Mail className="h-3.5 w-3.5" />
+                                      Send Email
+                                    </DropdownMenuItem>
+                                  )}
+                                  {(prospect.phone || primaryContact?.phone) && (
+                                    <DropdownMenuItem>
+                                      <Phone className="h-3.5 w-3.5" />
+                                      Call
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={async () => {
+                                      try {
+                                        const response = await fetch(`/api/growth/prospects/${prospect.id}/enrich`, {
+                                          method: 'POST',
+                                        })
+                                        if (response.ok) {
+                                          const data = await response.json()
+                                          setProspects(prev => prev.map(p =>
+                                            p.id === prospect.id ? { ...p, ...data.prospect, aiEnriched: true } : p
+                                          ))
+                                          toast.success('Prospect enriched')
+                                        }
+                                      } catch (error) {
+                                        toast.error('Failed to enrich')
                                       }
-                                    } catch (error) {
-                                      toast.error('Failed to enrich')
-                                    }
-                                  }}
-                                >
-                                  <Sparkles className="mr-2 h-3.5 w-3.5" />
-                                  AI Enrich
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </td>
+                                    }}
+                                  >
+                                    <Sparkles className="h-3.5 w-3.5" />
+                                    AI Enrich
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem onClick={() => setDeleteTarget(prospect)}>
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </TableCell>
                         )}
-                      </tr>
+                      </TableRow>
                     )
                   })
                 )}
-              </tbody>
-            </table>
-          </div>
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between mt-4">
-        <p className="text-xs text-warm-500 dark:text-cream-400">
+      <div className="mt-4 flex items-center justify-between">
+        <p className="font-mono text-xs tabular-nums text-muted-foreground">
           Showing {filteredProspects.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filteredProspects.length)} of {filteredProspects.length} leads
           {filteredProspects.length !== prospects.length && ` (${prospects.length} total)`}
         </p>
@@ -1877,20 +1999,18 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
-              size="sm"
-              className="rounded-sm h-7 px-2"
+              size="icon-sm"
               disabled={currentPage === 1}
               onClick={() => setCurrentPage(p => p - 1)}
             >
               <ChevronLeft className="h-3.5 w-3.5" />
             </Button>
-            <span className="text-xs text-warm-600 dark:text-cream-400">
+            <span className="font-mono text-xs tabular-nums text-muted-foreground">
               Page {currentPage} of {totalPages}
             </span>
             <Button
               variant="outline"
-              size="sm"
-              className="rounded-sm h-7 px-2"
+              size="icon-sm"
               disabled={currentPage === totalPages}
               onClick={() => setCurrentPage(p => p + 1)}
             >
@@ -1908,6 +2028,43 @@ export function ProspectsListClient({ prospects: initialProspects }: ProspectsLi
           onSave={handleSaveProspect}
         />
       )}
+
+      {/* Delete confirmation — the only place red is allowed */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently deletes{' '}
+              <span className="font-medium text-foreground">{deleteTarget?.companyName}</span>{' '}
+              along with its contacts and activity history.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleDeleteProspect()
+              }}
+              disabled={isDeleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

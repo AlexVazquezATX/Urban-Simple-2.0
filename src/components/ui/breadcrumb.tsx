@@ -25,7 +25,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
             {item.href && !isLast ? (
               <Link
                 href={item.href}
-                className="text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 {item.label}
               </Link>
@@ -33,8 +33,8 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               <span
                 className={
                   isLast
-                    ? 'font-medium text-warm-900 dark:text-cream-100'
-                    : 'text-warm-500 dark:text-cream-400'
+                    ? 'font-medium text-foreground'
+                    : 'text-muted-foreground'
                 }
                 aria-current={isLast ? 'page' : undefined}
               >
@@ -42,7 +42,7 @@ export function Breadcrumb({ items, className }: BreadcrumbProps) {
               </span>
             )}
             {!isLast && (
-              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-warm-400 dark:text-cream-500" />
+              <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />
             )}
           </span>
         )

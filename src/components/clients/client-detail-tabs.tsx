@@ -5,7 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Plus, MapPin, Mail, Phone, User, Edit } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Plus, MapPin, Mail, Phone, User, Pencil, MoreHorizontal, Trash2 } from 'lucide-react'
 import { LocationForm } from '@/components/forms/location-form'
 import { ContactForm } from '@/components/forms/contact-form'
 import { LocationCard } from '@/components/locations/location-card'
@@ -28,33 +35,21 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="bg-warm-100 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700">
-        <TabsTrigger value="overview" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
-          Overview
-        </TabsTrigger>
-        <TabsTrigger value="facilities" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
+      <TabsList className="w-full overflow-x-auto">
+        <TabsTrigger value="overview">Overview</TabsTrigger>
+        <TabsTrigger value="facilities">
           Facilities
           {client.facilityProfiles?.length > 0 && (
-            <Badge className="ml-1.5 rounded-sm text-[9px] px-1 py-0 bg-warm-200 dark:bg-charcoal-700 text-warm-600 dark:text-cream-400 border-0">
+            <Badge variant="neutral" className="px-1.5 py-0 font-mono text-[10px]">
               {client.facilityProfiles.length}
             </Badge>
           )}
         </TabsTrigger>
-        <TabsTrigger value="billing" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
-          Billing Preview
-        </TabsTrigger>
-        <TabsTrigger value="calendar" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
-          Calendar
-        </TabsTrigger>
-        <TabsTrigger value="delta" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
-          Delta Report
-        </TabsTrigger>
-        <TabsTrigger value="changelog" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
-          Change Log
-        </TabsTrigger>
-        <TabsTrigger value="documents" className="data-[state=active]:bg-white dark:data-[state=active]:bg-charcoal-900 data-[state=active]:text-warm-900 dark:data-[state=active]:text-cream-100 text-warm-600 dark:text-cream-400">
-          Documents
-        </TabsTrigger>
+        <TabsTrigger value="billing">Billing Preview</TabsTrigger>
+        <TabsTrigger value="calendar">Calendar</TabsTrigger>
+        <TabsTrigger value="delta">Delta Report</TabsTrigger>
+        <TabsTrigger value="changelog">Change Log</TabsTrigger>
+        <TabsTrigger value="documents">Documents</TabsTrigger>
       </TabsList>
 
       {/* Overview Tab — existing client detail content */}
@@ -64,19 +59,19 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
           <EditableClientInfo client={client} />
 
           {/* Contacts Card */}
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+          <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Contacts</CardTitle>
-                  <CardDescription className="text-warm-500">
+                  <CardTitle>Contacts</CardTitle>
+                  <CardDescription>
                     {client.contacts.length}{' '}
                     {client.contacts.length === 1 ? 'contact' : 'contacts'}
                   </CardDescription>
                 </div>
                 <ContactForm clientId={client.id}>
-                  <Button variant="lime" size="sm" className="rounded-sm">
-                    <Plus className="mr-2 h-4 w-4" />
+                  <Button variant="outline" size="sm">
+                    <Plus className="size-4" />
                     Add Contact
                   </Button>
                 </ContactForm>
@@ -84,37 +79,36 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
             </CardHeader>
             <CardContent>
               {client.contacts.length === 0 ? (
-                <div className="text-center py-8 text-warm-500 dark:text-cream-400">
-                  <User className="mx-auto h-12 w-12 mb-2 text-warm-400 dark:text-charcoal-600" />
-                  <p>No contacts yet</p>
-                  <ContactForm clientId={client.id}>
-                    <Button variant="outline" size="sm" className="mt-4 rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400">
-                      Add First Contact
-                    </Button>
-                  </ContactForm>
-                </div>
+                <EmptyState
+                  icon={User}
+                  title="No contacts yet"
+                  description={`Add the people you coordinate with at ${client.name}.`}
+                  action={
+                    <ContactForm clientId={client.id}>
+                      <Button variant="outline" size="sm">
+                        Add First Contact
+                      </Button>
+                    </ContactForm>
+                  }
+                />
               ) : (
                 <div className="space-y-3">
                   {client.contacts.map((contact: any) => (
                     <div
                       key={contact.id}
-                      className="flex items-start justify-between p-3 border border-warm-200 dark:border-charcoal-700 rounded-sm hover:border-ocean-400 transition-colors"
+                      className="flex items-start justify-between rounded-[10px] border border-border p-3 transition-colors hover:bg-secondary/40"
                     >
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-warm-900 dark:text-cream-100">
+                          <p className="font-medium text-foreground">
                             {contact.firstName} {contact.lastName}
                           </p>
-                          <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 capitalize border-warm-300 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">
+                          <Badge variant="neutral" className="capitalize">
                             {contact.role}
                           </Badge>
-                          {contact.isPortalUser && (
-                            <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
-                              Portal
-                            </Badge>
-                          )}
+                          {contact.isPortalUser && <Badge variant="teal">Portal</Badge>}
                         </div>
-                        <div className="flex items-center gap-4 mt-1 text-sm text-warm-500 dark:text-cream-400">
+                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
                           {contact.email && (
                             <div className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />
@@ -136,15 +130,31 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
                           contactEmail={contact.email}
                           isPortalUser={!!contact.isPortalUser}
                         />
-                        <ContactForm clientId={client.id} contact={contact}>
-                          <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </ContactForm>
-                        <DeleteContactButton
-                          clientId={client.id}
-                          contactId={contact.id}
-                        />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Actions for ${contact.firstName} ${contact.lastName}`}
+                            >
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <ContactForm clientId={client.id} contact={contact}>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Pencil className="size-4" />
+                                Edit
+                              </DropdownMenuItem>
+                            </ContactForm>
+                            <DeleteContactButton clientId={client.id} contactId={contact.id}>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Trash2 className="size-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DeleteContactButton>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                   ))}
@@ -155,20 +165,20 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
         </div>
 
         {/* Locations Section */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Locations</CardTitle>
-                <CardDescription className="text-warm-500">
+                <CardTitle>Locations</CardTitle>
+                <CardDescription>
                   {client.locations.length}{' '}
                   {client.locations.length === 1 ? 'location' : 'locations'} for{' '}
                   {client.name}
                 </CardDescription>
               </div>
               <LocationForm clientId={client.id}>
-                <Button variant="lime" className="rounded-sm">
-                  <Plus className="mr-2 h-4 w-4" />
+                <Button variant="gold">
+                  <Plus className="size-4" />
                   Add Location
                 </Button>
               </LocationForm>
@@ -176,21 +186,21 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
           </CardHeader>
           <CardContent>
             {client.locations.length === 0 ? (
-              <div className="text-center py-12 text-warm-500 dark:text-cream-400">
-                <MapPin className="mx-auto h-16 w-16 mb-4 text-warm-400 dark:text-charcoal-600" />
-                <p className="text-lg font-medium mb-2 text-warm-700 dark:text-cream-300">No locations yet</p>
-                <p className="text-sm mb-4">
-                  Add locations for {client.name} to get started
-                </p>
-                <LocationForm clientId={client.id}>
-                  <Button variant="outline" className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-ocean-400">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add First Location
-                  </Button>
-                </LocationForm>
-              </div>
+              <EmptyState
+                icon={MapPin}
+                title="No locations yet"
+                description={`Add locations for ${client.name} to start scheduling service.`}
+                action={
+                  <LocationForm clientId={client.id}>
+                    <Button variant="outline">
+                      <Plus className="size-4" />
+                      Add First Location
+                    </Button>
+                  </LocationForm>
+                }
+              />
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {client.locations.map((location: any) => (
                   <LocationCard key={location.id} location={location} />
                 ))}
@@ -200,28 +210,26 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
         </Card>
 
         {/* Quick Stats */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <Card>
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Quick Stats</CardTitle>
+            <CardTitle>Quick Stats</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-warm-500 dark:text-cream-400">Invoices</span>
-              <span className="font-medium text-warm-900 dark:text-cream-100">{client._count.invoices}</span>
+              <span className="text-sm text-muted-foreground">Invoices</span>
+              <span className="font-mono font-medium tabular-nums text-foreground">
+                {client._count.invoices}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-warm-500 dark:text-cream-400">Payments</span>
-              <span className="font-medium text-warm-900 dark:text-cream-100">{client._count.payments}</span>
+              <span className="text-sm text-muted-foreground">Payments</span>
+              <span className="font-mono font-medium tabular-nums text-foreground">
+                {client._count.payments}
+              </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-warm-500 dark:text-cream-400">Open Issues</span>
-              <Badge
-                className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                  client._count.issues > 0
-                    ? 'bg-red-100 text-red-700 border-red-200'
-                    : 'bg-warm-100 text-warm-600 border-warm-200'
-                }`}
-              >
+              <span className="text-sm text-muted-foreground">Open Issues</span>
+              <Badge variant={client._count.issues > 0 ? 'coral' : 'neutral'}>
                 {client._count.issues}
               </Badge>
             </div>

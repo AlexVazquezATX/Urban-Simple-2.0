@@ -1,21 +1,22 @@
+import { format } from 'date-fns'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { WalkthroughCapture } from '@/components/portal/walkthrough-capture'
 import { DEFAULT_WALKTHROUGH_ZONES } from '@/lib/portal-walkthrough'
+import { LivePage } from '@/components/portal/live-shell'
+
+// Walkthrough capture — LiveWalkthrough spec (usp-live-pages.jsx): zone list
+// left, capture panel right, live progress bar in the page head. The kicker
+// date is formatted server-side to keep hydration stable.
 
 export default async function NewWalkthroughPage() {
   const ctx = await requirePortalContext()
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-display font-medium text-warm-900">Morning Walkthrough</h1>
-        <p className="mt-1 text-sm text-warm-500">
-          Quick photo + note capture by zone. ~60 seconds. Builds your inspection trail.
-        </p>
-      </div>
+    <LivePage wide>
       <WalkthroughCapture
+        kicker={format(new Date(), 'EEEE · MMMM d')}
         locations={ctx.locations.map(l => ({ id: l.id, name: l.name }))}
         defaultZones={[...DEFAULT_WALKTHROUGH_ZONES]}
       />
-    </div>
+    </LivePage>
   )
 }

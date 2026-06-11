@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   AlertCircle,
   History,
@@ -39,11 +40,30 @@ interface ChangelogResponse {
   hasMore: boolean
 }
 
+// Action → tone mapping: created is success (green), updated is informational
+// (teal), deleted needs attention (coral — never red outside confirm
+// dialogs), status changes are gold.
 const ACTION_CONFIG: Record<string, { label: string; icon: typeof Plus; color: string }> = {
-  create: { label: 'Created', icon: Plus, color: 'bg-lime-100 text-lime-700 border-lime-200' },
-  update: { label: 'Updated', icon: Pencil, color: 'bg-ocean-100 text-ocean-700 border-ocean-200' },
-  delete: { label: 'Deleted', icon: Trash2, color: 'bg-red-100 text-red-700 border-red-200' },
-  status_change: { label: 'Status changed', icon: ToggleLeft, color: 'bg-yellow-100 text-yellow-700 border-yellow-200' },
+  create: {
+    label: 'Created',
+    icon: Plus,
+    color: 'text-green-600 bg-green-600/12 border-green-600/30 dark:text-green-300 dark:bg-green-300/12 dark:border-green-300/25',
+  },
+  update: {
+    label: 'Updated',
+    icon: Pencil,
+    color: 'text-teal-600 bg-teal-600/10 border-teal-600/30 dark:text-teal-300 dark:bg-teal-300/12 dark:border-teal-300/25',
+  },
+  delete: {
+    label: 'Deleted',
+    icon: Trash2,
+    color: 'text-coral-600 bg-coral-600/10 border-coral-600/30 dark:text-coral-300 dark:bg-coral-300/12 dark:border-coral-300/25',
+  },
+  status_change: {
+    label: 'Status changed',
+    icon: ToggleLeft,
+    color: 'text-gold-600 bg-gold-600/10 border-gold-600/30 dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25',
+  },
 }
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -167,11 +187,11 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
 
   if (error) {
     return (
-      <Card className="border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
-          <p className="text-sm text-warm-600 dark:text-cream-400 mb-4">{error}</p>
-          <Button variant="outline" size="sm" onClick={() => fetchChangelog()} className="rounded-sm">
+          <AlertCircle className="mb-3 h-8 w-8 text-coral-600 dark:text-coral-300" />
+          <p className="mb-4 text-sm text-muted-foreground">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => fetchChangelog()}>
             Retry
           </Button>
         </CardContent>
@@ -181,13 +201,13 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
 
   if (entries.length === 0) {
     return (
-      <Card className="border-warm-200 dark:border-charcoal-700">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <History className="h-12 w-12 text-warm-300 dark:text-charcoal-600 mb-3" />
-          <p className="text-sm font-medium text-warm-700 dark:text-cream-300">No changes recorded yet</p>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-            Changes to facilities, overrides, and seasonal rules will appear here.
-          </p>
+      <Card>
+        <CardContent>
+          <EmptyState
+            icon={History}
+            title="No changes recorded yet"
+            description="Changes to facilities, overrides, and seasonal rules will appear here."
+          />
         </CardContent>
       </Card>
     )
@@ -197,25 +217,23 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
   const grouped = groupByDate(entries)
 
   return (
-    <Card className="border-warm-200 dark:border-charcoal-700">
-      <CardHeader className="pb-3">
+    <Card className="gap-3">
+      <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-display font-medium text-warm-900 dark:text-cream-100">
-            Change Log
-          </CardTitle>
-          <span className="text-xs text-warm-500 dark:text-cream-400">
+          <CardTitle className="text-[15px]">Change Log</CardTitle>
+          <span className="font-mono text-xs tabular-nums text-muted-foreground">
             {entries.length} changes{hasMore ? '+' : ''}
           </span>
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="divide-y divide-warm-100 dark:divide-charcoal-700">
+        <div className="divide-y divide-border">
           {grouped.map(({ dateLabel, items }) => (
             <div key={dateLabel}>
-              <div className="px-4 py-2 bg-warm-50/50 dark:bg-charcoal-800/50 sticky top-0">
-                <p className="text-xs font-medium text-warm-500 dark:text-cream-400">{dateLabel}</p>
+              <div className="sticky top-0 bg-secondary/50 px-6 py-2">
+                <p className="kicker text-muted-foreground">{dateLabel}</p>
               </div>
-              <div className="divide-y divide-warm-100 dark:divide-charcoal-700">
+              <div className="divide-y divide-border">
                 {items.map(entry => (
                   <ChangelogEntry key={entry.id} entry={entry} />
                 ))}
@@ -225,19 +243,18 @@ export function ChangelogTab({ clientId }: ChangelogTabProps) {
         </div>
 
         {hasMore && (
-          <div className="p-4 text-center border-t border-warm-100 dark:border-charcoal-700">
+          <div className="border-t border-border p-4 text-center">
             <Button
               variant="outline"
               size="sm"
               onClick={() => fetchChangelog(nextCursor!)}
               disabled={loadingMore}
-              className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
             >
               {loadingMore ? (
                 'Loading...'
               ) : (
                 <>
-                  <ChevronDown className="h-3.5 w-3.5 mr-1.5" />
+                  <ChevronDown className="h-3.5 w-3.5" />
                   Load More
                 </>
               )}
@@ -266,44 +283,42 @@ function ChangelogEntry({ entry }: { entry: AuditLogEntry }) {
   const hasCreateDetails = entry.action === 'create' && entry.newValues && Object.keys(entry.newValues).length > 0
 
   return (
-    <div className="px-4 py-3">
+    <div className="px-6 py-3">
       <div
         className={`flex items-start gap-3 ${hasDetails || hasCreateDetails ? 'cursor-pointer' : ''}`}
         onClick={() => (hasDetails || hasCreateDetails) && setExpanded(!expanded)}
       >
-        <div className={`flex-shrink-0 mt-0.5 p-1 rounded-sm border ${config.color}`}>
+        <div className={`mt-0.5 flex-shrink-0 rounded-[6px] border p-1 ${config.color}`}>
           <Icon className="h-3 w-3" />
         </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-warm-800 dark:text-cream-200">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-foreground">
               <span className="font-medium">{entry.user.firstName} {entry.user.lastName}</span>
               {' '}{config.label.toLowerCase()}{' '}
-              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-warm-200 dark:border-charcoal-700 text-warm-600 dark:text-cream-400">
-                {entityLabel}
-              </Badge>
+              <Badge variant="neutral">{entityLabel}</Badge>
             </span>
             {(hasDetails || hasCreateDetails) && (
-              <ChevronDown className={`h-3 w-3 text-warm-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`h-3 w-3 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
             )}
           </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{time}</p>
+          <p className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">{time}</p>
         </div>
       </div>
 
       {/* Field-level changes */}
       {expanded && hasDetails && entry.oldValues && entry.newValues && (
-        <div className="mt-2 ml-9 space-y-1.5">
+        <div className="ml-9 mt-2 space-y-1.5">
           {Object.keys(entry.newValues).map(field => (
             <div key={field} className="flex items-start gap-2 text-xs">
-              <span className="text-warm-500 dark:text-cream-400 min-w-[120px] flex-shrink-0">
+              <span className="min-w-[120px] flex-shrink-0 text-muted-foreground">
                 {FIELD_LABELS[field] || field}
               </span>
-              <span className="text-red-500 line-through">
+              <span className="text-muted-foreground line-through">
                 {formatFieldValue(field, entry.oldValues![field])}
               </span>
-              <span className="text-warm-400">&rarr;</span>
-              <span className="text-lime-700 font-medium">
+              <span className="text-muted-foreground">&rarr;</span>
+              <span className="font-medium text-green-600 dark:text-green-300">
                 {formatFieldValue(field, entry.newValues![field])}
               </span>
             </div>
@@ -313,13 +328,13 @@ function ChangelogEntry({ entry }: { entry: AuditLogEntry }) {
 
       {/* Create details */}
       {expanded && hasCreateDetails && entry.newValues && (
-        <div className="mt-2 ml-9 space-y-1.5">
+        <div className="ml-9 mt-2 space-y-1.5">
           {Object.keys(entry.newValues).map(field => (
             <div key={field} className="flex items-start gap-2 text-xs">
-              <span className="text-warm-500 dark:text-cream-400 min-w-[120px] flex-shrink-0">
+              <span className="min-w-[120px] flex-shrink-0 text-muted-foreground">
                 {FIELD_LABELS[field] || field}
               </span>
-              <span className="text-lime-700 font-medium">
+              <span className="font-medium text-green-600 dark:text-green-300">
                 {formatFieldValue(field, entry.newValues![field])}
               </span>
             </div>
@@ -369,16 +384,16 @@ function formatDateLabel(iso: string): string {
 
 function ChangelogSkeleton() {
   return (
-    <Card className="border-warm-200 dark:border-charcoal-700">
-      <CardHeader className="pb-3">
+    <Card className="gap-3">
+      <CardHeader className="pb-0">
         <Skeleton className="h-4 w-32" />
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {[1, 2, 3, 4, 5].map(i => (
             <div key={i} className="flex items-start gap-3">
-              <Skeleton className="h-6 w-6 rounded-sm" />
-              <div className="space-y-1.5 flex-1">
+              <Skeleton className="h-6 w-6 rounded-[6px]" />
+              <div className="flex-1 space-y-1.5">
                 <Skeleton className="h-4 w-3/4" />
                 <Skeleton className="h-3 w-20" />
               </div>

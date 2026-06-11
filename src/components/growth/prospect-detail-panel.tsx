@@ -57,6 +57,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Switch } from '@/components/ui/switch'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { format } from 'date-fns'
@@ -663,34 +664,35 @@ export function ProspectDetailPanel({
     toast.success('Email added to contact')
   }
 
+  // Chip mapping: urgent→coral · hot→gold · the rest stay quiet
   const getInterestBadge = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">urgent</Badge>
+        return <Badge variant="coral">urgent</Badge>
       case 'high':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-orange-100 text-orange-700 border-orange-200">hot</Badge>
+        return <Badge variant="gold">hot</Badge>
       case 'medium':
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-yellow-100 text-yellow-700 border-yellow-200">warm</Badge>
+        return <Badge variant="neutral">warm</Badge>
       default:
-        return <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 border-blue-200">cold</Badge>
+        return <Badge variant="neutral">cold</Badge>
     }
   }
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
-      prospect: 'bg-warm-100 dark:bg-charcoal-800 text-warm-600 dark:text-cream-400 border-warm-200 dark:border-charcoal-700',
-      new: 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700',
-      researching: 'bg-plum-100 text-plum-700 border-plum-200',
-      contacted: 'bg-ocean-100 text-ocean-700 border-ocean-200',
-      engaged: 'bg-ocean-100 text-ocean-700 border-ocean-200',
-      qualified: 'bg-lime-100 text-lime-700 border-lime-200',
-      proposal_sent: 'bg-warm-200 dark:bg-charcoal-700 text-warm-700 dark:text-cream-300 border-warm-300 dark:border-charcoal-700',
-      won: 'bg-lime-100 text-lime-700 border-lime-200',
-      lost: 'bg-red-100 text-red-700 border-red-200',
-      nurturing: 'bg-plum-100 text-plum-700 border-plum-200',
+    const variants: Record<string, 'neutral' | 'gold' | 'teal' | 'coral' | 'green'> = {
+      prospect: 'neutral',
+      new: 'neutral',
+      researching: 'neutral',
+      contacted: 'teal',
+      engaged: 'teal',
+      qualified: 'green',
+      proposal_sent: 'gold',
+      won: 'green',
+      lost: 'coral',
+      nurturing: 'neutral',
     }
     return (
-      <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${colors[status] || 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 border-warm-200 dark:border-charcoal-700'}`}>
+      <Badge variant={variants[status] || 'neutral'}>
         {status.replace('_', ' ')}
       </Badge>
     )
@@ -703,7 +705,7 @@ export function ProspectDetailPanel({
       {/* Backdrop */}
       <div
         className={cn(
-          'absolute inset-0 bg-warm-900/20 transition-opacity duration-200',
+          'absolute inset-0 bg-ink-950/30 transition-opacity duration-200',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
         onClick={handleClose}
@@ -712,14 +714,14 @@ export function ProspectDetailPanel({
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full max-w-xl bg-white dark:bg-charcoal-900 shadow-xl border-l border-warm-200 dark:border-charcoal-700 flex flex-col transition-transform duration-200 ease-out',
+          'relative w-full max-w-xl bg-card shadow-xl border-l border-border flex flex-col transition-transform duration-200 ease-out',
           isVisible ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-secondary/50">
           <div className="flex-1 min-w-0">
-            <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100 truncate">
+            <h2 className="font-display text-lg font-bold tracking-[-0.3px] text-foreground truncate">
               {formData.companyName}
             </h2>
             <div className="flex items-center gap-2 mt-1">
@@ -731,10 +733,10 @@ export function ProspectDetailPanel({
             {formData.status === 'prospect' && (
               <Button
                 size="sm"
+                variant="outline"
                 onClick={handleMoveToPipeline}
-                className="bg-bronze-500 hover:bg-bronze-600 text-white rounded-sm"
               >
-                <ArrowRight className="mr-1.5 h-3.5 w-3.5" />
+                <ArrowRight className="h-3.5 w-3.5" />
                 Pipeline
               </Button>
             )}
@@ -743,7 +745,6 @@ export function ProspectDetailPanel({
               variant="outline"
               onClick={handleEnrich}
               disabled={isEnriching}
-              className="rounded-sm"
             >
               {isEnriching ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -753,18 +754,18 @@ export function ProspectDetailPanel({
             </Button>
             <button
               onClick={handleClose}
-              className="p-2 rounded-sm hover:bg-warm-200 dark:bg-charcoal-700 transition-colors"
+              className="p-2 rounded-[9px] hover:bg-secondary transition-colors"
             >
-              <X className="w-5 h-5 text-warm-500 dark:text-cream-400" />
+              <X className="w-5 h-5 text-muted-foreground" />
             </button>
           </div>
         </div>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <TabsList className="mx-5 mt-3 rounded-sm bg-warm-100 dark:bg-charcoal-800 p-1 justify-start">
-            <TabsTrigger value="details" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Details</TabsTrigger>
-            <TabsTrigger value="activity" className="text-xs rounded-sm data-[state=active]:bg-white data-[state=active]:dark:bg-charcoal-900">Activity</TabsTrigger>
+          <TabsList className="mx-5 mt-3 justify-start">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
           {/* Details Tab */}
@@ -772,11 +773,11 @@ export function ProspectDetailPanel({
             {/* Contact Information */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
-                  <Users className="h-4 w-4" />
+                <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
                   Contacts
                   {contacts.length > 1 && (
-                    <Badge variant="outline" className="ml-1 text-[10px] rounded-sm">
+                    <Badge variant="neutral" className="ml-1 font-mono tabular-nums">
                       {contacts.length}
                     </Badge>
                   )}
@@ -785,24 +786,24 @@ export function ProspectDetailPanel({
                   variant="ghost"
                   size="sm"
                   onClick={handleAddContact}
-                  className="h-7 text-xs text-bronze-600 hover:text-bronze-700 hover:bg-bronze-50"
+                  className="h-7 text-xs"
                 >
-                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  <Plus className="h-3.5 w-3.5" />
                   Add
                 </Button>
               </div>
 
               {/* Contact Selector - shows when multiple contacts */}
               {contacts.length > 1 && (
-                <div className="flex flex-wrap gap-1.5 p-2 bg-warm-50 dark:bg-charcoal-800 rounded-sm border border-warm-200 dark:border-charcoal-700">
+                <div className="flex flex-wrap gap-1.5 p-2 bg-secondary/50 rounded-[9px] border border-border">
                   {contacts.map((contact, index) => (
                     <div
                       key={contact.id}
                       className={cn(
-                        'group flex items-center gap-1.5 px-2 py-1 rounded-sm text-xs cursor-pointer transition-colors',
+                        'group flex items-center gap-1.5 px-2 py-1 rounded-full text-xs cursor-pointer transition-colors border',
                         selectedContactIndex === index
-                          ? 'bg-bronze-500 text-white'
-                          : 'bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 hover:border-bronze-300 text-warm-700 dark:text-cream-300'
+                          ? 'border-gold-600/30 bg-gold-600/10 text-gold-600 dark:border-gold-400/25 dark:bg-gold-400/12 dark:text-gold-400'
+                          : 'bg-card border-border text-muted-foreground hover:border-gold-600/30 dark:hover:border-gold-400/25'
                       )}
                       onClick={() => handleSwitchContact(index)}
                     >
@@ -814,7 +815,9 @@ export function ProspectDetailPanel({
                       {contact.email && (
                         <Mail className={cn(
                           'h-3 w-3',
-                          selectedContactIndex === index ? 'text-white/70' : 'text-warm-400 dark:text-cream-500'
+                          selectedContactIndex === index
+                            ? 'text-gold-600/70 dark:text-gold-400/70'
+                            : 'text-muted-foreground'
                         )} />
                       )}
                       {contacts.length > 1 && selectedContactIndex === index && (
@@ -823,7 +826,7 @@ export function ProspectDetailPanel({
                             e.stopPropagation()
                             handleDeleteContact(index)
                           }}
-                          className="ml-0.5 p-0.5 rounded hover:bg-white dark:bg-charcoal-900/20"
+                          className="ml-0.5 p-0.5 rounded hover:opacity-70"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
@@ -840,7 +843,7 @@ export function ProspectDetailPanel({
                     value={formData.contactName}
                     onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
                     placeholder="John Smith"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -849,7 +852,7 @@ export function ProspectDetailPanel({
                     value={formData.contactTitle}
                     onChange={(e) => setFormData({ ...formData, contactTitle: e.target.value })}
                     placeholder="Owner, GM, etc."
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
@@ -859,7 +862,7 @@ export function ProspectDetailPanel({
                 <Input
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                  className="rounded-sm h-9 text-sm"
+                  className="h-9 text-sm"
                 />
               </div>
 
@@ -871,7 +874,7 @@ export function ProspectDetailPanel({
                     value={formData.contactEmail}
                     onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
                     placeholder="john@company.com"
-                    className="rounded-sm h-9 text-sm flex-1"
+                    className="h-9 text-sm flex-1"
                   />
                   <Popover open={showEmailSuggestions} onOpenChange={setShowEmailSuggestions}>
                     <PopoverTrigger asChild>
@@ -881,16 +884,16 @@ export function ProspectDetailPanel({
                         onClick={handleFindEmail}
                         disabled={isFindingEmail}
                         title="Find email using Apollo.io"
-                        className="h-9 w-9 bg-bronze-50 hover:bg-bronze-100 border-bronze-200 rounded-sm"
+                        className="h-9 w-9"
                       >
                         {isFindingEmail ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Search className="h-4 w-4 text-bronze-600" />
+                          <Search className="h-4 w-4 text-gold-600 dark:text-gold-400" />
                         )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-72 p-0 rounded-sm" align="end">
+                    <PopoverContent className="w-72 p-0" align="end">
                       <div className="p-3 border-b">
                         <div className="flex items-center justify-between">
                           <h4 className="font-semibold text-sm">Email Suggestions</h4>
@@ -911,7 +914,7 @@ export function ProspectDetailPanel({
                           </div>
                         ) : (
                           emailSuggestions.map((suggestion, idx) => (
-                            <div key={idx} className="p-2.5 border-b last:border-0 hover:bg-warm-50 dark:hover:bg-charcoal-800">
+                            <div key={idx} className="p-2.5 border-b last:border-0 hover:bg-secondary/50">
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1 min-w-0">
                                   <p className="font-medium text-xs truncate">{suggestion.email}</p>
@@ -920,19 +923,22 @@ export function ProspectDetailPanel({
                                       {suggestion.source || 'unknown'}
                                     </span>
                                     {suggestion.confidence && (
-                                      <span className={`text-[10px] px-1 py-0 rounded ${
-                                        suggestion.confidence >= 80 ? 'bg-green-100 text-green-700' :
-                                        suggestion.confidence >= 50 ? 'bg-yellow-100 text-yellow-700' :
-                                        'bg-gray-100 text-gray-700'
-                                      }`}>
+                                      <Badge
+                                        variant={
+                                          suggestion.confidence >= 80 ? 'green' :
+                                          suggestion.confidence >= 50 ? 'gold' :
+                                          'neutral'
+                                        }
+                                        className="font-mono tabular-nums"
+                                      >
                                         {suggestion.confidence}%
-                                      </span>
+                                      </Badge>
                                     )}
                                     {suggestion.verified && (
                                       suggestion.verificationResult?.deliverability === 'DELIVERABLE' ? (
-                                        <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                        <CheckCircle2 className="h-3 w-3 text-green-600 dark:text-green-300" />
                                       ) : (
-                                        <AlertCircle className="h-3 w-3 text-yellow-600" />
+                                        <AlertCircle className="h-3 w-3 text-gold-600 dark:text-gold-400" />
                                       )
                                     )}
                                   </div>
@@ -950,8 +956,9 @@ export function ProspectDetailPanel({
                                     ) : suggestion.verified ? 'OK' : 'Verify'}
                                   </Button>
                                   <Button
+                                    variant="outline"
                                     size="sm"
-                                    className="h-6 text-[10px] px-2 bg-bronze-500 hover:bg-bronze-600"
+                                    className="h-6 text-[10px] px-2"
                                     onClick={() => handleSelectEmail(suggestion.email)}
                                   >
                                     Use
@@ -974,7 +981,7 @@ export function ProspectDetailPanel({
                     value={formData.contactPhone}
                     onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
                     placeholder="(512) 555-1234"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -984,13 +991,13 @@ export function ProspectDetailPanel({
                       value={formData.website}
                       onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                       placeholder="company.com"
-                      className="rounded-sm h-9 text-sm flex-1"
+                      className="h-9 text-sm flex-1"
                     />
                     {formData.website && (
                       <Button
                         variant="outline"
                         size="icon"
-                        className="h-9 w-9 rounded-sm"
+                        className="h-9 w-9"
                         onClick={() => window.open(formData.website.startsWith('http') ? formData.website : `https://${formData.website}`, '_blank')}
                       >
                         <ExternalLink className="h-3.5 w-3.5" />
@@ -1002,8 +1009,8 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Location & Business */}
-            <div className="space-y-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
-              <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
+            <div className="space-y-4 pt-4 border-t border-border">
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                 <MapPin className="h-4 w-4" />
                 Location & Business
               </h3>
@@ -1015,7 +1022,7 @@ export function ProspectDetailPanel({
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Austin"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1024,7 +1031,7 @@ export function ProspectDetailPanel({
                     value={formData.state}
                     onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                     placeholder="TX"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
@@ -1036,7 +1043,7 @@ export function ProspectDetailPanel({
                     value={formData.businessType}
                     onValueChange={(value) => setFormData({ ...formData, businessType: value })}
                   >
-                    <SelectTrigger className="rounded-sm h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1052,7 +1059,7 @@ export function ProspectDetailPanel({
                     value={formData.priceLevel}
                     onValueChange={(value) => setFormData({ ...formData, priceLevel: value })}
                   >
-                    <SelectTrigger className="rounded-sm h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder="$" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1071,7 +1078,7 @@ export function ProspectDetailPanel({
                     value={formData.estimatedSize}
                     onValueChange={(value) => setFormData({ ...formData, estimatedSize: value })}
                   >
-                    <SelectTrigger className="rounded-sm h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue placeholder="Select size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -1087,15 +1094,15 @@ export function ProspectDetailPanel({
                     value={formData.industry}
                     onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
                     placeholder="Hospitality"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
             </div>
 
             {/* Pipeline & Status */}
-            <div className="space-y-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
-              <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
+            <div className="space-y-4 pt-4 border-t border-border">
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                 <DollarSign className="h-4 w-4" />
                 Pipeline & Status
               </h3>
@@ -1107,7 +1114,7 @@ export function ProspectDetailPanel({
                     value={formData.status}
                     onValueChange={(value) => setFormData({ ...formData, status: value })}
                   >
-                    <SelectTrigger className="rounded-sm h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1123,7 +1130,7 @@ export function ProspectDetailPanel({
                     value={formData.priority}
                     onValueChange={(value) => setFormData({ ...formData, priority: value })}
                   >
-                    <SelectTrigger className="rounded-sm h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1143,7 +1150,7 @@ export function ProspectDetailPanel({
                     value={formData.estimatedValue}
                     onChange={(e) => setFormData({ ...formData, estimatedValue: e.target.value })}
                     placeholder="10000"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -1152,7 +1159,7 @@ export function ProspectDetailPanel({
                     value={formData.source}
                     onValueChange={(value) => setFormData({ ...formData, source: value })}
                   >
-                    <SelectTrigger className="rounded-sm h-9 text-sm">
+                    <SelectTrigger className="h-9 text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -1166,13 +1173,13 @@ export function ProspectDetailPanel({
             </div>
 
             {/* Do Not Contact */}
-            <div className="pt-4 border-t border-warm-200 dark:border-charcoal-700">
-              <div className={`flex items-center justify-between rounded-sm p-3 ${prospect?.doNotContact ? 'bg-red-50 border border-red-200' : 'bg-warm-50 dark:bg-charcoal-800 border border-warm-200 dark:border-charcoal-700'}`}>
+            <div className="pt-4 border-t border-border">
+              <div className={`flex items-center justify-between rounded-[9px] p-3 ${prospect?.doNotContact ? 'border border-coral-600/30 bg-coral-600/10 dark:border-coral-300/25 dark:bg-coral-300/12' : 'bg-secondary/50 border border-border'}`}>
                 <div className="flex items-center gap-2">
-                  <Ban className={`h-4 w-4 ${prospect?.doNotContact ? 'text-red-500' : 'text-warm-400 dark:text-cream-500'}`} />
+                  <Ban className={`h-4 w-4 ${prospect?.doNotContact ? 'text-coral-600 dark:text-coral-300' : 'text-muted-foreground'}`} />
                   <div>
-                    <p className={`text-sm font-medium ${prospect?.doNotContact ? 'text-red-700' : 'text-warm-700 dark:text-cream-300'}`}>Do Not Contact</p>
-                    <p className="text-[10px] text-warm-500 dark:text-cream-400">
+                    <p className={`text-sm font-medium ${prospect?.doNotContact ? 'text-coral-600 dark:text-coral-300' : 'text-foreground'}`}>Do Not Contact</p>
+                    <p className="text-[10px] text-muted-foreground">
                       {prospect?.doNotContact ? 'All outreach is blocked. Pending messages were cancelled.' : 'Toggle on to block all outreach to this prospect.'}
                     </p>
                   </div>
@@ -1196,14 +1203,14 @@ export function ProspectDetailPanel({
                       toast.error('Failed to update')
                     }
                   }}
-                  className={prospect?.doNotContact ? 'data-[state=checked]:bg-red-500' : ''}
+                  className={prospect?.doNotContact ? 'data-[state=checked]:bg-coral-600 dark:data-[state=checked]:bg-coral-300' : ''}
                 />
               </div>
             </div>
 
             {/* Social Media */}
-            <div className="space-y-4 pt-4 border-t border-warm-200 dark:border-charcoal-700">
-              <h3 className="text-sm font-medium text-warm-700 dark:text-cream-300 flex items-center gap-2">
+            <div className="space-y-4 pt-4 border-t border-border">
+              <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
                 <Globe className="h-4 w-4" />
                 Social Media
               </h3>
@@ -1211,26 +1218,26 @@ export function ProspectDetailPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center gap-1.5">
-                    <Linkedin className="h-3 w-3 text-blue-600" />
+                    <Linkedin className="h-3 w-3 text-muted-foreground" />
                     LinkedIn
                   </Label>
                   <Input
                     value={formData.linkedin}
                     onChange={(e) => setFormData({ ...formData, linkedin: e.target.value })}
                     placeholder="LinkedIn URL"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center gap-1.5">
-                    <Instagram className="h-3 w-3 text-pink-600" />
+                    <Instagram className="h-3 w-3 text-muted-foreground" />
                     Instagram
                   </Label>
                   <Input
                     value={formData.instagram}
                     onChange={(e) => setFormData({ ...formData, instagram: e.target.value })}
                     placeholder="Instagram URL"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
@@ -1238,40 +1245,40 @@ export function ProspectDetailPanel({
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center gap-1.5">
-                    <Facebook className="h-3 w-3 text-blue-700" />
+                    <Facebook className="h-3 w-3 text-muted-foreground" />
                     Facebook
                   </Label>
                   <Input
                     value={formData.facebook}
                     onChange={(e) => setFormData({ ...formData, facebook: e.target.value })}
                     placeholder="Facebook URL"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs flex items-center gap-1.5">
-                    <Twitter className="h-3 w-3 text-sky-500" />
+                    <Twitter className="h-3 w-3 text-muted-foreground" />
                     Twitter
                   </Label>
                   <Input
                     value={formData.twitter}
                     onChange={(e) => setFormData({ ...formData, twitter: e.target.value })}
                     placeholder="Twitter URL"
-                    className="rounded-sm h-9 text-sm"
+                    className="h-9 text-sm"
                   />
                 </div>
               </div>
             </div>
 
             {/* Notes */}
-            <div className="space-y-2 pt-4 border-t border-warm-200 dark:border-charcoal-700">
+            <div className="space-y-2 pt-4 border-t border-border">
               <Label className="text-xs">Notes</Label>
               <Textarea
                 value={formData.notes}
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Add your notes about this lead..."
                 rows={3}
-                className="rounded-sm text-sm resize-none"
+                className="text-sm resize-none"
               />
             </div>
           </TabsContent>
@@ -1279,15 +1286,15 @@ export function ProspectDetailPanel({
           {/* Activity Tab */}
           <TabsContent value="activity" className="flex-1 overflow-y-auto scrollbar-elegant p-5 mt-0">
             {!prospect.activities || prospect.activities.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Calendar className="mx-auto h-10 w-10 mb-3 opacity-50" />
-                <p className="font-medium text-sm">No activities yet</p>
-                <p className="text-xs mt-1">Activities will appear here when you interact with this lead</p>
-              </div>
+              <EmptyState
+                icon={Calendar}
+                title="No activity yet — this lead is brand new"
+                description="Calls, emails, and notes will show up here as you work the lead."
+              />
             ) : (
               <div className="space-y-3">
                 {prospect.activities.map((activity) => (
-                  <div key={activity.id} className="border-l-2 border-bronze-300 pl-3 pb-3">
+                  <div key={activity.id} className="border-l-2 border-gold-600/30 dark:border-gold-400/25 pl-3 pb-3">
                     <div className="flex items-start justify-between">
                       <div>
                         <div className="flex items-center gap-2">
@@ -1295,7 +1302,7 @@ export function ProspectDetailPanel({
                             {activity.type.replace('_', ' ')}
                           </span>
                           {activity.channel && (
-                            <Badge variant="outline" className="text-[10px] rounded-sm">
+                            <Badge variant="neutral">
                               {activity.channel}
                             </Badge>
                           )}
@@ -1324,15 +1331,14 @@ export function ProspectDetailPanel({
         </Tabs>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-border bg-card">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.push(`/growth/outreach?prospect=${prospect.id}&channel=email`)}
-              className="rounded-sm"
             >
-              <Mail className="mr-1.5 h-3.5 w-3.5" />
+              <Mail className="h-3.5 w-3.5" />
               Email
             </Button>
             {sequences.length > 0 && (
@@ -1342,23 +1348,22 @@ export function ProspectDetailPanel({
                     variant="outline"
                     size="sm"
                     disabled={isApplyingSequence}
-                    className="rounded-sm"
                   >
                     {isApplyingSequence ? (
-                      <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : (
-                      <Zap className="mr-1.5 h-3.5 w-3.5" />
+                      <Zap className="h-3.5 w-3.5" />
                     )}
                     Sequence
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="rounded-sm w-48">
+                <DropdownMenuContent align="start" className="w-48">
                   {sequences.map((seq) => (
                     <DropdownMenuItem
                       key={seq.id}
                       onClick={() => handleApplySequence(seq.id)}
                     >
-                      <Zap className="mr-2 h-4 w-4" />
+                      <Zap className="h-4 w-4" />
                       {seq.name}
                     </DropdownMenuItem>
                   ))}
@@ -1371,7 +1376,6 @@ export function ProspectDetailPanel({
               variant="outline"
               size="sm"
               onClick={handleClose}
-              className="rounded-sm border-warm-200 dark:border-charcoal-700"
             >
               Cancel
             </Button>
@@ -1379,17 +1383,16 @@ export function ProspectDetailPanel({
               size="sm"
               onClick={handleSave}
               disabled={loading}
-              variant="lime"
-              className="rounded-sm"
+              variant="gold"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
                   Saving...
                 </>
               ) : (
                 <>
-                  <Save className="w-3.5 h-3.5 mr-1.5" />
+                  <Save className="w-3.5 h-3.5" />
                   Save
                 </>
               )}

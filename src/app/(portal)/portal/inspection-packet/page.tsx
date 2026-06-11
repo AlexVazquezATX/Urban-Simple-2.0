@@ -3,15 +3,17 @@ import { ArrowLeft, FileText, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
-import { PORTAL_DOC_CATEGORIES, isExpired, isExpiringSoon, portalDocCategoryLabel } from '@/lib/portal-documents'
+import { PORTAL_DOC_CATEGORIES, isExpired, isExpiringSoon } from '@/lib/portal-documents'
 import { PrintButton } from '@/components/portal/print-button'
+import { LivePage } from '@/components/portal/live-shell'
 
 // Print-friendly composite view of everything an inspector might want to see.
 // Used as a one-tap "show me my compliance status" page that the user can
 // also print to PDF via the browser's print dialog.
 //
 // Page is server-rendered; print styles in globals.css hide the chrome
-// and the back button, leaving only the printable body.
+// and the back button, leaving only the printable body. Only the screen
+// view is restyled to the portal shell — print output is unchanged.
 export default async function InspectionPacketPage() {
   const ctx = await requirePortalContext()
   const locationIds = ctx.locations.map(l => l.id)
@@ -72,12 +74,12 @@ export default async function InspectionPacketPage() {
   const generatedAt = new Date()
 
   return (
-    <div className="space-y-4 print:space-y-3">
+    <LivePage className="space-y-4 print:max-w-none print:space-y-3 print:p-0">
       {/* Top chrome — hidden on print */}
       <div className="flex items-center justify-between gap-3 print:hidden">
         <Link
           href="/portal/documents"
-          className="inline-flex items-center gap-1 text-xs text-warm-500 hover:text-ocean-600"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-3 w-3" />
           Back to documents
@@ -85,42 +87,46 @@ export default async function InspectionPacketPage() {
         <PrintButton />
       </div>
 
-      <div className="rounded-sm border border-warm-200 bg-white p-6 print:border-0 print:p-0">
+      <div className="rounded-[18px] border border-border bg-card p-6 shadow-soft print:border-0 print:p-0 print:shadow-none">
         {/* Cover header */}
-        <div className="border-b border-warm-200 pb-3 mb-3 flex items-start justify-between gap-3">
+        <div className="mb-4 flex items-start justify-between gap-3 border-b border-border pb-4">
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-warm-500">Inspection Packet</p>
-            <h1 className="mt-1 text-xl font-display font-medium text-warm-900">{ctx.client.name}</h1>
-            <p className="mt-1 text-xs text-warm-500">
+            <p className="font-mono text-[10.5px] uppercase tracking-[2.4px] text-gold-600">
+              Inspection packet
+            </p>
+            <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.6px] text-foreground">
+              {ctx.client.name}
+            </h1>
+            <p className="mt-1 font-mono text-xs tabular-nums text-muted-foreground">
               Generated {format(generatedAt, 'EEEE, MMM d, yyyy h:mm a')}
             </p>
           </div>
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-ocean-100 text-ocean-700">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold-600/10 text-gold-600">
             <ShieldCheck className="h-4 w-4" />
           </div>
         </div>
 
         {/* Locations covered */}
         {ctx.locations.length > 0 && (
-          <section className="mb-4">
-            <h2 className="text-[10px] uppercase tracking-wider text-warm-500 mb-1.5">
+          <section className="mb-5">
+            <h2 className="mb-1.5 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
               Locations covered ({ctx.locations.length})
             </h2>
             <ul className="space-y-0.5">
               {ctx.locations.map(l => (
-                <li key={l.id} className="text-sm text-warm-700">· {l.name}</li>
+                <li key={l.id} className="text-sm text-cream-700">· {l.name}</li>
               ))}
             </ul>
           </section>
         )}
 
         {/* Documents */}
-        <section className="mb-4">
-          <h2 className="text-[10px] uppercase tracking-wider text-warm-500 mb-2">
+        <section className="mb-5">
+          <h2 className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
             Compliance documents ({docs.length})
           </h2>
           {docs.length === 0 ? (
-            <p className="text-sm text-warm-500">No documents on file.</p>
+            <p className="text-sm text-muted-foreground">No documents on file.</p>
           ) : (
             <div className="space-y-3">
               {PORTAL_DOC_CATEGORIES.map(cat => {
@@ -128,20 +134,28 @@ export default async function InspectionPacketPage() {
                 if (!list || list.length === 0) return null
                 return (
                   <div key={cat.value}>
-                    <h3 className="text-[11px] font-medium text-warm-700">{cat.label}</h3>
+                    <h3 className="text-[11px] font-semibold text-cream-700">{cat.label}</h3>
                     <ul className="mt-1 space-y-0.5">
                       {list.map(d => {
                         const expired = isExpired(d.expiresAt)
                         const expiringSoon = isExpiringSoon(d.expiresAt)
                         return (
                           <li key={d.id} className="flex items-baseline gap-2 text-xs">
-                            <FileText className="h-3 w-3 shrink-0 text-warm-400" />
-                            <span className="font-medium text-warm-900">{d.name}</span>
-                            <span className="text-warm-500">
+                            <FileText className="h-3 w-3 shrink-0 text-muted-foreground" />
+                            <span className="font-medium text-foreground">{d.name}</span>
+                            <span className="text-muted-foreground">
                               · uploaded {format(d.createdAt, 'MMM d, yyyy')}
                             </span>
                             {d.expiresAt && (
-                              <span className={expired ? 'text-red-600 font-medium' : expiringSoon ? 'text-amber-600 font-medium' : 'text-warm-500'}>
+                              <span
+                                className={
+                                  expired
+                                    ? 'font-medium text-coral-600'
+                                    : expiringSoon
+                                      ? 'font-medium text-gold-600'
+                                      : 'text-muted-foreground'
+                                }
+                              >
                                 · {expired ? 'expired' : 'expires'} {format(d.expiresAt, 'MMM d, yyyy')}
                               </span>
                             )}
@@ -157,20 +171,25 @@ export default async function InspectionPacketPage() {
         </section>
 
         {/* Recent cleaning reviews */}
-        <section className="mb-4">
-          <h2 className="text-[10px] uppercase tracking-wider text-warm-500 mb-2">
+        <section className="mb-5">
+          <h2 className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
             Manager cleaning reviews — last 60 days ({recentReviews.length})
           </h2>
           {recentReviews.length === 0 ? (
-            <p className="text-sm text-warm-500">No manager reviews logged in the last 60 days.</p>
+            <p className="text-sm text-muted-foreground">
+              No manager reviews logged in the last 60 days.
+            </p>
           ) : (
             <ul className="space-y-1.5">
               {recentReviews.map(r => (
                 <li key={r.id} className="flex items-baseline gap-2 text-xs">
-                  <span className="text-warm-500 w-20 shrink-0">{format(r.reviewDate, 'MMM d, yyyy')}</span>
-                  <span className="font-medium text-warm-900">{r.location.name}</span>
-                  <span className="text-warm-500">
-                    · rated {Number(r.overallRating).toFixed(1)} by {r.reviewer.firstName} {r.reviewer.lastName}
+                  <span className="w-20 shrink-0 font-mono tabular-nums text-muted-foreground">
+                    {format(r.reviewDate, 'MMM d, yyyy')}
+                  </span>
+                  <span className="font-medium text-foreground">{r.location.name}</span>
+                  <span className="text-muted-foreground">
+                    · rated {Number(r.overallRating).toFixed(1)} by {r.reviewer.firstName}{' '}
+                    {r.reviewer.lastName}
                   </span>
                 </li>
               ))}
@@ -179,19 +198,20 @@ export default async function InspectionPacketPage() {
         </section>
 
         {/* Open issues */}
-        <section className="mb-4">
-          <h2 className="text-[10px] uppercase tracking-wider text-warm-500 mb-2">
+        <section className="mb-5">
+          <h2 className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
             Active issues ({openIssues.length})
           </h2>
           {openIssues.length === 0 ? (
-            <p className="text-sm text-warm-700">No open issues. All resolved.</p>
+            <p className="text-sm text-cream-700">No open issues. All resolved.</p>
           ) : (
             <ul className="space-y-1.5">
               {openIssues.map(i => (
                 <li key={i.id} className="text-xs">
-                  <span className="font-medium text-warm-900">{i.title}</span>
-                  <span className="text-warm-500">
-                    {' '}· {i.location.name} · {i.category} · {i.severity} · reported {format(i.createdAt, 'MMM d')} · {i.status.replace('_', ' ')}
+                  <span className="font-medium text-foreground">{i.title}</span>
+                  <span className="text-muted-foreground">
+                    {' '}· {i.location.name} · {i.category} · {i.severity} · reported{' '}
+                    {format(i.createdAt, 'MMM d')} · {i.status.replace('_', ' ')}
                   </span>
                 </li>
               ))}
@@ -199,11 +219,12 @@ export default async function InspectionPacketPage() {
           )}
         </section>
 
-        <p className="mt-4 text-[10px] text-warm-400 border-t border-warm-200 pt-2">
-          Urban Simple LLC · Austin, TX · This packet reflects state as of {format(generatedAt, 'MMM d, yyyy h:mm a')}.
-          For the most current data, visit your portal.
+        <p className="mt-4 border-t border-border pt-2 text-[10px] text-muted-foreground">
+          Urban Simple LLC · Austin, TX · This packet reflects state as of{' '}
+          {format(generatedAt, 'MMM d, yyyy h:mm a')}. For the most current data, visit your
+          portal.
         </p>
       </div>
-    </div>
+    </LivePage>
   )
 }

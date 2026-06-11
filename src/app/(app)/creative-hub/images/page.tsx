@@ -4,23 +4,24 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ArrowLeft,
   Sparkles,
   Loader2,
   Image as ImageIcon,
   Upload,
-  RefreshCw,
   Download,
   Trash2,
   Filter,
   Grid,
   List,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Select,
   SelectContent,
@@ -34,6 +35,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { ImageLightbox } from '@/components/content-studio'
 import type { LightboxImage } from '@/components/content-studio/image-lightbox'
 
@@ -193,135 +200,131 @@ export default function ImageLibraryPage() {
   return (
     <div className="p-6 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/creative-hub">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-charcoal-900 dark:text-cream-100">Image Library</h1>
-            <p className="text-charcoal-600 dark:text-cream-400">Generate and manage marketing images</p>
-          </div>
-        </div>
+      <PageHeader
+        kicker="CREATIVE HUB · IMAGES"
+        title="Image Library"
+        subtitle="Generate and manage marketing images"
+        backHref="/creative-hub"
+        className="mb-0"
+        actions={
+          <>
+            {/* View Toggle */}
+            <div className="flex border border-border rounded-[9px] overflow-hidden">
+              <Button
+                variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="rounded-none border-0"
+              >
+                <Grid className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="rounded-none border-0"
+              >
+                <List className="w-4 h-4" />
+              </Button>
+            </div>
 
-        <div className="flex items-center gap-3">
-          {/* View Toggle */}
-          <div className="flex border rounded-lg overflow-hidden">
+            {/* Upload */}
             <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-              className="rounded-none"
+              variant="outline"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
             >
-              <Grid className="w-4 h-4" />
+              {uploading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Upload className="w-4 h-4 mr-2" />
+              )}
+              Upload
             </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-              className="rounded-none"
-            >
-              <List className="w-4 h-4" />
+
+            {/* Generate */}
+            <Button variant="gold" asChild>
+              <Link href="/creative-hub/generate">
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate with AI
+              </Link>
             </Button>
-          </div>
+          </>
+        }
+      />
 
-          {/* Upload */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-          <Button
-            variant="outline"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-          >
-            {uploading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Upload className="w-4 h-4 mr-2" />
-            )}
-            Upload
-          </Button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileSelect}
+        className="hidden"
+      />
 
-          {/* Generate */}
-          <Link href="/creative-hub/generate">
-            <Button className="bg-gradient-to-br from-ocean-500 to-ocean-600">
-              <Sparkles className="w-4 h-4 mr-2" />
-              Generate with AI
-            </Button>
-          </Link>
-
-          {/* Upload Dialog with Photo Credit */}
-          <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Upload Image</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                {pendingFile && (
-                  <div className="text-sm text-charcoal-600">
-                    <span className="font-medium">File:</span> {pendingFile.name}
-                  </div>
-                )}
-                <div>
-                  <Label>Photo Credit (Optional)</Label>
-                  <Input
-                    value={uploadPhotoCredit}
-                    onChange={(e) => setUploadPhotoCredit(e.target.value)}
-                    placeholder="e.g., Photo: Austin Monthly, Credit: @photographer"
-                    className="mt-2"
-                  />
-                  <p className="text-xs text-charcoal-500 mt-1">
-                    Add attribution for sourced images
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowUploadDialog(false)
-                      setPendingFile(null)
-                      setUploadPhotoCredit('')
-                    }}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleUploadConfirm}
-                    disabled={uploading}
-                    className="flex-1 bg-gradient-to-br from-ocean-500 to-ocean-600"
-                  >
-                    {uploading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload
-                      </>
-                    )}
-                  </Button>
-                </div>
+      {/* Upload Dialog with Photo Credit */}
+      <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Upload Image</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {pendingFile && (
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium text-foreground">File:</span> {pendingFile.name}
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+            )}
+            <div>
+              <Label>Photo Credit (Optional)</Label>
+              <Input
+                value={uploadPhotoCredit}
+                onChange={(e) => setUploadPhotoCredit(e.target.value)}
+                placeholder="e.g., Photo: Austin Monthly, Credit: @photographer"
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Add attribution for sourced images
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowUploadDialog(false)
+                  setPendingFile(null)
+                  setUploadPhotoCredit('')
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="gold"
+                onClick={handleUploadConfirm}
+                disabled={uploading}
+                className="flex-1"
+              >
+                {uploading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Filters */}
       <Card>
         <CardContent className="p-4">
           <div className="flex items-center gap-4">
-            <Filter className="w-5 h-5 text-charcoal-400" />
+            <Filter className="w-5 h-5 text-muted-foreground" />
             <Select
               value={filter.imageType}
               onValueChange={(value) =>
@@ -347,32 +350,30 @@ export default function ImageLibraryPage() {
       {/* Image Grid/List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-ocean-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : images.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center">
-            <ImageIcon className="w-12 h-12 mx-auto text-charcoal-300 mb-4" />
-            <h3 className="text-lg font-semibold text-charcoal-900 dark:text-cream-100 mb-2">
-              No images yet
-            </h3>
-            <p className="text-charcoal-600 dark:text-cream-400 mb-4">
-              Generate AI images or upload your own
-            </p>
-            <Link href="/creative-hub/generate">
-              <Button>
-                <Sparkles className="w-4 h-4 mr-2" />
-                Generate Your First Image
+          <EmptyState
+            icon={ImageIcon}
+            title="No images yet — your library is wide open"
+            description="Generate AI images or upload your own to get started."
+            action={
+              <Button variant="outline" asChild>
+                <Link href="/creative-hub/generate">
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Your First Image
+                </Link>
               </Button>
-            </Link>
-          </CardContent>
+            }
+          />
         </Card>
       ) : viewMode === 'grid' ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {images.map((image, index) => (
             <div
               key={image.id}
-              className="group overflow-hidden cursor-pointer rounded-lg border bg-white dark:bg-charcoal-900 dark:border-charcoal-700 shadow-sm hover:shadow-md transition-shadow"
+              className="group overflow-hidden cursor-pointer rounded-[14px] border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
               onClick={() => openLightbox(index)}
             >
               <div className="aspect-square relative">
@@ -382,16 +383,15 @@ export default function ImageLibraryPage() {
                   className="w-full h-full object-cover"
                 />
                 {image.isAiGenerated && (
-                  <Badge className="absolute top-2 right-2 bg-ocean-500">
+                  <Badge variant="gold" className="absolute top-2 right-2 bg-cream-50/90 dark:bg-ink-950/80">
                     <Sparkles className="w-3 h-3 mr-1" />
                     AI
                   </Badge>
                 )}
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                <div className="absolute inset-0 bg-ink-950/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <Button
-                    size="icon"
+                    size="icon-sm"
                     variant="secondary"
-                    className="h-8 w-8"
                     onClick={(e) => {
                       e.stopPropagation()
                       const link = document.createElement('a')
@@ -402,26 +402,37 @@ export default function ImageLibraryPage() {
                   >
                     <Download className="w-4 h-4" />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    className="h-8 w-8"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleDelete(image.id)
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        size="icon-sm"
+                        variant="secondary"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleDelete(image.id)
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
               <div className="px-3 py-2.5">
-                <p className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">{image.name}</p>
-                <p className="text-xs text-warm-500 dark:text-cream-400 capitalize">
-                  {image.imageType.replace('_', ' ')} • {image.aspectRatio}
+                <p className="text-sm font-medium text-foreground truncate">{image.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {image.imageType.replace('_', ' ')} · <span className="font-mono tabular-nums">{image.aspectRatio}</span>
                 </p>
                 {image.photoCredit && (
-                  <p className="text-xs text-warm-400 italic mt-1 truncate">
+                  <p className="text-xs text-muted-foreground italic mt-1 truncate">
                     {image.photoCredit}
                   </p>
                 )}
@@ -434,7 +445,7 @@ export default function ImageLibraryPage() {
           {images.map((image) => (
             <Card key={image.id} className="p-4">
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                <div className="w-20 h-20 rounded-[10px] overflow-hidden flex-shrink-0">
                   <img
                     src={getImageSrc(image)}
                     alt={image.name}
@@ -442,30 +453,30 @@ export default function ImageLibraryPage() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium truncate">{image.name}</h4>
-                  <p className="text-sm text-charcoal-500 capitalize">
-                    {image.imageType.replace('_', ' ')} • {image.aspectRatio}
+                  <h4 className="font-medium text-foreground truncate">{image.name}</h4>
+                  <p className="text-sm text-muted-foreground capitalize">
+                    {image.imageType.replace('_', ' ')} · <span className="font-mono tabular-nums">{image.aspectRatio}</span>
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     {image.isAiGenerated && (
-                      <Badge variant="outline" className="text-xs">
+                      <Badge variant="gold">
                         <Sparkles className="w-3 h-3 mr-1" />
-                        AI Generated
+                        AI
                       </Badge>
                     )}
                     {image.photoCredit && (
-                      <span className="text-xs text-charcoal-400 italic">
+                      <span className="text-xs text-muted-foreground italic">
                         {image.photoCredit}
                       </span>
                     )}
-                    <span className="text-xs text-charcoal-400">
+                    <span className="text-xs font-mono tabular-nums text-muted-foreground">
                       {new Date(image.createdAt).toLocaleDateString()}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button
-                    size="sm"
+                    size="icon-sm"
                     variant="outline"
                     onClick={() => {
                       const link = document.createElement('a')
@@ -476,14 +487,19 @@ export default function ImageLibraryPage() {
                   >
                     <Download className="w-4 h-4" />
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-red-600 hover:bg-red-50"
-                    onClick={() => handleDelete(image.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon-sm" variant="ghost">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => handleDelete(image.id)}>
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
             </Card>

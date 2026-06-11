@@ -125,21 +125,22 @@ async function ClientsList() {
 function ClientsListSkeleton() {
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-end justify-between">
         <div>
+          <Skeleton className="mb-2 h-4 w-36" />
           <Skeleton className="mb-2 h-9 w-32" />
           <Skeleton className="h-5 w-64" />
         </div>
-        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-9 w-32 rounded-[9px]" />
       </div>
-      {/* Financials band */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Financial KPI row */}
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
         {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-[72px] w-full rounded-sm" />
+          <Skeleton key={i} className="h-[104px] w-full rounded-[14px]" />
         ))}
       </div>
       {/* Search toolbar */}
-      <Skeleton className="h-9 w-full max-w-sm" />
+      <Skeleton className="h-9 w-full max-w-sm rounded-[12px]" />
       <Card>
         <CardHeader>
           <Skeleton className="mb-2 h-6 w-32" />

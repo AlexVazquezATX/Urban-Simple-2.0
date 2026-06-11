@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ActivityFeed } from './activity-feed'
 import { TaskList } from './task-list'
 import { CommandCenter } from './command-center'
@@ -13,11 +14,6 @@ import {
   TrendingUp,
   Calendar,
   Zap,
-  Mail,
-  MessageSquare,
-  Linkedin,
-  Instagram,
-  Clock,
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -62,12 +58,12 @@ export function OutreachDashboard() {
       <div className="space-y-6">
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="rounded-sm border-warm-200 dark:border-charcoal-700">
-              <CardHeader className="p-4 pb-2">
-                <Skeleton className="h-4 w-24 rounded-sm" />
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-4 w-24" />
               </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <Skeleton className="h-8 w-16 rounded-sm" />
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
               </CardContent>
             </Card>
           ))}
@@ -77,23 +73,7 @@ export function OutreachDashboard() {
   }
 
   if (!data) {
-    return <div className="text-warm-500 dark:text-cream-400">Failed to load dashboard data</div>
-  }
-
-  const getChannelIcon = (channel: string) => {
-    switch (channel) {
-      case 'email':
-        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
-      case 'sms':
-        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
-      case 'linkedin':
-        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
-      case 'instagram':
-      case 'instagram_dm':
-        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
-      default:
-        return <Send className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
-    }
+    return <div className="text-muted-foreground">Failed to load dashboard data</div>
   }
 
   return (
@@ -103,79 +83,81 @@ export function OutreachDashboard() {
 
       {/* Stats Cards */}
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Messages This Week</div>
-          <div className="text-2xl font-semibold text-ocean-600">{data.stats.messagesThisWeek}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Across all channels</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Response Rate</div>
-          <div className="text-2xl font-semibold text-lime-600">{data.stats.responseRate}%</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">{data.stats.responsesThisWeek} responses this week</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Scheduled Today</div>
-          <div className="text-2xl font-semibold text-plum-600">{data.stats.scheduledToday}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Messages to send</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-red-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Hot Prospects</div>
-          <div className="text-2xl font-semibold text-red-600">{data.stats.hotProspects}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Showing engagement</p>
-        </Card>
+        <StatCard
+          label="Messages This Week"
+          value={data.stats.messagesThisWeek}
+          sub="Across all channels"
+          icon={Send}
+        />
+        <StatCard
+          label="Response Rate"
+          value={`${data.stats.responseRate}%`}
+          sub={`${data.stats.responsesThisWeek} responses this week`}
+          icon={TrendingUp}
+        />
+        <StatCard
+          label="Scheduled Today"
+          value={data.stats.scheduledToday}
+          sub="Messages to send"
+          icon={Calendar}
+        />
+        <StatCard
+          label="Hot Prospects"
+          value={data.stats.hotProspects}
+          sub="Showing engagement"
+          icon={Zap}
+          tone={data.stats.hotProspects > 0 ? 'gold' : 'neutral'}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         {/* Today's Tasks */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-3">
-            <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Today's Tasks</CardTitle>
-            <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+        <Card>
+          <CardHeader>
+            <CardTitle>Today's Tasks</CardTitle>
+            <CardDescription>
               Follow-ups and scheduled messages for today
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
+          <CardContent>
             <TaskList tasks={data.todaysTasks} scheduledMessages={data.scheduledMessages} />
           </CardContent>
         </Card>
 
         {/* Hot Prospects */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-3">
-            <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Hot Prospects</CardTitle>
-            <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+        <Card>
+          <CardHeader>
+            <CardTitle>Hot Prospects</CardTitle>
+            <CardDescription>
               Prospects showing recent engagement
             </CardDescription>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
+          <CardContent>
             {data.hotProspects.length === 0 ? (
-              <div className="text-center py-8">
-                <Zap className="h-10 w-10 mx-auto mb-2 text-warm-300 dark:text-charcoal-500" />
-                <p className="text-sm text-warm-500 dark:text-cream-400">No hot prospects right now</p>
-              </div>
+              <EmptyState
+                icon={Zap}
+                title="No hot prospects right now"
+                description="Prospects who open, click, or reply will light up here."
+                className="py-8"
+              />
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {data.hotProspects.map((prospect) => (
                   <Link
                     key={prospect.id}
                     href={`/growth/prospects/${prospect.id}`}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors"
+                    className="flex items-center justify-between rounded-[12px] border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-warm-900 dark:text-cream-100">{prospect.companyName}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
-                          {prospect.status}
-                        </Badge>
-                        <span className="text-[10px] text-warm-400 dark:text-cream-500">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground">{prospect.companyName}</p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <Badge variant="neutral">{prospect.status}</Badge>
+                        <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                           {format(new Date(prospect.lastActivity), 'MMM d')}
                         </span>
                       </div>
                     </div>
-                    <Zap className="h-4 w-4 text-red-500 flex-shrink-0" />
+                    <Zap className="size-4 shrink-0 text-gold-600 dark:text-gold-400" />
                   </Link>
                 ))}
               </div>
@@ -185,14 +167,14 @@ export function OutreachDashboard() {
       </div>
 
       {/* Activity Feed */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Recent Activity</CardTitle>
-          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+          <CardDescription>
             Latest outreach activities across all prospects
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardContent>
           <ActivityFeed activities={data.recentActivity} />
         </CardContent>
       </Card>

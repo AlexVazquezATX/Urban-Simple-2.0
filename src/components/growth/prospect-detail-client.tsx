@@ -50,6 +50,9 @@ import Link from 'next/link'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { formatMoney } from '@/lib/format'
 
 interface ProspectDetailClientProps {
   prospect: any
@@ -465,86 +468,104 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
     }
   }
 
+  // Chip mapping: urgent→coral · hot→gold · the rest stay neutral
   const getInterestBadge = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return <Badge className="bg-red-100 text-red-700 hover:bg-red-100">urgent</Badge>
+        return <Badge variant="coral">urgent</Badge>
       case 'high':
-        return <Badge className="bg-orange-100 text-orange-700 hover:bg-orange-100">hot</Badge>
+        return <Badge variant="gold">hot</Badge>
       case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">warm</Badge>
+        return <Badge variant="neutral">warm</Badge>
       default:
-        return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">cold</Badge>
+        return <Badge variant="neutral">cold</Badge>
     }
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/growth/prospects">
-            <Button variant="ghost" size="sm" className="gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Leads
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-charcoal-900">{prospect.companyName}</h1>
-            <p className="text-sm text-muted-foreground">
-              {prospect.legalName || prospect.companyName}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {formData.status === 'prospect' && (
+      <PageHeader
+        kicker="GROWTH · LEAD"
+        title={prospect.companyName}
+        subtitle={prospect.legalName || undefined}
+        backHref="/growth/prospects"
+        actions={
+          <>
+            {formData.status === 'prospect' && (
+              <Button variant="outline" onClick={handleMoveToPipeline}>
+                <ArrowRight className="h-4 w-4" />
+                Add to Pipeline
+              </Button>
+            )}
             <Button
-              onClick={handleMoveToPipeline}
-              className="bg-bronze-500 hover:bg-bronze-600 text-white"
+              variant="outline"
+              onClick={handleEnrich}
+              disabled={isEnriching}
             >
-              <ArrowRight className="mr-2 h-4 w-4" />
-              Add to Pipeline
+              {isEnriching ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4" />
+              )}
+              Enrich
             </Button>
-          )}
-          <Button
-            variant="outline"
-            onClick={handleEnrich}
-            disabled={isEnriching}
-          >
-            {isEnriching ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
-            )}
-            Enrich
-          </Button>
-          <Button variant="outline">
-            <Calendar className="mr-2 h-4 w-4" />
-            Cadence
-          </Button>
-          <Link href={`/growth/outreach?prospect=${prospect.id}&channel=email`}>
             <Button variant="outline">
-              <Mail className="mr-2 h-4 w-4" />
-              Email
+              <Calendar className="h-4 w-4" />
+              Cadence
             </Button>
-          </Link>
-          <Button onClick={handleSave} disabled={isSaving} className="bg-charcoal-900 hover:bg-charcoal-800">
-            {isSaving ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Edit Lead
-          </Button>
-        </div>
-      </div>
+            <Button variant="outline" asChild>
+              <Link href={`/growth/outreach?prospect=${prospect.id}&channel=email`}>
+                <Mail className="h-4 w-4" />
+                Email
+              </Link>
+            </Button>
+            <Button variant="gold" onClick={handleSave} disabled={isSaving}>
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              Save Lead
+            </Button>
+          </>
+        }
+      />
 
-      {/* Status Badges */}
-      <div className="flex items-center gap-2">
-        <Badge variant="outline">{formData.status}</Badge>
-        {getInterestBadge(formData.priority)}
-        <Badge variant="outline">Priority: {getPriorityLabel(formData.priority)}</Badge>
-      </div>
+      {/* Identity card */}
+      <Card className="py-4">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12">
+              <Building2 className="size-[18px] text-gold-600 dark:text-gold-400" />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="neutral">{formData.status.replace('_', ' ')}</Badge>
+              {getInterestBadge(formData.priority)}
+              <Badge variant="neutral">Priority: {getPriorityLabel(formData.priority)}</Badge>
+            </div>
+          </div>
+          <div className="flex items-center gap-8">
+            <div>
+              <div className="kicker text-muted-foreground">Deal Value</div>
+              <div className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">
+                {prospect.estimatedValue ? formatMoney(Number(prospect.estimatedValue)) : '—'}
+              </div>
+            </div>
+            <div>
+              <div className="kicker text-muted-foreground">Activities</div>
+              <div className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">
+                {prospect.activities.length}
+              </div>
+            </div>
+            <div>
+              <div className="kicker text-muted-foreground">Added</div>
+              <div className="mt-1 font-mono text-sm tabular-nums text-muted-foreground">
+                {format(new Date(prospect.createdAt), 'MMM d, yyyy')}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -557,7 +578,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
           {/* Contact Information */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5 text-muted-foreground" />
                 Contact Information
               </CardTitle>
@@ -580,7 +601,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                       onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                       className="flex-1"
                     />
-                    <Button variant="outline" size="icon" className="bg-red-100 text-red-600 hover:bg-red-200 border-red-200">
+                    <Button variant="outline" size="icon">
                       <MessageSquare className="h-4 w-4" />
                     </Button>
                   </div>
@@ -603,12 +624,11 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                           onClick={handleFindEmail}
                           disabled={isFindingEmail}
                           title="Find email using Apollo.io"
-                          className="bg-bronze-50 hover:bg-bronze-100 border-bronze-200"
                         >
                           {isFindingEmail ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Search className="h-4 w-4 text-bronze-600" />
+                            <Search className="h-4 w-4 text-gold-600 dark:text-gold-400" />
                           )}
                         </Button>
                       </PopoverTrigger>
@@ -638,7 +658,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                             emailSuggestions.map((suggestion, idx) => (
                               <div
                                 key={idx}
-                                className="p-3 border-b last:border-0 hover:bg-warm-50 dark:hover:bg-charcoal-800"
+                                className="p-3 border-b last:border-0 hover:bg-secondary/50"
                               >
                                 <div className="flex items-center justify-between gap-2">
                                   <div className="flex-1 min-w-0">
@@ -650,21 +670,24 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                                         {suggestion.source || 'unknown'}
                                       </span>
                                       {suggestion.confidence && (
-                                        <span className={`text-xs px-1.5 py-0.5 rounded ${
-                                          suggestion.confidence >= 80
-                                            ? 'bg-green-100 text-green-700'
-                                            : suggestion.confidence >= 50
-                                            ? 'bg-yellow-100 text-yellow-700'
-                                            : 'bg-gray-100 text-gray-700'
-                                        }`}>
+                                        <Badge
+                                          variant={
+                                            suggestion.confidence >= 80
+                                              ? 'green'
+                                              : suggestion.confidence >= 50
+                                              ? 'gold'
+                                              : 'neutral'
+                                          }
+                                          className="font-mono tabular-nums"
+                                        >
                                           {suggestion.confidence}%
-                                        </span>
+                                        </Badge>
                                       )}
                                       {suggestion.verified && (
                                         suggestion.verificationResult?.deliverability === 'DELIVERABLE' ? (
-                                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                                          <CheckCircle2 className="h-3.5 w-3.5 text-green-600 dark:text-green-300" />
                                         ) : (
-                                          <AlertCircle className="h-3.5 w-3.5 text-yellow-600" />
+                                          <AlertCircle className="h-3.5 w-3.5 text-gold-600 dark:text-gold-400" />
                                         )
                                       )}
                                     </div>
@@ -686,8 +709,9 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                                       )}
                                     </Button>
                                     <Button
+                                      variant="outline"
                                       size="sm"
-                                      className="h-7 text-xs bg-bronze-500 hover:bg-bronze-600"
+                                      className="h-7 text-xs"
                                       onClick={() => handleSelectEmail(
                                         suggestion.email,
                                         suggestion.source,
@@ -749,7 +773,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
           {/* Location & Business Details */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-muted-foreground" />
                 Location & Business Details
               </CardTitle>
@@ -857,7 +881,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
           {/* Pipeline & Status */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5 text-muted-foreground" />
                 Pipeline & Status
               </CardTitle>
@@ -952,7 +976,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
           {/* Social Media */}
           <Card>
             <CardHeader className="pb-4">
-              <CardTitle className="flex items-center gap-2 text-lg">
+              <CardTitle className="flex items-center gap-2">
                 <Globe className="h-5 w-5 text-muted-foreground" />
                 Social Media
               </CardTitle>
@@ -961,7 +985,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
               <div className="grid grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <Linkedin className="h-4 w-4 text-blue-600" />
+                    <Linkedin className="h-4 w-4 text-muted-foreground" />
                     LinkedIn
                   </Label>
                   <Input
@@ -972,7 +996,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <Instagram className="h-4 w-4 text-pink-600" />
+                    <Instagram className="h-4 w-4 text-muted-foreground" />
                     Instagram
                   </Label>
                   <Input
@@ -983,7 +1007,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <Facebook className="h-4 w-4 text-blue-700" />
+                    <Facebook className="h-4 w-4 text-muted-foreground" />
                     Facebook
                   </Label>
                   <Input
@@ -994,7 +1018,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2">
-                    <Twitter className="h-4 w-4 text-sky-500" />
+                    <Twitter className="h-4 w-4 text-muted-foreground" />
                     Twitter
                   </Label>
                   <Input
@@ -1027,9 +1051,9 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
 
           {/* AI Enrichment Data */}
           {prospect.aiEnriched && discoveryData.aiEnrichment && (
-            <Card className="bg-purple-50 border-purple-200">
+            <Card className="border-gold-600/30 bg-gold-600/10 dark:border-gold-400/25 dark:bg-gold-400/12">
               <CardHeader className="pb-4">
-                <CardTitle className="flex items-center gap-2 text-lg text-purple-700">
+                <CardTitle className="flex items-center gap-2 text-gold-600 dark:text-gold-400">
                   <Sparkles className="h-5 w-5" />
                   AI Insights
                 </CardTitle>
@@ -1037,33 +1061,33 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
               <CardContent className="space-y-4">
                 {discoveryData.aiEnrichment.insights && (
                   <div>
-                    <Label className="text-purple-600">Analysis</Label>
+                    <Label className="text-gold-600 dark:text-gold-400">Analysis</Label>
                     <p className="text-sm mt-1">{discoveryData.aiEnrichment.insights}</p>
                   </div>
                 )}
                 {discoveryData.aiEnrichment.outreachSuggestion && (
                   <div>
-                    <Label className="text-purple-600">Outreach Suggestion</Label>
+                    <Label className="text-gold-600 dark:text-gold-400">Outreach Suggestion</Label>
                     <p className="text-sm mt-1">{discoveryData.aiEnrichment.outreachSuggestion}</p>
                   </div>
                 )}
                 {discoveryData.aiEnrichment.estimatedRevenue && (
                   <div>
-                    <Label className="text-purple-600">Estimated Revenue</Label>
+                    <Label className="text-gold-600 dark:text-gold-400">Estimated Revenue</Label>
                     <p className="text-sm mt-1">{discoveryData.aiEnrichment.estimatedRevenue}</p>
                   </div>
                 )}
                 <div className="grid grid-cols-2 gap-4 pt-2">
                   {discoveryData.externalData?.googleRating && (
-                    <div className="bg-white dark:bg-charcoal-900 rounded-lg p-3">
+                    <div className="rounded-[10px] border border-border bg-card p-3">
                       <p className="text-xs text-muted-foreground">Google Rating</p>
-                      <p className="font-semibold">{discoveryData.externalData.googleRating}/5 ({discoveryData.externalData.googleReviewCount} reviews)</p>
+                      <p className="font-semibold font-mono tabular-nums">{discoveryData.externalData.googleRating}/5 ({discoveryData.externalData.googleReviewCount} reviews)</p>
                     </div>
                   )}
                   {discoveryData.externalData?.yelpRating && (
-                    <div className="bg-white dark:bg-charcoal-900 rounded-lg p-3">
+                    <div className="rounded-[10px] border border-border bg-card p-3">
                       <p className="text-xs text-muted-foreground">Yelp Rating</p>
-                      <p className="font-semibold">{discoveryData.externalData.yelpRating}/5 ({discoveryData.externalData.yelpReviewCount} reviews)</p>
+                      <p className="font-semibold font-mono tabular-nums">{discoveryData.externalData.yelpRating}/5 ({discoveryData.externalData.yelpReviewCount} reviews)</p>
                     </div>
                   )}
                 </div>
@@ -1079,15 +1103,15 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
             </CardHeader>
             <CardContent>
               {prospect.activities.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <Calendar className="mx-auto h-12 w-12 mb-3 opacity-50" />
-                  <p className="font-medium">No activities yet</p>
-                  <p className="text-sm">Activities will appear here when you interact with this lead</p>
-                </div>
+                <EmptyState
+                  icon={Calendar}
+                  title="No activity yet — this lead is brand new"
+                  description="Calls, emails, and notes will show up here as you work the lead."
+                />
               ) : (
                 <div className="space-y-4">
                   {prospect.activities.map((activity: any) => (
-                    <div key={activity.id} className="border-l-2 border-bronze-300 pl-4 pb-4">
+                    <div key={activity.id} className="border-l-2 border-gold-600/30 dark:border-gold-400/25 pl-4 pb-4">
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
@@ -1095,7 +1119,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                               {activity.type.replace('_', ' ')}
                             </span>
                             {activity.channel && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="neutral">
                                 {activity.channel}
                               </Badge>
                             )}
@@ -1109,7 +1133,7 @@ export function ProspectDetailClient({ prospect: initialProspect }: ProspectDeta
                             </p>
                           )}
                           {activity.outcome && (
-                            <Badge variant="outline" className="mt-2">
+                            <Badge variant="neutral" className="mt-2">
                               {activity.outcome}
                             </Badge>
                           )}

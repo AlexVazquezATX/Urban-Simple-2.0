@@ -1,8 +1,7 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, DollarSign } from 'lucide-react'
+import { DollarSign } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -13,11 +12,23 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { PageHeader } from '@/components/layout/page-header'
 import { MarkAsSentButton } from '@/components/invoice-actions'
+import { InvoiceStatusBadge } from '@/components/invoices/invoice-status-badge'
 import { PaymentForm } from '@/components/forms/payment-form'
 import { PaymentHistory } from '@/components/billing/payment-history'
 import { QBSyncButton } from '@/components/billing/qb-sync-button'
+import { formatMoneyExact } from '@/lib/format'
 import { getApiUrl } from '@/lib/api'
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <p className="kicker text-muted-foreground">{label}</p>
+      <div className="mt-1 text-sm font-medium text-foreground">{children}</div>
+    </div>
+  )
+}
 
 async function InvoiceDetail({ id }: { id: string }) {
   const response = await fetch(getApiUrl(`/api/invoices/${id}`), {
@@ -41,251 +52,205 @@ async function InvoiceDetail({ id }: { id: string }) {
     Number(invoice.balanceDue) > 0
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/app/invoices">
-            <Button variant="ghost" size="icon" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">{invoice.invoiceNumber}</h1>
-            <p className="text-sm text-warm-500 dark:text-cream-400">
-              {invoice.client.name} •{' '}
+    <div>
+      <PageHeader
+        kicker="MONEY · INVOICE"
+        title={invoice.invoiceNumber}
+        subtitle={
+          <>
+            {invoice.client.name} ·{' '}
+            <span className="font-mono tabular-nums">
               {new Date(invoice.issueDate).toLocaleDateString()}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge
-            className={`rounded-sm text-sm px-2.5 py-0.5 ${
-              invoice.status === 'paid'
-                ? 'bg-lime-100 text-lime-700 border-lime-200'
-                : invoice.status === 'draft'
-                  ? 'bg-warm-100 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700'
-                  : isOverdue
-                    ? 'bg-red-100 text-red-700 border-red-200'
-                    : 'bg-ocean-100 text-ocean-700 border-ocean-200'
-            }`}
-          >
-            {invoice.status === 'sent' && isOverdue
-              ? 'Overdue'
-              : invoice.status}
-          </Badge>
-          {invoice.status === 'draft' && (
-            <MarkAsSentButton invoiceId={invoice.id} />
-          )}
-          {Number(invoice.balanceDue) > 0 && (
-            <PaymentForm
-              clientId={invoice.clientId}
+            </span>
+          </>
+        }
+        backHref="/invoices"
+        actions={
+          <>
+            <InvoiceStatusBadge status={invoice.status} isOverdue={isOverdue} />
+            {invoice.status === 'draft' && (
+              <MarkAsSentButton invoiceId={invoice.id} />
+            )}
+            {Number(invoice.balanceDue) > 0 && (
+              <PaymentForm
+                clientId={invoice.clientId}
+                invoiceId={invoice.id}
+                invoiceBalance={Number(invoice.balanceDue)}
+              >
+                <Button variant="gold" size="sm">
+                  <DollarSign className="size-4" />
+                  Record Payment
+                </Button>
+              </PaymentForm>
+            )}
+            <QBSyncButton
               invoiceId={invoice.id}
-              invoiceBalance={Number(invoice.balanceDue)}
-            >
-              <Button variant="lime" size="sm" className="rounded-sm">
-                <DollarSign className="mr-2 h-4 w-4" />
-                Record Payment
-              </Button>
-            </PaymentForm>
-          )}
-          <QBSyncButton
-            invoiceId={invoice.id}
-            qbInvoiceId={invoice.qbInvoiceId}
-          />
-        </div>
-      </div>
+              qbInvoiceId={invoice.qbInvoiceId}
+            />
+          </>
+        }
+      />
 
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Invoice Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Issue Date</p>
-              <p className="font-medium text-warm-900 dark:text-cream-100">
-                {new Date(invoice.issueDate).toLocaleDateString()}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Due Date</p>
-              <p
-                className={`font-medium ${isOverdue ? 'text-red-600' : 'text-warm-900 dark:text-cream-100'}`}
-              >
-                {new Date(invoice.dueDate).toLocaleDateString()}
-              </p>
-            </div>
-            {invoice.sentAt && (
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Sent At</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">
-                  {new Date(invoice.sentAt).toLocaleDateString()}
-                </p>
-              </div>
-            )}
-            {invoice.terms && (
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Payment Terms</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">{invoice.terms}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Client Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Client</p>
-              <p className="font-medium text-warm-900 dark:text-cream-100">{invoice.client.name}</p>
-              {invoice.client.legalName && (
-                <p className="text-sm text-warm-500 dark:text-cream-400">
-                  {invoice.client.legalName}
-                </p>
+      <div className="flex flex-col gap-6">
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Invoice Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Field label="Issue Date">
+                <span className="font-mono tabular-nums">
+                  {new Date(invoice.issueDate).toLocaleDateString()}
+                </span>
+              </Field>
+              <Field label="Due Date">
+                <span
+                  className={`font-mono tabular-nums ${
+                    isOverdue ? 'text-coral-600 dark:text-coral-300' : ''
+                  }`}
+                >
+                  {new Date(invoice.dueDate).toLocaleDateString()}
+                </span>
+              </Field>
+              {invoice.sentAt && (
+                <Field label="Sent At">
+                  <span className="font-mono tabular-nums">
+                    {new Date(invoice.sentAt).toLocaleDateString()}
+                  </span>
+                </Field>
               )}
-            </div>
-            {invoice.client.billingEmail && (
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Billing Email</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">{invoice.client.billingEmail}</p>
-              </div>
-            )}
-            {invoice.client.phone && (
-              <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Phone</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">{invoice.client.phone}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {invoice.terms && <Field label="Payment Terms">{invoice.terms}</Field>}
+            </CardContent>
+          </Card>
 
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Amounts</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Subtotal</p>
-              <p className="font-medium text-warm-900 dark:text-cream-100">
-                ${Number(invoice.subtotal).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
-            {Number(invoice.taxAmount) > 0 && (
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Client Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Field label="Client">
+                {invoice.client.name}
+                {invoice.client.legalName && (
+                  <p className="mt-0.5 text-sm font-normal text-muted-foreground">
+                    {invoice.client.legalName}
+                  </p>
+                )}
+              </Field>
+              {invoice.client.billingEmail && (
+                <Field label="Billing Email">{invoice.client.billingEmail}</Field>
+              )}
+              {invoice.client.phone && (
+                <Field label="Phone">
+                  <span className="font-mono tabular-nums">{invoice.client.phone}</span>
+                </Field>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Amounts</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Field label="Subtotal">
+                <span className="font-mono tabular-nums">
+                  {formatMoneyExact(Number(invoice.subtotal))}
+                </span>
+              </Field>
+              {Number(invoice.taxAmount) > 0 && (
+                <Field label="Tax">
+                  <span className="font-mono tabular-nums">
+                    {formatMoneyExact(Number(invoice.taxAmount))}
+                  </span>
+                </Field>
+              )}
               <div>
-                <p className="text-sm text-warm-500 dark:text-cream-400">Tax</p>
-                <p className="font-medium text-warm-900 dark:text-cream-100">
-                  ${Number(invoice.taxAmount).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                <p className="kicker text-muted-foreground">Total</p>
+                <p className="mt-1 font-display text-2xl font-bold tracking-[-0.5px] tabular-nums text-foreground">
+                  {formatMoneyExact(Number(invoice.totalAmount))}
                 </p>
               </div>
-            )}
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Total</p>
-              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                ${Number(invoice.totalAmount).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Amount Paid</p>
-              <p className="font-medium text-lime-700">
-                ${Number(invoice.amountPaid).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Balance Due</p>
-              <p
-                className={`text-xl font-display font-medium ${
-                  Number(invoice.balanceDue) > 0 ? 'text-red-600' : 'text-warm-900 dark:text-cream-100'
-                }`}
-              >
-                ${Number(invoice.balanceDue).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              <Field label="Amount Paid">
+                <span className="font-mono tabular-nums text-green-600 dark:text-green-300">
+                  {formatMoneyExact(Number(invoice.amountPaid))}
+                </span>
+              </Field>
+              <div>
+                <p className="kicker text-muted-foreground">Balance Due</p>
+                <p
+                  className={`mt-1 font-display text-xl font-bold tracking-[-0.5px] tabular-nums ${
+                    Number(invoice.balanceDue) > 0
+                      ? 'text-coral-600 dark:text-coral-300'
+                      : 'text-foreground'
+                  }`}
+                >
+                  {formatMoneyExact(Number(invoice.balanceDue))}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Line Items</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Description</TableHead>
-                <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Quantity</TableHead>
-                <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Unit Price</TableHead>
-                <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Amount</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invoice.lineItems.map((item: any) => (
-                <TableRow key={item.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                  <TableCell className="font-medium text-warm-900 dark:text-cream-100">
-                    {item.description}
-                    {item.serviceAgreement && (
-                      <Badge className="ml-2 rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
-                        Agreement
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right text-warm-600 dark:text-cream-400">
-                    {Number(item.quantity).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell className="text-right text-warm-600 dark:text-cream-400">
-                    ${Number(item.unitPrice).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell className="text-right font-medium text-warm-900 dark:text-cream-100">
-                    ${Number(item.amount).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-
-      {invoice.notes && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <Card className="gap-4">
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Notes</CardTitle>
+            <CardTitle>Line Items</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-warm-700 dark:text-cream-300 whitespace-pre-wrap">{invoice.notes}</p>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Quantity</TableHead>
+                  <TableHead className="text-right">Unit Price</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {invoice.lineItems.map((item: any) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-foreground">
+                      {item.description}
+                      {item.serviceAgreement && (
+                        <Badge variant="teal" className="ml-2">
+                          Agreement
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                      {Number(item.quantity).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-muted-foreground">
+                      {formatMoneyExact(Number(item.unitPrice))}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums font-medium text-foreground">
+                      {formatMoneyExact(Number(item.amount))}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </CardContent>
         </Card>
-      )}
 
-      {/* Payment History */}
-      {invoice.payments && invoice.payments.length > 0 && (
-        <PaymentHistory payments={invoice.payments} />
-      )}
+        {invoice.notes && (
+          <Card className="gap-4">
+            <CardHeader>
+              <CardTitle>Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="whitespace-pre-wrap text-sm text-muted-foreground">{invoice.notes}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Payment History */}
+        {invoice.payments && invoice.payments.length > 0 && (
+          <PaymentHistory payments={invoice.payments} />
+        )}
+      </div>
     </div>
   )
 }
@@ -346,4 +311,3 @@ export default async function InvoiceDetailPage({
     </Suspense>
   )
 }
-

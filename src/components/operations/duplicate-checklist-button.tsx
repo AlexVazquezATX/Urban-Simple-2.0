@@ -67,27 +67,27 @@ export function DuplicateChecklistButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" className="rounded-sm h-7 px-2 text-xs">
-          <Copy className="h-3 w-3 mr-1" />
+        <Button variant="ghost" size="sm">
+          <Copy className="size-4" />
           Duplicate
         </Button>
       </DialogTrigger>
-      <DialogContent className="rounded-sm">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Duplicate Checklist</DialogTitle>
-          <DialogDescription className="text-sm text-warm-500 dark:text-cream-400">
+          <DialogTitle>Duplicate Checklist</DialogTitle>
+          <DialogDescription>
             Create a copy of "{templateName}" with a new name
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="duplicate-name" className="text-xs font-medium text-warm-700 dark:text-cream-300">New Checklist Name *</Label>
+            <Label htmlFor="duplicate-name">New Checklist Name *</Label>
             <Input
               id="duplicate-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter name for duplicate..."
-              className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1"
+              className="mt-1.5"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleDuplicate()
@@ -97,10 +97,10 @@ export function DuplicateChecklistButton({
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading} className="rounded-sm">
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={loading}>
             Cancel
           </Button>
-          <Button onClick={handleDuplicate} disabled={loading} variant="lime" className="rounded-sm">
+          <Button onClick={handleDuplicate} disabled={loading} variant="gold">
             {loading ? 'Duplicating...' : 'Duplicate'}
           </Button>
         </DialogFooter>
@@ -108,5 +108,3 @@ export function DuplicateChecklistButton({
     </Dialog>
   )
 }
-
-

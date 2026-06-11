@@ -540,10 +540,10 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
                 )}
               />
 
-            <div className="space-y-4 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4 bg-warm-50/60 dark:bg-charcoal-800/60">
+            <div className="space-y-4 rounded-sm border border-border p-4 bg-secondary/60">
               <div>
                 <FormLabel>Dispatch Profile</FormLabel>
-                <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   Configure cadence, preferred window, and route ownership for manager dispatch.
                 </p>
               </div>
@@ -612,7 +612,7 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Service Days</FormLabel>
-                    <div className="grid grid-cols-4 gap-2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 p-3">
+                    <div className="grid grid-cols-4 gap-2 rounded-sm border border-border bg-card p-3">
                       {SERVICE_DAY_OPTIONS.map((day) => (
                         <div key={day.value} className="flex items-center gap-2">
                           <Checkbox
@@ -712,7 +712,7 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
                   control={form.control}
                   name="autoSchedule"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 p-3">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-sm border border-border bg-card p-3">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>
@@ -730,7 +730,7 @@ export function LocationForm({ clientId: propClientId, location, children }: Loc
                   control={form.control}
                   name="reviewRequired"
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 p-3">
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-sm border border-border bg-card p-3">
                       <FormControl>
                         <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                       </FormControl>

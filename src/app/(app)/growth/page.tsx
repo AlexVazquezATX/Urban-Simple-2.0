@@ -3,10 +3,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Phone, Mail, Calendar, TrendingUp, Target, Sparkles, Users, Zap, ArrowRight, CheckCircle2, Clock, Rocket, BarChart3 } from 'lucide-react'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Plus, Phone, Mail, Calendar, Target, Sparkles, Users, Clock, Rocket, BarChart3, Building2 } from 'lucide-react'
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+
+function priorityTone(priority: string): 'coral' | 'gold' | 'neutral' {
+  if (priority === 'urgent') return 'coral'
+  if (priority === 'high') return 'gold'
+  return 'neutral'
+}
 
 async function DailyPlannerContent() {
   const user = await getCurrentUser()
@@ -97,189 +106,206 @@ async function DailyPlannerContent() {
   }, {} as Record<string, number>)
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Daily Planner</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
-            Manage your sales pipeline and prospect outreach
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/growth/prospects">
-            <Button variant="outline" size="sm" className="rounded-sm">
-              <Users className="mr-1.5 h-3.5 w-3.5" />
-              View All Leads
+    <div className="mx-auto max-w-7xl p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · DAILY PLANNER"
+        title="Daily Planner"
+        subtitle="Manage your sales pipeline and prospect outreach"
+        actions={
+          <>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/growth/prospects">
+                <Users className="size-4" />
+                View All Leads
+              </Link>
             </Button>
-          </Link>
-          <Link href="/growth/prospects/new">
-            <Button variant="lime" size="sm" className="rounded-sm">
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              Add Prospect
+            <Button asChild variant="gold" size="sm">
+              <Link href="/growth/prospects/new">
+                <Plus className="size-4" />
+                Add Prospect
+              </Link>
             </Button>
-          </Link>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-warm-400">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Prospects</div>
-          <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">
-            {Object.values(statsMap).reduce((a, b) => a + b, 0)}
-          </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">All prospects in system</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">New in Pipeline</div>
-          <div className="text-2xl font-semibold text-ocean-600">{statsMap.new || 0}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Ready for outreach</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Qualified</div>
-          <div className="text-2xl font-semibold text-lime-600">{statsMap.qualified || 0}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">High-value leads</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Contact Today</div>
-          <div className="text-2xl font-semibold text-plum-600">{prospectsToContact.length}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Action required</p>
-        </Card>
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard
+          label="Total prospects"
+          value={Object.values(statsMap).reduce((a, b) => a + b, 0)}
+          sub="All prospects in system"
+          icon={Users}
+        />
+        <StatCard
+          label="New in pipeline"
+          value={statsMap.new || 0}
+          sub="Ready for outreach"
+          icon={Rocket}
+        />
+        <StatCard
+          label="Qualified"
+          value={statsMap.qualified || 0}
+          sub="High-value leads"
+          icon={Target}
+        />
+        <StatCard
+          label="Contact today"
+          value={prospectsToContact.length}
+          sub="Action required"
+          icon={Clock}
+          tone={prospectsToContact.length > 0 ? 'coral' : 'neutral'}
+        />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-[1fr_380px]">
         {/* Prospects to Contact */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-3">
-            <div className="flex items-center justify-between">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Priority Outreach</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Prospects that need contact today</CardDescription>
+                <CardTitle>Priority Outreach</CardTitle>
+                <CardDescription className="mt-0.5 text-xs">Prospects that need contact today</CardDescription>
               </div>
-              <Badge variant="secondary" className="rounded-sm text-xs">{prospectsToContact.length}</Badge>
+              <Badge variant={prospectsToContact.length > 0 ? 'coral' : 'neutral'}>
+                {prospectsToContact.length}
+              </Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
+          <CardContent>
             {prospectsToContact.length === 0 ? (
-              <div className="text-center py-8">
-                <Target className="mx-auto h-10 w-10 mb-2 text-warm-300 dark:text-charcoal-500" />
-                <p className="text-sm text-warm-500 dark:text-cream-400">No prospects need contact today</p>
-                <Link href="/growth/prospects">
-                  <Button variant="outline" size="sm" className="mt-4 rounded-sm">
-                    View All Prospects
+              <EmptyState
+                icon={Target}
+                title="All caught up — no one needs a nudge today"
+                description="Prospects show up here when they go a week without contact."
+                action={
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/growth/prospects">View All Prospects</Link>
                   </Button>
-                </Link>
-              </div>
+                }
+              />
             ) : (
-              <div className="space-y-1.5">
-                {prospectsToContact.map((prospect) => (
-                  <div
-                    key={prospect.id}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <Link href={`/growth/prospects/${prospect.id}`}>
-                        <h4 className="text-sm font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600 truncate">
-                          {prospect.companyName}
-                        </h4>
-                      </Link>
-                      {prospect.contacts.length > 0 && (
-                        <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
-                          {prospect.contacts[0].firstName} {prospect.contacts[0].lastName}
-                          {prospect.contacts[0].title && ` • ${prospect.contacts[0].title}`}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className={`text-[10px] px-1.5 py-0 rounded-sm font-medium ${
-                          prospect.priority === 'urgent' ? 'bg-red-100 text-red-700' :
-                          prospect.priority === 'high' ? 'bg-plum-100 text-plum-700' :
-                          prospect.priority === 'medium' ? 'bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300' :
-                          'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400'
-                        }`}>
-                          {prospect.priority}
-                        </span>
-                        <span className="text-[10px] text-warm-400 dark:text-cream-500 capitalize">
-                          {prospect.status}
-                        </span>
+              <div>
+                {prospectsToContact.map((prospect) => {
+                  const tone = priorityTone(prospect.priority)
+                  return (
+                    <div
+                      key={prospect.id}
+                      className="flex items-center gap-3 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0"
+                    >
+                      <div
+                        className={`grid size-[30px] shrink-0 place-items-center rounded-[9px] ${
+                          tone === 'coral'
+                            ? 'bg-coral-600/10 dark:bg-coral-300/12'
+                            : tone === 'gold'
+                              ? 'bg-gold-600/10 dark:bg-gold-400/12'
+                              : 'bg-secondary'
+                        }`}
+                      >
+                        <Building2
+                          className={`size-[14px] ${
+                            tone === 'coral'
+                              ? 'text-coral-600 dark:text-coral-300'
+                              : tone === 'gold'
+                                ? 'text-gold-600 dark:text-gold-400'
+                                : 'text-muted-foreground'
+                          }`}
+                        />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <Link href={`/growth/prospects/${prospect.id}`}>
+                          <h4 className="truncate text-[13px] font-semibold text-foreground transition-colors hover:text-primary">
+                            {prospect.companyName}
+                          </h4>
+                        </Link>
+                        {prospect.contacts.length > 0 && (
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                            {prospect.contacts[0].firstName} {prospect.contacts[0].lastName}
+                            {prospect.contacts[0].title && ` · ${prospect.contacts[0].title}`}
+                          </p>
+                        )}
+                        <div className="mt-1.5 flex items-center gap-1.5">
+                          <Badge variant={tone}>{prospect.priority}</Badge>
+                          <span className="font-mono text-[10.5px] uppercase tracking-wide text-muted-foreground">
+                            {prospect.status}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-2 flex items-center gap-1">
+                        {prospect.contacts[0]?.email && (
+                          <Button asChild variant="ghost" size="icon-sm">
+                            <Link href={`/growth/outreach?prospect=${prospect.id}&channel=email`}>
+                              <Mail className="size-4" />
+                            </Link>
+                          </Button>
+                        )}
+                        {prospect.contacts[0]?.phone && (
+                          <Button asChild variant="ghost" size="icon-sm">
+                            <Link href={`/growth/outreach?prospect=${prospect.id}&channel=phone`}>
+                              <Phone className="size-4" />
+                            </Link>
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 ml-2">
-                      {prospect.contacts[0]?.email && (
-                        <Link href={`/growth/outreach?prospect=${prospect.id}&channel=email`}>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-ocean-600">
-                            <Mail className="h-3.5 w-3.5" />
-                          </Button>
-                        </Link>
-                      )}
-                      {prospect.contacts[0]?.phone && (
-                        <Link href={`/growth/outreach?prospect=${prospect.id}&channel=phone`}>
-                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-ocean-600">
-                            <Phone className="h-3.5 w-3.5" />
-                          </Button>
-                        </Link>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Scheduled Activities */}
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4 pb-3">
-            <div className="flex items-center justify-between">
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Today's Schedule</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Activities scheduled for today</CardDescription>
+                <CardTitle>Today&apos;s Schedule</CardTitle>
+                <CardDescription className="mt-0.5 text-xs">Activities scheduled for today</CardDescription>
               </div>
-              <Badge variant="secondary" className="rounded-sm text-xs">{scheduledActivities.length}</Badge>
+              <Badge variant="neutral">{scheduledActivities.length}</Badge>
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
+          <CardContent>
             {scheduledActivities.length === 0 ? (
-              <div className="text-center py-8">
-                <Calendar className="mx-auto h-10 w-10 mb-2 text-warm-300 dark:text-charcoal-500" />
-                <p className="text-sm text-warm-500 dark:text-cream-400">No activities scheduled for today</p>
-              </div>
+              <EmptyState
+                icon={Calendar}
+                title="Nothing on the books today"
+                description="Schedule a follow-up from any prospect and it will show up here."
+              />
             ) : (
-              <div className="space-y-1.5">
+              <div>
                 {scheduledActivities.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors"
+                    className="flex items-center gap-3 border-b border-border/60 py-3 first:pt-0 last:border-0 last:pb-0"
                   >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-[10px] px-1.5 py-0 rounded-sm bg-warm-100 dark:bg-charcoal-800 text-warm-700 dark:text-cream-300 font-medium uppercase">
-                          {activity.type}
-                        </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <Badge variant="neutral" className="uppercase">{activity.type}</Badge>
                         {activity.channel && (
-                          <span className="text-[10px] text-warm-400 dark:text-cream-500">
+                          <span className="text-[11px] text-muted-foreground">
                             via {activity.channel}
                           </span>
                         )}
                       </div>
                       <Link href={`/growth/prospects/${activity.prospect.id}`}>
-                        <h4 className="text-sm font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600 truncate">
+                        <h4 className="truncate text-[13px] font-semibold text-foreground transition-colors hover:text-primary">
                           {activity.prospect.companyName}
                         </h4>
                       </Link>
                       {activity.title && (
-                        <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5 truncate">
+                        <p className="mt-0.5 truncate text-xs text-muted-foreground">
                           {activity.title}
                         </p>
                       )}
                       {activity.scheduledAt && (
-                        <p className="text-xs text-warm-400 dark:text-cream-500 mt-0.5">
-                          <Clock className="h-3 w-3 inline mr-1" />
-                          {new Date(activity.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          {activity.user && ` • ${activity.user.firstName} ${activity.user.lastName}`}
+                        <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Clock className="size-3 text-gold-600 dark:text-gold-400" />
+                          <span className="font-mono tabular-nums text-gold-600 dark:text-gold-400">
+                            {new Date(activity.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {activity.user && ` · ${activity.user.firstName} ${activity.user.lastName}`}
                         </p>
                       )}
                     </div>
@@ -292,27 +318,27 @@ async function DailyPlannerContent() {
       </div>
 
       {/* Quick Actions */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-4">
-        <div className="flex items-center justify-between p-4">
+      <Card className="mt-4">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h3 className="font-display font-medium text-warm-900 dark:text-cream-100">More Tools</h3>
-            <p className="text-sm text-warm-500 dark:text-cream-400">Access pipeline and discovery features</p>
+            <h3 className="font-display text-[15px] font-bold tracking-[-0.2px] text-foreground">More Tools</h3>
+            <p className="text-sm text-muted-foreground">Access pipeline and discovery features</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/growth/pipeline">
-              <Button variant="outline" size="sm" className="rounded-sm">
-                <BarChart3 className="mr-1.5 h-3.5 w-3.5" />
+            <Button asChild variant="outline" size="sm">
+              <Link href="/growth/pipeline">
+                <BarChart3 className="size-4" />
                 Pipeline
-              </Button>
-            </Link>
-            <Link href="/growth/discovery">
-              <Button variant="lime" size="sm" className="rounded-sm">
-                <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/growth/discovery">
+                <Sparkles className="size-4" />
                 AI Discovery
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </div>
-        </div>
+        </CardContent>
       </Card>
     </div>
   )
@@ -322,32 +348,33 @@ export default function GrowthPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
+        <div className="mx-auto max-w-7xl p-4 md:p-6">
           {/* Header skeleton */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-end justify-between">
             <div>
-              <Skeleton className="h-7 w-40 rounded-sm" />
-              <Skeleton className="h-4 w-64 mt-2 rounded-sm" />
+              <Skeleton className="h-3.5 w-44 rounded-md" />
+              <Skeleton className="mt-3 h-8 w-48 rounded-md" />
+              <Skeleton className="mt-2 h-4 w-72 rounded-md" />
             </div>
             <div className="flex gap-2">
-              <Skeleton className="h-8 w-28 rounded-sm" />
-              <Skeleton className="h-8 w-28 rounded-sm" />
+              <Skeleton className="h-8 w-28 rounded-[9px]" />
+              <Skeleton className="h-8 w-28 rounded-[9px]" />
             </div>
           </div>
           {/* Stats skeletons */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
             {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-24 rounded-sm" />
+              <Skeleton key={i} className="h-[110px] rounded-[14px]" />
             ))}
           </div>
           {/* Content skeletons */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_380px]">
             {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-80 rounded-sm" />
+              <Skeleton key={i} className="h-80 rounded-[14px]" />
             ))}
           </div>
           {/* Quick actions skeleton */}
-          <Skeleton className="h-16 w-full mt-4 rounded-sm" />
+          <Skeleton className="mt-4 h-20 w-full rounded-[14px]" />
         </div>
       }
     >
@@ -355,4 +382,3 @@ export default function GrowthPage() {
     </Suspense>
   )
 }
-

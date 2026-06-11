@@ -1,11 +1,14 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { ArrowLeft, ThumbsUp, AlertTriangle } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { ArrowLeft, Check } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import type { WalkthroughZone } from '@/lib/portal-walkthrough'
+import { LivePage } from '@/components/portal/live-shell'
+
+// Walkthrough detail — LiveWalkthrough card language: display zone titles,
+// sage check circles, pastel status chips, rounded photo grids.
 
 export default async function WalkthroughDetailPage({
   params,
@@ -27,88 +30,118 @@ export default async function WalkthroughDetailPage({
   const zones = (Array.isArray(w.zones) ? (w.zones as unknown as WalkthroughZone[]) : []).filter(Boolean)
 
   return (
-    <div className="space-y-4">
+    <LivePage>
       <Link
         href="/portal/walkthroughs"
-        className="inline-flex items-center gap-1 text-xs text-warm-500 hover:text-ocean-600"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3 w-3" />
         Back to walkthroughs
       </Link>
 
-      <div className="rounded-sm border border-warm-200 bg-white p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[10px] uppercase tracking-wider text-warm-500">Walkthrough</p>
-            <h1 className="mt-1 text-lg font-medium text-warm-900">{w.location.name}</h1>
-            <p className="mt-0.5 text-xs text-warm-500">
-              {format(w.capturedAt, 'EEEE, MMM d, yyyy · h:mm a')} · {w.completedBy.firstName} {w.completedBy.lastName}
+      <div className="mt-4 rounded-[18px] border border-border bg-card p-6 shadow-soft">
+        <div className="flex flex-wrap items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="font-mono text-[10.5px] uppercase tracking-[2.4px] text-gold-600">
+              Walkthrough
+            </p>
+            <h1 className="mt-2 font-display text-[26px] font-bold tracking-[-0.6px] text-foreground">
+              {w.location.name}
+            </h1>
+            <p className="mt-1 text-xs text-muted-foreground">
+              <span className="font-mono tabular-nums">
+                {format(w.capturedAt, 'EEEE, MMM d, yyyy · h:mm a')}
+              </span>
+              {' · '}
+              {w.completedBy.firstName} {w.completedBy.lastName}
             </p>
           </div>
           {w.overallRating === 'issue' ? (
-            <Badge className="rounded-sm bg-amber-100 text-amber-700 border-amber-200 text-[10px]">
-              <AlertTriangle className="mr-1 h-3 w-3" />
+            <span className="shrink-0 rounded-full border border-peach-line bg-peach-bg px-3 py-[3px] text-[11.5px] font-semibold text-peach-deep">
               Issue flagged
-            </Badge>
+            </span>
           ) : w.overallRating === 'ok' ? (
-            <Badge className="rounded-sm bg-lime-100 text-lime-700 border-lime-200 text-[10px]">
-              <ThumbsUp className="mr-1 h-3 w-3" />
+            <span className="shrink-0 rounded-full border border-sage-line bg-sage-bg px-3 py-[3px] text-[11.5px] font-semibold text-sage-deep">
               All good
-            </Badge>
+            </span>
           ) : null}
         </div>
 
         {w.notes && (
-          <p className="mt-3 text-sm text-warm-700 whitespace-pre-wrap">{w.notes}</p>
+          <div className="mt-4 rounded-xl bg-secondary px-4 py-3 text-[13.5px] leading-relaxed text-foreground">
+            <span className="mb-1 block font-mono text-[9px] uppercase tracking-[1.6px] text-muted-foreground">
+              Overall note
+            </span>
+            <span className="whitespace-pre-wrap">{w.notes}</span>
+          </div>
         )}
       </div>
 
-      <div className="space-y-3">
+      <div className="mt-3.5 flex flex-col gap-3.5">
         {zones.map((z, idx) => {
           const hasIssue = z.rating === 'issue'
           const ok = z.rating === 'ok'
           return (
             <section
               key={idx}
-              className={`rounded-sm border bg-white p-3 ${
-                hasIssue ? 'border-amber-200' : ok ? 'border-lime-200' : 'border-warm-200'
-              }`}
+              className="rounded-[18px] border border-border bg-card p-6 shadow-soft"
             >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-warm-900">{z.zone}</p>
+              <div className="flex items-center gap-3">
+                <div
+                  className={`grid h-[22px] w-[22px] shrink-0 place-items-center rounded-full border-[1.5px] ${
+                    ok
+                      ? 'border-sage-line bg-sage-bg'
+                      : hasIssue
+                        ? 'border-peach-line bg-peach-bg'
+                        : 'border-border'
+                  }`}
+                >
+                  {ok && <Check className="h-[11px] w-[11px] text-sage-deep" strokeWidth={2.4} />}
+                  {hasIssue && <span className="h-1.5 w-1.5 rounded-full bg-peach-deep" />}
+                </div>
+                <p className="flex-1 font-display text-base font-semibold tracking-[-0.2px] text-foreground">
+                  {z.zone}
+                </p>
                 {hasIssue ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-amber-700 font-medium">
-                    <AlertTriangle className="h-3 w-3" />
+                  <span className="shrink-0 rounded-full border border-peach-line bg-peach-bg px-2.5 py-0.5 text-[11px] font-semibold text-peach-deep">
                     Issue
                   </span>
                 ) : ok ? (
-                  <span className="inline-flex items-center gap-1 text-[10px] text-lime-700 font-medium">
-                    <ThumbsUp className="h-3 w-3" />
-                    OK
+                  <span className="shrink-0 rounded-full border border-sage-line bg-sage-bg px-2.5 py-0.5 text-[11px] font-semibold text-sage-deep">
+                    Complete
                   </span>
                 ) : null}
               </div>
 
               {z.photos.length > 0 && (
-                <div className="mt-2 grid grid-cols-3 gap-1.5">
+                <div className="mt-3.5 grid grid-cols-2 gap-2.5 sm:grid-cols-3">
                   {z.photos.map((url, p) => (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img key={p} src={url} alt="" className="h-24 w-full rounded-sm object-cover" />
+                    <img
+                      key={p}
+                      src={url}
+                      alt=""
+                      className="h-28 w-full rounded-[14px] border border-border object-cover"
+                    />
                   ))}
                 </div>
               )}
 
               {z.notes && (
-                <p className="mt-2 text-xs text-warm-700 whitespace-pre-wrap">{z.notes}</p>
+                <p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-cream-700">
+                  {z.notes}
+                </p>
               )}
 
               {z.photos.length === 0 && !z.notes && (
-                <p className="mt-2 text-[11px] text-warm-400 italic">No photos or notes captured.</p>
+                <p className="mt-2.5 text-[11.5px] italic text-muted-foreground">
+                  No photos or notes captured.
+                </p>
               )}
             </section>
           )
         })}
       </div>
-    </div>
+    </LivePage>
   )
 }

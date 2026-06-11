@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { Plus, DollarSign } from 'lucide-react'
+import { Banknote, DollarSign, FileText, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -12,15 +12,19 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
 import { ServiceAgreementForm } from '@/components/forms/service-agreement-form'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { formatMoneyExact } from '@/lib/format'
 
 async function ServiceAgreementsList() {
   const user = await getCurrentUser()
   if (!user) {
     return (
-      <div className="text-destructive">
+      <div className="text-muted-foreground">
         Please log in to view service agreements.
       </div>
     )
@@ -67,18 +71,30 @@ async function ServiceAgreementsList() {
 
   if (agreements.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <DollarSign className="h-12 w-12 mb-4 text-warm-400 dark:text-cream-400" />
-          <p className="text-warm-500 dark:text-cream-400 mb-4">No service agreements yet</p>
-          <ServiceAgreementForm>
-            <Button variant="lime" className="rounded-sm">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Your First Agreement
-            </Button>
-          </ServiceAgreementForm>
-        </CardContent>
-      </Card>
+      <div>
+        <PageHeader
+          kicker="MONEY · AGREEMENTS"
+          title="Service Agreements"
+          subtitle="Manage recurring service agreements and billing"
+        />
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={FileText}
+              title="No agreements yet — recurring revenue starts here"
+              description="Set up a service agreement for a location and its monthly billing takes care of itself."
+              action={
+                <ServiceAgreementForm>
+                  <Button variant="gold">
+                    <Plus className="size-4" />
+                    Create Your First Agreement
+                  </Button>
+                </ServiceAgreementForm>
+              }
+            />
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
@@ -90,126 +106,100 @@ async function ServiceAgreementsList() {
   )
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Service Agreements</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            Manage recurring service agreements and billing
-          </p>
+    <div>
+      <PageHeader
+        kicker="MONEY · AGREEMENTS"
+        title="Service Agreements"
+        subtitle="Manage recurring service agreements and billing"
+        actions={
+          <ServiceAgreementForm>
+            <Button variant="gold">
+              <Plus className="size-4" />
+              New Agreement
+            </Button>
+          </ServiceAgreementForm>
+        }
+      />
+
+      <div className="flex flex-col gap-4">
+        <div className="grid gap-4 md:grid-cols-3">
+          <StatCard
+            label="Active agreements"
+            icon={FileText}
+            value={agreements.length}
+            sub="Currently active"
+          />
+          <StatCard
+            label="Monthly revenue"
+            icon={DollarSign}
+            value={formatMoneyExact(totalMonthly)}
+            sub="Recurring monthly"
+          />
+          <StatCard
+            label="Annual revenue"
+            icon={Banknote}
+            value={formatMoneyExact(totalMonthly * 12)}
+            sub="Projected annual"
+          />
         </div>
-        <ServiceAgreementForm>
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="mr-2 h-4 w-4" />
-            New Agreement
-          </Button>
-        </ServiceAgreementForm>
-      </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Active Agreements</CardTitle>
-            <DollarSign className="h-4 w-4 text-warm-400 dark:text-cream-400" />
+        <Card className="gap-4">
+          <CardHeader>
+            <CardTitle>Active Agreements</CardTitle>
+            <CardDescription className="text-xs">
+              {agreements.length} {agreements.length === 1 ? 'agreement' : 'agreements'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">{agreements.length}</div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">Currently active</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-warm-400 dark:text-cream-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-              ${totalMonthly.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">Recurring monthly</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Annual Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-warm-400 dark:text-cream-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-              ${(totalMonthly * 12).toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">Projected annual</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Active Agreements</CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">
-            {agreements.length} {agreements.length === 1 ? 'agreement' : 'agreements'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Client</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Location</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Description</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Monthly Amount</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Billing Day</TableHead>
-                <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Status</TableHead>
-                <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {agreements.map((agreement: any) => (
-                <TableRow key={agreement.id} className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                  <TableCell className="font-medium text-warm-900 dark:text-cream-100">
-                    {agreement.location.client.name}
-                  </TableCell>
-                  <TableCell className="text-warm-600 dark:text-cream-400">{agreement.location.name}</TableCell>
-                  <TableCell className="max-w-xs truncate text-warm-600 dark:text-cream-400">
-                    {agreement.description}
-                  </TableCell>
-                  <TableCell className="text-warm-900 dark:text-cream-100">
-                    ${Number(agreement.monthlyAmount).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </TableCell>
-                  <TableCell className="text-warm-600 dark:text-cream-400">Day {agreement.billingDay}</TableCell>
-                  <TableCell>
-                    <Badge
-                      className={`rounded-sm text-[10px] px-1.5 py-0 ${
-                        agreement.isActive
-                          ? 'bg-lime-100 text-lime-700 border-lime-200'
-                          : 'bg-warm-100 text-warm-600 border-warm-200 dark:bg-charcoal-800 dark:text-cream-400 dark:border-charcoal-700'
-                      }`}
-                    >
-                      {agreement.isActive ? 'Active' : 'Inactive'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <ServiceAgreementForm agreement={agreement}>
-                      <Button variant="ghost" size="sm" className="rounded-sm text-warm-600 dark:text-cream-400 hover:text-ocean-600 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-                        Edit
-                      </Button>
-                    </ServiceAgreementForm>
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Location</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="text-right">Monthly Amount</TableHead>
+                  <TableHead>Billing Day</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {agreements.map((agreement: any) => (
+                  <TableRow key={agreement.id}>
+                    <TableCell className="font-medium text-foreground">
+                      {agreement.location.client.name}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{agreement.location.name}</TableCell>
+                    <TableCell className="max-w-xs truncate text-muted-foreground">
+                      {agreement.description}
+                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums text-foreground">
+                      {formatMoneyExact(Number(agreement.monthlyAmount))}
+                    </TableCell>
+                    <TableCell className="font-mono tabular-nums text-muted-foreground">
+                      Day {agreement.billingDay}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={agreement.isActive ? 'green' : 'neutral'}>
+                        {agreement.isActive ? 'Active' : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <ServiceAgreementForm agreement={agreement}>
+                        <Button variant="ghost" size="sm">
+                          Edit
+                        </Button>
+                      </ServiceAgreementForm>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
@@ -219,6 +209,7 @@ function ServiceAgreementsListSkeleton() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
+          <Skeleton className="h-4 w-40 mb-3" />
           <Skeleton className="h-9 w-48 mb-2" />
           <Skeleton className="h-5 w-64" />
         </div>
@@ -258,7 +249,3 @@ export default function ServiceAgreementsPage() {
     </Suspense>
   )
 }
-
-
-
-

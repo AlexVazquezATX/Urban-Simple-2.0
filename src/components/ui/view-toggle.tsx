@@ -17,7 +17,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
     <div className={cn('flex items-center gap-1 border rounded-md p-1', className)}>
       <Button
         type="button"
-        variant={value === 'table' ? 'default' : 'ghost'}
+        variant={value === 'table' ? 'secondary' : 'ghost'}
         size="sm"
         onClick={() => onChange('table')}
         className="h-8 px-3"
@@ -26,7 +26,7 @@ export function ViewToggle({ value, onChange, className }: ViewToggleProps) {
       </Button>
       <Button
         type="button"
-        variant={value === 'card' ? 'default' : 'ghost'}
+        variant={value === 'card' ? 'secondary' : 'ghost'}
         size="sm"
         onClick={() => onChange('card')}
         className="h-8 px-3"

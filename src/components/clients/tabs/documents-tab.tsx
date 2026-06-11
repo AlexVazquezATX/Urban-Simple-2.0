@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { FileText, Download } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { UploadDocumentButton } from '@/components/portal/upload-document-button'
 import { DeleteDocumentButton } from '@/components/portal/delete-document-button'
 import { PORTAL_DOC_CATEGORIES, isExpired, isExpiringSoon } from '@/lib/portal-documents'
@@ -58,14 +59,12 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+    <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Portal Documents
-            </CardTitle>
-            <CardDescription className="text-warm-500 dark:text-cream-400">
+            <CardTitle>Portal Documents</CardTitle>
+            <CardDescription>
               Compliance binder visible to the client&apos;s portal users. Pre-load COIs, training records, etc.
             </CardDescription>
           </div>
@@ -74,13 +73,13 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
       </CardHeader>
       <CardContent>
         {loading ? (
-          <p className="text-sm text-warm-500">Loading...</p>
+          <p className="text-sm text-muted-foreground">Loading...</p>
         ) : docs.length === 0 ? (
-          <div className="text-center py-8 text-warm-500">
-            <FileText className="mx-auto h-8 w-8 text-warm-300" />
-            <p className="mt-2 text-sm">No documents yet for this client.</p>
-            <p className="text-xs">Upload to make them visible in the portal.</p>
-          </div>
+          <EmptyState
+            icon={FileText}
+            title="No documents yet for this client"
+            description="Upload COIs, training records, and other compliance documents to make them visible in the portal."
+          />
         ) : (
           <div className="space-y-4">
             {PORTAL_DOC_CATEGORIES.map(cat => {
@@ -88,38 +87,36 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
               if (!list || list.length === 0) return null
               return (
                 <section key={cat.value}>
-                  <h3 className="text-[10px] uppercase tracking-wider text-warm-500 mb-1.5">
-                    {cat.label} <span className="text-warm-400">· {list.length}</span>
+                  <h3 className="kicker mb-1.5 text-muted-foreground">
+                    {cat.label} <span className="opacity-70">· {list.length}</span>
                   </h3>
                   <ul className="space-y-1.5">
                     {list.map(d => {
                       const expired = isExpired(d.expiresAt)
                       const expiringSoon = isExpiringSoon(d.expiresAt)
                       return (
-                        <li key={d.id} className="flex items-center gap-3 rounded-sm border border-warm-200 dark:border-charcoal-700 p-2.5">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-sm ${
-                            expired ? 'bg-red-50 text-red-600' :
-                            expiringSoon ? 'bg-amber-50 text-amber-600' :
-                            'bg-warm-100 text-warm-600'
+                        <li key={d.id} className="flex items-center gap-3 rounded-[10px] border border-border p-2.5">
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] ${
+                            expired ? 'bg-coral-600/10 text-coral-600 dark:bg-coral-300/12 dark:text-coral-300' :
+                            expiringSoon ? 'bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400' :
+                            'bg-secondary text-muted-foreground'
                           }`}>
                             <FileText className="h-4 w-4" />
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">{d.name}</p>
+                              <p className="truncate text-sm font-medium text-foreground">{d.name}</p>
                               {d.uploadedFromPortal && (
-                                <Badge variant="outline" className="rounded-sm text-[9px] px-1 py-0 border-ocean-200 text-ocean-600">
-                                  Client uploaded
-                                </Badge>
+                                <Badge variant="teal">Client uploaded</Badge>
                               )}
                             </div>
-                            <p className="text-[10px] text-warm-500">
+                            <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
                               {format(new Date(d.createdAt), 'MMM d, yyyy')}
                               {d.uploadedBy && ` · ${d.uploadedBy.firstName} ${d.uploadedBy.lastName}`}
                               {d.expiresAt && (
                                 <>
                                   {' · '}
-                                  <span className={expired ? 'text-red-600 font-medium' : expiringSoon ? 'text-amber-600 font-medium' : ''}>
+                                  <span className={expired ? 'font-medium text-coral-600 dark:text-coral-300' : expiringSoon ? 'font-medium text-gold-600 dark:text-gold-400' : ''}>
                                     {expired ? 'Expired ' : 'Expires '}
                                     {format(new Date(d.expiresAt), 'MMM d, yyyy')}
                                   </span>
@@ -131,7 +128,7 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
                             href={d.fileUrl}
                             target="_blank"
                             rel="noreferrer"
-                            className="flex h-8 w-8 items-center justify-center rounded-sm text-warm-600 hover:bg-warm-100 hover:text-ocean-600"
+                            className="flex h-8 w-8 items-center justify-center rounded-[9px] text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                             title="Download"
                           >
                             <Download className="h-4 w-4" />

@@ -88,8 +88,8 @@ export function UploadDocumentButton({ endpoint, label = 'Upload' }: { endpoint:
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) reset(); setOpen(next) }}>
       <DialogTrigger asChild>
-        <Button variant="lime" className="rounded-sm">
-          <Upload className="mr-1.5 h-4 w-4" />
+        <Button variant="gold" className="rounded-full px-5">
+          <Upload className="h-3.5 w-3.5" />
           {label}
         </Button>
       </DialogTrigger>
@@ -111,7 +111,7 @@ export function UploadDocumentButton({ endpoint, label = 'Upload' }: { endpoint:
               accept=".pdf,.png,.jpg,.jpeg,.webp,.heic,.doc,.docx,.xls,.xlsx,.csv,.txt"
             />
             {file && (
-              <p className="text-[10px] text-warm-500">
+              <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
                 {file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB
               </p>
             )}
@@ -166,10 +166,10 @@ export function UploadDocumentButton({ endpoint, label = 'Upload' }: { endpoint:
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={uploading} className="rounded-sm">
+          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={uploading} className="rounded-full">
             Cancel
           </Button>
-          <Button type="button" onClick={handleUpload} disabled={uploading || !file} className="rounded-sm">
+          <Button type="button" variant="gold" onClick={handleUpload} disabled={uploading || !file} className="rounded-full">
             {uploading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

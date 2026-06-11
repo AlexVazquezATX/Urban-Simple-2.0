@@ -423,12 +423,12 @@ export function CSVImport() {
                   {batchTags.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {batchTags.map(tag => (
-                        <Badge key={tag} className="rounded-sm text-xs px-2 py-0.5 bg-lime-100 text-lime-700 border-lime-200">
+                        <Badge key={tag} variant="gold">
                           {tag}
                           <button
                             type="button"
                             onClick={() => removeBatchTag(tag)}
-                            className="ml-1 hover:text-red-600"
+                            className="ml-1 hover:opacity-70"
                           >
                             <X className="h-3 w-3" />
                           </button>
@@ -500,7 +500,7 @@ export function CSVImport() {
                         </SelectContent>
                       </Select>
                       {columnMapping[header] === '__tag__' && (
-                        <span className="text-xs text-lime-600 whitespace-nowrap">Values become tags</span>
+                        <span className="text-xs text-gold-600 dark:text-gold-400 whitespace-nowrap">Values become tags</span>
                       )}
                     </div>
                   ))}
@@ -514,10 +514,10 @@ export function CSVImport() {
                   <div className="mt-2 border rounded-lg overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full text-sm">
-                        <thead className="bg-muted">
+                        <thead className="bg-secondary/50">
                           <tr>
                             {headers.map(header => (
-                              <th key={header} className="px-4 py-2 text-left font-medium">
+                              <th key={header} className="kicker px-4 py-2 text-left font-normal text-muted-foreground">
                                 {header}
                               </th>
                             ))}
@@ -525,10 +525,10 @@ export function CSVImport() {
                         </thead>
                         <tbody>
                           {previewRows.map((row, idx) => (
-                            <tr key={idx} className="border-t">
+                            <tr key={idx} className="border-t border-border">
                               {headers.map(header => (
                                 <td key={header} className="px-4 py-2">
-                                  {row[header] || '-'}
+                                  {row[header] || <span className="text-muted-foreground">—</span>}
                                 </td>
                               ))}
                             </tr>

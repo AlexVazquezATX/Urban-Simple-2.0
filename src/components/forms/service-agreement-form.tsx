@@ -101,12 +101,12 @@ export function ServiceAgreementForm({
   const liveProfit = liveRevenue - liveCosts
   const liveMargin = liveRevenue > 0 ? (liveProfit / liveRevenue) * 100 : null
   const marginColorClass = liveMargin === null
-    ? 'text-warm-500'
+    ? 'text-muted-foreground'
     : liveMargin < 0
-      ? 'text-red-600'
+      ? 'text-coral-600 dark:text-coral-300'
       : liveMargin < 20
         ? 'text-amber-600'
-        : 'text-lime-700'
+        : 'text-green-600 dark:text-green-300'
 
   // Load clients on mount
   useEffect(() => {
@@ -338,12 +338,12 @@ export function ServiceAgreementForm({
               />
             </div>
 
-            <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3 space-y-3">
+            <div className="rounded-sm border border-border p-3 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-medium uppercase tracking-wider text-warm-600 dark:text-cream-400">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   Operational P&L
                 </p>
-                <p className="text-[10px] text-warm-500 dark:text-cream-400">All optional. Profit and margin calculate live.</p>
+                <p className="text-[10px] text-muted-foreground">All optional. Profit and margin calculate live.</p>
               </div>
               <div className="grid grid-cols-3 gap-3">
                 <FormField
@@ -386,19 +386,19 @@ export function ServiceAgreementForm({
                   )}
                 />
               </div>
-              <div className="grid grid-cols-3 gap-3 rounded-sm bg-warm-50/60 dark:bg-charcoal-900/40 p-2 text-xs">
+              <div className="grid grid-cols-3 gap-3 rounded-sm bg-secondary/60 p-2 text-xs">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Total Cost</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Total Cost</p>
                   <p className="font-mono font-medium">${liveCosts.toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Profit</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Profit</p>
                   <p className={`font-mono font-medium ${marginColorClass}`}>
                     ${liveProfit.toLocaleString()}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Margin</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Margin</p>
                   <p className={`font-mono font-medium ${marginColorClass}`}>
                     {liveMargin === null ? '—' : `${liveMargin.toFixed(1)}%`}
                   </p>

@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 
 interface GalleryItem {
@@ -90,7 +91,7 @@ export function GalleryPickerDialog({
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-warm-400 dark:text-cream-400" />
+            <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : items.length > 0 ? (
           <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto scrollbar-elegant py-2">
@@ -100,9 +101,9 @@ export function GalleryPickerDialog({
                 onClick={() => handleSelect(item)}
                 disabled={!!selecting}
                 className={cn(
-                  'relative aspect-square rounded-sm overflow-hidden border-2 border-transparent',
-                  'hover:border-lime-500 hover:shadow-md transition-all cursor-pointer group',
-                  selecting === item.id && 'ring-2 ring-lime-500',
+                  'relative aspect-square rounded-[10px] overflow-hidden border-2 border-transparent',
+                  'hover:border-primary hover:shadow-soft transition-all cursor-pointer group',
+                  selecting === item.id && 'ring-2 ring-primary',
                   selecting && selecting !== item.id && 'opacity-50'
                 )}
               >
@@ -127,13 +128,12 @@ export function GalleryPickerDialog({
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <ImageIcon className="w-10 h-10 text-warm-300 dark:text-charcoal-600 mb-3" />
-            <p className="text-sm text-warm-600 dark:text-cream-400">No saved content yet</p>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-              Generate and save some content first
-            </p>
-          </div>
+          <EmptyState
+            icon={ImageIcon}
+            title="No saved content yet"
+            description="Generate and save an image first, then pick it here."
+            className="py-12"
+          />
         )}
       </DialogContent>
     </Dialog>

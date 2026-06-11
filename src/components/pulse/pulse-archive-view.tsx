@@ -14,8 +14,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
-  ArrowLeft,
   Calendar,
   ChevronLeft,
   ChevronRight,
@@ -81,19 +82,12 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/pulse">
-          <Button variant="ghost" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold">Briefing Archive</h1>
-          <p className="text-muted-foreground">
-            Browse past briefings and bookmarked items
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        kicker="PULSE · ARCHIVE"
+        title="Briefing Archive"
+        subtitle="Browse past briefings and bookmarked items"
+        backHref="/pulse"
+      />
 
       <Tabs defaultValue="calendar" className="space-y-6">
         <TabsList>
@@ -203,9 +197,9 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                     )}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <FileText className="h-4 w-4" />
-                      {selectedBriefing._count.items} items
+                      <span className="font-mono tabular-nums">{selectedBriefing._count.items} items</span>
                       {selectedBriefing.readAt && (
-                        <Badge variant="secondary" className="ml-2">
+                        <Badge variant="neutral" className="ml-2">
                           Read
                         </Badge>
                       )}
@@ -219,22 +213,28 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                     </Link>
                   </div>
                 ) : selectedDate ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No briefing was generated for this date</p>
-                    {isToday(selectedDate) && (
-                      <Link href="/pulse" className="mt-4 inline-block">
-                        <Button variant="outline" size="sm">
-                          Generate Today's Briefing
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
+                  <EmptyState
+                    icon={Calendar}
+                    title="A quiet day"
+                    description="No briefing was generated for this date."
+                    action={
+                      isToday(selectedDate) ? (
+                        <Link href="/pulse">
+                          <Button variant="outline" size="sm">
+                            Generate Today's Briefing
+                          </Button>
+                        </Link>
+                      ) : undefined
+                    }
+                    className="py-8"
+                  />
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>Select a highlighted date to view its briefing</p>
-                  </div>
+                  <EmptyState
+                    icon={Calendar}
+                    title="Pick a day to revisit"
+                    description="Select a highlighted date to view its briefing."
+                    className="py-8"
+                  />
                 )}
               </CardContent>
             </Card>
@@ -253,9 +253,9 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                       key={briefing.id}
                       href={`/pulse/archive/${format(new Date(briefing.date), 'yyyy-MM-dd')}`}
                     >
-                      <div className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors">
+                      <div className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="text-sm font-medium">
+                          <div className="text-sm font-medium font-mono tabular-nums">
                             {format(new Date(briefing.date), 'MMM d, yyyy')}
                           </div>
                           {briefing.title && (
@@ -265,9 +265,9 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                           )}
                         </div>
                         <div className="flex items-center gap-2">
-                          <Badge variant="outline">{briefing._count.items} items</Badge>
+                          <Badge variant="neutral" className="font-mono tabular-nums">{briefing._count.items} items</Badge>
                           {!briefing.readAt && (
-                            <Badge variant="secondary">New</Badge>
+                            <Badge variant="gold">New</Badge>
                           )}
                         </div>
                       </div>
@@ -275,9 +275,12 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  No briefings yet. Generate your first one!
-                </p>
+                <EmptyState
+                  icon={FileText}
+                  title="No briefings yet"
+                  description="Generate your first daily briefing from the Pulse home page and it will land here."
+                  className="py-8"
+                />
               )}
             </CardContent>
           </Card>
@@ -299,17 +302,17 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                       key={item.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="p-4 rounded-lg border hover:bg-muted/50 transition-colors"
+                      className="p-4 rounded-lg border border-border hover:bg-secondary/50 transition-colors"
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             {item.topic && (
-                              <Badge variant="outline" className="text-xs">
+                              <Badge variant="neutral">
                                 {item.topic.name}
                               </Badge>
                             )}
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-xs text-muted-foreground font-mono tabular-nums">
                               {format(new Date(item.briefing.date), 'MMM d, yyyy')}
                             </span>
                           </div>
@@ -337,13 +340,11 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  <BookmarkCheck className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No bookmarked items yet</p>
-                  <p className="text-sm mt-1">
-                    Bookmark items in your daily briefings to save them here
-                  </p>
-                </div>
+                <EmptyState
+                  icon={BookmarkCheck}
+                  title="Nothing saved yet"
+                  description="Bookmark items in your daily briefings and they will be waiting for you here."
+                />
               )}
             </CardContent>
           </Card>

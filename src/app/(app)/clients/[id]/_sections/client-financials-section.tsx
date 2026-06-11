@@ -1,5 +1,6 @@
+import { Lock } from 'lucide-react'
 import { ClientFinancialsBlock } from '@/components/clients/client-financials-block'
-import { FinancialsSummaryBand } from '@/components/financials/financials-summary-band'
+import { FinancialKPIRow } from '@/components/shared/financial-kpi-row'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { canSeeFinancials, summarizeAgreements, summarizeBand } from '@/lib/financials'
@@ -48,12 +49,20 @@ export async function ClientFinancialsSection({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <FinancialsSummaryBand
-        variant="admin"
-        locationsServiced={locationsServiced}
-        data={bandData}
-        scopeLabel="This client + child accounts"
-      />
+      <div className="space-y-1.5">
+        <FinancialKPIRow
+          locationsServiced={locationsServiced}
+          mrr={bandData.mrr}
+          arr={bandData.arr}
+          monthlyProfit={bandData.monthlyProfit}
+          blendedMarginPct={bandData.blendedMarginPct}
+        />
+        <p className="flex items-center gap-1 text-[11px] text-muted-foreground">
+          <Lock className="h-3 w-3 shrink-0" />
+          Gross P&amp;L from service agreements · This client + child accounts.
+          Overhead-inclusive net lives on the Financials dashboard.
+        </p>
+      </div>
       <ClientFinancialsBlock
         summary={summary}
         agreements={agreements.map((a) => ({

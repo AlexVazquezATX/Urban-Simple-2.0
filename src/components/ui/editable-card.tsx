@@ -36,9 +36,9 @@ export function EditableCard({
   children,
 }: EditableCardProps) {
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+    <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+        <CardTitle>
           {title}
         </CardTitle>
         {canEdit &&
@@ -50,13 +50,13 @@ export function EditableCard({
                 size="sm"
                 onClick={onCancel}
                 disabled={saving}
-                className="rounded-sm text-warm-600 hover:bg-warm-50 hover:text-warm-900 dark:text-cream-400 dark:hover:bg-charcoal-800"
+                className="text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </Button>
               <Button
                 type="button"
-                variant="lime"
+                variant="gold"
                 size="sm"
                 onClick={onSave}
                 disabled={saving}
@@ -78,7 +78,7 @@ export function EditableCard({
               variant="ghost"
               size="sm"
               onClick={onEdit}
-              className="rounded-sm text-warm-600 hover:bg-warm-50 hover:text-ocean-600 dark:text-cream-400 dark:hover:bg-charcoal-800"
+              className="text-muted-foreground hover:text-foreground"
             >
               <Pencil className="mr-1.5 h-3.5 w-3.5" />
               {editLabel}
@@ -100,7 +100,7 @@ export function Field({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium uppercase tracking-wider text-warm-500 dark:text-cream-400">
+      <Label>
         {label}
       </Label>
       {children}
@@ -118,8 +118,8 @@ export function ViewRow({
 }) {
   return (
     <div>
-      <p className="text-sm text-warm-500 dark:text-cream-400">{label}</p>
-      <div className="font-medium text-warm-900 dark:text-cream-100">{children}</div>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <div className="font-medium text-foreground">{children}</div>
     </div>
   )
 }

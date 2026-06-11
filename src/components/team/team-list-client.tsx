@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Mail, Phone, Building2, Shield, UserCheck, Users, User } from 'lucide-react'
+import { Plus, Shield, UserCheck, Users, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -14,6 +14,9 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { TeamMemberDetailPanel } from './team-member-detail-panel'
 
 interface TeamMember {
@@ -53,12 +56,14 @@ const roleLabels: Record<string, string> = {
   CLIENT_USER: 'Client User',
 }
 
-const roleColors: Record<string, string> = {
-  SUPER_ADMIN: 'bg-plum-100 text-plum-700 border-plum-200',
-  ADMIN: 'bg-bronze-100 text-bronze-700 border-bronze-200',
-  MANAGER: 'bg-ocean-100 text-ocean-700 border-ocean-200',
-  ASSOCIATE: 'bg-lime-100 text-lime-700 border-lime-200',
-  CLIENT_USER: 'bg-warm-100 text-warm-600 border-warm-200',
+// Chip mapping per the design system: Super Admin/Admin → gold,
+// Manager → teal, Associate (and everything else) → neutral.
+const roleBadgeVariants: Record<string, 'gold' | 'teal' | 'neutral'> = {
+  SUPER_ADMIN: 'gold',
+  ADMIN: 'gold',
+  MANAGER: 'teal',
+  ASSOCIATE: 'neutral',
+  CLIENT_USER: 'neutral',
 }
 
 export function TeamListClient({ initialUsers, branches }: TeamListClientProps) {
@@ -119,112 +124,74 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">
-            Team Members
-          </h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400">
-            Manage your team members and their access
-          </p>
-        </div>
-        <Button variant="lime" className="rounded-sm" onClick={handleAddMember}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Team Member
-        </Button>
-      </div>
+      <PageHeader
+        kicker="OPERATIONS · PEOPLE"
+        title="Team"
+        subtitle="Manage your team members and their access"
+        actions={
+          <Button variant="gold" onClick={handleAddMember}>
+            <Plus className="size-4" />
+            Add Team Member
+          </Button>
+        }
+      />
 
-      {/* Stats Cards */}
+      {/* KPI row */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Total Members</CardTitle>
-            <Users className="h-4 w-4 text-warm-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">{users.length}</div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">{activeUsers.length} active</p>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Admins</CardTitle>
-            <Shield className="h-4 w-4 text-warm-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-              {users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Managers</CardTitle>
-            <UserCheck className="h-4 w-4 text-warm-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-              {users.filter((u) => u.role === 'MANAGER').length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">Associates</CardTitle>
-            <User className="h-4 w-4 text-warm-400" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-              {users.filter((u) => u.role === 'ASSOCIATE').length}
-            </div>
-          </CardContent>
-        </Card>
+        <StatCard
+          label="Total Members"
+          value={users.length}
+          sub={`${activeUsers.length} active`}
+          icon={Users}
+        />
+        <StatCard
+          label="Admins"
+          value={users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN').length}
+          icon={Shield}
+        />
+        <StatCard
+          label="Managers"
+          value={users.filter((u) => u.role === 'MANAGER').length}
+          icon={UserCheck}
+        />
+        <StatCard
+          label="Associates"
+          value={users.filter((u) => u.role === 'ASSOCIATE').length}
+          icon={User}
+        />
       </div>
 
       {/* Active Members */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+      <Card>
         <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Active Members</CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">
+          <CardTitle>Active Members</CardTitle>
+          <CardDescription>
             {activeUsers.length} active team member{activeUsers.length !== 1 ? 's' : ''}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {activeUsers.length === 0 ? (
-            <div className="text-center py-8 text-warm-500 dark:text-cream-400">
-              <Users className="h-12 w-12 mx-auto mb-4 text-warm-400" />
-              <p>No active team members yet</p>
-              <Button
-                variant="outline"
-                className="mt-4 rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400"
-                onClick={handleAddMember}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Your First Team Member
-              </Button>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="No team members yet — it starts with one"
+              description="Add your first team member to give them access to schedules, checklists, and assignments."
+              action={
+                <Button variant="outline" onClick={handleAddMember}>
+                  <Plus className="size-4" />
+                  Add Your First Team Member
+                </Button>
+              }
+            />
           ) : (
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Member
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Email
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Phone
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Role
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Branch
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Actions
-                  </TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Member</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Branch</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -233,22 +200,22 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                   return (
                     <TableRow
                       key={member.id}
-                      className="border-warm-200 dark:border-charcoal-700 hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer"
+                      className="cursor-pointer"
                       onClick={() => handleSelectMember(member)}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-bronze-100 text-bronze-700 text-xs font-semibold">
+                            <AvatarFallback className="bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400 text-xs font-semibold">
                               {initials}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium text-warm-900 dark:text-cream-100">
+                            <div className="font-medium text-foreground">
                               {member.displayName || `${member.firstName} ${member.lastName}`}
                             </div>
                             {member.displayName && (
-                              <div className="text-xs text-warm-500 dark:text-cream-400">
+                              <div className="text-xs text-muted-foreground">
                                 {member.firstName} {member.lastName}
                               </div>
                             )}
@@ -256,43 +223,33 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-warm-600 dark:text-cream-300">
-                          <Mail className="h-3 w-3 text-warm-400" />
-                          <span className="text-sm">{member.email}</span>
-                        </div>
+                        <span className="font-mono text-[13px] text-muted-foreground">
+                          {member.email}
+                        </span>
                       </TableCell>
                       <TableCell>
                         {member.phone ? (
-                          <div className="flex items-center gap-2 text-warm-600 dark:text-cream-300">
-                            <Phone className="h-3 w-3 text-warm-400" />
-                            <span className="text-sm">{member.phone}</span>
-                          </div>
+                          <span className="font-mono text-[13px] tabular-nums text-muted-foreground">
+                            {member.phone}
+                          </span>
                         ) : (
-                          <span className="text-sm text-warm-400">—</span>
+                          <span className="text-sm text-muted-foreground">—</span>
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          className={`rounded-sm text-[10px] px-1.5 py-0 ${roleColors[member.role] || 'bg-warm-100 text-warm-600 border-warm-200'}`}
-                        >
+                        <Badge variant={roleBadgeVariants[member.role] || 'neutral'}>
                           {roleLabels[member.role] || member.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {member.branch ? (
-                          <div className="flex items-center gap-2 text-warm-600 dark:text-cream-300">
-                            <Building2 className="h-3 w-3 text-warm-400" />
-                            <span className="text-sm">{member.branch.name}</span>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-warm-500">All Branches</span>
-                        )}
+                        <Badge variant="neutral">
+                          {member.branch ? member.branch.name : 'All Branches'}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleSelectMember(member)
@@ -312,31 +269,21 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
 
       {/* Inactive Members */}
       {inactiveUsers.length > 0 && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+        <Card>
           <CardHeader>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Inactive Members
-            </CardTitle>
-            <CardDescription className="text-warm-500 dark:text-cream-400">
+            <CardTitle>Inactive Members</CardTitle>
+            <CardDescription>
               {inactiveUsers.length} inactive team member{inactiveUsers.length !== 1 ? 's' : ''}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="border-warm-200 dark:border-charcoal-700 hover:bg-transparent">
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Member
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Email
-                  </TableHead>
-                  <TableHead className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Role
-                  </TableHead>
-                  <TableHead className="text-right text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wider">
-                    Actions
-                  </TableHead>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead>Member</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -345,39 +292,35 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                   return (
                     <TableRow
                       key={member.id}
-                      className="border-warm-200 dark:border-charcoal-700 opacity-60 hover:bg-warm-50 dark:hover:bg-charcoal-800 cursor-pointer"
+                      className="cursor-pointer opacity-60"
                       onClick={() => handleSelectMember(member)}
                     >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar className="h-8 w-8">
-                            <AvatarFallback className="bg-warm-100 text-warm-600 text-xs font-semibold">
+                            <AvatarFallback className="bg-secondary text-muted-foreground text-xs font-semibold">
                               {initials}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium text-warm-700 dark:text-cream-300">
+                            <div className="font-medium text-foreground">
                               {member.displayName || `${member.firstName} ${member.lastName}`}
                             </div>
                           </div>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm text-warm-600 dark:text-cream-300">{member.email}</span>
+                        <span className="font-mono text-[13px] text-muted-foreground">
+                          {member.email}
+                        </span>
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className="rounded-sm text-[10px] px-1.5 py-0 bg-warm-100 text-warm-600 border-warm-200"
-                        >
-                          {roleLabels[member.role] || member.role}
-                        </Badge>
+                        <Badge variant="neutral">{roleLabels[member.role] || member.role}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="rounded-sm text-warm-600 hover:text-ocean-600 hover:bg-warm-50"
                           onClick={(e) => {
                             e.stopPropagation()
                             handleSelectMember(member)

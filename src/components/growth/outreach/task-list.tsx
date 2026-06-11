@@ -1,7 +1,7 @@
 'use client'
 
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { Mail, MessageSquare, Linkedin, Instagram, Clock, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -15,16 +15,16 @@ export function TaskList({ tasks, scheduledMessages }: TaskListProps) {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email':
-        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
+        return <Mail className="size-3.5 text-muted-foreground" />
       case 'sms':
-        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
+        return <MessageSquare className="size-3.5 text-muted-foreground" />
       case 'linkedin':
-        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
+        return <Linkedin className="size-3.5 text-muted-foreground" />
       case 'instagram':
       case 'instagram_dm':
-        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
+        return <Instagram className="size-3.5 text-muted-foreground" />
       default:
-        return <Clock className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
+        return <Clock className="size-3.5 text-muted-foreground" />
     }
   }
 
@@ -57,44 +57,46 @@ export function TaskList({ tasks, scheduledMessages }: TaskListProps) {
 
   if (allTasks.length === 0) {
     return (
-      <div className="text-center py-8">
-        <CheckCircle2 className="h-10 w-10 text-warm-300 dark:text-charcoal-500 mx-auto mb-2" />
-        <p className="text-sm text-warm-500 dark:text-cream-400">No tasks scheduled for today</p>
-      </div>
+      <EmptyState
+        icon={CheckCircle2}
+        title="No tasks today — the queue is clear"
+        description="Scheduled messages and follow-ups for today will show up here."
+        className="py-8"
+      />
     )
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {allTasks.slice(0, 10).map((task) => (
         <Link
           key={task.id}
           href={`/growth/prospects/${task.prospectId}`}
-          className="flex items-start gap-3 px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors"
+          className="flex items-start gap-3 rounded-[12px] border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
         >
-          <div className="mt-0.5 w-6 h-6 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center flex-shrink-0">
+          <div className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-[8px] bg-secondary">
             {getChannelIcon(task.channel || 'email')}
           </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <p className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">{task.prospectName}</p>
-              <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
+          <div className="min-w-0 flex-1">
+            <div className="mb-0.5 flex items-center gap-1.5">
+              <p className="truncate text-sm font-medium text-foreground">{task.prospectName}</p>
+              <Badge variant={task.type === 'scheduled' ? 'teal' : 'neutral'}>
                 {task.type === 'scheduled' ? 'Scheduled' : 'Follow-up'}
               </Badge>
             </div>
             {task.subject && (
-              <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{task.subject}</p>
+              <p className="truncate text-xs text-muted-foreground">{task.subject}</p>
             )}
-            <div className="flex items-center gap-2 mt-1">
+            <div className="mt-1 flex items-center gap-2">
               {task.scheduledAt && (
-                <span className="text-[10px] text-warm-400 dark:text-cream-500">
+                <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
                   {format(new Date(task.scheduledAt), 'h:mm a')}
                 </span>
               )}
               {task.campaignName && (
                 <>
-                  <span className="text-[10px] text-warm-300 dark:text-charcoal-500">•</span>
-                  <span className="text-[10px] text-warm-400 dark:text-cream-500">
+                  <span className="text-[10px] text-muted-foreground">·</span>
+                  <span className="text-[10px] text-muted-foreground">
                     {task.campaignName}
                   </span>
                 </>

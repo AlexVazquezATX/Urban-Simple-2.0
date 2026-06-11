@@ -6,6 +6,7 @@ import { Wrench } from 'lucide-react'
 import { toast } from 'sonner'
 import { Textarea } from '@/components/ui/textarea'
 import { EditableCard } from '@/components/ui/editable-card'
+import { EmptyState } from '@/components/ui/empty-state'
 
 interface EditableEquipmentProps {
   location: any
@@ -81,26 +82,29 @@ export function EditableEquipment({ location }: EditableEquipmentProps) {
             value={text}
             onChange={(e) => setText(e.target.value)}
           />
-          <p className="text-xs text-warm-500 dark:text-cream-400">One item per line.</p>
+          <p className="text-xs text-muted-foreground">One item per line.</p>
         </div>
       ) : items.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
           {items.map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 rounded-sm border border-warm-200 p-2 transition-colors hover:border-ocean-400 dark:border-charcoal-700"
+              className="flex items-center gap-2 rounded-[10px] border border-border p-2 transition-colors hover:border-primary/40"
             >
-              <Wrench className="h-4 w-4 text-warm-500" />
-              <span className="text-sm text-warm-700 dark:text-cream-300">
+              <Wrench className="size-4 text-muted-foreground" />
+              <span className="text-sm text-foreground">
                 {typeof item === 'string' ? item : item?.name || 'Unknown'}
               </span>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-warm-500 dark:text-cream-400">
-          No equipment listed. Use Edit to add items.
-        </p>
+        <EmptyState
+          icon={Wrench}
+          title="No equipment on file"
+          description="Use Edit to list the hoods, fryers, and other gear at this location — one item per line."
+          className="py-8"
+        />
       )}
     </EditableCard>
   )

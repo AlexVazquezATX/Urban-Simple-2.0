@@ -3,12 +3,13 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Send,
   CheckCircle2,
   Eye,
   MousePointerClick,
-  MessageSquare,
   AlertTriangle,
   Loader2,
   TrendingUp,
@@ -93,17 +94,19 @@ export function OutreachAnalytics() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-5 w-5 animate-spin text-warm-400 dark:text-cream-500" />
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   if (!stats) {
     return (
-      <div className="text-center py-20">
-        <BarChart3 className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
-        <p className="text-sm text-warm-500 dark:text-cream-400">Unable to load analytics</p>
-      </div>
+      <EmptyState
+        icon={BarChart3}
+        title="Analytics took the night off"
+        description="We couldn't load outreach stats. Refresh to try again."
+        className="py-20"
+      />
     )
   }
 
@@ -113,41 +116,30 @@ export function OutreachAnalytics() {
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KPICard
-          label="Sent"
-          value={overview.sent}
-          icon={<Send className="h-4 w-4 text-ocean-500" />}
-          color="ocean"
-        />
-        <KPICard
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard label="Sent" value={overview.sent} icon={Send} />
+        <StatCard
           label="Delivered"
           value={overview.delivered}
-          rate={rates.deliveryRate}
-          rateLabel="delivery"
-          icon={<CheckCircle2 className="h-4 w-4 text-lime-600" />}
-          color="lime"
+          sub={`${rates.deliveryRate}% delivery`}
+          icon={CheckCircle2}
         />
-        <KPICard
+        <StatCard
           label="Opened"
           value={overview.opened}
-          rate={rates.openRate}
-          rateLabel="open rate"
-          icon={<Eye className="h-4 w-4 text-plum-500" />}
-          color="plum"
+          sub={`${rates.openRate}% open rate`}
+          icon={Eye}
         />
-        <KPICard
+        <StatCard
           label="Clicked"
           value={overview.clicked}
-          rate={rates.clickRate}
-          rateLabel="click rate"
-          icon={<MousePointerClick className="h-4 w-4 text-amber-500" />}
-          color="amber"
+          sub={`${rates.clickRate}% click rate`}
+          icon={MousePointerClick}
         />
       </div>
 
       {/* Secondary stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
         <MiniStat label="Replied" value={overview.replied} rate={rates.replyRate} />
         <MiniStat label="Bounced" value={overview.bounced} rate={rates.bounceRate} warning={rates.bounceRate > 5} />
         <MiniStat label="Failed" value={overview.failed} warning={overview.failed > 0} />
@@ -157,32 +149,32 @@ export function OutreachAnalytics() {
 
       {/* Engagement details */}
       {hasData && overview.totalOpens > 0 && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <TrendingUp className="h-4 w-4 text-plum-500" />
-              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Engagement</h3>
+        <Card>
+          <CardContent>
+            <div className="mb-3 flex items-center gap-2">
+              <TrendingUp className="size-4 text-muted-foreground" />
+              <h3 className="font-display text-sm font-bold text-foreground">Engagement</h3>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div className="grid grid-cols-2 gap-4 text-center md:grid-cols-4">
               <div>
-                <p className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{overview.totalOpens}</p>
-                <p className="text-[10px] text-warm-500 dark:text-cream-400 uppercase tracking-wide">Total opens</p>
+                <p className="font-display text-2xl font-bold tabular-nums text-foreground">{overview.totalOpens}</p>
+                <p className="kicker mt-1 text-muted-foreground">Total opens</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{overview.totalClicks}</p>
-                <p className="text-[10px] text-warm-500 dark:text-cream-400 uppercase tracking-wide">Total clicks</p>
+                <p className="font-display text-2xl font-bold tabular-nums text-foreground">{overview.totalClicks}</p>
+                <p className="kicker mt-1 text-muted-foreground">Total clicks</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-warm-900 dark:text-cream-100">
+                <p className="font-display text-2xl font-bold tabular-nums text-foreground">
                   {overview.opened > 0 ? (overview.totalOpens / overview.opened).toFixed(1) : '0'}
                 </p>
-                <p className="text-[10px] text-warm-500 dark:text-cream-400 uppercase tracking-wide">Opens per recipient</p>
+                <p className="kicker mt-1 text-muted-foreground">Opens per recipient</p>
               </div>
               <div>
-                <p className="text-2xl font-semibold text-warm-900 dark:text-cream-100">
+                <p className="font-display text-2xl font-bold tabular-nums text-foreground">
                   {overview.clicked > 0 ? (overview.totalClicks / overview.clicked).toFixed(1) : '0'}
                 </p>
-                <p className="text-[10px] text-warm-500 dark:text-cream-400 uppercase tracking-wide">Clicks per clicker</p>
+                <p className="kicker mt-1 text-muted-foreground">Clicks per clicker</p>
               </div>
             </div>
           </CardContent>
@@ -191,42 +183,42 @@ export function OutreachAnalytics() {
 
       {/* Step-by-step performance */}
       {steps.length > 0 && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Inbox className="h-4 w-4 text-ocean-500" />
-              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Performance by Step</h3>
+        <Card>
+          <CardContent>
+            <div className="mb-3 flex items-center gap-2">
+              <Inbox className="size-4 text-muted-foreground" />
+              <h3 className="font-display text-sm font-bold text-foreground">Performance by Step</h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b border-warm-200 dark:border-charcoal-700">
-                    <th className="text-left py-2 pr-4 text-warm-500 dark:text-cream-400 font-medium">Step</th>
-                    <th className="text-right py-2 px-2 text-warm-500 dark:text-cream-400 font-medium">Sent</th>
-                    <th className="text-right py-2 px-2 text-warm-500 dark:text-cream-400 font-medium">Delivered</th>
-                    <th className="text-right py-2 px-2 text-warm-500 dark:text-cream-400 font-medium">Opened</th>
-                    <th className="text-right py-2 px-2 text-warm-500 dark:text-cream-400 font-medium">Open Rate</th>
-                    <th className="text-right py-2 px-2 text-warm-500 dark:text-cream-400 font-medium">Clicked</th>
-                    <th className="text-right py-2 px-2 text-warm-500 dark:text-cream-400 font-medium">Replied</th>
-                    <th className="text-right py-2 pl-2 text-warm-500 dark:text-cream-400 font-medium">Bounced</th>
+                  <tr className="border-b border-border">
+                    <th className="kicker py-2 pr-4 text-left font-normal text-muted-foreground">Step</th>
+                    <th className="kicker px-2 py-2 text-right font-normal text-muted-foreground">Sent</th>
+                    <th className="kicker px-2 py-2 text-right font-normal text-muted-foreground">Delivered</th>
+                    <th className="kicker px-2 py-2 text-right font-normal text-muted-foreground">Opened</th>
+                    <th className="kicker px-2 py-2 text-right font-normal text-muted-foreground">Open Rate</th>
+                    <th className="kicker px-2 py-2 text-right font-normal text-muted-foreground">Clicked</th>
+                    <th className="kicker px-2 py-2 text-right font-normal text-muted-foreground">Replied</th>
+                    <th className="kicker py-2 pl-2 text-right font-normal text-muted-foreground">Bounced</th>
                   </tr>
                 </thead>
                 <tbody>
                   {steps.map((s) => (
-                    <tr key={s.step} className="border-b border-warm-100 dark:border-charcoal-700">
-                      <td className="py-2 pr-4 text-warm-900 dark:text-cream-100 font-medium">
+                    <tr key={s.step} className="border-b border-border">
+                      <td className="py-2 pr-4 font-medium text-foreground">
                         Step {s.step}
-                        {s.step === 1 && <span className="text-warm-400 dark:text-cream-500 ml-1">(First contact)</span>}
+                        {s.step === 1 && <span className="ml-1 text-muted-foreground">(First contact)</span>}
                       </td>
-                      <td className="text-right py-2 px-2 text-warm-700 dark:text-cream-300">{s.sent}</td>
-                      <td className="text-right py-2 px-2 text-warm-700 dark:text-cream-300">{s.delivered}</td>
-                      <td className="text-right py-2 px-2 text-warm-700 dark:text-cream-300">{s.opened}</td>
-                      <td className="text-right py-2 px-2">
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-foreground">{s.sent}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-foreground">{s.delivered}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-foreground">{s.opened}</td>
+                      <td className="px-2 py-2 text-right">
                         <RateBadge value={s.openRate} />
                       </td>
-                      <td className="text-right py-2 px-2 text-warm-700 dark:text-cream-300">{s.clicked}</td>
-                      <td className="text-right py-2 px-2 text-warm-700 dark:text-cream-300">{s.replied}</td>
-                      <td className="text-right py-2 pl-2 text-warm-700 dark:text-cream-300">{s.bounced}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-foreground">{s.clicked}</td>
+                      <td className="px-2 py-2 text-right font-mono tabular-nums text-foreground">{s.replied}</td>
+                      <td className="py-2 pl-2 text-right font-mono tabular-nums text-foreground">{s.bounced}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -238,33 +230,33 @@ export function OutreachAnalytics() {
 
       {/* Per-sequence breakdown */}
       {sequences.length > 0 && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <BarChart3 className="h-4 w-4 text-plum-500" />
-              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Performance by Sequence</h3>
+        <Card>
+          <CardContent>
+            <div className="mb-3 flex items-center gap-2">
+              <BarChart3 className="size-4 text-muted-foreground" />
+              <h3 className="font-display text-sm font-bold text-foreground">Performance by Sequence</h3>
             </div>
             <div className="space-y-2">
               {sequences.map((seq) => (
                 <div
                   key={seq.id}
-                  className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3"
+                  className="rounded-[12px] border border-border p-3"
                 >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-warm-900 dark:text-cream-100">{seq.name}</span>
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">{seq.name}</span>
                     <div className="flex items-center gap-3">
                       <RateBadge value={seq.openRate} label="open" />
                       <RateBadge value={seq.clickRate} label="click" />
                     </div>
                   </div>
-                  <div className="flex items-center gap-4 text-[10px] text-warm-500 dark:text-cream-400">
+                  <div className="flex items-center gap-4 font-mono text-[10px] tabular-nums text-muted-foreground">
                     <span>{seq.sent} sent</span>
                     <span>{seq.delivered} delivered</span>
                     <span>{seq.opened} opened</span>
                     <span>{seq.clicked} clicked</span>
                     <span>{seq.replied} replied</span>
                     {seq.bounced > 0 && (
-                      <span className="text-red-500">{seq.bounced} bounced</span>
+                      <span className="text-coral-600 dark:text-coral-300">{seq.bounced} bounced</span>
                     )}
                   </div>
                 </div>
@@ -276,29 +268,29 @@ export function OutreachAnalytics() {
 
       {/* Daily volume */}
       {stats.dailyVolume.length > 0 && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Send className="h-4 w-4 text-ocean-500" />
-              <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100">Daily Send Volume (Last 30 Days)</h3>
+        <Card>
+          <CardContent>
+            <div className="mb-3 flex items-center gap-2">
+              <Send className="size-4 text-muted-foreground" />
+              <h3 className="font-display text-sm font-bold text-foreground">Daily Send Volume (Last 30 Days)</h3>
             </div>
-            <div className="flex items-end gap-[2px] h-24">
+            <div className="flex h-24 items-end gap-[2px]">
               {stats.dailyVolume.map((d) => {
                 const max = Math.max(...stats.dailyVolume.map((v) => v.count), 1)
                 const height = Math.max((d.count / max) * 100, 4)
                 return (
                   <div
                     key={d.date}
-                    className="flex-1 bg-ocean-400 rounded-t-[1px] transition-all hover:bg-ocean-600 group relative"
+                    className="group relative flex-1 rounded-t-[2px] bg-gold-600 transition-all hover:bg-gold-500 dark:bg-gold-400 dark:hover:bg-gold-300"
                     style={{ height: `${height}%` }}
                     title={`${d.date}: ${d.count} sent`}
                   />
                 )
               })}
             </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[9px] text-warm-400 dark:text-cream-500">{stats.dailyVolume[0]?.date}</span>
-              <span className="text-[9px] text-warm-400 dark:text-cream-500">{stats.dailyVolume[stats.dailyVolume.length - 1]?.date}</span>
+            <div className="mt-1 flex justify-between">
+              <span className="font-mono text-[9px] tabular-nums text-muted-foreground">{stats.dailyVolume[0]?.date}</span>
+              <span className="font-mono text-[9px] tabular-nums text-muted-foreground">{stats.dailyVolume[stats.dailyVolume.length - 1]?.date}</span>
             </div>
           </CardContent>
         </Card>
@@ -306,51 +298,17 @@ export function OutreachAnalytics() {
 
       {/* No data state */}
       {!hasData && (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="p-4">
-            <div className="text-center py-10">
-              <BarChart3 className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
-              <p className="text-sm text-warm-500 dark:text-cream-400">No sent messages yet</p>
-              <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
-                Analytics will populate once you start sending emails
-              </p>
-            </div>
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={BarChart3}
+              title="No sends to chart yet"
+              description="Analytics will populate once you start sending emails."
+            />
           </CardContent>
         </Card>
       )}
     </div>
-  )
-}
-
-function KPICard({
-  label,
-  value,
-  rate,
-  rateLabel,
-  icon,
-}: {
-  label: string
-  value: number
-  rate?: number
-  rateLabel?: string
-  icon: React.ReactNode
-  color: string
-}) {
-  return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-      <CardContent className="p-3">
-        <div className="flex items-center gap-2 mb-1">
-          {icon}
-          <span className="text-[10px] text-warm-500 dark:text-cream-400 uppercase tracking-wide">{label}</span>
-        </div>
-        <p className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{value}</p>
-        {rate !== undefined && (
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
-            {rate}% {rateLabel}
-          </p>
-        )}
-      </CardContent>
-    </Card>
   )
 }
 
@@ -366,31 +324,36 @@ function MiniStat({
   warning?: boolean
 }) {
   return (
-    <div className={`rounded-sm border p-2.5 ${warning ? 'border-red-200 bg-red-50' : 'border-warm-200 dark:border-charcoal-700'}`}>
+    <div
+      className={`rounded-[12px] border p-2.5 ${
+        warning
+          ? 'border-coral-600/30 bg-coral-600/10 dark:border-coral-300/25 dark:bg-coral-300/12'
+          : 'border-border bg-card'
+      }`}
+    >
       <div className="flex items-center gap-1.5">
-        {warning && <AlertTriangle className="h-3 w-3 text-red-500" />}
-        <span className="text-[10px] text-warm-500 dark:text-cream-400 uppercase tracking-wide">{label}</span>
+        {warning && <AlertTriangle className="size-3 text-coral-600 dark:text-coral-300" />}
+        <span className="kicker text-muted-foreground">{label}</span>
       </div>
-      <p className={`text-lg font-semibold ${warning ? 'text-red-700' : 'text-warm-900 dark:text-cream-100'}`}>{value}</p>
+      <p
+        className={`font-display text-lg font-bold tabular-nums ${
+          warning ? 'text-coral-600 dark:text-coral-300' : 'text-foreground'
+        }`}
+      >
+        {value}
+      </p>
       {rate !== undefined && (
-        <p className="text-[10px] text-warm-500 dark:text-cream-400">{rate}%</p>
+        <p className="font-mono text-[10px] tabular-nums text-muted-foreground">{rate}%</p>
       )}
     </div>
   )
 }
 
 function RateBadge({ value, label }: { value: number; label?: string }) {
-  const color =
-    value >= 40
-      ? 'bg-lime-100 text-lime-700 border-lime-200'
-      : value >= 20
-        ? 'bg-amber-100 text-amber-700 border-amber-200'
-        : value > 0
-          ? 'bg-red-100 text-red-700 border-red-200'
-          : 'bg-warm-100 dark:bg-charcoal-800 text-warm-500 dark:text-cream-400 border-warm-200 dark:border-charcoal-700'
+  const variant = value >= 40 ? 'green' : value >= 20 ? 'gold' : value > 0 ? 'coral' : 'neutral'
 
   return (
-    <Badge className={`rounded-sm text-[10px] px-1.5 py-0 ${color}`}>
+    <Badge variant={variant} className="font-mono tabular-nums">
       {value}%{label ? ` ${label}` : ''}
     </Badge>
   )

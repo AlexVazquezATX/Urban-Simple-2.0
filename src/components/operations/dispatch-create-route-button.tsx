@@ -64,7 +64,7 @@ export function DispatchCreateRouteButton({
       type="button"
       variant="ghost"
       size="sm"
-      className="mt-2 h-7 rounded-sm px-2 text-xs"
+      className="mt-2 h-7 px-2 text-xs"
       onClick={handleCreateRoute}
       disabled={loading}
     >

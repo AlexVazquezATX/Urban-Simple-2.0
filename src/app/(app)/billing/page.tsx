@@ -1,11 +1,13 @@
 import { Suspense } from 'react'
-import Link from 'next/link'
-import { DollarSign, AlertTriangle, Clock, FileText } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { AlertTriangle, Clock, Wallet } from 'lucide-react'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components/ui/stat-card'
+import { PageHeader } from '@/components/layout/page-header'
 import { ARagingTable } from '@/components/billing/ar-aging-table'
 import { QboConnectionCard } from '@/components/billing/qbo-connection-card'
+import { agingTextClass } from '@/components/billing/aging'
+import { formatMoneyExact } from '@/lib/format'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 
@@ -13,7 +15,7 @@ async function ARDashboard() {
   const user = await getCurrentUser()
   if (!user) {
     return (
-      <div className="text-destructive">
+      <div className="text-muted-foreground">
         Please log in to view AR aging report.
       </div>
     )
@@ -122,121 +124,79 @@ async function ARDashboard() {
     counts,
   }
 
+  const invoiceWord = (n: number) => (n === 1 ? 'invoice' : 'invoices')
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Outstanding Payments</h1>
-        <p className="text-sm text-warm-500 dark:text-cream-400">
-          Track unpaid invoices and how long they've been waiting
-        </p>
+    <div>
+      <PageHeader
+        kicker="MONEY · ACCOUNTS RECEIVABLE"
+        title="Billing & AR"
+        subtitle="Track unpaid invoices and how long they've been waiting"
+      />
+
+      <div className="flex flex-col gap-4">
+        {/* QuickBooks connection + sync */}
+        <QboConnectionCard />
+
+        {/* Total Outstanding — hero */}
+        <StatCard
+          label="Total outstanding"
+          icon={Wallet}
+          value={
+            <span className="text-[40px] tracking-[-1.5px]">
+              {formatMoneyExact(totals.total)}
+            </span>
+          }
+          sub={`${counts.total} ${invoiceWord(counts.total)} outstanding across all aging buckets`}
+        />
+
+        {/* Aging ramp — teal → gold → coral → danger (the one approved red) */}
+        <div className="grid gap-4 md:grid-cols-4">
+          <StatCard
+            label="On time (0-30 days)"
+            icon={Clock}
+            value={
+              <span className={agingTextClass.current}>
+                {formatMoneyExact(totals.current)}
+              </span>
+            }
+            sub={`${counts.current} ${invoiceWord(counts.current)}`}
+          />
+          <StatCard
+            label="1-2 months late"
+            icon={AlertTriangle}
+            value={
+              <span className={agingTextClass.overdue_31_60}>
+                {formatMoneyExact(totals.overdue_31_60)}
+              </span>
+            }
+            sub={`${counts.overdue_31_60} ${invoiceWord(counts.overdue_31_60)}`}
+          />
+          <StatCard
+            label="2-3 months late"
+            icon={AlertTriangle}
+            value={
+              <span className={agingTextClass.overdue_61_90}>
+                {formatMoneyExact(totals.overdue_61_90)}
+              </span>
+            }
+            sub={`${counts.overdue_61_90} ${invoiceWord(counts.overdue_61_90)}`}
+          />
+          <StatCard
+            label="3+ months late"
+            icon={AlertTriangle}
+            value={
+              <span className={agingTextClass.overdue_90_plus}>
+                {formatMoneyExact(totals.overdue_90_plus)}
+              </span>
+            }
+            sub={`${counts.overdue_90_plus} ${invoiceWord(counts.overdue_90_plus)}`}
+          />
+        </div>
+
+        {/* AR Aging Table */}
+        <ARagingTable initialData={data} />
       </div>
-
-      {/* QuickBooks connection + sync */}
-      <QboConnectionCard />
-
-      {/* Payment Status by Age */}
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">On Time (0-30 days)</CardTitle>
-            <div className="rounded-sm bg-ocean-100 p-2">
-              <Clock className="h-4 w-4 text-ocean-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-ocean-700">
-              ${totals.current.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
-              {counts.current} {counts.current === 1 ? 'invoice' : 'invoices'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">1-2 Months Late</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-yellow-600">
-              ${totals.overdue_31_60.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
-              {counts.overdue_31_60}{' '}
-              {counts.overdue_31_60 === 1 ? 'invoice' : 'invoices'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">2-3 Months Late</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-orange-600">
-              ${totals.overdue_61_90.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
-              {counts.overdue_61_90}{' '}
-              {counts.overdue_61_90 === 1 ? 'invoice' : 'invoices'}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-warm-700 dark:text-cream-300">3+ Months Late</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-display font-medium text-red-600">
-              ${totals.overdue_90_plus.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400">
-              {counts.overdue_90_plus}{' '}
-              {counts.overdue_90_plus === 1 ? 'invoice' : 'invoices'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Total Outstanding */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader>
-          <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">Total Outstanding</CardTitle>
-          <CardDescription className="text-warm-500 dark:text-cream-400">
-            All unpaid invoices across all aging buckets
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-4xl font-display font-medium text-warm-900 dark:text-cream-100">
-            ${totals.total.toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-2">
-            {counts.total} {counts.total === 1 ? 'invoice' : 'invoices'} outstanding
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* AR Aging Table */}
-      <ARagingTable initialData={data} />
     </div>
   )
 }
@@ -245,9 +205,16 @@ function ARDashboardSkeleton() {
   return (
     <div className="space-y-6">
       <div>
+        <Skeleton className="h-4 w-48 mb-3" />
         <Skeleton className="h-9 w-64 mb-2" />
         <Skeleton className="h-5 w-96" />
       </div>
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-4 w-40 mb-2" />
+          <Skeleton className="h-12 w-56" />
+        </CardHeader>
+      </Card>
       <div className="grid gap-4 md:grid-cols-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i}>
@@ -258,15 +225,6 @@ function ARDashboardSkeleton() {
           </Card>
         ))}
       </div>
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48 mb-2" />
-          <Skeleton className="h-4 w-64" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-12 w-48" />
-        </CardContent>
-      </Card>
       <Card>
         <CardHeader>
           <Skeleton className="h-6 w-40" />
@@ -286,7 +244,3 @@ export default function BillingPage() {
     </Suspense>
   )
 }
-
-
-
-

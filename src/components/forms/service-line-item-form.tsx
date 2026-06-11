@@ -164,12 +164,12 @@ export function ServiceLineItemForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-md rounded-sm border-warm-200">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+          <DialogTitle>
             {isEditing ? 'Edit Service Item' : 'Add Service Item'}
           </DialogTitle>
-          <DialogDescription className="text-warm-500 dark:text-cream-400">
+          <DialogDescription>
             One-time or ad-hoc charge for this billing period
           </DialogDescription>
         </DialogHeader>
@@ -183,17 +183,17 @@ export function ServiceLineItemForm({
                 name="month"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Month</FormLabel>
+                    <FormLabel>Month</FormLabel>
                     <Select
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(parseInt(v))}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm">
+                      <SelectContent>
                         {MONTH_NAMES.map((name, i) => (
                           <SelectItem key={i + 1} value={String(i + 1)}>
                             {name}
@@ -210,17 +210,17 @@ export function ServiceLineItemForm({
                 name="year"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Year</FormLabel>
+                    <FormLabel>Year</FormLabel>
                     <Select
                       value={String(field.value)}
                       onValueChange={(v) => field.onChange(parseInt(v))}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm">
+                      <SelectContent>
                         {Array.from({ length: 5 }, (_, i) => currentYear - 1 + i).map(y => (
                           <SelectItem key={y} value={String(y)}>{y}</SelectItem>
                         ))}
@@ -238,11 +238,10 @@ export function ServiceLineItemForm({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Description</FormLabel>
+                  <FormLabel>Description</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g. High dusting — all chandeliers"
-                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       {...field}
                     />
                   </FormControl>
@@ -258,13 +257,12 @@ export function ServiceLineItemForm({
                 name="quantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Quantity</FormLabel>
+                    <FormLabel>Quantity</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0.01"
-                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                         {...field}
                       />
                     </FormControl>
@@ -277,14 +275,13 @@ export function ServiceLineItemForm({
                 name="unitRate"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Unit Rate ($)</FormLabel>
+                    <FormLabel>Unit Rate ($)</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         step="0.01"
                         min="0"
                         placeholder="0.00"
-                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                         {...field}
                       />
                     </FormControl>
@@ -301,19 +298,19 @@ export function ServiceLineItemForm({
                 name="facilityProfileId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">
-                      Facility <span className="text-warm-400 dark:text-cream-400">(optional)</span>
+                    <FormLabel>
+                      Facility <span className="text-muted-foreground">(optional)</span>
                     </FormLabel>
                     <Select
                       value={field.value || '_none'}
                       onValueChange={(v) => field.onChange(v === '_none' ? '' : v)}
                     >
                       <FormControl>
-                        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
+                        <SelectTrigger>
                           <SelectValue placeholder="Client-level (no facility)" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent className="rounded-sm">
+                      <SelectContent>
                         <SelectItem value="_none">Client-level (no facility)</SelectItem>
                         {facilities.map((f) => (
                           <SelectItem key={f.id} value={f.id}>
@@ -334,17 +331,17 @@ export function ServiceLineItemForm({
               name="taxBehavior"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">Tax Behavior</FormLabel>
+                  <FormLabel>Tax Behavior</FormLabel>
                   <Select
                     value={field.value || 'INHERIT_CLIENT'}
                     onValueChange={field.onChange}
                   >
                     <FormControl>
-                      <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700">
+                      <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                     </FormControl>
-                    <SelectContent className="rounded-sm">
+                    <SelectContent>
                       <SelectItem value="INHERIT_CLIENT">Inherit Client Rate</SelectItem>
                       <SelectItem value="TAX_INCLUDED">Tax Included</SelectItem>
                       <SelectItem value="PRE_TAX">Pre-tax (add tax)</SelectItem>
@@ -361,13 +358,12 @@ export function ServiceLineItemForm({
               name="performedDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">
-                    Date Performed <span className="text-warm-400 dark:text-cream-400">(optional)</span>
+                  <FormLabel>
+                    Date Performed <span className="text-muted-foreground">(optional)</span>
                   </FormLabel>
                   <FormControl>
                     <Input
                       type="date"
-                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       {...field}
                     />
                   </FormControl>
@@ -382,14 +378,13 @@ export function ServiceLineItemForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300 text-xs">
-                    Notes <span className="text-warm-400 dark:text-cream-400">(optional)</span>
+                  <FormLabel>
+                    Notes <span className="text-muted-foreground">(optional)</span>
                   </FormLabel>
                   <FormControl>
                     <Textarea
                       rows={2}
                       placeholder="Additional details..."
-                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       {...field}
                     />
                   </FormControl>
@@ -406,7 +401,6 @@ export function ServiceLineItemForm({
                   size="sm"
                   onClick={handleDelete}
                   disabled={loading}
-                  className="rounded-sm text-red-600 hover:text-red-700 hover:bg-red-50"
                 >
                   <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                   Delete
@@ -419,11 +413,10 @@ export function ServiceLineItemForm({
                   type="button"
                   variant="outline"
                   onClick={() => setOpen(false)}
-                  className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
                 >
                   Cancel
                 </Button>
-                <Button type="submit" variant="lime" className="rounded-sm" disabled={loading}>
+                <Button type="submit" variant="gold" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {isEditing ? 'Update' : 'Add Service Item'}
                 </Button>

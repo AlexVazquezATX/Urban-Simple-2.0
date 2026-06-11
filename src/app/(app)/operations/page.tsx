@@ -1,10 +1,64 @@
 import Link from 'next/link'
-import { ClipboardList, Calendar, Users, ArrowRight, AlertTriangle } from 'lucide-react'
+import {
+  ClipboardList,
+  Calendar,
+  Users,
+  ArrowUpRight,
+  AlertTriangle,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { PageHeader } from '@/components/layout/page-header'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getReviewFreshness } from '@/lib/operations/review-freshness'
+import { getReviewFreshness, STALE_REVIEW_DAYS } from '@/lib/operations/review-freshness'
+import { cn } from '@/lib/utils'
+
+function NavCard({
+  href,
+  icon: Icon,
+  title,
+  sub,
+  count,
+  countTone = 'neutral',
+}: {
+  href: string
+  icon: LucideIcon
+  title: string
+  sub: string
+  count: number
+  countTone?: 'neutral' | 'coral'
+}) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-3 rounded-[14px] border border-border bg-card p-4 shadow-soft transition-colors hover:border-gold-600/30 dark:shadow-none dark:hover:border-gold-400/25"
+    >
+      <div className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12">
+        <Icon className="size-4 text-gold-600 dark:text-gold-400" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <h2 className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
+          {title}
+        </h2>
+        <p className="truncate text-[13px] text-muted-foreground">{sub}</p>
+      </div>
+      <div
+        className={cn(
+          'font-display text-2xl font-bold tabular-nums tracking-[-0.5px]',
+          countTone === 'coral'
+            ? 'text-coral-600 dark:text-coral-300'
+            : 'text-foreground'
+        )}
+      >
+        {count}
+      </div>
+      <ArrowUpRight className="size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+    </Link>
+  )
+}
 
 async function OperationsDashboard() {
   const user = await getCurrentUser()
@@ -109,153 +163,96 @@ async function OperationsDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Operations</h1>
-        <p className="text-sm text-warm-500 dark:text-cream-400 mt-1">
-          Manage service operations, schedules, and checklists
-        </p>
-      </div>
+      <PageHeader
+        kicker="OPERATIONS · OVERVIEW"
+        title="Operations"
+        subtitle="Manage service operations, schedules, and checklists"
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
-          <CardHeader className="p-4 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm bg-ocean-100 flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-ocean-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Checklists</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Manage checklist templates</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-3xl font-bold text-warm-900 dark:text-cream-100 mb-4">{templatesCount}</div>
-            <Link href="/operations/checklists">
-              <Button variant="outline" className="w-full rounded-sm">
-                View Checklists
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
-          <CardHeader className="p-4 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm bg-plum-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-plum-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Assignments</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Manage location assignments</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-3xl font-bold text-warm-900 dark:text-cream-100 mb-4">{assignmentsCount}</div>
-            <Link href="/operations/assignments">
-              <Button variant="outline" className="w-full rounded-sm">
-                View Assignments
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
-          <CardHeader className="p-4 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center">
-                <Calendar className="h-5 w-5 text-warm-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Schedule</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">View and manage shifts</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-3xl font-bold text-warm-900 dark:text-cream-100 mb-4">{shiftsCount}</div>
-            <Link href="/operations/schedule">
-              <Button variant="outline" className="w-full rounded-sm">
-                View Schedule
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-red-300 transition-colors">
-          <CardHeader className="p-4 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-sm bg-red-100 flex items-center justify-center">
-                <AlertTriangle className="h-5 w-5 text-red-600" />
-              </div>
-              <div>
-                <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Review Flags</CardTitle>
-                <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Accounts over 7 days since photo review</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-4 pt-0">
-            <div className="text-3xl font-bold text-red-600 mb-4">{staleReviewCount}</div>
-            <Link href="/operations/review-flags">
-              <Button variant="outline" className="w-full rounded-sm">
-                Open Queue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
+        <NavCard
+          href="/operations/checklists"
+          icon={ClipboardList}
+          title="Checklists"
+          sub="Manage checklist templates"
+          count={templatesCount}
+        />
+        <NavCard
+          href="/operations/assignments"
+          icon={Users}
+          title="Assignments"
+          sub="Manage location assignments"
+          count={assignmentsCount}
+        />
+        <NavCard
+          href="/operations/schedule"
+          icon={Calendar}
+          title="Schedule"
+          sub="View and manage shifts"
+          count={shiftsCount}
+        />
+        <NavCard
+          href="/operations/review-flags"
+          icon={AlertTriangle}
+          title="Review Flags"
+          sub={`Accounts ${STALE_REVIEW_DAYS}+ days since photo review`}
+          count={staleReviewCount}
+          countTone={staleReviewCount > 0 ? 'coral' : 'neutral'}
+        />
       </div>
 
       {flaggedPreview.length > 0 && (
-        <Card className="rounded-sm border-red-200 bg-red-50/40 dark:border-red-900 dark:bg-red-950/20">
-          <CardHeader className="p-4 pb-2">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-                  Stale Review Queue
-                </CardTitle>
-                <CardDescription className="text-warm-500 dark:text-cream-400">
-                  Accounts with no qualifying manager photo review in over 7 days.
-                </CardDescription>
-              </div>
-              <Link href="/operations/review-flags">
-                <Button variant="outline" className="rounded-sm">
-                  Open Full Queue
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2 p-4 pt-0">
-            {flaggedPreview.map((entry) => (
-              <Link
-                key={entry.id}
-                href={`/locations/${entry.id}`}
-                className="flex items-center justify-between rounded-sm border border-red-200 bg-white/80 px-3 py-2 text-sm transition-colors hover:border-red-300 dark:border-red-950 dark:bg-charcoal-900"
-              >
-                <div>
-                  <p className="font-medium text-warm-900 dark:text-cream-100">
-                    {entry.clientName} - {entry.locationName}
-                  </p>
-                  <p className="text-xs text-warm-500 dark:text-cream-400">
-                    {entry.reviewFreshness.reviewedOnLabel || 'No qualifying review on file'}
-                  </p>
-                </div>
-                <span className="text-xs font-medium text-red-700">
-                  {entry.reviewFreshness.shortLabel}
-                </span>
-              </Link>
-            ))}
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-[14px] border border-coral-600/30 bg-coral-600/10 p-4 dark:border-coral-300/25 dark:bg-coral-300/12">
+            <AlertTriangle className="size-4 shrink-0 text-coral-600 dark:text-coral-300" />
+            <p className="min-w-0 flex-1 text-sm text-foreground">
+              <span className="font-semibold tabular-nums">{staleReviewCount}</span>{' '}
+              {staleReviewCount === 1 ? 'account has' : 'accounts have'} gone more than{' '}
+              {STALE_REVIEW_DAYS} days without a photo-backed manager review.
+            </p>
+            <Button asChild variant="outline" size="sm">
+              <Link href="/operations/review-flags">Open Full Queue</Link>
+            </Button>
+          </div>
+
+          <Card className="gap-0 py-0">
+            <CardHeader className="px-5 pb-3 pt-5">
+              <CardTitle>Stale Review Queue</CardTitle>
+              <CardDescription>
+                Accounts with no qualifying manager photo review in over {STALE_REVIEW_DAYS} days.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2 px-5 pb-5">
+              {flaggedPreview.map((entry) => (
+                <Link
+                  key={entry.id}
+                  href={`/locations/${entry.id}`}
+                  className="flex items-center justify-between gap-3 rounded-[10px] border border-border bg-card px-3 py-2.5 text-sm transition-colors hover:bg-secondary/50"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-foreground">
+                      {entry.clientName} - {entry.locationName}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {entry.reviewFreshness.reviewedOnLabel || 'No qualifying review on file'}
+                    </p>
+                  </div>
+                  <Badge
+                    variant="coral"
+                    className={cn(
+                      entry.reviewFreshness.hasQualifyingReview && 'font-mono tabular-nums'
+                    )}
+                  >
+                    {entry.reviewFreshness.shortLabel}
+                  </Badge>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   )
 }
 
 export default OperationsDashboard
-

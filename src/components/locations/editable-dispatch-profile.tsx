@@ -182,7 +182,7 @@ export function EditableDispatchProfile({ location }: EditableDispatchProfilePro
           </div>
 
           <Field label="Service Days">
-            <div className="grid grid-cols-4 gap-2 rounded-sm border border-warm-200 bg-white p-3 dark:border-charcoal-700 dark:bg-charcoal-900">
+            <div className="grid grid-cols-4 gap-2 rounded-[10px] border border-border bg-background p-3">
               {SERVICE_DAY_OPTIONS.map((day) => (
                 <div key={day.value} className="flex items-center gap-2">
                   <Checkbox
@@ -196,7 +196,7 @@ export function EditableDispatchProfile({ location }: EditableDispatchProfilePro
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-xs text-warm-500 dark:text-cream-400">
+            <p className="mt-1 font-mono text-xs text-muted-foreground">
               Route days: {formatServiceDays(form.serviceDays)}
             </p>
           </Field>
@@ -240,21 +240,21 @@ export function EditableDispatchProfile({ location }: EditableDispatchProfilePro
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <label className="flex cursor-pointer items-start gap-2 rounded-sm border border-warm-200 bg-white p-3 dark:border-charcoal-700 dark:bg-charcoal-900">
+            <label className="flex cursor-pointer items-start gap-2 rounded-[10px] border border-border bg-background p-3">
               <Checkbox
                 checked={form.autoSchedule}
                 onCheckedChange={(c) => set({ autoSchedule: c === true })}
               />
-              <span className="text-sm text-warm-700 dark:text-cream-300">
+              <span className="text-sm text-foreground">
                 Auto-schedule manager route
               </span>
             </label>
-            <label className="flex cursor-pointer items-start gap-2 rounded-sm border border-warm-200 bg-white p-3 dark:border-charcoal-700 dark:bg-charcoal-900">
+            <label className="flex cursor-pointer items-start gap-2 rounded-[10px] border border-border bg-background p-3">
               <Checkbox
                 checked={form.reviewRequired}
                 onCheckedChange={(c) => set({ reviewRequired: c === true })}
               />
-              <span className="text-sm text-warm-700 dark:text-cream-300">
+              <span className="text-sm text-foreground">
                 Require manager review
               </span>
             </label>
@@ -271,32 +271,35 @@ export function EditableDispatchProfile({ location }: EditableDispatchProfilePro
       ) : (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-medium text-warm-900 dark:text-cream-100">Cadence</p>
-            <Badge
-              variant="outline"
-              className="rounded-sm border-warm-300 px-1.5 py-0 text-[10px] capitalize text-warm-600"
-            >
+            <p className="text-sm font-medium text-foreground">Cadence</p>
+            <Badge variant="neutral" className="capitalize">
               {view.cadence}
             </Badge>
           </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400">
-            Service days: {formatServiceDays(view.serviceDays)}
+          <p className="text-xs text-muted-foreground">
+            Service days:{' '}
+            <span className="font-mono">{formatServiceDays(view.serviceDays)}</span>
           </p>
-          <p className="text-xs text-warm-500 dark:text-cream-400">
-            Window: {view.preferredStartTime || '--'} - {view.preferredEndTime || '--'}
+          <p className="text-xs text-muted-foreground">
+            Window:{' '}
+            <span className="font-mono">
+              {view.preferredStartTime || '--'} - {view.preferredEndTime || '--'}
+            </span>
           </p>
-          <p className="text-xs text-warm-500 dark:text-cream-400">
+          <p className="text-xs text-muted-foreground">
             Default manager: {managerName}
           </p>
-          <p className="text-xs text-warm-500 dark:text-cream-400">
-            Route priority: {view.routePriority} • Duration: {view.estimatedDurationMins} mins
+          <p className="text-xs text-muted-foreground">
+            Route priority: <span className="font-mono tabular-nums">{view.routePriority}</span> •
+            Duration: <span className="font-mono tabular-nums">{view.estimatedDurationMins}</span>{' '}
+            mins
           </p>
-          <p className="text-xs text-warm-500 dark:text-cream-400">
+          <p className="text-xs text-muted-foreground">
             Auto-schedule: {view.autoSchedule ? 'On' : 'Off'} • Review required:{' '}
             {view.reviewRequired ? 'Yes' : 'No'}
           </p>
           {view.dispatchNotes && (
-            <p className="text-xs text-warm-600 dark:text-cream-300">{view.dispatchNotes}</p>
+            <p className="text-xs text-foreground">{view.dispatchNotes}</p>
           )}
         </div>
       )}

@@ -2,21 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import {
-  Target,
-  Sparkles,
-  Loader2,
-  CheckCircle2,
-  Circle,
-  Clock,
-  AlertTriangle,
-  Calendar,
-  RefreshCw,
-  ChevronRight,
-  ExternalLink,
-  Star,
-} from 'lucide-react'
+import { Target, Sparkles, Loader2, Check, Star, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { cn } from '@/lib/utils'
 
 interface FocusTask {
@@ -61,12 +51,6 @@ interface TaskStats {
   overdue: number
   dueToday: number
   total: number
-}
-
-const STATUS_ICONS: Record<string, React.ReactNode> = {
-  todo: <Circle className="w-4 h-4 text-slate-400" />,
-  in_progress: <Clock className="w-4 h-4 text-blue-500" />,
-  done: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
 }
 
 export function FocusWidget() {
@@ -182,235 +166,173 @@ export function FocusWidget() {
     return d < today
   }
 
+  const doneCount = focusTasks.filter(task => task.status === 'done').length
+  const openCount = (stats?.byStatus?.todo || 0) + (stats?.byStatus?.in_progress || 0)
+
   if (loading) {
     return (
-      <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm p-6">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="w-5 h-5 animate-spin text-ocean-500" />
-        </div>
-      </div>
+      <Card className="py-5">
+        <CardContent className="flex items-center justify-center px-5 py-8 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+        </CardContent>
+      </Card>
     )
   }
 
   return (
-    <div className="bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 rounded-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-sm bg-lime-400 flex items-center justify-center">
-            <Target className="w-4 h-4 text-warm-900" />
-          </div>
-          <div>
-            <h2 className="font-display font-medium text-warm-900 dark:text-cream-100 text-lg tracking-tight">Today's Focus</h2>
-            {summary && (
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">{summary}</p>
+    <Card className="gap-0 py-5">
+      <CardHeader className="px-5 pb-2">
+        <div className="flex items-center gap-2.5">
+          <Star className="size-4 shrink-0 text-gold-600 dark:text-gold-400" />
+          <CardTitle>Today&apos;s focus</CardTitle>
+          {focusTasks.length > 0 && (
+            <Badge variant="gold">{doneCount} of {focusTasks.length}</Badge>
+          )}
+          <span className="flex-1" />
+          {focusTasks.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={generateFocus}
+              disabled={generating}
+              className="gap-1.5 text-[12.5px] font-semibold text-gold-600 hover:text-gold-700 dark:text-gold-400 dark:hover:text-gold-300"
+            >
+              {generating ? (
+                <Loader2 className="size-[13px] animate-spin" />
+              ) : (
+                <Sparkles className="size-[13px]" />
+              )}
+              {generating ? 'Analyzing...' : 'Regenerate'}
+            </Button>
+          )}
+        </div>
+        {summary && (
+          <p className="text-[12.5px] text-muted-foreground">{summary}</p>
+        )}
+      </CardHeader>
+
+      <CardContent className="px-5">
+        {/* This week's goals */}
+        {weeklyGoals.length > 0 && (
+          <div className="mb-2 rounded-[11px] border border-border/60 bg-secondary/40 px-3.5 py-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="kicker text-muted-foreground">This week&apos;s goals</span>
+              <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
+                {weeklyGoals.filter(g => g.progress >= 100).length}/{weeklyGoals.length} complete
+              </span>
+            </div>
+            <div className="flex gap-2">
+              {weeklyGoals.slice(0, 3).map(goal => (
+                <div key={goal.id} className="min-w-0 flex-1" title={`${goal.title}: ${goal.progress}%`}>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${Math.min(goal.progress, 100)}%` }}
+                    />
+                  </div>
+                  <p className="mt-1 truncate text-[10px] text-muted-foreground">{goal.title}</p>
+                </div>
+              ))}
+            </div>
+            {weeklyGoals.length > 3 && (
+              <p className="mt-1 text-[10px] text-muted-foreground">+{weeklyGoals.length - 3} more</p>
             )}
           </div>
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={generateFocus}
-          disabled={generating}
-          className="gap-2 text-ocean-600 hover:text-ocean-700 hover:bg-ocean-50"
-        >
-          {generating ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Sparkles className="w-4 h-4" />
-          )}
-          {generating ? 'Analyzing...' : 'Generate Focus'}
-        </Button>
-      </div>
+        )}
 
-      {/* Quick Stats */}
-      {stats && (stats.overdue > 0 || stats.dueToday > 0) && (
-        <div className="px-5 py-3 bg-warm-50 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700 flex items-center gap-4 text-sm">
-          {stats.overdue > 0 && (
-            <span className="flex items-center gap-1.5 text-red-600">
-              <AlertTriangle className="w-4 h-4" />
-              {stats.overdue} overdue
-            </span>
-          )}
-          {stats.dueToday > 0 && (
-            <span className="flex items-center gap-1.5 text-amber-600">
-              <Calendar className="w-4 h-4" />
-              {stats.dueToday} due today
-            </span>
-          )}
-        </div>
-      )}
+        {/* Focus tasks */}
+        {focusTasks.length > 0 ? (
+          <div className="flex flex-col">
+            {focusTasks.map(task => {
+              const done = task.status === 'done'
+              const overdue = isOverdue(task.dueDate) && !done
+              const meta = overdue
+                ? formatDueDate(task.dueDate)
+                : task.project?.name || task.goal?.title || formatDueDate(task.dueDate)
 
-      {/* Weekly Goals Summary */}
-      {weeklyGoals.length > 0 && (
-        <div className="px-5 py-3 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-warm-600 dark:text-cream-300 flex items-center gap-1.5">
-              <Target className="w-3.5 h-3.5 text-ocean-600" />
-              This Week's Goals
-            </span>
-            <span className="text-xs text-warm-500 dark:text-cream-400">
-              {weeklyGoals.filter(g => g.progress >= 100).length}/{weeklyGoals.length} complete
-            </span>
-          </div>
-          <div className="flex gap-2">
-            {weeklyGoals.slice(0, 3).map((goal) => (
-              <div
-                key={goal.id}
-                className="flex-1 min-w-0"
-                title={`${goal.title}: ${goal.progress}%`}
-              >
-                <div className="h-1.5 bg-warm-200 dark:bg-charcoal-700 rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{
-                      width: `${Math.min(goal.progress, 100)}%`,
-                      backgroundColor: goal.color,
-                    }}
-                  />
-                </div>
-                <p className="text-[10px] text-warm-500 dark:text-cream-400 mt-1 truncate">{goal.title}</p>
-              </div>
-            ))}
-          </div>
-          {weeklyGoals.length > 3 && (
-            <p className="text-[10px] text-warm-400 dark:text-cream-500 mt-1">+{weeklyGoals.length - 3} more</p>
-          )}
-        </div>
-      )}
-
-      {/* Focus Tasks */}
-      {focusTasks.length > 0 ? (
-        <div className="divide-y divide-warm-100 dark:divide-charcoal-700">
-          {focusTasks.map((task, index) => (
-            <div
-              key={task.id}
-              className={cn(
-                'px-5 py-3 flex items-start gap-3 hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors group',
-                task.status === 'done' && 'opacity-60'
-              )}
-            >
-              {/* Priority Number */}
-              <div className="w-6 h-6 rounded-sm bg-ocean-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                {index + 1}
-              </div>
-
-              {/* Task Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+              return (
+                <div key={task.id} className="flex items-center gap-3 px-1 py-2.5">
                   <button
-                    onClick={() => handleStatusChange(
-                      task.id,
-                      task.status === 'done' ? 'todo' : 'done'
+                    onClick={() => handleStatusChange(task.id, done ? 'todo' : 'done')}
+                    aria-label={done ? 'Mark as to do' : 'Mark as done'}
+                    className={cn(
+                      'grid size-[18px] shrink-0 place-items-center rounded-full border-[1.5px] transition-colors',
+                      done
+                        ? 'border-green-600 bg-green-600/12 dark:border-green-300 dark:bg-green-300/12'
+                        : 'border-muted-foreground/50 hover:border-gold-600 dark:hover:border-gold-400'
                     )}
-                    className="flex-shrink-0"
                   >
-                    {STATUS_ICONS[task.status]}
+                    {done && (
+                      <Check className="size-2.5 text-green-600 dark:text-green-300" strokeWidth={2.4} />
+                    )}
                   </button>
                   {task.isStarred && (
-                    <Star className="w-3.5 h-3.5 text-lime-600 fill-lime-500 flex-shrink-0" />
+                    <Star className="size-3.5 shrink-0 fill-gold-500 text-gold-600 dark:text-gold-400" />
                   )}
-                  <span className={cn(
-                    'font-medium text-sm text-warm-900 dark:text-cream-100',
-                    task.status === 'done' && 'line-through text-warm-500 dark:text-cream-500'
-                  )}>
+                  <span
+                    title={task.focusReason || undefined}
+                    className={cn(
+                      'min-w-0 flex-1 truncate text-[13.5px]',
+                      done ? 'text-muted-foreground line-through' : 'text-foreground'
+                    )}
+                  >
                     {task.title}
                   </span>
-                </div>
-
-                <div className="flex items-center gap-3 mt-1 text-xs text-warm-500 dark:text-cream-400 ml-6">
-                  {/* Due Date */}
-                  {task.dueDate && (
-                    <span className={cn(
-                      'flex items-center gap-1',
-                      isOverdue(task.dueDate) && task.status !== 'done' && 'text-red-600 font-medium'
-                    )}>
-                      {isOverdue(task.dueDate) && task.status !== 'done' && (
-                        <AlertTriangle className="w-3 h-3" />
-                      )}
-                      {formatDueDate(task.dueDate)}
-                    </span>
-                  )}
-
-                  {/* Project */}
-                  {task.project && (
-                    <span className="flex items-center gap-1">
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: task.project.color }}
-                      />
-                      {task.project.name}
-                    </span>
-                  )}
-
-                  {/* Goal */}
-                  {task.goal && (
+                  {meta && (
                     <span
-                      className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium"
-                      style={{
-                        backgroundColor: `${task.goal.color}15`,
-                        color: task.goal.color,
-                      }}
+                      className={cn(
+                        'shrink-0 font-mono text-[10.5px]',
+                        overdue ? 'text-coral-600 dark:text-coral-300' : 'text-muted-foreground'
+                      )}
                     >
-                      <Target className="w-2.5 h-2.5" />
-                      {task.goal.title}
-                    </span>
-                  )}
-
-                  {/* Linked Entity */}
-                  {task.links.length > 0 && (
-                    <span className="flex items-center gap-1">
-                      <ExternalLink className="w-3 h-3" />
-                      {task.links[0].entityLabel || task.links[0].entityType}
+                      {meta}
                     </span>
                   )}
                 </div>
-
-                {/* AI Reason */}
-                {task.focusReason && (
-                  <p className="mt-1.5 ml-6 text-xs text-ocean-600 italic">
-                    "{task.focusReason}"
-                  </p>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="px-5 py-8 text-center">
-          <div className="w-12 h-12 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-3">
-            <Target className="w-6 h-6 text-ocean-600" />
+              )
+            })}
           </div>
-          <h3 className="font-display font-medium text-warm-900 dark:text-cream-100 text-base mb-1">No focus set for today</h3>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
-            Generate your AI-powered daily focus to get started
-          </p>
-          <Button onClick={generateFocus} disabled={generating} variant="lime">
-            {generating ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Sparkles className="w-4 h-4 mr-2" />
-            )}
-            Generate Focus
-          </Button>
-        </div>
-      )}
+        ) : (
+          <EmptyState
+            icon={Target}
+            title="No focus set for today"
+            description="Generate an AI-powered focus list from your open tasks and goals."
+            className="py-8"
+            action={
+              <Button onClick={generateFocus} disabled={generating} variant="gold">
+                {generating ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <Sparkles className="size-4" />
+                )}
+                {generating ? 'Analyzing...' : 'Generate Focus'}
+              </Button>
+            }
+          />
+        )}
+      </CardContent>
 
       {/* Footer */}
-      <div className="px-5 py-3 border-t border-warm-200 dark:border-charcoal-700 flex items-center justify-between bg-warm-50 dark:bg-charcoal-800">
+      <div className="mt-3 flex items-center justify-between border-t border-border px-5 pt-3.5">
         <Link
           href="/tasks"
-          className="text-sm text-ocean-600 hover:text-ocean-700 font-medium flex items-center gap-1"
+          className="flex items-center gap-1 text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
-          View All Tasks
-          <ChevronRight className="w-4 h-4" />
+          View all tasks
+          <ChevronRight className="size-3.5" />
         </Link>
         {stats && (
-          <span className="text-xs text-warm-400 dark:text-cream-500">
-            {(stats.byStatus?.todo || 0) + (stats.byStatus?.in_progress || 0)} open tasks
+          <span className="font-mono text-[10.5px] tabular-nums text-muted-foreground">
+            {stats.overdue > 0 && (
+              <span className="text-coral-600 dark:text-coral-300">{stats.overdue} overdue · </span>
+            )}
+            {stats.dueToday > 0 && (
+              <span className="text-gold-600 dark:text-gold-400">{stats.dueToday} due today · </span>
+            )}
+            {openCount} open
           </span>
         )}
       </div>
-    </div>
+    </Card>
   )
 }

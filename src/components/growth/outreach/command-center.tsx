@@ -6,18 +6,16 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
 import { ApprovalQueue } from './approval-queue'
-import { ActivityFeed } from './activity-feed'
 import {
   CheckCircle2,
   Zap,
-  TrendingUp,
   Clock,
   ArrowRight,
-  Phone,
-  Mail,
-  Calendar,
   Sparkles,
+  TrendingUp,
 } from 'lucide-react'
 import Link from 'next/link'
 import { format } from 'date-fns'
@@ -75,10 +73,10 @@ export function CommandCenter() {
   if (loading) {
     return (
       <div className="space-y-4">
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardHeader className="p-4">
-            <Skeleton className="h-6 w-48 rounded-sm" />
-            <Skeleton className="h-4 w-96 mt-2 rounded-sm" />
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="mt-2 h-4 w-96" />
           </CardHeader>
         </Card>
       </div>
@@ -86,67 +84,55 @@ export function CommandCenter() {
   }
 
   if (!data) {
-    return <div className="text-warm-500 dark:text-cream-400">Failed to load command center</div>
+    return <div className="text-muted-foreground">Failed to load command center</div>
   }
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Command Center</h2>
-        <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
+        <h2 className="font-display text-lg font-bold tracking-[-0.2px] text-foreground">Command Center</h2>
+        <p className="mt-0.5 text-sm text-muted-foreground">
           Your 5-minute morning review dashboard
         </p>
       </div>
 
       {/* Quick Stats */}
       <div className="grid gap-3 md:grid-cols-4">
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Pending Approval</div>
-          <div className="text-2xl font-semibold text-ocean-600">{data.approvalQueueCount}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">First contacts to review</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-red-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Hot Prospects</div>
-          <div className="text-2xl font-semibold text-red-600">{data.hotProspects.length}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Need immediate attention</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Overnight Activity</div>
-          <div className="text-2xl font-semibold text-plum-600">
-            {data.overnightActivity.reduce((sum, a) => sum + a.count, 0)}
-          </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Actions completed by AI</p>
-        </Card>
-
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-warm-400">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Pipeline Changes</div>
-          <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{data.pipelineMovement.length}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Status updates overnight</p>
-        </Card>
+        <StatCard
+          label="Pending Approval"
+          value={data.approvalQueueCount}
+          sub="First contacts to review"
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label="Hot Prospects"
+          value={data.hotProspects.length}
+          sub="Need immediate attention"
+          icon={Zap}
+          tone={data.hotProspects.length > 0 ? 'gold' : 'neutral'}
+        />
+        <StatCard
+          label="Overnight Activity"
+          value={data.overnightActivity.reduce((sum, a) => sum + a.count, 0)}
+          sub="Actions completed by AI"
+          icon={Sparkles}
+        />
+        <StatCard
+          label="Pipeline Changes"
+          value={data.pipelineMovement.length}
+          sub="Status updates overnight"
+          icon={TrendingUp}
+        />
       </div>
 
       {/* Main Content Tabs */}
       <Tabs defaultValue="approval" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 rounded-none bg-white dark:bg-charcoal-900 border-b border-warm-200 dark:border-charcoal-700 p-0 h-auto">
-          <TabsTrigger value="approval" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <CheckCircle2 className="h-3.5 w-3.5 text-ocean-500" />
-            <span>Approval Queue</span>
-          </TabsTrigger>
-          <TabsTrigger value="hot" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Zap className="h-3.5 w-3.5 text-red-500" />
-            <span>Hot Prospects</span>
-          </TabsTrigger>
-          <TabsTrigger value="activity" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Clock className="h-3.5 w-3.5 text-plum-500" />
-            <span>Overnight Activity</span>
-          </TabsTrigger>
-          <TabsTrigger value="insights" className="flex items-center gap-1.5 text-xs py-2.5 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Sparkles className="h-3.5 w-3.5 text-lime-600" />
-            <span>AI Insights</span>
-          </TabsTrigger>
+        <TabsList className="w-full justify-start gap-5 overflow-x-auto">
+          <TabsTrigger value="approval">Approval Queue</TabsTrigger>
+          <TabsTrigger value="hot">Hot Prospects</TabsTrigger>
+          <TabsTrigger value="activity">Overnight Activity</TabsTrigger>
+          <TabsTrigger value="insights">AI Insights</TabsTrigger>
         </TabsList>
 
         <TabsContent value="approval" className="mt-4">
@@ -154,48 +140,46 @@ export function CommandCenter() {
         </TabsContent>
 
         <TabsContent value="hot" className="mt-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardHeader className="p-4 pb-3">
-              <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Hot Prospects</CardTitle>
-              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+          <Card>
+            <CardHeader>
+              <CardTitle>Hot Prospects</CardTitle>
+              <CardDescription>
                 Prospects showing high engagement - call them now
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent>
               {data.hotProspects.length === 0 ? (
-                <div className="text-center py-8">
-                  <Zap className="h-10 w-10 mx-auto mb-2 text-warm-300 dark:text-charcoal-500" />
-                  <p className="text-sm text-warm-500 dark:text-cream-400">No hot prospects right now</p>
-                </div>
+                <EmptyState
+                  icon={Zap}
+                  title="No hot prospects right now"
+                  description="When a prospect starts engaging heavily, they'll surface here so you can strike while it's warm."
+                  className="py-8"
+                />
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {data.hotProspects.map((prospect) => (
                     <div
                       key={prospect.id}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors"
+                      className="flex items-center justify-between rounded-[12px] border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
                     >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 mb-0.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-0.5 flex items-center gap-1.5">
                           <Link
                             href={`/growth/prospects/${prospect.id}`}
-                            className="text-sm font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600"
+                            className="text-sm font-medium text-foreground hover:text-primary"
                           >
                             {prospect.companyName}
                           </Link>
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-red-100 text-red-700 border-red-200">
-                            Hot
-                          </Badge>
-                          <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
-                            {prospect.status}
-                          </Badge>
+                          <Badge variant="gold">Hot</Badge>
+                          <Badge variant="neutral">{prospect.status}</Badge>
                         </div>
-                        <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
+                        <div className="flex items-center gap-3 font-mono text-xs tabular-nums text-muted-foreground">
                           <span>Engagement: {prospect.engagementScore}/100</span>
                           <span>Last: {format(new Date(prospect.lastActivity), 'MMM d, h:mm a')}</span>
                         </div>
                       </div>
                       <Link href={`/growth/prospects/${prospect.id}`}>
-                        <Button size="sm" variant="outline" className="rounded-sm">
+                        <Button size="sm" variant="ghost">
                           View
                         </Button>
                       </Link>
@@ -208,36 +192,38 @@ export function CommandCenter() {
         </TabsContent>
 
         <TabsContent value="activity" className="mt-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardHeader className="p-4 pb-3">
-              <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Overnight Activity</CardTitle>
-              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+          <Card>
+            <CardHeader>
+              <CardTitle>Overnight Activity</CardTitle>
+              <CardDescription>
                 What the AI accomplished while you slept
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent>
               {data.overnightActivity.length === 0 ? (
-                <div className="text-center py-8">
-                  <Clock className="h-10 w-10 mx-auto mb-2 text-warm-300 dark:text-charcoal-500" />
-                  <p className="text-sm text-warm-500 dark:text-cream-400">No overnight activity</p>
-                </div>
+                <EmptyState
+                  icon={Clock}
+                  title="A quiet night"
+                  description="The AI didn't have anything queued overnight. New automated activity will be summarized here."
+                  className="py-8"
+                />
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {data.overnightActivity.map((activity, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700"
+                      className="flex items-center justify-between rounded-[12px] border border-border bg-card px-3 py-2.5"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-sm bg-plum-100 flex items-center justify-center">
-                          <Sparkles className="h-4 w-4 text-plum-600" />
+                        <div className="grid size-8 place-items-center rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12">
+                          <Sparkles className="size-4 text-gold-600 dark:text-gold-400" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-warm-900 dark:text-cream-100">{activity.description}</p>
-                          <p className="text-xs text-warm-500 dark:text-cream-400">{activity.type}</p>
+                          <p className="text-sm font-medium text-foreground">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground">{activity.type}</p>
                         </div>
                       </div>
-                      <Badge variant="secondary" className="rounded-sm text-xs">{activity.count}</Badge>
+                      <Badge variant="default" className="font-mono tabular-nums">{activity.count}</Badge>
                     </div>
                   ))}
                 </div>
@@ -247,34 +233,36 @@ export function CommandCenter() {
         </TabsContent>
 
         <TabsContent value="insights" className="mt-4">
-          <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-            <CardHeader className="p-4 pb-3">
-              <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">AI Insights</CardTitle>
-              <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+          <Card>
+            <CardHeader>
+              <CardTitle>AI Insights</CardTitle>
+              <CardDescription>
                 Recommendations and performance insights
               </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 pt-0">
+            <CardContent>
               {data.aiInsights.length === 0 ? (
-                <div className="text-center py-8">
-                  <Sparkles className="h-10 w-10 mx-auto mb-2 text-warm-300 dark:text-charcoal-500" />
-                  <p className="text-sm text-warm-500 dark:text-cream-400">No insights available yet</p>
-                </div>
+                <EmptyState
+                  icon={Sparkles}
+                  title="No insights yet"
+                  description="Once there's enough outreach data, the AI will surface recommendations here."
+                  className="py-8"
+                />
               ) : (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {data.aiInsights.map((insight, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors"
+                      className="flex items-center justify-between rounded-[12px] border border-border bg-card px-3 py-2.5 transition-colors hover:border-primary/40"
                     >
-                      <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-0.5">{insight.title}</h4>
-                        <p className="text-xs text-warm-500 dark:text-cream-400">{insight.description}</p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="mb-0.5 text-sm font-medium text-foreground">{insight.title}</h4>
+                        <p className="text-xs text-muted-foreground">{insight.description}</p>
                       </div>
                       {insight.action && (
-                        <Button size="sm" variant="outline" className="rounded-sm ml-3">
+                        <Button size="sm" variant="outline" className="ml-3">
                           {insight.action}
-                          <ArrowRight className="h-3 w-3 ml-1" />
+                          <ArrowRight className="size-3" />
                         </Button>
                       )}
                     </div>

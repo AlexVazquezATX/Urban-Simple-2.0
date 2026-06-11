@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { redirect } from 'next/navigation'
 import { Skeleton } from '@/components/ui/skeleton'
+import { PageHeader } from '@/components/layout/page-header'
 import { PipelineTabs } from '@/components/pipeline/pipeline-tabs'
 
 async function PipelineData() {
@@ -94,16 +95,14 @@ export default async function PipelinePage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-3xl font-medium tracking-tight font-display text-warm-900 dark:text-cream-100">
-          Pipeline
-        </h1>
-        <p className="text-warm-500 dark:text-cream-400">
-          Discover, qualify, and convert prospects
-        </p>
-      </div>
+      <PageHeader
+        kicker="GROWTH · PIPELINE"
+        title="Pipeline"
+        subtitle="Discover, qualify, and convert prospects"
+        className="mb-0"
+      />
 
-      <Suspense fallback={<Skeleton className="h-[600px] rounded-sm" />}>
+      <Suspense fallback={<Skeleton className="h-[600px] rounded-[14px]" />}>
         <PipelineData />
       </Suspense>
     </div>

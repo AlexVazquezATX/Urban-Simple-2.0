@@ -32,9 +32,11 @@ export function MarkAsSentButton({ invoiceId }: { invoiceId: string }) {
     }
   }
 
+  // Secondary action — Record Payment holds the one gold slot in the
+  // invoice-detail header region.
   return (
-    <Button onClick={handleMarkAsSent} size="sm">
-      <Send className="mr-2 h-4 w-4" />
+    <Button onClick={handleMarkAsSent} variant="outline" size="sm">
+      <Send className="size-4" />
       Mark as Sent
     </Button>
   )

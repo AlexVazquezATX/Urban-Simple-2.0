@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import {
-  ArrowLeft,
   Download,
   Trash2,
   Loader2,
@@ -13,18 +12,30 @@ import {
   Sparkles,
   Wand2,
   X,
-  Filter,
   Maximize2,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { cn } from '@/lib/utils'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { toast } from 'sonner'
 
 interface ContentItem {
@@ -103,8 +114,6 @@ function GalleryContent() {
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Delete this image? This cannot be undone.')) return
-
     setDeleting(id)
     try {
       const response = await fetch(`/api/creative-studio/content?id=${id}`, {
@@ -138,173 +147,144 @@ function GalleryContent() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      {/* Header */}
-      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                href="/creative-studio"
-                className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
-              </Link>
-              <div>
-                <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-                  Gallery
-                </h1>
-                <p className="text-sm text-warm-500 dark:text-cream-400">
-                  {content.length} {content.length === 1 ? 'image' : 'images'} saved
-                </p>
-              </div>
-            </div>
+    <div className="mx-auto max-w-7xl">
+      <PageHeader
+        backHref="/creative-studio"
+        kicker="STUDIO · BACKHAUS"
+        title="Gallery"
+        subtitle={
+          <>
+            <span className="font-mono tabular-nums">{content.length}</span>{' '}
+            {content.length === 1 ? 'image' : 'images'} saved
+          </>
+        }
+        actions={
+          <Link href="/creative-studio/generate">
+            <Button variant="gold" size="sm">
+              <Sparkles className="size-3.5" />
+              Create New
+            </Button>
+          </Link>
+        }
+      />
 
-            <Link href="/creative-studio/generate">
-              <Button variant="lime" size="sm" className="rounded-sm">
-                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-                Create New
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-warm-500 dark:text-cream-400" />
-          <div className="flex gap-2">
-            {(['all', 'food_photo', 'branded_post'] as FilterMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setFilterMode(mode)}
-                className={cn(
-                  'px-3 py-1.5 rounded-sm text-sm font-medium transition-colors',
-                  filterMode === mode
-                    ? 'bg-warm-900 text-white'
-                    : 'bg-white dark:bg-charcoal-900 border border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300 hover:border-warm-300'
-                )}
-              >
-                {mode === 'all' ? 'All' : mode === 'food_photo' ? 'Food Photos' : 'Branded Posts'}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Filters - underline count tabs */}
+      <Tabs
+        value={filterMode}
+        onValueChange={(value) => setFilterMode(value as FilterMode)}
+        className="mb-5"
+      >
+        <TabsList>
+          <TabsTrigger value="all">All</TabsTrigger>
+          <TabsTrigger value="food_photo">Food Photos</TabsTrigger>
+          <TabsTrigger value="branded_post">Branded Posts</TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
-          </div>
-        ) : content.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {content.map((item) => (
-              <div
-                key={item.id}
-                onClick={() => setSelectedItem(item)}
-                className="group cursor-pointer"
-              >
-                <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden bg-white dark:bg-charcoal-900 hover:border-lime-400 hover:shadow-md transition-all">
-                  {/* Image */}
-                  <div className="aspect-square bg-warm-100 dark:bg-charcoal-800 relative">
-                    {item.hasImage ? (
-                      <img
-                        src={imageUrl(item.id)}
-                        alt={item.headline || 'Generated image'}
-                        className="w-full h-full object-cover"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <ImageIcon className="w-10 h-10 text-warm-300 dark:text-charcoal-600" />
-                      </div>
-                    )}
-
-                    {/* Mode Badge */}
-                    <Badge
-                      className={`absolute top-2 left-2 text-[10px] px-1.5 py-0 rounded-sm ${
-                        item.mode === 'food_photo'
-                          ? 'bg-amber-100 text-amber-700 border-amber-200'
-                          : 'bg-purple-100 text-purple-700 border-purple-200'
-                      }`}
-                    >
-                      {item.mode === 'food_photo' ? (
-                        <Camera className="w-3 h-3 mr-1" />
-                      ) : (
-                        <Sparkles className="w-3 h-3 mr-1" />
-                      )}
-                      {item.mode === 'food_photo' ? 'Food' : 'Branded'}
-                    </Badge>
-
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                      <span className="text-white text-sm font-medium">View</span>
-                      {item.hasImage && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${item.id}`)
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1 bg-white/90 hover:bg-white rounded-sm text-xs font-medium text-plum-700 transition-colors"
-                        >
-                          <Wand2 className="w-3 h-3" />
-                          Use in Branded Post
-                        </button>
-                      )}
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : content.length > 0 ? (
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {content.map((item) => (
+            <div
+              key={item.id}
+              onClick={() => setSelectedItem(item)}
+              className="group cursor-pointer"
+            >
+              <div className="overflow-hidden rounded-[14px] border border-border bg-card transition-all hover:border-gold-600/30 hover:shadow-soft dark:hover:border-gold-400/25">
+                {/* Image */}
+                <div className="relative aspect-square bg-secondary">
+                  {item.hasImage ? (
+                    <img
+                      src={imageUrl(item.id)}
+                      alt={item.headline || 'Generated image'}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <ImageIcon className="size-10 text-muted-foreground/50" />
                     </div>
-                  </div>
+                  )}
 
-                  {/* Info */}
-                  <div className="p-3">
-                    <p className="text-sm text-warm-900 dark:text-cream-100 font-medium truncate">
-                      {item.headline || item.outputFormat || 'Untitled'}
-                    </p>
-                    <p className="text-xs text-warm-500 dark:text-cream-400 mt-0.5">
-                      {new Date(item.createdAt).toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric',
-                      })}
-                    </p>
+                  {/* Mode chip - neutral; the photography provides the color */}
+                  <Badge variant="neutral" className="absolute left-2 top-2">
+                    {item.mode === 'food_photo' ? (
+                      <Camera className="size-3" />
+                    ) : (
+                      <Sparkles className="size-3" />
+                    )}
+                    {item.mode === 'food_photo' ? 'Food' : 'Branded'}
+                  </Badge>
+
+                  {/* Hover overlay */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/0 opacity-0 transition-colors group-hover:bg-black/40 group-hover:opacity-100">
+                    <span className="text-sm font-medium text-white">View</span>
+                    {item.hasImage && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${item.id}`)
+                        }}
+                        className="flex items-center gap-1 rounded-full bg-white/90 px-2.5 py-1 text-xs font-medium text-ink-900 transition-colors hover:bg-white"
+                      >
+                        <Wand2 className="size-3" />
+                        Use in Branded Post
+                      </button>
+                    )}
                   </div>
                 </div>
+
+                {/* Info */}
+                <div className="p-3">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {item.headline || item.outputFormat || 'Untitled'}
+                  </p>
+                  <p className="mt-0.5 font-mono text-xs tabular-nums text-muted-foreground">
+                    {new Date(item.createdAt).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric',
+                    })}
+                  </p>
+                </div>
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-sm bg-warm-100 dark:bg-charcoal-800 flex items-center justify-center mx-auto mb-4">
-              <ImageIcon className="w-7 h-7 text-warm-400 dark:text-cream-400" />
             </div>
-            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">
-              No images yet
-            </h3>
-            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
-              {filterMode !== 'all'
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-[14px] border border-border bg-card">
+          <EmptyState
+            icon={ImageIcon}
+            title="Your gallery is waiting for its first image"
+            description={
+              filterMode !== 'all'
                 ? `No ${filterMode === 'food_photo' ? 'food photos' : 'branded posts'} saved yet.`
-                : 'Start creating to build your gallery.'}
-            </p>
-            <Link href="/creative-studio/generate">
-              <Button variant="lime" size="sm" className="rounded-sm">
-                Create Your First Image
-              </Button>
-            </Link>
-          </div>
-        )}
-      </div>
+                : 'Start creating to build your gallery.'
+            }
+            action={
+              <Link href="/creative-studio/generate">
+                <Button variant="outline" size="sm">
+                  Create Your First Image
+                </Button>
+              </Link>
+            }
+          />
+        </div>
+      )}
 
       {/* Detail Modal */}
       <Dialog open={!!selectedItem} onOpenChange={() => { setSelectedItem(null); setLightboxOpen(false) }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selectedItem?.mode === 'food_photo' ? (
-                <Camera className="w-4 h-4 text-amber-600" />
+                <Camera className="size-4 text-gold-600 dark:text-gold-400" />
               ) : (
-                <Sparkles className="w-4 h-4 text-purple-600" />
+                <Sparkles className="size-4 text-gold-600 dark:text-gold-400" />
               )}
               {selectedItem?.headline || selectedItem?.outputFormat || 'Generated Image'}
             </DialogTitle>
@@ -313,26 +293,26 @@ function GalleryContent() {
           {selectedItem && (
             <div className="space-y-4">
               {/* Image */}
-              <div className="rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800 relative group">
+              <div className="group relative overflow-hidden rounded-[12px] bg-secondary">
                 {selectedItem.hasImage ? (
                   <>
                     <img
                       src={imageUrl(selectedItem.id)}
                       alt={selectedItem.headline || 'Generated image'}
-                      className="w-full h-auto max-h-[60vh] object-contain cursor-pointer"
+                      className="h-auto max-h-[60vh] w-full cursor-pointer object-contain"
                       onClick={() => setLightboxOpen(true)}
                     />
                     <button
                       onClick={() => setLightboxOpen(true)}
-                      className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-sm text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute right-2 top-2 rounded-full bg-ink-950/60 p-1.5 text-white opacity-0 transition-opacity hover:bg-ink-950/80 group-hover:opacity-100"
                       title="View full size"
                     >
-                      <Maximize2 className="w-4 h-4" />
+                      <Maximize2 className="size-4" />
                     </button>
                   </>
                 ) : (
-                  <div className="aspect-square flex items-center justify-center">
-                    <ImageIcon className="w-12 h-12 text-warm-300 dark:text-charcoal-600" />
+                  <div className="flex aspect-square items-center justify-center">
+                    <ImageIcon className="size-12 text-muted-foreground/50" />
                   </div>
                 )}
               </div>
@@ -340,20 +320,20 @@ function GalleryContent() {
               {/* Details */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-warm-500 dark:text-cream-400">Type</p>
-                  <p className="font-medium text-warm-900 dark:text-cream-100">
+                  <p className="text-muted-foreground">Type</p>
+                  <p className="font-medium text-foreground">
                     {selectedItem.mode === 'food_photo' ? 'Food Photography' : 'Branded Post'}
                   </p>
                 </div>
                 {selectedItem.outputFormat && (
                   <div>
-                    <p className="text-warm-500 dark:text-cream-400">Format</p>
-                    <p className="font-medium text-warm-900 dark:text-cream-100">{selectedItem.outputFormat}</p>
+                    <p className="text-muted-foreground">Format</p>
+                    <p className="font-medium text-foreground">{selectedItem.outputFormat}</p>
                   </div>
                 )}
                 <div>
-                  <p className="text-warm-500 dark:text-cream-400">Created</p>
-                  <p className="font-medium text-warm-900 dark:text-cream-100">
+                  <p className="text-muted-foreground">Created</p>
+                  <p className="font-mono text-[13px] font-medium tabular-nums text-foreground">
                     {new Date(selectedItem.createdAt).toLocaleDateString('en-US', {
                       month: 'long',
                       day: 'numeric',
@@ -363,8 +343,8 @@ function GalleryContent() {
                 </div>
                 {selectedItem.aiModel && (
                   <div>
-                    <p className="text-warm-500 dark:text-cream-400">Model</p>
-                    <p className="font-medium text-warm-900 dark:text-cream-100">{selectedItem.aiModel}</p>
+                    <p className="text-muted-foreground">Model</p>
+                    <p className="font-mono text-[13px] font-medium text-foreground">{selectedItem.aiModel}</p>
                   </div>
                 )}
               </div>
@@ -374,36 +354,57 @@ function GalleryContent() {
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
-                    className="flex-1 rounded-sm"
+                    className="flex-1"
                     onClick={() => handleDownload(selectedItem)}
                   >
-                    <Download className="w-4 h-4 mr-1.5" />
+                    <Download className="size-4" />
                     Download
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="rounded-sm text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => handleDelete(selectedItem.id)}
-                    disabled={deleting === selectedItem.id}
-                  >
-                    {deleting === selectedItem.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Trash2 className="w-4 h-4" />
-                    )}
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        disabled={deleting === selectedItem.id}
+                        aria-label="Delete image"
+                      >
+                        {deleting === selectedItem.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-4" />
+                        )}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete this image?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This removes it from your gallery permanently. This cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-white hover:bg-destructive/90"
+                          onClick={() => handleDelete(selectedItem.id)}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
 
                 {selectedItem.hasImage && (
                   <Button
                     variant="outline"
-                    className="w-full rounded-sm border-plum-200 text-plum-700 hover:bg-plum-50 hover:border-plum-300"
+                    className="w-full"
                     onClick={() => {
                       setSelectedItem(null)
                       router.push(`/creative-studio/generate?mode=branded_post&sourceImageId=${selectedItem.id}`)
                     }}
                   >
-                    <Wand2 className="w-4 h-4 mr-1.5" />
+                    <Wand2 className="size-4" />
                     Use in Branded Post
                   </Button>
                 )}
@@ -416,19 +417,19 @@ function GalleryContent() {
       {/* Full-screen Lightbox */}
       {lightboxOpen && selectedItem?.hasImage && (
         <div
-          className="fixed inset-0 z-100 bg-black/90 flex items-center justify-center p-4"
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/90 p-4"
           onClick={() => setLightboxOpen(false)}
         >
           <button
             onClick={() => setLightboxOpen(false)}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-sm text-white transition-colors"
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition-colors hover:bg-white/20"
           >
-            <X className="w-6 h-6" />
+            <X className="size-6" />
           </button>
           <img
             src={imageUrl(selectedItem.id)}
             alt={selectedItem.headline || 'Generated image'}
-            className="max-w-full max-h-full object-contain"
+            className="max-h-full max-w-full object-contain"
             onClick={(e) => e.stopPropagation()}
           />
         </div>

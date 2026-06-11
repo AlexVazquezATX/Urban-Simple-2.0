@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Card,
@@ -30,18 +29,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import { toast } from 'sonner'
 import {
   Plus,
   MoreVertical,
   Pencil,
   Trash2,
-  ArrowLeft,
   Sparkles,
   Brain,
   TrendingUp,
   MapPin,
-  Users,
   Heart,
   Globe,
   Cpu,
@@ -163,40 +162,33 @@ export function PulseTopicManager({ topics: initialTopics }: PulseTopicManagerPr
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link href="/pulse">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
+      <PageHeader
+        kicker="PULSE · TOPICS"
+        title="Manage Topics"
+        subtitle="Customize what appears in your daily briefing"
+        backHref="/pulse"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setShowTemplates(!showTemplates)}
+            >
+              <Lightbulb className="h-4 w-4 mr-2" />
+              Templates
             </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold">Manage Topics</h1>
-            <p className="text-muted-foreground">
-              Customize what appears in your daily briefing
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setShowTemplates(!showTemplates)}
-          >
-            <Lightbulb className="h-4 w-4 mr-2" />
-            Templates
-          </Button>
-          <PulseTopicForm onSuccess={(newTopic) => {
-            if (newTopic) {
-              setTopics((prev) => [...prev, newTopic])
-            }
-          }}>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Topic
-            </Button>
-          </PulseTopicForm>
-        </div>
-      </div>
+            <PulseTopicForm onSuccess={(newTopic) => {
+              if (newTopic) {
+                setTopics((prev) => [...prev, newTopic])
+              }
+            }}>
+              <Button variant="gold">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Topic
+              </Button>
+            </PulseTopicForm>
+          </>
+        }
+      />
 
       {/* Quick Add Templates */}
       <AnimatePresence>
@@ -248,8 +240,8 @@ export function PulseTopicManager({ topics: initialTopics }: PulseTopicManagerPr
       {/* Active Topics */}
       {activeTopics.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full bg-green-500" />
+          <h2 className="kicker flex items-center gap-2 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-green-600 dark:bg-green-300" />
             Active Topics ({activeTopics.length})
           </h2>
           <div className="grid gap-3">
@@ -278,8 +270,8 @@ export function PulseTopicManager({ topics: initialTopics }: PulseTopicManagerPr
       {/* Inactive Topics */}
       {inactiveTopics.length > 0 && (
         <div className="space-y-3">
-          <h2 className="text-lg font-semibold flex items-center gap-2 text-muted-foreground">
-            <span className="h-2 w-2 rounded-full bg-gray-400" />
+          <h2 className="kicker flex items-center gap-2 text-muted-foreground">
+            <span className="h-2 w-2 rounded-full bg-muted-foreground/40" />
             Inactive Topics ({inactiveTopics.length})
           </h2>
           <div className="grid gap-3 opacity-70">
@@ -307,32 +299,30 @@ export function PulseTopicManager({ topics: initialTopics }: PulseTopicManagerPr
 
       {/* Empty State */}
       {topics.length === 0 && (
-        <Card className="p-12">
-          <div className="text-center space-y-4">
-            <Brain className="h-12 w-12 mx-auto text-muted-foreground" />
-            <div>
-              <h3 className="text-lg font-semibold">No topics yet</h3>
-              <p className="text-muted-foreground">
-                Add topics to start receiving personalized daily briefings
-              </p>
-            </div>
-            <div className="flex justify-center gap-2">
-              <Button variant="outline" onClick={() => setShowTemplates(true)}>
-                <Lightbulb className="h-4 w-4 mr-2" />
-                Browse Templates
-              </Button>
-              <PulseTopicForm onSuccess={(newTopic) => {
-                if (newTopic) {
-                  setTopics((prev) => [...prev, newTopic])
-                }
-              }}>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Custom Topic
+        <Card className="py-8">
+          <EmptyState
+            icon={Brain}
+            title="No topics yet"
+            description="Add a few topics and Pulse will build you a personalized briefing every morning."
+            action={
+              <div className="flex justify-center gap-2">
+                <Button variant="outline" onClick={() => setShowTemplates(true)}>
+                  <Lightbulb className="h-4 w-4 mr-2" />
+                  Browse Templates
                 </Button>
-              </PulseTopicForm>
-            </div>
-          </div>
+                <PulseTopicForm onSuccess={(newTopic) => {
+                  if (newTopic) {
+                    setTopics((prev) => [...prev, newTopic])
+                  }
+                }}>
+                  <Button variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Custom Topic
+                  </Button>
+                </PulseTopicForm>
+              </div>
+            }
+          />
         </Card>
       )}
 
@@ -381,17 +371,17 @@ function TopicCard({
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3 flex-1 min-w-0">
-            <div className="p-2 rounded-lg bg-muted">
-              <Icon className="h-5 w-5" />
+            <div className="grid size-10 shrink-0 place-items-center rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12">
+              <Icon className="h-[18px] w-[18px] text-gold-600 dark:text-gold-400" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold truncate">{topic.name}</h3>
-                <Badge variant="outline" className="shrink-0">
+                <Badge variant="neutral" className="shrink-0">
                   {categoryLabel}
                 </Badge>
                 {topic.priority > 50 && (
-                  <Badge variant="secondary" className="shrink-0">
+                  <Badge variant="gold" className="shrink-0">
                     High Priority
                   </Badge>
                 )}
@@ -403,17 +393,17 @@ function TopicCard({
               )}
               <div className="flex flex-wrap gap-1 mt-2">
                 {topic.keywords.slice(0, 5).map((keyword) => (
-                  <Badge key={keyword} variant="secondary" className="text-xs">
+                  <Badge key={keyword} variant="neutral">
                     {keyword}
                   </Badge>
                 ))}
                 {topic.keywords.length > 5 && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="neutral">
                     +{topic.keywords.length - 5} more
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
+              <p className="text-xs text-muted-foreground mt-2 font-mono tabular-nums">
                 {topic._count.briefingItems} items generated
               </p>
             </div>
@@ -423,7 +413,7 @@ function TopicCard({
             <Switch checked={topic.isActive} onCheckedChange={onToggle} />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
+                <Button variant="ghost" size="icon-sm">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -435,10 +425,7 @@ function TopicCard({
                   </DropdownMenuItem>
                 </PulseTopicForm>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={onDelete}
-                  className="text-destructive focus:text-destructive"
-                >
+                <DropdownMenuItem onClick={onDelete}>
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </DropdownMenuItem>

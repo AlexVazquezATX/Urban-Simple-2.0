@@ -98,10 +98,10 @@ interface TaskDetailPanelProps {
 }
 
 const PRIORITY_OPTIONS = [
-  { value: 'low', label: 'Low', color: 'text-warm-500' },
-  { value: 'medium', label: 'Medium', color: 'text-ocean-600' },
-  { value: 'high', label: 'High', color: 'text-amber-600' },
-  { value: 'urgent', label: 'Urgent', color: 'text-red-600' },
+  { value: 'low', label: 'Low', color: 'text-muted-foreground' },
+  { value: 'medium', label: 'Medium', color: 'text-gold-600 dark:text-gold-400' },
+  { value: 'high', label: 'High', color: 'text-coral-600 dark:text-coral-300' },
+  { value: 'urgent', label: 'Urgent', color: 'text-coral-600 dark:text-coral-300' },
 ]
 
 const STATUS_OPTIONS = [
@@ -286,7 +286,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
       {/* Backdrop */}
       <div
         className={cn(
-          'absolute inset-0 bg-warm-900/20 transition-opacity duration-200',
+          'absolute inset-0 bg-ink-950/30 transition-opacity duration-200',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
         onClick={handleClose}
@@ -295,24 +295,24 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full max-w-md bg-white dark:bg-charcoal-900 shadow-xl border-l border-warm-200 dark:border-charcoal-700 flex flex-col transition-transform duration-200 ease-out',
+          'relative w-full max-w-md bg-card shadow-elevated border-l border-border flex flex-col transition-transform duration-200 ease-out',
           isVisible ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-secondary/50">
           <div className="flex items-center gap-3">
-            <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100">
+            <h2 className="font-display text-xl font-bold tracking-[-0.4px] text-foreground">
               {task && !isNew ? 'Edit Task' : 'New Task'}
             </h2>
             <button
               type="button"
               onClick={() => setIsStarred(!isStarred)}
               className={cn(
-                'p-1.5 rounded-sm transition-all',
+                'p-1.5 rounded-[9px] transition-all',
                 isStarred
-                  ? 'text-lime-600 bg-lime-100 hover:bg-lime-200'
-                  : 'text-warm-400 hover:text-lime-500 hover:bg-warm-100 dark:hover:bg-charcoal-800'
+                  ? 'text-gold-600 bg-gold-600/10 dark:text-gold-400 dark:bg-gold-400/12'
+                  : 'text-muted-foreground hover:text-gold-600 hover:bg-secondary dark:hover:text-gold-400'
               )}
               title={isStarred ? 'Unstar task' : 'Star task'}
             >
@@ -321,9 +321,9 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-sm hover:bg-warm-200 dark:hover:bg-charcoal-700 transition-colors"
+            className="p-2 rounded-[9px] hover:bg-secondary transition-colors"
           >
-            <X className="w-5 h-5 text-warm-500 dark:text-cream-400" />
+            <X className="w-5 h-5 text-muted-foreground" />
           </button>
         </div>
 
@@ -446,7 +446,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                   {goals.length > 0 && (
                     <>
                       {goals.filter(g => g.period === 'weekly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-warm-500 dark:text-cream-400">
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                           This Week
                         </div>
                       )}
@@ -462,7 +462,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                         </SelectItem>
                       ))}
                       {goals.filter(g => g.period === 'monthly').length > 0 && (
-                        <div className="px-2 py-1.5 text-xs font-medium text-warm-500 dark:text-cream-400">
+                        <div className="px-2 py-1.5 text-xs font-medium text-muted-foreground">
                           This Month
                         </div>
                       )}
@@ -524,10 +524,10 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
                   type="button"
                   onClick={() => toggleTag(tag.id)}
                   className={cn(
-                    'px-3 py-1 rounded-sm text-sm border transition-colors',
+                    'px-3 py-1 rounded-full text-sm border transition-colors',
                     selectedTagIds.includes(tag.id)
                       ? 'border-transparent'
-                      : 'border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-800 text-warm-600 dark:text-cream-300'
+                      : 'border-border bg-secondary/60 text-muted-foreground hover:text-foreground'
                   )}
                   style={selectedTagIds.includes(tag.id) ? {
                     backgroundColor: `${tag.color}20`,
@@ -567,13 +567,13 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
         </form>
 
         {/* Footer Actions - Fixed */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-border bg-card">
           {task && !isNew && onDelete ? (
             <Button
               type="button"
               variant="ghost"
               onClick={handleDelete}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              className="text-muted-foreground hover:text-foreground"
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Delete
@@ -588,7 +588,7 @@ export function TaskDetailPanel({ task, isNew, projects, onClose, onSave, onDele
             <Button
               onClick={handleSubmit}
               disabled={loading || !title.trim()}
-              variant="lime"
+              variant="gold"
             >
               {loading ? (
                 <>

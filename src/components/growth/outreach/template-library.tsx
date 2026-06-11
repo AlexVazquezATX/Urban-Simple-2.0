@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   Select,
   SelectContent,
@@ -13,6 +14,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
   Mail,
   MessageSquare,
   Linkedin,
@@ -20,9 +27,9 @@ import {
   Plus,
   Edit,
   Trash2,
-  Search,
   Loader2,
   FileText,
+  MoreHorizontal,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -76,15 +83,15 @@ export function TemplateLibrary() {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email':
-        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
+        return <Mail className="size-3.5 text-muted-foreground" />
       case 'sms':
-        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
+        return <MessageSquare className="size-3.5 text-muted-foreground" />
       case 'linkedin':
-        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
+        return <Linkedin className="size-3.5 text-muted-foreground" />
       case 'instagram_dm':
-        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
+        return <Instagram className="size-3.5 text-muted-foreground" />
       default:
-        return <MessageSquare className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
+        return <MessageSquare className="size-3.5 text-muted-foreground" />
     }
   }
 
@@ -97,14 +104,14 @@ export function TemplateLibrary() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">Message Templates</h2>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
+          <h2 className="font-display text-lg font-bold tracking-[-0.2px] text-foreground">Message Templates</h2>
+          <p className="mt-0.5 text-sm text-muted-foreground">
             Create and manage reusable message templates
           </p>
         </div>
         <Link href="/growth/outreach/templates/new">
-          <Button variant="lime" className="rounded-sm">
-            <Plus className="h-3.5 w-3.5 mr-1.5" />
+          <Button variant="gold">
+            <Plus className="size-3.5" />
             New Template
           </Button>
         </Link>
@@ -117,14 +124,14 @@ export function TemplateLibrary() {
             placeholder="Search templates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="max-w-sm rounded-sm border-warm-200 dark:border-charcoal-700"
+            className="max-w-sm"
           />
         </div>
         <Select value={filterChannel} onValueChange={setFilterChannel}>
-          <SelectTrigger className="w-[180px] rounded-sm border-warm-200 dark:border-charcoal-700">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Filter by channel" />
           </SelectTrigger>
-          <SelectContent className="rounded-sm">
+          <SelectContent>
             <SelectItem value="all">All Channels</SelectItem>
             <SelectItem value="email">Email</SelectItem>
             <SelectItem value="sms">SMS</SelectItem>
@@ -137,69 +144,86 @@ export function TemplateLibrary() {
       {/* Templates Grid */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-warm-400 dark:text-cream-500" />
+          <Loader2 className="size-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredTemplates.length === 0 ? (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-          <CardContent className="py-12 text-center">
-            <FileText className="h-10 w-10 mx-auto mb-3 text-warm-300 dark:text-charcoal-500" />
-            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">No templates found</p>
-            <Link href="/growth/outreach/templates/new">
-              <Button variant="outline" className="rounded-sm">
-                <Plus className="h-3.5 w-3.5 mr-1.5" />
-                Create Your First Template
-              </Button>
-            </Link>
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={FileText}
+              title="No templates here yet"
+              description="Save your best-performing messages once and reuse them across every channel."
+              action={
+                <Link href="/growth/outreach/templates/new">
+                  <Button variant="outline">
+                    <Plus className="size-3.5" />
+                    Create Your First Template
+                  </Button>
+                </Link>
+              }
+            />
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="rounded-sm border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors">
-              <CardHeader className="p-4 pb-3">
+            <Card key={template.id} className="transition-colors hover:border-primary/40">
+              <CardHeader>
                 <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-sm font-medium text-warm-900 dark:text-cream-100">{template.name}</CardTitle>
+                  <div className="min-w-0 flex-1">
+                    <CardTitle className="text-sm">{template.name}</CardTitle>
                     <CardDescription className="mt-1">
                       <div className="flex items-center gap-1.5">
                         {getChannelIcon(template.channel)}
-                        <span className="text-xs text-warm-500 dark:text-cream-400 capitalize">{template.channel}</span>
+                        <span className="text-xs capitalize text-muted-foreground">{template.channel}</span>
                       </div>
                     </CardDescription>
                   </div>
-                  <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700">
+                  <Badge variant="neutral" className="font-mono tabular-nums">
                     Used {template.useCount}x
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 pt-0">
+              <CardContent>
                 <div className="space-y-3">
                   {template.subject && (
                     <div>
-                      <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-0.5">Subject:</p>
-                      <p className="text-xs text-warm-700 dark:text-cream-300">{template.subject}</p>
+                      <p className="kicker mb-1 text-muted-foreground">Subject</p>
+                      <p className="text-xs text-foreground">{template.subject}</p>
                     </div>
                   )}
                   <div>
-                    <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-0.5">Body:</p>
-                    <p className="text-xs text-warm-600 dark:text-cream-400 line-clamp-3">{template.body}</p>
+                    <p className="kicker mb-1 text-muted-foreground">Body</p>
+                    <p className="line-clamp-3 text-xs text-muted-foreground">{template.body}</p>
                   </div>
-                  <div className="flex items-center gap-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
+                  <div className="flex items-center gap-2 border-t border-border pt-2">
                     <Link href={`/growth/outreach/templates/${template.id}`}>
-                      <Button variant="outline" size="sm" className="rounded-sm h-7 px-2 text-xs">
-                        <Edit className="h-3 w-3 mr-1" />
+                      <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
+                        <Edit className="size-3" />
                         Edit
                       </Button>
                     </Link>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDelete(template.id)}
-                      className="rounded-sm h-7 px-2 text-xs text-warm-500 dark:text-cream-400 hover:text-red-600"
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Delete
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          className="size-7 text-muted-foreground hover:text-foreground"
+                          aria-label="More actions"
+                        >
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDelete(template.id)}
+                        >
+                          <Trash2 className="size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </CardContent>

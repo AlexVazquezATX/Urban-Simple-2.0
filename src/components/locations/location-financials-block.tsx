@@ -1,11 +1,9 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Lock } from 'lucide-react'
-import {
-  formatCurrency,
-  formatMargin,
-  marginToneClass,
-  type FinancialSummary,
-} from '@/lib/financials'
+import { formatMargin, type FinancialSummary } from '@/lib/financials'
+import { formatMoney, moneyClass } from '@/lib/format'
+import { marginTone } from './tones'
+import { cn } from '@/lib/utils'
 import { FinancialsQuickEditDialog } from '@/components/clients/financials-quick-edit-dialog'
 
 interface LocationFinancialsBlockProps {
@@ -30,14 +28,12 @@ export function LocationFinancialsBlock({
   locationName,
 }: LocationFinancialsBlockProps) {
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
+    <Card>
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <CardTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
-              Financials
-            </CardTitle>
-            <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+            <CardTitle>Financials</CardTitle>
+            <CardDescription className="text-xs">
               {agreement.description}
             </CardDescription>
           </div>
@@ -52,58 +48,70 @@ export function LocationFinancialsBlock({
                 monthlyOtherCost: agreement.monthlyOtherCost,
               }}
             />
-            <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">
-              <Lock className="h-3 w-3" />
+            <div className="flex items-center gap-1.5 kicker text-muted-foreground">
+              <Lock className="size-3" />
               Super admin
             </div>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-2 space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Revenue</p>
-            <p className="mt-1 text-lg font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.monthlyRevenue)}
+      <CardContent className="space-y-3 p-4 pt-2">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Revenue</p>
+            <p className={cn('mt-1 font-display text-lg font-bold text-foreground', moneyClass)}>
+              {formatMoney(summary.monthlyRevenue)}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Cost</p>
-            <p className="mt-1 text-lg font-bold text-warm-900 dark:text-cream-100">
-              {formatCurrency(summary.monthlyCost)}
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Cost</p>
+            <p className={cn('mt-1 font-display text-lg font-bold text-foreground', moneyClass)}>
+              {formatMoney(summary.monthlyCost)}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Profit</p>
-            <p className={`mt-1 text-lg font-bold ${marginToneClass(summary.marginPct)}`}>
-              {formatCurrency(summary.monthlyProfit)}
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Profit</p>
+            <p
+              className={cn(
+                'mt-1 font-display text-lg font-bold',
+                moneyClass,
+                marginTone(summary.marginPct)
+              )}
+            >
+              {formatMoney(summary.monthlyProfit)}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Margin</p>
-            <p className={`mt-1 text-lg font-bold ${marginToneClass(summary.marginPct)}`}>
+          <div className="rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">Margin</p>
+            <p
+              className={cn(
+                'mt-1 font-display text-lg font-bold',
+                moneyClass,
+                marginTone(summary.marginPct)
+              )}
+            >
               {formatMargin(summary.marginPct)}
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-xs">
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Labor</p>
-            <p className="font-mono text-warm-900 dark:text-cream-100">
-              {agreement.monthlyLaborCost !== null ? formatCurrency(agreement.monthlyLaborCost) : '—'}
+          <div className="rounded-[10px] border border-border p-2">
+            <p className="kicker text-muted-foreground">Labor</p>
+            <p className={cn('text-foreground', moneyClass)}>
+              {agreement.monthlyLaborCost !== null ? formatMoney(agreement.monthlyLaborCost) : '—'}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Materials</p>
-            <p className="font-mono text-warm-900 dark:text-cream-100">
-              {agreement.monthlyMaterialCost !== null ? formatCurrency(agreement.monthlyMaterialCost) : '—'}
+          <div className="rounded-[10px] border border-border p-2">
+            <p className="kicker text-muted-foreground">Materials</p>
+            <p className={cn('text-foreground', moneyClass)}>
+              {agreement.monthlyMaterialCost !== null ? formatMoney(agreement.monthlyMaterialCost) : '—'}
             </p>
           </div>
-          <div className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-2">
-            <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">Other</p>
-            <p className="font-mono text-warm-900 dark:text-cream-100">
-              {agreement.monthlyOtherCost !== null ? formatCurrency(agreement.monthlyOtherCost) : '—'}
+          <div className="rounded-[10px] border border-border p-2">
+            <p className="kicker text-muted-foreground">Other</p>
+            <p className={cn('text-foreground', moneyClass)}>
+              {agreement.monthlyOtherCost !== null ? formatMoney(agreement.monthlyOtherCost) : '—'}
             </p>
           </div>
         </div>

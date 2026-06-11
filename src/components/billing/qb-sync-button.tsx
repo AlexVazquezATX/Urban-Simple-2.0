@@ -16,7 +16,7 @@ export function QBSyncButton({ qbInvoiceId }: QBSyncButtonProps) {
   // (e.g. legacy placeholder ids) gets a plain badge without a link.
   if (!/^\d+$/.test(qbInvoiceId)) {
     return (
-      <Badge variant="outline" className="rounded-sm font-mono text-xs">
+      <Badge variant="neutral" className="font-mono tabular-nums text-xs">
         QB: {qbInvoiceId}
       </Badge>
     )
@@ -29,8 +29,8 @@ export function QBSyncButton({ qbInvoiceId }: QBSyncButtonProps) {
       rel="noopener noreferrer"
     >
       <Badge
-        variant="outline"
-        className="rounded-sm text-xs gap-1 hover:bg-warm-50 dark:hover:bg-charcoal-800"
+        variant="neutral"
+        className="text-xs gap-1 transition-colors hover:text-foreground"
       >
         View in QuickBooks
         <ExternalLink className="h-3 w-3" />

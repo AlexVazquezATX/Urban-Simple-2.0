@@ -42,12 +42,12 @@ export function ContentPreviewPanel({
   }
 
   return (
-    <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden sticky top-4">
+    <div className="bg-card rounded-[14px] border border-border overflow-hidden sticky top-4">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700 flex items-center justify-between">
-        <h2 className="text-sm font-medium text-warm-900 dark:text-cream-100">Preview</h2>
+      <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+        <h2 className="text-sm font-medium text-foreground">Preview</h2>
         {imageBase64 && aspectRatio && (
-          <span className="text-xs text-warm-500 dark:text-cream-400 bg-warm-100 dark:bg-charcoal-800 px-2 py-0.5 rounded-sm">
+          <span className="text-xs font-mono tabular-nums text-muted-foreground bg-secondary px-2 py-0.5 rounded-full">
             {aspectRatio}
           </span>
         )}
@@ -56,17 +56,17 @@ export function ContentPreviewPanel({
       {/* Image Area */}
       <div className="p-4">
         <div
-          className="relative w-full bg-warm-100 dark:bg-charcoal-800 rounded-sm overflow-hidden"
+          className="relative w-full bg-secondary rounded-[10px] overflow-hidden"
           style={{ paddingBottom: getAspectRatioPadding(aspectRatio) }}
         >
           {isGenerating ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
               <div className="relative">
-                <Loader2 className="w-10 h-10 text-lime-600 animate-spin" />
-                <Sparkles className="w-4 h-4 text-lime-400 absolute -top-1 -right-1 animate-pulse" />
+                <Loader2 className="w-10 h-10 text-gold-600 dark:text-gold-400 animate-spin" />
+                <Sparkles className="w-4 h-4 text-gold-600/70 dark:text-gold-400/70 absolute -top-1 -right-1 animate-pulse" />
               </div>
-              <p className="text-sm font-medium text-warm-700 dark:text-cream-300 mt-4">Creating your image...</p>
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">This may take 20-30 seconds</p>
+              <p className="text-sm font-medium text-foreground mt-4">Creating your image...</p>
+              <p className="text-xs text-muted-foreground mt-1">This may take 20-30 seconds</p>
             </div>
           ) : imageBase64 ? (
             <img
@@ -80,11 +80,11 @@ export function ContentPreviewPanel({
             />
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <div className="w-16 h-16 rounded-sm bg-warm-200 dark:bg-charcoal-700 flex items-center justify-center mb-3">
-                <ImageIcon className="w-7 h-7 text-warm-400 dark:text-cream-400" />
+              <div className="w-16 h-16 rounded-[10px] bg-gold-600/10 dark:bg-gold-400/12 flex items-center justify-center mb-3">
+                <ImageIcon className="w-7 h-7 text-gold-600 dark:text-gold-400" />
               </div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Your creation will appear here</p>
-              <p className="text-xs text-warm-400 dark:text-cream-400 mt-1">Write a prompt and hit Generate</p>
+              <p className="text-sm text-foreground">Your creation will appear here</p>
+              <p className="text-xs text-muted-foreground mt-1">Write a prompt and hit Generate</p>
             </div>
           )}
         </div>
@@ -97,7 +97,7 @@ export function ContentPreviewPanel({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 rounded-sm"
+              className="flex-1"
               onClick={onRegenerate}
               disabled={disabled || isGenerating}
             >
@@ -107,7 +107,7 @@ export function ContentPreviewPanel({
             <Button
               variant="outline"
               size="sm"
-              className="flex-1 rounded-sm"
+              className="flex-1"
               onClick={handleDownload}
               disabled={disabled}
             >
@@ -115,9 +115,9 @@ export function ContentPreviewPanel({
               Download
             </Button>
             <Button
-              variant="lime"
+              variant="gold"
               size="sm"
-              className="flex-1 rounded-sm"
+              className="flex-1"
               onClick={onSave}
               disabled={disabled || isSaving}
             >

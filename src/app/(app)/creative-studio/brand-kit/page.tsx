@@ -1,9 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import {
-  ArrowLeft,
   Save,
   Loader2,
   Palette,
@@ -15,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PageHeader } from '@/components/layout/page-header'
 import { CUISINE_TYPES, STYLE_PREFERENCES } from '@/lib/config/restaurant-studio'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -32,7 +31,7 @@ interface BrandKit {
   isDefault: boolean
 }
 
-// Predefined color palettes for restaurants
+// Predefined color palettes for restaurants (client brand data, not UI chrome)
 const COLOR_PALETTES = [
   { primary: '#1a1a1a', secondary: '#f5f5f5', name: 'Classic' },
   { primary: '#8B4513', secondary: '#F5DEB3', name: 'Rustic' },
@@ -170,320 +169,301 @@ export default function BrandKitPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] bg-warm-50 dark:bg-charcoal-950">
-        <Loader2 className="w-5 h-5 animate-spin text-warm-400" />
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <Loader2 className="size-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      {/* Header */}
-      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-        <div className="max-w-3xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/creative-studio"
-              className="p-2 hover:bg-warm-100 dark:hover:bg-charcoal-800 rounded-sm transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 text-warm-600 dark:text-cream-400" />
-            </Link>
-            <div>
-              <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-                Brand Kit
-              </h1>
-              <p className="text-sm text-warm-500 dark:text-cream-400">
-                Configure your restaurant&apos;s branding
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Form */}
-      <div className="max-w-3xl mx-auto px-4 md:px-6 py-6">
-        <div className="space-y-6">
-          {/* Restaurant Name */}
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-            <Label htmlFor="name" className="text-warm-700 dark:text-cream-300 mb-2 block">
-              Restaurant Name
-            </Label>
-            <Input
-              id="name"
-              value={restaurantName}
-              onChange={(e) => setRestaurantName(e.target.value)}
-              placeholder="Your Restaurant Name"
-              className="rounded-sm"
-            />
-          </div>
-
-          {/* Logos & Icons */}
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <ImageIcon className="w-4 h-4 text-warm-500 dark:text-cream-400" />
-              <Label className="text-warm-700">Logos & Icons</Label>
-            </div>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4">
-              Upload your logo and icon to automatically include them in branded posts
-            </p>
-
-            <div className="grid grid-cols-2 gap-4">
-              {/* Full Logo */}
-              <div>
-                <Label className="text-xs text-warm-500 dark:text-cream-400 mb-2 block">
-                  Full Logo
-                </Label>
-                {logoUrl ? (
-                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 overflow-hidden">
-                    <img
-                      src={logoUrl}
-                      alt="Restaurant logo"
-                      className="w-full h-full object-contain p-2"
-                    />
-                    <button
-                      onClick={() => setLogoUrl(null)}
-                      className="absolute top-1.5 right-1.5 p-1 bg-warm-900/70 hover:bg-warm-900 rounded-sm text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="block cursor-pointer">
-                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-700 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800 flex flex-col items-center justify-center transition-colors">
-                      <Upload className="w-5 h-5 text-warm-400 dark:text-cream-400 mb-1.5" />
-                      <span className="text-xs text-warm-500 dark:text-cream-400">Upload logo</span>
-                      <span className="text-[10px] text-warm-400 dark:text-cream-400 mt-0.5">PNG, SVG, JPG</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, setLogoUrl)}
-                    />
-                  </label>
-                )}
-                <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
-                  Main logo with text
-                </p>
-              </div>
-
-              {/* Icon / Mark */}
-              <div>
-                <Label className="text-xs text-warm-500 dark:text-cream-400 mb-2 block">
-                  Icon / Mark
-                </Label>
-                {iconUrl ? (
-                  <div className="relative group aspect-3/2 rounded-sm border border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800 overflow-hidden">
-                    <img
-                      src={iconUrl}
-                      alt="Restaurant icon"
-                      className="w-full h-full object-contain p-2"
-                    />
-                    <button
-                      onClick={() => setIconUrl(null)}
-                      className="absolute top-1.5 right-1.5 p-1 bg-warm-900/70 hover:bg-warm-900 rounded-sm text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="block cursor-pointer">
-                    <div className="aspect-3/2 rounded-sm border-2 border-dashed border-warm-300 dark:border-charcoal-700 hover:border-lime-400 bg-warm-50 dark:bg-charcoal-800 flex flex-col items-center justify-center transition-colors">
-                      <Upload className="w-5 h-5 text-warm-400 dark:text-cream-400 mb-1.5" />
-                      <span className="text-xs text-warm-500 dark:text-cream-400">Upload icon</span>
-                      <span className="text-[10px] text-warm-400 dark:text-cream-400 mt-0.5">PNG, SVG, JPG</span>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleImageUpload(e, setIconUrl)}
-                    />
-                  </label>
-                )}
-                <p className="text-[10px] text-warm-400 dark:text-cream-400 mt-1">
-                  Smaller mark or symbol
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Colors */}
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-            <div className="flex items-center gap-2 mb-4">
-              <Palette className="w-4 h-4 text-warm-500 dark:text-cream-400" />
-              <Label className="text-warm-700">Brand Colors</Label>
-            </div>
-
-            {/* Color Palettes */}
-            <div className="mb-4">
-              <p className="text-xs text-warm-500 dark:text-cream-400 mb-2">Quick palettes:</p>
-              <div className="flex flex-wrap gap-2">
-                {COLOR_PALETTES.map((palette) => (
-                  <button
-                    key={palette.name}
-                    onClick={() => applyPalette(palette)}
-                    className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-sm border transition-colors',
-                      primaryColor === palette.primary && secondaryColor === palette.secondary
-                        ? 'border-lime-500 bg-lime-50'
-                        : 'border-warm-200 hover:border-warm-300'
-                    )}
-                  >
-                    <div className="flex">
-                      <div
-                        className="w-5 h-5 rounded-l-sm"
-                        style={{ backgroundColor: palette.primary }}
-                      />
-                      <div
-                        className="w-5 h-5 rounded-r-sm"
-                        style={{ backgroundColor: palette.secondary }}
-                      />
-                    </div>
-                    <span className="text-xs text-warm-700 dark:text-cream-300">{palette.name}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom Colors */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="primary" className="text-xs text-warm-500 dark:text-cream-400 mb-1.5 block">
-                  Primary Color
-                </Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    id="primary"
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="w-10 h-10 rounded-sm border border-warm-200 dark:border-charcoal-700 cursor-pointer"
-                  />
-                  <Input
-                    value={primaryColor}
-                    onChange={(e) => setPrimaryColor(e.target.value)}
-                    className="rounded-sm font-mono text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="secondary" className="text-xs text-warm-500 dark:text-cream-400 mb-1.5 block">
-                  Secondary Color
-                </Label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    id="secondary"
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="w-10 h-10 rounded-sm border border-warm-200 dark:border-charcoal-700 cursor-pointer"
-                  />
-                  <Input
-                    value={secondaryColor}
-                    onChange={(e) => setSecondaryColor(e.target.value)}
-                    className="rounded-sm font-mono text-sm"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Preview */}
-            <div className="mt-4 p-4 rounded-sm border border-warm-200 dark:border-charcoal-700">
-              <p className="text-xs text-warm-500 dark:text-cream-400 mb-2">Preview:</p>
-              <div
-                className="h-20 rounded-sm flex items-center justify-center"
-                style={{ backgroundColor: primaryColor }}
-              >
-                <span
-                  className="text-lg font-medium"
-                  style={{ color: secondaryColor }}
-                >
-                  {restaurantName || 'Your Restaurant'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Cuisine Type */}
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-            <Label htmlFor="cuisine" className="text-warm-700 dark:text-cream-300 mb-2 block">
-              Cuisine Type (optional)
-            </Label>
-            <select
-              id="cuisine"
-              value={cuisineType}
-              onChange={(e) => setCuisineType(e.target.value)}
-              className="w-full px-3 py-2 rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 text-warm-900 dark:text-cream-100 text-sm focus:outline-none focus:ring-2 focus:ring-lime-500/20 focus:border-lime-500"
-            >
-              <option value="">Select cuisine...</option>
-              {CUISINE_TYPES.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs text-warm-500 mt-1">
-              Helps AI generate more contextually appropriate content
-            </p>
-          </div>
-
-          {/* Preferred Style */}
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-5">
-            <Label className="text-warm-700 dark:text-cream-300 mb-3 block">
-              Preferred Style (optional)
-            </Label>
-            <div className="space-y-2">
-              {STYLE_PREFERENCES.map((style) => (
-                <button
-                  key={style.value}
-                  onClick={() => setPreferredStyle(style.value)}
-                  className={cn(
-                    'w-full p-3 rounded-sm border transition-all text-left flex items-center justify-between',
-                    preferredStyle === style.value
-                      ? 'border-lime-500 bg-lime-50'
-                      : 'border-warm-200 dark:border-charcoal-700 hover:border-warm-300 bg-white dark:bg-charcoal-900'
-                  )}
-                >
-                  <div>
-                    <p
-                      className={cn(
-                        'text-sm font-medium',
-                        preferredStyle === style.value ? 'text-lime-700' : 'text-warm-900 dark:text-cream-100'
-                      )}
-                    >
-                      {style.label}
-                    </p>
-                    <p className="text-xs text-warm-500 dark:text-cream-400">{style.description}</p>
-                  </div>
-                  {preferredStyle === style.value && (
-                    <Check className="w-4 h-4 text-lime-600 shrink-0" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Save Button */}
+    <div className="mx-auto max-w-3xl">
+      <PageHeader
+        backHref="/creative-studio"
+        kicker="STUDIO · BACKHAUS"
+        title="Brand Kit"
+        subtitle="Configure your restaurant's branding"
+        actions={
           <Button
-            variant="lime"
-            size="lg"
-            className="w-full rounded-sm"
+            variant="gold"
             onClick={handleSave}
             disabled={saving || !restaurantName.trim()}
           >
             {saving ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
                 Saving...
               </>
             ) : (
               <>
-                <Save className="w-4 h-4 mr-2" />
+                <Save className="size-4" />
                 Save Brand Kit
               </>
             )}
           </Button>
+        }
+      />
+
+      <div className="space-y-6">
+        {/* Restaurant Name */}
+        <div className="rounded-[14px] border border-border bg-card p-5">
+          <Label htmlFor="name" className="mb-2 block">
+            Restaurant Name
+          </Label>
+          <Input
+            id="name"
+            value={restaurantName}
+            onChange={(e) => setRestaurantName(e.target.value)}
+            placeholder="Your Restaurant Name"
+          />
+        </div>
+
+        {/* Logos & Icons */}
+        <div className="rounded-[14px] border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <ImageIcon className="size-4 text-muted-foreground" />
+            <Label>Logos & Icons</Label>
+          </div>
+          <p className="mb-4 text-xs text-muted-foreground">
+            Upload your logo and icon to automatically include them in branded posts
+          </p>
+
+          <div className="grid grid-cols-2 gap-4">
+            {/* Full Logo */}
+            <div>
+              <Label className="mb-2 block">
+                Full Logo
+              </Label>
+              {logoUrl ? (
+                <div className="group relative aspect-3/2 overflow-hidden rounded-[12px] border border-border bg-secondary">
+                  <img
+                    src={logoUrl}
+                    alt="Restaurant logo"
+                    className="h-full w-full object-contain p-2"
+                  />
+                  <button
+                    onClick={() => setLogoUrl(null)}
+                    className="absolute right-1.5 top-1.5 rounded-full bg-ink-950/70 p-1 text-white opacity-0 transition-opacity hover:bg-ink-950/90 group-hover:opacity-100"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="block cursor-pointer">
+                  <div className="flex aspect-3/2 flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-secondary/40 transition-colors hover:border-gold-600/40 dark:hover:border-gold-400/40">
+                    <Upload className="mb-1.5 size-5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Upload logo</span>
+                    <span className="mt-0.5 text-[10px] text-muted-foreground/70">PNG, SVG, JPG</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, setLogoUrl)}
+                  />
+                </label>
+              )}
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Main logo with text
+              </p>
+            </div>
+
+            {/* Icon / Mark */}
+            <div>
+              <Label className="mb-2 block">
+                Icon / Mark
+              </Label>
+              {iconUrl ? (
+                <div className="group relative aspect-3/2 overflow-hidden rounded-[12px] border border-border bg-secondary">
+                  <img
+                    src={iconUrl}
+                    alt="Restaurant icon"
+                    className="h-full w-full object-contain p-2"
+                  />
+                  <button
+                    onClick={() => setIconUrl(null)}
+                    className="absolute right-1.5 top-1.5 rounded-full bg-ink-950/70 p-1 text-white opacity-0 transition-opacity hover:bg-ink-950/90 group-hover:opacity-100"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </div>
+              ) : (
+                <label className="block cursor-pointer">
+                  <div className="flex aspect-3/2 flex-col items-center justify-center rounded-[12px] border-2 border-dashed border-border bg-secondary/40 transition-colors hover:border-gold-600/40 dark:hover:border-gold-400/40">
+                    <Upload className="mb-1.5 size-5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Upload icon</span>
+                    <span className="mt-0.5 text-[10px] text-muted-foreground/70">PNG, SVG, JPG</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => handleImageUpload(e, setIconUrl)}
+                  />
+                </label>
+              )}
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Smaller mark or symbol
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Colors */}
+        <div className="rounded-[14px] border border-border bg-card p-5">
+          <div className="mb-4 flex items-center gap-2">
+            <Palette className="size-4 text-muted-foreground" />
+            <Label>Brand Colors</Label>
+          </div>
+
+          {/* Color Palettes */}
+          <div className="mb-4">
+            <p className="mb-2 text-xs text-muted-foreground">Quick palettes:</p>
+            <div className="flex flex-wrap gap-2">
+              {COLOR_PALETTES.map((palette) => (
+                <button
+                  key={palette.name}
+                  onClick={() => applyPalette(palette)}
+                  className={cn(
+                    'flex items-center gap-2 rounded-[10px] border px-3 py-2 transition-colors',
+                    primaryColor === palette.primary && secondaryColor === palette.secondary
+                      ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                      : 'border-border hover:border-gold-600/30 dark:hover:border-gold-400/25'
+                  )}
+                >
+                  <div className="flex">
+                    <div
+                      className="size-5 rounded-l-[6px]"
+                      style={{ backgroundColor: palette.primary }}
+                    />
+                    <div
+                      className="size-5 rounded-r-[6px]"
+                      style={{ backgroundColor: palette.secondary }}
+                    />
+                  </div>
+                  <span className="text-xs text-foreground">{palette.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Custom Colors */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="primary" className="mb-1.5 block">
+                Primary Color
+              </Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id="primary"
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="size-10 cursor-pointer rounded-[10px] border border-border"
+                />
+                <Input
+                  value={primaryColor}
+                  onChange={(e) => setPrimaryColor(e.target.value)}
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="secondary" className="mb-1.5 block">
+                Secondary Color
+              </Label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  id="secondary"
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  className="size-10 cursor-pointer rounded-[10px] border border-border"
+                />
+                <Input
+                  value={secondaryColor}
+                  onChange={(e) => setSecondaryColor(e.target.value)}
+                  className="font-mono text-sm"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="mt-4 rounded-[12px] border border-border p-4">
+            <p className="mb-2 text-xs text-muted-foreground">Preview:</p>
+            <div
+              className="flex h-20 items-center justify-center rounded-[10px]"
+              style={{ backgroundColor: primaryColor }}
+            >
+              <span
+                className="font-display text-lg font-medium"
+                style={{ color: secondaryColor }}
+              >
+                {restaurantName || 'Your Restaurant'}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Cuisine Type */}
+        <div className="rounded-[14px] border border-border bg-card p-5">
+          <Label htmlFor="cuisine" className="mb-2 block">
+            Cuisine Type (optional)
+          </Label>
+          <select
+            id="cuisine"
+            value={cuisineType}
+            onChange={(e) => setCuisineType(e.target.value)}
+            className="w-full rounded-[12px] border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30"
+          >
+            <option value="">Select cuisine...</option>
+            {CUISINE_TYPES.map((c) => (
+              <option key={c.value} value={c.value}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Helps AI generate more contextually appropriate content
+          </p>
+        </div>
+
+        {/* Preferred Style */}
+        <div className="rounded-[14px] border border-border bg-card p-5">
+          <Label className="mb-3 block">
+            Preferred Style (optional)
+          </Label>
+          <div className="space-y-2">
+            {STYLE_PREFERENCES.map((style) => (
+              <button
+                key={style.value}
+                onClick={() => setPreferredStyle(style.value)}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-[12px] border p-3 text-left transition-all',
+                  preferredStyle === style.value
+                    ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                    : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25'
+                )}
+              >
+                <div>
+                  <p
+                    className={cn(
+                      'text-sm font-medium',
+                      preferredStyle === style.value
+                        ? 'text-gold-600 dark:text-gold-400'
+                        : 'text-foreground'
+                    )}
+                  >
+                    {style.label}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{style.description}</p>
+                </div>
+                {preferredStyle === style.value && (
+                  <Check className="size-4 shrink-0 text-gold-600 dark:text-gold-400" />
+                )}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>

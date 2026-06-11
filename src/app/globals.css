@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&display=swap');
+/* Fonts (Bricolage Grotesque / Instrument Sans / Spline Sans Mono) are loaded
+   via next/font in src/app/layout.tsx, which binds --font-display/--font-sans/
+   --font-mono on <body>. */
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -6,148 +8,197 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  /* === URBAN COGNITIVE DESIGN SYSTEM === */
+  /* === URBAN SIMPLE DESIGN SYSTEM — gold / ink / cream === */
 
   /* Font Families */
-  --font-display: 'Fraunces', 'Cormorant Garamond', Georgia, serif;
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+  --font-mono: 'Spline Sans Mono', monospace;
 
-  /* Cream - Primary warm neutrals */
-  --color-cream-50: #FDFCFA;
-  --color-cream-100: #FAF8F5;
-  --color-cream-200: #F5F1EC;
-  --color-cream-300: #E8E2DA;
-  --color-cream-400: #D4CCC0;
-  --color-cream-500: #B8AEA0;
+  /* Gold — THE brand accent (replaces lime, honey, bronze) */
+  --color-gold-50:  #FBF6E8;
+  --color-gold-100: #F6ECD4;
+  --color-gold-200: #EDDCA8;
+  --color-gold-300: #E9C878;
+  --color-gold-400: #E9B84F;  /* dark-mode primary */
+  --color-gold-500: #C2932F;
+  --color-gold-600: #9C7418;  /* light-mode primary */
+  --color-gold-700: #7E5D12;
+  --color-gold-800: #5C440E;
+  --color-gold-900: #3D2D09;
 
-  /* Bronze - Rich accent (primary brand) */
-  --color-bronze-50: #FBF7F4;
-  --color-bronze-100: #F5EBE3;
-  --color-bronze-200: #E8D4C4;
-  --color-bronze-300: #D4B396;
-  --color-bronze-400: #C49A6C;
-  --color-bronze-500: #A67C52;
-  --color-bronze-600: #8B6544;
-  --color-bronze-700: #6F4F36;
-  --color-bronze-800: #553C29;
-  --color-bronze-900: #3D2B1D;
+  /* Ink — warm near-black (replaces charcoal) */
+  --color-ink-950: #0F0E0B;   /* dark bg */
+  --color-ink-900: #15130F;   /* dark raised/sidebar */
+  --color-ink-850: #191713;   /* dark card */
+  --color-ink-800: #1E1B16;   /* dark card-2 / secondary */
+  --color-ink-700: #262219;   /* dark border */
+  --color-ink-600: #3A352A;
+  --color-ink-500: #6F6A5E;   /* dark muted text */
+  --color-ink-400: #A8A294;   /* dark secondary text */
+  --color-ink-300: #C9C3B4;
+  --color-ink-100: #211C12;   /* light-mode foreground (warm ink) */
 
-  /* Charcoal - Deep text and dark elements */
-  --color-charcoal-50: #F7F7F7;
-  --color-charcoal-100: #E3E3E3;
-  --color-charcoal-200: #C8C8C8;
-  --color-charcoal-300: #A4A4A4;
-  --color-charcoal-400: #818181;
-  --color-charcoal-500: #666666;
-  --color-charcoal-600: #515151;
-  --color-charcoal-700: #434343;
-  --color-charcoal-800: #383838;
-  --color-charcoal-900: #1F1D1B;
-  --color-charcoal-950: #141311;
+  /* Cream — warm light neutrals (replaces warm + old cream) */
+  --color-cream-50:  #FCFAF5;  /* portal bg / light sidebar */
+  --color-cream-100: #F6F2E8;  /* light admin bg */
+  --color-cream-200: #F3EEE0;  /* light muted/secondary */
+  --color-cream-300: #ECE6D4;
+  --color-cream-400: #E4DCC6;  /* light border */
+  --color-cream-500: #C9BFA4;
+  --color-cream-600: #9C937E;  /* light muted text */
+  --color-cream-700: #6E6655;  /* light secondary text */
 
-  /* Sage - Secondary green accent */
-  --color-sage-50: #F4F7F4;
-  --color-sage-100: #E2EBE2;
-  --color-sage-200: #C5D6C5;
-  --color-sage-300: #A8C1A8;
-  --color-sage-400: #8BAC8B;
-  --color-sage-500: #6E976E;
+  /* Teal — informational (replaces ocean) */
+  --color-teal-300: #52D6C3;  /* dark mode */
+  --color-teal-600: #2E7D6E;  /* light mode */
 
-  /* Terracotta - Warm earthiness for alerts and features */
-  --color-terracotta-50: #FDF6F3;
-  --color-terracotta-100: #F9E8E0;
-  --color-terracotta-200: #F3D1C1;
-  --color-terracotta-300: #E8B49A;
-  --color-terracotta-400: #DC9473;
-  --color-terracotta-500: #C97A55;
-  --color-terracotta-600: #B06244;
-  --color-terracotta-700: #8E4D35;
-  --color-terracotta-800: #6D3A28;
-  --color-terracotta-900: #4E2A1E;
+  /* Coral — attention, non-destructive (replaces most reds) */
+  --color-coral-300: #F08070;  /* dark mode */
+  --color-coral-600: #B3502E;  /* light mode */
 
-  /* Ocean - Vibrant teal for trust and interactive elements */
-  --color-ocean-50: #EDFAFA;
-  --color-ocean-100: #D5F5F5;
-  --color-ocean-200: #A8EBEB;
-  --color-ocean-300: #6CDCDC;
-  --color-ocean-400: #2DC8C8;
-  --color-ocean-500: #14B8B8;
-  --color-ocean-600: #0E9A9A;
-  --color-ocean-700: #0B7A7A;
-  --color-ocean-800: #085C5C;
-  --color-ocean-900: #064040;
+  /* Green — success */
+  --color-green-300: #8FCC85;  /* dark mode */
+  --color-green-600: #4E7D47;  /* light mode */
 
-  /* Plum - Sophisticated richness for premium features */
-  --color-plum-50: #F8F5F7;
-  --color-plum-100: #EFE7EC;
-  --color-plum-200: #DFCFD9;
-  --color-plum-300: #C9B0BE;
-  --color-plum-400: #B08FA0;
-  --color-plum-500: #946D81;
-  --color-plum-600: #7A5769;
-  --color-plum-700: #614453;
-  --color-plum-800: #49343F;
-  --color-plum-900: #33252C;
+  /* Portal pastels (tiles on light surfaces) */
+  --color-sage-bg: #E3EBD9;  --color-sage-line: #D3DFC6;  --color-sage-deep: #46663C;
+  --color-sky-bg:  #DFE9EC;  --color-sky-line:  #CEDDE1;  --color-sky-deep:  #3E6470;
+  --color-peach-bg:#F4E0D6;  --color-peach-line:#EDD2BC;  --color-peach-deep:#9E4A26;
 
-  /* Honey - Warm gold for success and highlights */
-  --color-honey-50: #FEFCF8;
-  --color-honey-100: #FDF6E8;
-  --color-honey-200: #FAEDC1;
-  --color-honey-300: #F5DD8A;
-  --color-honey-400: #EFC954;
-  --color-honey-500: #D9AF3D;
-  --color-honey-600: #B8912E;
-  --color-honey-700: #927323;
-  --color-honey-800: #6E561A;
-  --color-honey-900: #4D3C12;
+  /* Status (keep keys, new values) */
+  --color-status-success: #4E7D47;  --color-status-success-light: #E9F1E4;
+  --color-status-warning: #C2932F;  --color-status-warning-light: #F6ECD4;
+  --color-status-error:   #B3502E;  --color-status-error-light:   #F4E0D6;
+  --color-status-info:    #2E7D6E;  --color-status-info-light:    #DFE9EC;
 
-  /* Accent - Golden/Lemon yellow for CTAs and highlights (Ramp-inspired) */
-  --color-lime-50: #FFFDF5;
-  --color-lime-100: #FEF9E7;
-  --color-lime-200: #FDF2C9;
-  --color-lime-300: #FCE8A0;
-  --color-lime-400: #F9D85C;
-  --color-lime-500: #EAC435;
-  --color-lime-600: #D4A91F;
-  --color-lime-700: #A78318;
-  --color-lime-800: #7A5F14;
-  --color-lime-900: #4D3B0D;
+  /* True destructive red — confirm dialogs + AR 90+ bucket ONLY */
+  --color-danger: #C04437;
 
-  /* Warm Neutrals - Ramp-inspired warmer grays */
-  --color-warm-50: #FAF9F7;
-  --color-warm-100: #F5F3F0;
-  --color-warm-200: #EBE8E4;
-  --color-warm-300: #DAD6D0;
-  --color-warm-400: #B8B3AA;
-  --color-warm-500: #969189;
-  --color-warm-600: #787268;
-  --color-warm-700: #5C5750;
-  --color-warm-800: #3D3A36;
-  --color-warm-900: #2A2825;
-  --color-warm-950: #1C1B19;
+  /* ============================================================
+     DEPRECATED legacy scales — remapped onto the new palette so
+     un-migrated screens land in the new system automatically.
+     Do not use in new code; migrate to gold/ink/cream/teal/coral/
+     green or semantic tokens, then delete.
+     ============================================================ */
 
-  /* Status colors */
-  --color-status-success: #4C8C63;
-  --color-status-success-light: #E8F5EC;
-  --color-status-warning: #D4A24C;
-  --color-status-warning-light: #FDF6E8;
-  --color-status-error: #C45A4A;
-  --color-status-error-light: #FCEEEC;
-  --color-status-info: var(--color-ocean-600);
-  --color-status-info-light: var(--color-ocean-50);
+  /* bronze → gold */
+  --color-bronze-50:  var(--color-gold-50);
+  --color-bronze-100: var(--color-gold-100);
+  --color-bronze-200: var(--color-gold-200);
+  --color-bronze-300: var(--color-gold-300);
+  --color-bronze-400: var(--color-gold-400);
+  --color-bronze-500: var(--color-gold-500);
+  --color-bronze-600: var(--color-gold-600);
+  --color-bronze-700: var(--color-gold-700);
+  --color-bronze-800: var(--color-gold-800);
+  --color-bronze-900: var(--color-gold-900);
 
-  /* Legacy brand mapping (bronze) */
-  --color-brand-50: #FBF7F4;
-  --color-brand-100: #F5EBE3;
-  --color-brand-200: #E8D4C4;
-  --color-brand-300: #D4B396;
-  --color-brand-400: #C49A6C;
-  --color-brand-500: #A67C52;
-  --color-brand-600: #8B6544;
-  --color-brand-700: #6F4F36;
-  --color-brand-800: #553C29;
-  --color-brand-900: #3D2B1D;
+  /* lime (retired Ramp accent) → gold */
+  --color-lime-50:  var(--color-gold-50);
+  --color-lime-100: var(--color-gold-100);
+  --color-lime-200: var(--color-gold-200);
+  --color-lime-300: var(--color-gold-300);
+  --color-lime-400: var(--color-gold-400);
+  --color-lime-500: var(--color-gold-500);
+  --color-lime-600: var(--color-gold-600);
+  --color-lime-700: var(--color-gold-700);
+  --color-lime-800: var(--color-gold-800);
+  --color-lime-900: var(--color-gold-900);
+
+  /* honey → gold */
+  --color-honey-50:  var(--color-gold-50);
+  --color-honey-100: var(--color-gold-100);
+  --color-honey-200: var(--color-gold-200);
+  --color-honey-300: var(--color-gold-300);
+  --color-honey-400: var(--color-gold-400);
+  --color-honey-500: var(--color-gold-500);
+  --color-honey-600: var(--color-gold-600);
+  --color-honey-700: var(--color-gold-700);
+  --color-honey-800: var(--color-gold-800);
+  --color-honey-900: var(--color-gold-900);
+
+  /* charcoal → ink (warm) */
+  --color-charcoal-50:  var(--color-cream-100);
+  --color-charcoal-100: var(--color-cream-300);
+  --color-charcoal-200: var(--color-ink-300);
+  --color-charcoal-300: var(--color-ink-400);
+  --color-charcoal-400: var(--color-ink-500);
+  --color-charcoal-500: var(--color-cream-700);
+  --color-charcoal-600: var(--color-ink-600);
+  --color-charcoal-700: var(--color-ink-700);
+  --color-charcoal-800: var(--color-ink-800);
+  --color-charcoal-900: var(--color-ink-900);
+  --color-charcoal-950: var(--color-ink-950);
+
+  /* warm grays → cream/ink ramp */
+  --color-warm-50:  var(--color-cream-50);
+  --color-warm-100: var(--color-cream-200);
+  --color-warm-200: var(--color-cream-300);
+  --color-warm-300: var(--color-cream-400);
+  --color-warm-400: var(--color-cream-500);
+  --color-warm-500: var(--color-cream-600);
+  --color-warm-600: var(--color-cream-700);
+  --color-warm-700: var(--color-cream-700);
+  --color-warm-800: var(--color-ink-600);
+  --color-warm-900: var(--color-ink-100);
+  --color-warm-950: var(--color-ink-950);
+
+  /* ocean → teal */
+  --color-ocean-50:  var(--color-status-info-light);
+  --color-ocean-100: var(--color-status-info-light);
+  --color-ocean-200: var(--color-teal-300);
+  --color-ocean-300: var(--color-teal-300);
+  --color-ocean-400: var(--color-teal-300);
+  --color-ocean-500: var(--color-teal-600);
+  --color-ocean-600: var(--color-teal-600);
+  --color-ocean-700: var(--color-teal-600);
+  --color-ocean-800: var(--color-sky-deep);
+  --color-ocean-900: var(--color-sky-deep);
+
+  /* terracotta → coral/peach */
+  --color-terracotta-50:  var(--color-peach-bg);
+  --color-terracotta-100: var(--color-peach-bg);
+  --color-terracotta-200: var(--color-peach-line);
+  --color-terracotta-300: var(--color-coral-300);
+  --color-terracotta-400: var(--color-coral-300);
+  --color-terracotta-500: var(--color-coral-600);
+  --color-terracotta-600: var(--color-coral-600);
+  --color-terracotta-700: var(--color-peach-deep);
+  --color-terracotta-800: var(--color-peach-deep);
+  --color-terracotta-900: var(--color-peach-deep);
+
+  /* plum (retired premium purple) → gold */
+  --color-plum-50:  var(--color-gold-50);
+  --color-plum-100: var(--color-gold-100);
+  --color-plum-200: var(--color-gold-200);
+  --color-plum-300: var(--color-gold-300);
+  --color-plum-400: var(--color-gold-400);
+  --color-plum-500: var(--color-gold-500);
+  --color-plum-600: var(--color-gold-600);
+  --color-plum-700: var(--color-gold-700);
+  --color-plum-800: var(--color-gold-800);
+  --color-plum-900: var(--color-gold-900);
+
+  /* numeric sage (legacy greens) → success greens */
+  --color-sage-50:  var(--color-status-success-light);
+  --color-sage-100: var(--color-sage-bg);
+  --color-sage-200: var(--color-sage-line);
+  --color-sage-300: var(--color-green-300);
+  --color-sage-400: var(--color-green-300);
+  --color-sage-500: var(--color-green-600);
+
+  /* Legacy brand mapping → gold */
+  --color-brand-50:  var(--color-gold-50);
+  --color-brand-100: var(--color-gold-100);
+  --color-brand-200: var(--color-gold-200);
+  --color-brand-300: var(--color-gold-300);
+  --color-brand-400: var(--color-gold-400);
+  --color-brand-500: var(--color-gold-500);
+  --color-brand-600: var(--color-gold-600);
+  --color-brand-700: var(--color-gold-700);
+  --color-brand-800: var(--color-gold-800);
+  --color-brand-900: var(--color-gold-900);
 
   /* Display font sizes (for headlines) */
   --font-size-display-2xl: 4.5rem;
@@ -182,13 +233,13 @@
   --radius-3xl: 36px;
 
   /* Box shadows */
-  --shadow-soft: 0 2px 8px rgba(31, 29, 27, 0.04);
-  --shadow-card: 0 4px 20px rgba(31, 29, 27, 0.06);
-  --shadow-elevated: 0 8px 40px rgba(31, 29, 27, 0.08);
-  --shadow-lifted: 0 12px 60px rgba(31, 29, 27, 0.10);
-  --shadow-glow: 0 0 40px rgba(166, 124, 82, 0.12);
-  --shadow-glow-lg: 0 0 60px rgba(166, 124, 82, 0.18);
-  --shadow-inner-warm: inset 0 2px 4px rgba(31, 29, 27, 0.04);
+  --shadow-soft: 0 2px 8px rgba(33, 28, 18, 0.04);
+  --shadow-card: 0 4px 20px rgba(33, 28, 18, 0.06);
+  --shadow-elevated: 0 8px 40px rgba(33, 28, 18, 0.08);
+  --shadow-lifted: 0 12px 60px rgba(33, 28, 18, 0.10);
+  --shadow-glow: 0 0 40px rgba(194, 147, 47, 0.12);
+  --shadow-glow-lg: 0 0 60px rgba(194, 147, 47, 0.18);
+  --shadow-inner-warm: inset 0 2px 4px rgba(33, 28, 18, 0.04);
 
   /* Spacing extensions */
   --spacing-18: 4.5rem;
@@ -198,89 +249,96 @@
   --spacing-34: 8.5rem;
   --spacing-38: 9.5rem;
 
-  /* === shadcn/ui theme integration (Ramp-inspired) === */
-  --color-background: var(--color-warm-50);
-  --color-foreground: var(--color-warm-900);
+  /* === shadcn/ui semantic mapping — light (default) === */
+  --color-background: var(--color-cream-100);      /* portal pages: cream-50 */
+  --color-foreground: var(--color-ink-100);
 
   --color-card: #FFFFFF;
-  --color-card-foreground: var(--color-warm-900);
+  --color-card-foreground: var(--color-ink-100);
 
   --color-popover: #FFFFFF;
-  --color-popover-foreground: var(--color-warm-900);
+  --color-popover-foreground: var(--color-ink-100);
 
-  --color-primary: var(--color-lime-500);
-  --color-primary-foreground: var(--color-warm-950);
+  --color-primary: var(--color-gold-600);
+  --color-primary-foreground: var(--color-cream-50);
 
-  --color-secondary: var(--color-warm-100);
-  --color-secondary-foreground: var(--color-warm-900);
+  --color-secondary: var(--color-cream-200);
+  --color-secondary-foreground: var(--color-ink-100);
 
-  --color-muted: var(--color-warm-100);
-  --color-muted-foreground: var(--color-warm-500);
+  --color-muted: var(--color-cream-200);
+  --color-muted-foreground: var(--color-cream-600);
 
-  --color-accent: var(--color-warm-100);
-  --color-accent-foreground: var(--color-warm-900);
+  --color-accent: var(--color-cream-200);
+  --color-accent-foreground: var(--color-ink-100);
 
-  --color-destructive: var(--color-status-error);
+  --color-destructive: var(--color-danger);
 
-  --color-border: var(--color-warm-200);
-  --color-input: var(--color-warm-200);
-  --color-ring: var(--color-lime-500);
+  --color-border: var(--color-cream-400);
+  --color-input: var(--color-cream-400);
+  --color-ring: var(--color-gold-600);
 
-  /* Chart colors */
-  --color-chart-1: var(--color-bronze-500);
-  --color-chart-2: var(--color-ocean-500);
-  --color-chart-3: var(--color-ocean-700);
-  --color-chart-4: var(--color-status-warning);
-  --color-chart-5: var(--color-charcoal-600);
+  /* Chart colors — series order: gold, teal, muted, coral, green */
+  --color-chart-1: var(--color-gold-500);
+  --color-chart-2: var(--color-teal-600);
+  --color-chart-3: var(--color-cream-500);
+  --color-chart-4: var(--color-coral-600);
+  --color-chart-5: var(--color-green-600);
 
-  /* Sidebar - Ramp-inspired light warm sidebar */
-  --color-sidebar: var(--color-warm-100);
-  --color-sidebar-foreground: var(--color-warm-900);
-  --color-sidebar-primary: var(--color-lime-500);
-  --color-sidebar-primary-foreground: var(--color-warm-950);
-  --color-sidebar-accent: var(--color-warm-200);
-  --color-sidebar-accent-foreground: var(--color-warm-900);
-  --color-sidebar-border: var(--color-warm-200);
-  --color-sidebar-ring: var(--color-lime-500);
-  --color-sidebar-muted: var(--color-warm-500);
+  /* Sidebar — warm cream, gold active */
+  --color-sidebar: var(--color-cream-50);
+  --color-sidebar-foreground: var(--color-ink-100);
+  --color-sidebar-primary: var(--color-gold-600);
+  --color-sidebar-primary-foreground: var(--color-cream-50);
+  --color-sidebar-accent: rgba(156, 116, 24, 0.10);
+  --color-sidebar-accent-foreground: var(--color-gold-700);
+  --color-sidebar-border: var(--color-cream-300);
+  --color-sidebar-ring: var(--color-gold-600);
+  --color-sidebar-muted: var(--color-cream-600);
 }
 
 .dark {
-  --color-background: var(--color-charcoal-950);
-  --color-foreground: var(--color-cream-50);
+  --color-background: var(--color-ink-950);
+  --color-foreground: #F3EFE6;
 
-  --color-card: var(--color-charcoal-900);
-  --color-card-foreground: var(--color-cream-50);
+  --color-card: var(--color-ink-850);
+  --color-card-foreground: #F3EFE6;
 
-  --color-popover: var(--color-charcoal-900);
-  --color-popover-foreground: var(--color-cream-50);
+  --color-popover: var(--color-ink-850);
+  --color-popover-foreground: #F3EFE6;
 
-  --color-primary: var(--color-bronze-400);
-  --color-primary-foreground: var(--color-charcoal-950);
+  --color-primary: var(--color-gold-400);
+  --color-primary-foreground: #191407;
 
-  --color-secondary: var(--color-charcoal-800);
-  --color-secondary-foreground: var(--color-cream-50);
+  --color-secondary: var(--color-ink-800);
+  --color-secondary-foreground: #F3EFE6;
 
-  --color-muted: var(--color-charcoal-800);
-  --color-muted-foreground: var(--color-charcoal-400);
+  --color-muted: var(--color-ink-800);
+  --color-muted-foreground: var(--color-ink-500);
 
-  --color-accent: var(--color-bronze-900);
-  --color-accent-foreground: var(--color-bronze-200);
+  --color-accent: rgba(233, 184, 79, 0.12);
+  --color-accent-foreground: var(--color-gold-400);
 
-  --color-destructive: var(--color-status-error);
+  --color-destructive: #D85B4B;
 
-  --color-border: var(--color-charcoal-800);
-  --color-input: var(--color-charcoal-800);
-  --color-ring: var(--color-bronze-400);
+  --color-border: var(--color-ink-700);
+  --color-input: var(--color-ink-700);
+  --color-ring: var(--color-gold-400);
 
-  --color-sidebar: var(--color-charcoal-900);
-  --color-sidebar-foreground: var(--color-cream-50);
-  --color-sidebar-primary: var(--color-bronze-400);
-  --color-sidebar-primary-foreground: var(--color-charcoal-950);
-  --color-sidebar-accent: var(--color-charcoal-800);
-  --color-sidebar-accent-foreground: var(--color-cream-50);
-  --color-sidebar-border: var(--color-charcoal-700);
-  --color-sidebar-ring: var(--color-bronze-400);
+  --color-chart-1: var(--color-gold-400);
+  --color-chart-2: var(--color-teal-300);
+  --color-chart-3: var(--color-ink-600);
+  --color-chart-4: var(--color-coral-300);
+  --color-chart-5: var(--color-green-300);
+
+  --color-sidebar: var(--color-ink-900);
+  --color-sidebar-foreground: #F3EFE6;
+  --color-sidebar-primary: var(--color-gold-400);
+  --color-sidebar-primary-foreground: #191407;
+  --color-sidebar-accent: rgba(233, 184, 79, 0.12);
+  --color-sidebar-accent-foreground: var(--color-gold-400);
+  --color-sidebar-border: #1F1C16;
+  --color-sidebar-ring: var(--color-gold-400);
+  --color-sidebar-muted: var(--color-ink-500);
 }
 
 @layer base {
@@ -296,6 +354,7 @@
     @apply font-display font-semibold tracking-tight;
   }
 
+  /* Marketing-site heading ramp (the app shell caps these below) */
   h1 {
     @apply text-4xl md:text-5xl lg:text-6xl;
   }
@@ -306,6 +365,22 @@
 
   h3 {
     @apply text-2xl md:text-3xl lg:text-4xl;
+  }
+
+  /* Inside the app/portal shells, page headings stay compact:
+     h1 caps at 30px — the responsive ramp is for the marketing site only. */
+  [data-shell] h1 {
+    font-size: 1.875rem;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+  [data-shell] h2 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+  [data-shell] h3 {
+    font-size: 1.0625rem;
+    line-height: 1.3;
   }
 }
 
@@ -395,18 +470,19 @@
 
   /* Glass effect */
   .glass {
-    background-color: rgba(253, 252, 250, 0.85);
+    background-color: rgba(252, 250, 245, 0.85);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(232, 226, 218, 0.6);
+    border: 1px solid rgba(228, 220, 198, 0.6);
   }
 
-  /* Gradient text */
-  .gradient-text {
-    background: linear-gradient(135deg, var(--color-bronze-600), var(--color-bronze-400));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* Mono kicker label — uppercase mono micro-label used on page headers,
+     stat cards, table headers, and sidebar group labels */
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
   }
 
   /* Background patterns */
@@ -424,19 +500,15 @@
 
   /* Background gradients */
   .bg-gradient-warm {
-    background: linear-gradient(135deg, #FAF8F5 0%, #F5F1EC 100%);
-  }
-
-  .bg-gradient-bronze {
-    background: linear-gradient(135deg, #C49A6C 0%, #A67C52 100%);
+    background: linear-gradient(135deg, #FCFAF5 0%, #F3EEE0 100%);
   }
 
   .bg-gradient-hero {
-    background: linear-gradient(180deg, rgba(253,252,250,0.95) 0%, rgba(253,252,250,0.7) 50%, rgba(253,252,250,0.95) 100%);
+    background: linear-gradient(180deg, rgba(252,250,245,0.95) 0%, rgba(252,250,245,0.7) 50%, rgba(252,250,245,0.95) 100%);
   }
 
   .bg-gradient-card {
-    background: linear-gradient(180deg, #FFFFFF 0%, #FAF8F5 100%);
+    background: linear-gradient(180deg, #FFFFFF 0%, #FCFAF5 100%);
   }
 
   /* Custom shadows */
@@ -497,11 +569,11 @@
   }
 
   .scrollbar-elegant::-webkit-scrollbar-thumb:active {
-    background: var(--color-bronze-400);
+    background: var(--color-gold-400);
     background-clip: padding-box;
   }
 
-  /* Sidebar-specific elegant scrollbar (light sidebar) */
+  /* Sidebar-specific elegant scrollbar */
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar {
     width: 6px;
   }
@@ -511,73 +583,20 @@
   }
 
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
-    background: var(--color-warm-300);
+    background: var(--color-cream-400);
     border-radius: 10px;
     border: 1px solid transparent;
     background-clip: padding-box;
   }
 
   [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb:hover {
-    background: var(--color-warm-400);
+    background: var(--color-cream-500);
     background-clip: padding-box;
   }
 
-  /* Golden accent button (Ramp-style CTA) */
-  .btn-lime {
-    background-color: var(--color-lime-400);
-    color: var(--color-warm-950);
-    font-weight: 600;
-    transition: all 0.15s ease;
-    border-radius: 4px;
-  }
-
-  .btn-lime:hover {
-    background-color: var(--color-lime-500);
-  }
-
-  .btn-lime:active {
-    background-color: var(--color-lime-600);
-  }
-
-  /* Ramp-style outline button */
-  .btn-outline-warm {
-    background-color: transparent;
-    color: var(--color-warm-700);
-    font-weight: 500;
-    border: 1px solid var(--color-warm-300);
-    transition: all 0.15s ease;
-    border-radius: 8px;
-  }
-
-  .btn-outline-warm:hover {
-    background-color: var(--color-warm-100);
-    border-color: var(--color-warm-400);
-  }
-
-  /* Ramp-style card with subtle shadow */
-  .card-ramp {
-    background: white;
-    border: 1px solid var(--color-warm-200);
-    border-radius: 4px;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
-    transition: border-color 0.15s ease;
-  }
-
-  .card-ramp:hover {
-    border-color: var(--color-ocean-400);
-  }
-
-  /* Ramp-style section heading */
-  .heading-ramp {
-    font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    color: var(--color-warm-900);
-  }
-
-  /* Ramp-style muted text */
-  .text-muted-warm {
-    color: var(--color-warm-500);
+  .dark [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
+    background: var(--color-ink-600);
+    background-clip: padding-box;
   }
 
   /* Safe area padding for iPhone notch/home indicator */
@@ -601,36 +620,32 @@
 /* PULSE ARTICLE STYLING - Magazine Quality */
 /* ======================================== */
 
-/* Custom prose styling for Pulse articles */
 .pulse-article-content {
-  /* Base typography */
   font-family: var(--font-sans);
   font-weight: 300;
   line-height: 1.8;
   letter-spacing: 0.01em;
-  color: var(--color-charcoal-600);
+  color: var(--color-ink-600);
 }
 
 .pulse-article-content h2 {
   font-family: var(--font-display);
   font-size: 2.25rem;
   font-weight: 600;
-  font-style: italic;
   line-height: 1.2;
   margin-top: 4rem;
   margin-bottom: 2rem;
-  color: var(--color-charcoal-900);
+  color: var(--color-ink-100);
 }
 
 .pulse-article-content h3 {
   font-family: var(--font-display);
   font-size: 1.75rem;
   font-weight: 500;
-  font-style: italic;
   line-height: 1.3;
   margin-top: 3rem;
   margin-bottom: 1.5rem;
-  color: var(--color-charcoal-900);
+  color: var(--color-ink-100);
 }
 
 .pulse-article-content p {
@@ -644,9 +659,9 @@
   font-size: 1.5rem;
   font-style: italic;
   line-height: 1.6;
-  color: var(--color-charcoal-800);
-  border-left: 6px solid var(--color-bronze-500);
-  background: linear-gradient(to right, rgba(166, 124, 82, 0.08), transparent);
+  color: var(--color-ink-100);
+  border-left: 6px solid var(--color-gold-500);
+  background: linear-gradient(to right, rgba(194, 147, 47, 0.08), transparent);
   padding: 1.5rem 2rem;
   margin: 3rem 0;
   border-radius: 0 1rem 1rem 0;
@@ -666,16 +681,16 @@
 }
 
 .pulse-article-content ul li::marker {
-  color: var(--color-bronze-500);
+  color: var(--color-gold-500);
 }
 
 .pulse-article-content strong {
   font-weight: 600;
-  color: var(--color-charcoal-900);
+  color: var(--color-ink-100);
 }
 
 .pulse-article-content a {
-  color: var(--color-bronze-600);
+  color: var(--color-gold-600);
   font-weight: 500;
   text-decoration: none;
 }
@@ -686,30 +701,35 @@
 
 /* Dark mode adjustments */
 .dark .pulse-article-content {
-  color: var(--color-cream-200);
+  color: var(--color-ink-300);
 }
 
 .dark .pulse-article-content h2,
 .dark .pulse-article-content h3 {
-  color: var(--color-cream-50);
+  color: #F3EFE6;
 }
 
 .dark .pulse-article-content blockquote {
-  color: var(--color-cream-100);
-  background: linear-gradient(to right, rgba(196, 154, 108, 0.15), transparent);
+  color: #F3EFE6;
+  background: linear-gradient(to right, rgba(233, 184, 79, 0.12), transparent);
+  border-left-color: var(--color-gold-400);
 }
 
 .dark .pulse-article-content strong {
-  color: var(--color-cream-50);
+  color: #F3EFE6;
 }
 
-/* Custom input styling to use bronze color instead of browser default red */
+.dark .pulse-article-content a {
+  color: var(--color-gold-400);
+}
+
+/* Native input accents follow the active theme's primary */
 input[type="range"] {
-  accent-color: #A67C52; /* bronze-500 - only changes color, keeps default style */
+  accent-color: var(--color-primary);
 }
 
 input[type="checkbox"] {
-  accent-color: #A67C52; /* bronze-500 */
+  accent-color: var(--color-primary);
 }
 
 /* Certifications marquee animation */
@@ -756,4 +776,3 @@ input[type="checkbox"] {
     margin: 0.75in;
   }
 }
-

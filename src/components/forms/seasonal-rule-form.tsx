@@ -139,13 +139,13 @@ export function SeasonalRuleForm({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-md rounded-sm border-warm-200">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-display font-medium text-warm-900 dark:text-cream-100">
+          <DialogTitle>
             {isEditing ? 'Edit Seasonal Rule' : 'Add Seasonal Rule'}
           </DialogTitle>
           {facilityName && (
-            <DialogDescription className="text-warm-500 dark:text-cream-400">
+            <DialogDescription>
               {facilityName}
             </DialogDescription>
           )}
@@ -159,7 +159,7 @@ export function SeasonalRuleForm({
               name="mode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300">Define by</FormLabel>
+                  <FormLabel>Define by</FormLabel>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -191,7 +191,7 @@ export function SeasonalRuleForm({
               name="selectedMonths"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300">
+                  <FormLabel>
                     {mode === 'active' ? 'Active months' : 'Paused months'}
                   </FormLabel>
                   <div className="grid grid-cols-4 gap-2">
@@ -200,12 +200,12 @@ export function SeasonalRuleForm({
                       return (
                         <label
                           key={month.value}
-                          className={`flex items-center justify-center h-8 rounded-sm border text-xs font-medium cursor-pointer transition-colors ${
+                          className={`flex items-center justify-center h-8 rounded-md border text-xs font-medium cursor-pointer transition-colors ${
                             isSelected
                               ? mode === 'active'
-                                ? 'bg-lime-100 border-lime-300 text-lime-700'
+                                ? 'bg-gold-600/10 border-gold-600/30 text-gold-600 dark:bg-gold-400/12 dark:border-gold-400/25 dark:text-gold-400'
                                 : 'bg-yellow-100 border-yellow-300 text-yellow-700'
-                              : 'bg-white dark:bg-charcoal-900 border-warm-200 dark:border-charcoal-700 text-warm-500 dark:text-cream-400 hover:border-warm-300'
+                              : 'bg-background border-border text-muted-foreground hover:border-muted-foreground/40'
                           }`}
                         >
                           <input
@@ -236,7 +236,7 @@ export function SeasonalRuleForm({
                 name="effectiveYearStart"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300">From Year</FormLabel>
+                    <FormLabel>From Year</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -245,7 +245,6 @@ export function SeasonalRuleForm({
                         placeholder="Any"
                         min="2020"
                         max="2035"
-                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       />
                     </FormControl>
                     <FormMessage />
@@ -257,7 +256,7 @@ export function SeasonalRuleForm({
                 name="effectiveYearEnd"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-warm-700 dark:text-cream-300">To Year</FormLabel>
+                    <FormLabel>To Year</FormLabel>
                     <FormControl>
                       <Input
                         {...field}
@@ -266,7 +265,6 @@ export function SeasonalRuleForm({
                         placeholder="Any"
                         min="2020"
                         max="2035"
-                        className="rounded-sm border-warm-200 dark:border-charcoal-700"
                       />
                     </FormControl>
                     <FormMessage />
@@ -281,13 +279,12 @@ export function SeasonalRuleForm({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-warm-700 dark:text-cream-300">Notes</FormLabel>
+                  <FormLabel>Notes</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       placeholder="Optional notes about this seasonal rule..."
                       rows={2}
-                      className="rounded-sm border-warm-200 dark:border-charcoal-700"
                     />
                   </FormControl>
                   <FormMessage />
@@ -300,11 +297,10 @@ export function SeasonalRuleForm({
                 type="button"
                 variant="outline"
                 onClick={() => setOpen(false)}
-                className="rounded-sm border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300"
               >
                 Cancel
               </Button>
-              <Button type="submit" variant="lime" className="rounded-sm" disabled={loading}>
+              <Button type="submit" variant="gold" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isEditing ? 'Update Rule' : 'Create Rule'}
               </Button>

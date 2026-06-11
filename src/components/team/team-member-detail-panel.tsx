@@ -12,7 +12,7 @@ import {
   User,
   UserCheck,
   Users,
-  Trash2,
+  UserX,
   Key,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -28,6 +28,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -80,12 +89,14 @@ const roleIcons: Record<string, typeof Shield> = {
   CLIENT_USER: Users,
 }
 
-const roleColors: Record<string, string> = {
-  SUPER_ADMIN: 'bg-plum-100 text-plum-700 border-plum-200',
-  ADMIN: 'bg-bronze-100 text-bronze-700 border-bronze-200',
-  MANAGER: 'bg-ocean-100 text-ocean-700 border-ocean-200',
-  ASSOCIATE: 'bg-lime-100 text-lime-700 border-lime-200',
-  CLIENT_USER: 'bg-warm-100 text-warm-600 border-warm-200',
+// Chip mapping per the design system: Super Admin/Admin → gold,
+// Manager → teal, Associate (and everything else) → neutral.
+const roleBadgeVariants: Record<string, 'gold' | 'teal' | 'neutral'> = {
+  SUPER_ADMIN: 'gold',
+  ADMIN: 'gold',
+  MANAGER: 'teal',
+  ASSOCIATE: 'neutral',
+  CLIENT_USER: 'neutral',
 }
 
 export function TeamMemberDetailPanel({
@@ -99,6 +110,7 @@ export function TeamMemberDetailPanel({
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
+  const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false)
 
   // Form state
   const [email, setEmail] = useState(member?.email || '')
@@ -234,7 +246,7 @@ export function TeamMemberDetailPanel({
       {/* Backdrop */}
       <div
         className={cn(
-          'absolute inset-0 bg-warm-900/20 transition-opacity duration-200',
+          'absolute inset-0 bg-ink-950/30 transition-opacity duration-200',
           isVisible ? 'opacity-100' : 'opacity-0'
         )}
         onClick={handleClose}
@@ -243,24 +255,24 @@ export function TeamMemberDetailPanel({
       {/* Panel */}
       <div
         className={cn(
-          'relative w-full max-w-md bg-white dark:bg-charcoal-900 shadow-xl border-l border-warm-200 dark:border-charcoal-700 flex flex-col transition-transform duration-200 ease-out',
+          'relative w-full max-w-md bg-card shadow-xl border-l border-border flex flex-col transition-transform duration-200 ease-out',
           isVisible ? 'translate-x-0' : 'translate-x-full'
         )}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-warm-200 dark:border-charcoal-700 bg-warm-50 dark:bg-charcoal-800">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-secondary/50">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-bronze-100 text-bronze-700 text-sm font-semibold">
+              <AvatarFallback className="bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400 text-sm font-semibold">
                 {initials}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="font-display text-lg font-medium text-warm-900 dark:text-cream-100">
+              <h2 className="font-display text-lg font-semibold tracking-[-0.2px] text-foreground">
                 {member && !isNew ? 'Team Member Details' : 'New Team Member'}
               </h2>
               {member && !isNew && (
-                <p className="text-sm text-warm-500 dark:text-cream-400">
+                <p className="text-sm text-muted-foreground">
                   {displayName || `${firstName} ${lastName}`}
                 </p>
               )}
@@ -268,9 +280,10 @@ export function TeamMemberDetailPanel({
           </div>
           <button
             onClick={handleClose}
-            className="p-2 rounded-sm hover:bg-warm-200 dark:hover:bg-charcoal-700 transition-colors"
+            className="p-2 rounded-[9px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            aria-label="Close"
           >
-            <X className="w-5 h-5 text-warm-500 dark:text-cream-400" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -279,18 +292,11 @@ export function TeamMemberDetailPanel({
           {/* Status Badge (for existing members) */}
           {member && !isNew && (
             <div className="flex items-center gap-2">
-              <Badge
-                className={cn(
-                  'rounded-sm text-[10px] px-1.5 py-0',
-                  isActive
-                    ? 'bg-lime-100 text-lime-700 border-lime-200'
-                    : 'bg-warm-100 text-warm-600 border-warm-200'
-                )}
-              >
+              <Badge variant={isActive ? 'green' : 'neutral'}>
                 {isActive ? 'Active' : 'Inactive'}
               </Badge>
-              <Badge className={cn('rounded-sm text-[10px] px-1.5 py-0', roleColors[role])}>
-                <RoleIcon className="w-3 h-3 mr-1" />
+              <Badge variant={roleBadgeVariants[role] || 'neutral'}>
+                <RoleIcon className="w-3 h-3" />
                 {roleLabels[role] || role}
               </Badge>
             </div>
@@ -305,7 +311,6 @@ export function TeamMemberDetailPanel({
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="John"
-                className="rounded-sm"
               />
             </div>
             <div className="space-y-2">
@@ -315,7 +320,6 @@ export function TeamMemberDetailPanel({
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="Doe"
-                className="rounded-sm"
               />
             </div>
           </div>
@@ -328,9 +332,8 @@ export function TeamMemberDetailPanel({
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Optional nickname or preferred name"
-              className="rounded-sm"
             />
-            <p className="text-xs text-warm-500 dark:text-cream-400">Optional. Defaults to first and last name.</p>
+            <p className="text-xs text-muted-foreground">Optional. Defaults to first and last name.</p>
           </div>
 
           {/* Email */}
@@ -345,7 +348,6 @@ export function TeamMemberDetailPanel({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="john.doe@example.com"
-              className="rounded-sm"
             />
           </div>
 
@@ -361,7 +363,6 @@ export function TeamMemberDetailPanel({
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="(512) 555-1234"
-              className="rounded-sm"
             />
           </div>
 
@@ -373,7 +374,7 @@ export function TeamMemberDetailPanel({
                 Role *
               </Label>
               <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="rounded-sm">
+                <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -394,7 +395,7 @@ export function TeamMemberDetailPanel({
                 value={branchId || '__none__'}
                 onValueChange={(v) => setBranchId(v === '__none__' ? '' : v)}
               >
-                <SelectTrigger className="rounded-sm">
+                <SelectTrigger>
                   <SelectValue placeholder="Select branch" />
                 </SelectTrigger>
                 <SelectContent>
@@ -411,17 +412,17 @@ export function TeamMemberDetailPanel({
 
           {/* Active Status (for existing members) */}
           {member && !isNew && (
-            <div className="flex items-center space-x-3 p-3 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50">
+            <div className="flex items-center space-x-3 p-3 border border-border rounded-[12px] bg-secondary/40">
               <Checkbox
                 id="isActive"
                 checked={isActive}
                 onCheckedChange={(checked) => setIsActive(checked === true)}
               />
               <div className="space-y-0.5">
-                <Label htmlFor="isActive" className="font-medium text-warm-900 dark:text-cream-100">
+                <Label htmlFor="isActive" className="font-medium text-foreground">
                   Active Member
                 </Label>
-                <p className="text-xs text-warm-500 dark:text-cream-400">
+                <p className="text-xs text-muted-foreground">
                   Inactive members cannot log in or access the platform
                 </p>
               </div>
@@ -430,7 +431,7 @@ export function TeamMemberDetailPanel({
 
           {/* Auth Account Section (for new members or setting password) */}
           {(!member || isNew) && (
-            <div className="space-y-4 p-4 border border-warm-200 dark:border-charcoal-700 rounded-sm bg-warm-50/50 dark:bg-charcoal-800/50">
+            <div className="space-y-4 p-4 border border-border rounded-[12px] bg-secondary/40">
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="createAuthAccount"
@@ -438,10 +439,10 @@ export function TeamMemberDetailPanel({
                   onCheckedChange={(checked) => setCreateAuthAccount(checked === true)}
                 />
                 <div className="space-y-0.5">
-                  <Label htmlFor="createAuthAccount" className="font-medium text-warm-900 dark:text-cream-100">
+                  <Label htmlFor="createAuthAccount" className="font-medium text-foreground">
                     Create Login Account
                   </Label>
-                  <p className="text-xs text-warm-500 dark:text-cream-400">
+                  <p className="text-xs text-muted-foreground">
                     Allow this user to log in to the platform
                   </p>
                 </div>
@@ -459,7 +460,6 @@ export function TeamMemberDetailPanel({
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Enter password"
-                    className="rounded-sm"
                   />
                 </div>
               )}
@@ -468,8 +468,8 @@ export function TeamMemberDetailPanel({
 
           {/* Member Info (read-only for existing) */}
           {member && !isNew && member.createdAt && (
-            <div className="pt-4 border-t border-warm-200 dark:border-charcoal-700">
-              <p className="text-xs text-warm-500 dark:text-cream-400">
+            <div className="pt-4 border-t border-border">
+              <p className="font-mono text-xs text-muted-foreground">
                 Member since {new Date(member.createdAt).toLocaleDateString()}
               </p>
             </div>
@@ -477,38 +477,31 @@ export function TeamMemberDetailPanel({
         </form>
 
         {/* Footer Actions - Fixed */}
-        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
+        <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-border bg-card">
           {member && !isNew && onDelete ? (
             <Button
               type="button"
               variant="ghost"
-              onClick={handleDelete}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 rounded-sm"
+              onClick={() => setConfirmDeactivateOpen(true)}
             >
-              <Trash2 className="w-4 h-4 mr-2" />
+              <UserX className="size-4" />
               Deactivate
             </Button>
           ) : (
             <div />
           )}
           <div className="flex items-center gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              className="rounded-sm border-warm-200"
-            >
+            <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={loading || !firstName.trim() || !lastName.trim() || !email.trim()}
-              variant="lime"
-              className="rounded-sm"
+              variant="gold"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                   Saving...
                 </>
               ) : member && !isNew ? (
@@ -520,6 +513,36 @@ export function TeamMemberDetailPanel({
           </div>
         </div>
       </div>
+
+      {/* Deactivate confirmation — the only place red appears */}
+      <AlertDialog open={confirmDeactivateOpen} onOpenChange={setConfirmDeactivateOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deactivate team member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-medium text-foreground">
+                {displayName || `${firstName} ${lastName}`}
+              </span>{' '}
+              will no longer be able to log in or access the platform. Their history is
+              preserved, and you can reactivate them anytime.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                setConfirmDeactivateOpen(false)
+                handleDelete()
+              }}
+            >
+              <UserX className="size-4" />
+              Deactivate
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

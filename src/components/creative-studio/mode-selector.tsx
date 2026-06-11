@@ -38,34 +38,29 @@ export function ModeSelector({ value, onChange, disabled }: ModeSelectorProps) {
             onClick={() => onChange(mode.id)}
             disabled={disabled}
             className={cn(
-              'flex-1 p-4 rounded-xl border transition-all text-left',
+              'flex-1 rounded-[14px] border p-4 text-left transition-all',
               isSelected
-                ? 'border-bronze-400 bg-bronze-50 ring-1 ring-bronze-300'
-                : 'border-cream-300 hover:border-bronze-200 bg-white',
-              disabled && 'opacity-50 cursor-not-allowed'
+                ? 'border-gold-600/40 bg-gold-600/10 ring-1 ring-gold-600/30 dark:border-gold-400/30 dark:bg-gold-400/12 dark:ring-gold-400/25'
+                : 'border-border bg-card hover:border-gold-600/30 dark:hover:border-gold-400/25',
+              disabled && 'cursor-not-allowed opacity-50'
             )}
           >
             <div className="flex items-start gap-3">
               <div
                 className={cn(
-                  'w-10 h-10 rounded-lg flex items-center justify-center shrink-0',
+                  'grid size-10 shrink-0 place-items-center rounded-[10px]',
                   isSelected
-                    ? 'bg-bronze-100 text-bronze-700'
-                    : 'bg-cream-200 text-warm-500'
+                    ? 'bg-gold-600/15 text-gold-600 dark:bg-gold-400/15 dark:text-gold-400'
+                    : 'bg-secondary text-muted-foreground'
                 )}
               >
-                <Icon className="w-5 h-5" />
+                <Icon className="size-5" />
               </div>
               <div>
-                <h3
-                  className={cn(
-                    'text-sm font-semibold',
-                    isSelected ? 'text-charcoal-900' : 'text-charcoal-800'
-                  )}
-                >
+                <h3 className="text-sm font-semibold text-foreground">
                   {mode.title}
                 </h3>
-                <p className="text-xs text-warm-500 mt-0.5">{mode.description}</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{mode.description}</p>
               </div>
             </div>
           </button>

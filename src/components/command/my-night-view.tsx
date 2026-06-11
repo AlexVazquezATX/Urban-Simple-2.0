@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MapPin, Clock, CheckCircle, Loader2, ClipboardList, ChevronRight } from 'lucide-react'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/layout/page-header'
+import { Clock, CheckCircle, Loader2, ClipboardList, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -23,11 +25,11 @@ interface NightLocation {
   serviceLogId: string | null
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  pending: { label: 'Not Started', color: 'text-warm-500 dark:text-cream-400', bgColor: 'bg-warm-50 border-warm-200 dark:bg-charcoal-800 dark:border-charcoal-700' },
-  in_progress: { label: 'In Progress', color: 'text-ocean-600 dark:text-ocean-400', bgColor: 'bg-ocean-50 border-ocean-300 dark:bg-ocean-950 dark:border-ocean-700' },
-  completed: { label: 'Complete', color: 'text-lime-600 dark:text-lime-400', bgColor: 'bg-lime-50 border-lime-300 dark:bg-lime-950 dark:border-lime-700' },
-  partial: { label: 'Partial', color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-50 border-amber-300 dark:bg-amber-950 dark:border-amber-700' },
+const statusConfig: Record<string, { label: string; variant: 'neutral' | 'teal' | 'green' | 'gold' }> = {
+  pending: { label: 'Not started', variant: 'neutral' },
+  in_progress: { label: 'In progress', variant: 'teal' },
+  completed: { label: 'Complete', variant: 'green' },
+  partial: { label: 'Partial', variant: 'gold' },
 }
 
 export function MyNightView({ userName }: { userName: string }) {
@@ -61,8 +63,8 @@ export function MyNightView({ userName }: { userName: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16 text-warm-400 dark:text-cream-500">
-        <Loader2 className="h-6 w-6 animate-spin mr-2" />
+      <div className="flex items-center justify-center py-16 text-muted-foreground">
+        <Loader2 className="mr-2 size-6 animate-spin" />
         Loading tonight&apos;s route...
       </div>
     )
@@ -71,34 +73,43 @@ export function MyNightView({ userName }: { userName: string }) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-medium tracking-tight font-display text-warm-900 dark:text-cream-100">
-          My Night
-        </h1>
-        <p className="text-warm-500 dark:text-cream-400">
-          {shiftCount === 0
-            ? 'No shifts scheduled for tonight'
-            : `${completedCount}/${totalCount} locations complete`}
-        </p>
+      <div className="space-y-3">
+        <PageHeader
+          kicker="TODAY · MY NIGHT"
+          title={`Good evening, ${userName}`}
+          subtitle={
+            shiftCount === 0
+              ? 'No shifts scheduled for tonight'
+              : `${completedCount}/${totalCount} locations complete`
+          }
+          className="mb-0"
+        />
 
-        {/* Progress bar */}
+        {/* Progress bar — track secondary, fill gold */}
         {totalCount > 0 && (
-          <div className="w-full h-2 bg-warm-200 dark:bg-charcoal-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-lime-500 rounded-full transition-all duration-500"
-              style={{ width: `${(completedCount / totalCount) * 100}%` }}
-            />
+          <div className="flex items-center gap-3">
+            <div className="h-1.5 w-full max-w-md overflow-hidden rounded-full bg-secondary">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${(completedCount / totalCount) * 100}%` }}
+              />
+            </div>
+            <span className="font-mono text-[11.5px] tabular-nums text-gold-600 dark:text-gold-400">
+              {completedCount}/{totalCount}
+            </span>
           </div>
         )}
       </div>
 
       {/* Location Cards */}
       {locations.length === 0 ? (
-        <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-          <CardContent className="py-12 text-center">
-            <Clock className="h-10 w-10 mx-auto text-warm-300 dark:text-cream-600 mb-3" />
-            <p className="text-warm-500 dark:text-cream-400 font-medium">No locations tonight</p>
-            <p className="text-sm text-warm-400 dark:text-cream-500 mt-1">Check back when your shift starts</p>
+        <Card>
+          <CardContent>
+            <EmptyState
+              icon={Clock}
+              title="No shifts tonight — enjoy the quiet"
+              description="Check back here when your shift starts."
+            />
           </CardContent>
         </Card>
       ) : (
@@ -112,34 +123,40 @@ export function MyNightView({ userName }: { userName: string }) {
               <Card
                 key={`${loc.shiftId}-${loc.locationId}`}
                 className={cn(
-                  'rounded-sm border transition-all dark:bg-charcoal-900',
-                  isActive && 'border-ocean-400 shadow-sm ring-1 ring-ocean-200 dark:ring-ocean-800',
-                  isDone && 'border-lime-300 dark:border-lime-700 opacity-75',
-                  !isActive && !isDone && 'border-warm-200 dark:border-charcoal-700'
+                  'py-0 transition-all',
+                  isActive &&
+                    'border-teal-600/30 ring-1 ring-teal-600/30 dark:border-teal-300/25 dark:ring-teal-300/25',
+                  isDone && 'border-green-600/30 opacity-75 dark:border-green-300/25'
                 )}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
                       {/* Step number */}
-                      <div className={cn(
-                        'h-8 w-8 rounded-full flex items-center justify-center shrink-0 text-sm font-semibold',
-                        isDone ? 'bg-lime-100 text-lime-600 dark:bg-lime-950 dark:text-lime-400' : isActive ? 'bg-ocean-100 text-ocean-600 dark:bg-ocean-950 dark:text-ocean-400' : 'bg-warm-100 text-warm-500 dark:bg-charcoal-800 dark:text-cream-400'
-                      )}>
-                        {isDone ? <CheckCircle className="h-4 w-4" /> : index + 1}
+                      <div
+                        className={cn(
+                          'grid size-8 shrink-0 place-items-center rounded-full font-mono text-sm font-semibold tabular-nums',
+                          isDone
+                            ? 'bg-green-600/12 text-green-600 dark:bg-green-300/12 dark:text-green-300'
+                            : isActive
+                              ? 'bg-teal-600/10 text-teal-600 dark:bg-teal-300/12 dark:text-teal-300'
+                              : 'bg-secondary text-muted-foreground'
+                        )}
+                      >
+                        {isDone ? <CheckCircle className="size-4" /> : index + 1}
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-warm-900 dark:text-cream-100 truncate">{loc.locationName}</p>
-                        <p className="text-sm text-warm-500 dark:text-cream-400">{loc.clientName}</p>
-                        <div className="flex items-center gap-3 mt-2 text-xs text-warm-400 dark:text-cream-500">
+                        <p className="truncate font-medium text-foreground">{loc.locationName}</p>
+                        <p className="text-sm text-muted-foreground">{loc.clientName}</p>
+                        <div className="mt-2 flex items-center gap-3 text-xs text-muted-foreground">
                           <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {loc.shiftTime}
+                            <Clock className="size-3" />
+                            <span className="font-mono tabular-nums">{loc.shiftTime}</span>
                           </span>
                           {loc.checklistName && (
                             <span className="flex items-center gap-1">
-                              <ClipboardList className="h-3 w-3" />
+                              <ClipboardList className="size-3" />
                               {loc.checklistName}
                             </span>
                           )}
@@ -147,27 +164,25 @@ export function MyNightView({ userName }: { userName: string }) {
                       </div>
                     </div>
 
-                    <Badge variant="outline" className={cn('text-xs shrink-0 ml-2', config.color)}>
+                    <Badge variant={config.variant} className="ml-2 shrink-0">
                       {config.label}
                     </Badge>
                   </div>
 
                   {/* Action Button */}
                   {!isDone && loc.checklistId && (
-                    <div className="mt-3 pt-3 border-t border-warm-100 dark:border-charcoal-700">
-                      <Link href={`/operations/checklists/${loc.checklistId}`}>
-                        <Button
-                          variant={isActive ? 'default' : 'outline'}
-                          size="sm"
-                          className={cn(
-                            'w-full gap-1.5',
-                            isActive && 'bg-ocean-600 hover:bg-ocean-700'
-                          )}
-                        >
+                    <div className="mt-3 border-t border-border pt-3">
+                      <Button
+                        variant={isActive ? 'gold' : 'outline'}
+                        size="sm"
+                        className="w-full gap-1.5"
+                        asChild
+                      >
+                        <Link href={`/operations/checklists/${loc.checklistId}`}>
                           {isActive ? 'Continue Checklist' : 'Start Checklist'}
-                          <ChevronRight className="h-3.5 w-3.5" />
-                        </Button>
-                      </Link>
+                          <ChevronRight className="size-3.5" />
+                        </Link>
+                      </Button>
                     </div>
                   )}
                 </CardContent>

@@ -55,15 +55,15 @@ export default function ApiKeysPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-4 md:p-6 max-w-4xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
+        <div className="p-4 md:p-6 max-w-4xl mx-auto bg-background min-h-screen">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <Skeleton className="h-7 w-32 rounded-sm" />
-              <Skeleton className="h-4 w-64 mt-2 rounded-sm" />
+              <Skeleton className="h-7 w-32" />
+              <Skeleton className="h-4 w-64 mt-2" />
             </div>
-            <Skeleton className="h-8 w-36 rounded-sm" />
+            <Skeleton className="h-9 w-36 rounded-[9px]" />
           </div>
-          <Skeleton className="h-[300px] rounded-sm" />
+          <Skeleton className="h-[300px] rounded-[14px]" />
         </div>
       }
     >

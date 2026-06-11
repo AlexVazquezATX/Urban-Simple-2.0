@@ -1,10 +1,40 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Sparkles, Eye, EyeOff, Trash2, Edit } from 'lucide-react'
+import {
+  Sparkles,
+  Eye,
+  EyeOff,
+  Trash2,
+  Pencil,
+  MoreHorizontal,
+  FileText,
+  CheckCircle2,
+  PenLine,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { AIGenerationWizard } from './ai-generation-wizard'
 import type { BlogPostWithRelations } from '@/lib/services/blog-service'
 import type { BlogCategory } from '@prisma/client'
@@ -15,6 +45,7 @@ export default function BlogManagementPage() {
   const [loading, setLoading] = useState(true)
   const [showWizard, setShowWizard] = useState(false)
   const [selectedPost, setSelectedPost] = useState<BlogPostWithRelations | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<BlogPostWithRelations | null>(null)
 
   useEffect(() => {
     loadData()
@@ -56,8 +87,6 @@ export default function BlogManagementPage() {
   }
 
   async function handleDelete(post: BlogPostWithRelations) {
-    if (!confirm('Are you sure you want to delete this post?')) return
-
     try {
       await fetch(`/api/blog/admin/posts/${post.id}`, {
         method: 'DELETE',
@@ -66,6 +95,8 @@ export default function BlogManagementPage() {
       await loadData()
     } catch (error) {
       console.error('Failed to delete post:', error)
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -84,194 +115,203 @@ export default function BlogManagementPage() {
     )
   }
 
+  const publishedCount = posts.filter((p) => p.status === 'published').length
+  const draftCount = posts.filter((p) => p.status === 'draft').length
+  const totalViews = posts.reduce((sum, p) => sum + p.viewCount, 0)
+
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Blog Management</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
-            Create engaging Austin content with AI
-          </p>
-        </div>
-        <Button
-          onClick={() => setShowWizard(true)}
-          variant="lime"
-          size="sm"
-          className="rounded-sm"
-        >
-          <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-          <span className="hidden sm:inline">Generate New Post</span>
-        </Button>
-      </div>
+    <div className="mx-auto max-w-7xl p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · CONTENT"
+        title="Blog Management"
+        subtitle="Create engaging Austin content with AI"
+        actions={
+          <Button onClick={() => setShowWizard(true)} variant="gold" size="sm">
+            <Sparkles className="size-4" />
+            <span className="hidden sm:inline">Generate New Post</span>
+            <span className="sm:hidden">Generate</span>
+          </Button>
+        }
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-warm-400">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Posts</div>
-          <div className="text-2xl font-semibold text-warm-900 dark:text-cream-100">{posts.length}</div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">All blog content</p>
-        </Card>
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-ocean-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Published</div>
-          <div className="text-2xl font-semibold text-ocean-600">
-            {posts.filter((p) => p.status === 'published').length}
-          </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Live on site</p>
-        </Card>
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-lime-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Drafts</div>
-          <div className="text-2xl font-semibold text-lime-600">
-            {posts.filter((p) => p.status === 'draft').length}
-          </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Pending review</p>
-        </Card>
-        <Card className="p-4 rounded-sm border-warm-200 dark:border-charcoal-700 border-l-4 border-l-plum-500">
-          <div className="text-xs font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-1">Total Views</div>
-          <div className="text-2xl font-semibold text-plum-600">
-            {posts.reduce((sum, p) => sum + p.viewCount, 0).toLocaleString()}
-          </div>
-          <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">All-time reads</p>
-        </Card>
+      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+        <StatCard
+          label="Total Posts"
+          value={posts.length}
+          sub="All blog content"
+          icon={FileText}
+        />
+        <StatCard
+          label="Published"
+          value={publishedCount}
+          sub="Live on site"
+          icon={CheckCircle2}
+        />
+        <StatCard
+          label="Drafts"
+          value={draftCount}
+          sub="Pending review"
+          icon={PenLine}
+        />
+        <StatCard
+          label="Total Views"
+          value={totalViews.toLocaleString()}
+          sub="All-time reads"
+          icon={Eye}
+        />
       </div>
 
       {/* Posts List */}
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <div className="px-4 py-3 border-b border-warm-200 dark:border-charcoal-700">
-          <h2 className="text-base font-display font-medium text-warm-900 dark:text-cream-100">All Posts</h2>
-        </div>
+      <Card className="gap-4 py-5">
+        <CardHeader className="px-5">
+          <CardTitle>All Posts</CardTitle>
+        </CardHeader>
 
-        {loading ? (
-          <div className="text-center py-8">
-            <p className="text-warm-500 dark:text-cream-400 text-sm">Loading posts...</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-10 px-4">
-            <div className="w-12 h-12 rounded-sm bg-lime-100 flex items-center justify-center mx-auto mb-3">
-              <Sparkles className="w-5 h-5 text-lime-600" />
-            </div>
-            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">
-              No posts yet
-            </h3>
-            <p className="text-xs text-warm-500 dark:text-cream-400 mb-4 max-w-sm mx-auto">
-              Create your first Austin blog post with AI
-            </p>
-            <Button
-              onClick={() => setShowWizard(true)}
-              variant="lime"
-              size="sm"
-              className="rounded-sm"
-            >
-              <Sparkles className="w-3.5 h-3.5 mr-1.5" />
-              Generate Your First Post
-            </Button>
-          </div>
-        ) : (
-          <div className="p-4 space-y-1.5">
-            {posts.map((post) => (
-              <div
-                key={post.id}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 hover:border-ocean-400 transition-colors group"
-              >
-                {/* Featured Image */}
-                {post.featuredImage && (
-                  <div className="w-16 h-16 rounded-sm overflow-hidden bg-warm-100 dark:bg-charcoal-800 shrink-0">
-                    <img
-                      src={post.featuredImage}
-                      alt={post.title}
-                      className="w-full h-full object-cover"
-                    />
+        <CardContent className="px-5">
+          {loading ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Loading posts...</p>
+          ) : posts.length === 0 ? (
+            <EmptyState
+              icon={Sparkles}
+              title="No posts yet"
+              description="Generate your first Austin post with AI. It takes about a minute from idea to draft."
+              action={
+                <Button onClick={() => setShowWizard(true)} variant="outline" size="sm">
+                  <Sparkles className="size-4" />
+                  Generate Your First Post
+                </Button>
+              }
+            />
+          ) : (
+            <div className="space-y-1.5">
+              {posts.map((post) => (
+                <div
+                  key={post.id}
+                  className="group flex items-center gap-3 rounded-[10px] border border-border px-3 py-2.5 transition-colors hover:bg-secondary/50"
+                >
+                  {/* Featured Image */}
+                  {post.featuredImage && (
+                    <div className="size-14 shrink-0 overflow-hidden rounded-[8px] bg-secondary">
+                      <img
+                        src={post.featuredImage}
+                        alt={post.title}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  )}
+
+                  {/* Content */}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                      <Badge variant="neutral">{post.category?.name || 'Uncategorized'}</Badge>
+                      {post.status === 'published' ? (
+                        <Badge variant="teal">Published</Badge>
+                      ) : (
+                        <Badge variant="neutral">Draft</Badge>
+                      )}
+                      {post.isAiGenerated && (
+                        <Badge variant="gold">
+                          <Sparkles />
+                          AI
+                        </Badge>
+                      )}
+                    </div>
+                    <h3 className="truncate text-sm font-medium text-foreground">{post.title}</h3>
+                    <div className="mt-0.5 flex items-center gap-2 font-mono text-xs tabular-nums text-muted-foreground">
+                      <span>
+                        {post.publishedAt
+                          ? new Date(post.publishedAt).toLocaleDateString()
+                          : new Date(post.createdAt).toLocaleDateString()}
+                      </span>
+                      <span>·</span>
+                      <span>{post.viewCount} views</span>
+                      {post.readTime && (
+                        <>
+                          <span>·</span>
+                          <span>{post.readTime} min</span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                )}
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <Badge
-                      className="rounded-sm text-[10px] px-1.5 py-0"
-                      style={{
-                        backgroundColor: post.category?.color || '#A67C52',
-                        color: 'white',
-                      }}
+                  {/* Actions */}
+                  <div className="flex shrink-0 items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
                     >
-                      {post.category?.name || 'Uncategorized'}
-                    </Badge>
-                    {post.status === 'published' ? (
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-ocean-500 text-ocean-700">
-                        Published
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-400 text-warm-600">
-                        Draft
-                      </Badge>
-                    )}
-                    {post.isAiGenerated && (
-                      <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-plum-500 text-plum-700">
-                        <Sparkles className="w-2.5 h-2.5 mr-0.5" />
-                        AI
-                      </Badge>
-                    )}
-                  </div>
-                  <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 truncate">
-                    {post.title}
-                  </h3>
-                  <div className="flex items-center gap-3 text-xs text-warm-500 dark:text-cream-400">
-                    <span>
-                      {post.publishedAt
-                        ? new Date(post.publishedAt).toLocaleDateString()
-                        : new Date(post.createdAt).toLocaleDateString()}
-                    </span>
-                    <span>•</span>
-                    <span>{post.viewCount} views</span>
-                    {post.readTime && (
-                      <>
-                        <span>•</span>
-                        <span>{post.readTime} min</span>
-                      </>
-                    )}
+                      View
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm" aria-label="More actions">
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => (window.location.href = `/dashboard/blog/edit/${post.id}`)}
+                        >
+                          <Pencil className="size-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handlePublish(post)}>
+                          {post.status === 'published' ? (
+                            <>
+                              <EyeOff className="size-4" />
+                              Unpublish
+                            </>
+                          ) : (
+                            <>
+                              <Eye className="size-4" />
+                              Publish
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setDeleteTarget(post)}>
+                          <Trash2 className="size-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-
-                {/* Actions - show on hover */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => window.location.href = `/dashboard/blog/edit/${post.id}`}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
-                    title="Edit"
-                  >
-                    <Edit className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handlePublish(post)}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
-                    title={post.status === 'published' ? 'Unpublish' : 'Publish'}
-                  >
-                    {post.status === 'published' ? (
-                      <EyeOff className="w-3.5 h-3.5" />
-                    ) : (
-                      <Eye className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-ocean-600 transition-colors"
-                    title="Preview"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(post)}
-                    className="p-1.5 rounded-sm hover:bg-warm-100 dark:hover:bg-charcoal-800 text-warm-500 dark:text-cream-400 hover:text-red-600 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </CardContent>
       </Card>
+
+      {/* Delete confirmation */}
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display">Delete this post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              &ldquo;{deleteTarget?.title}&rdquo; will be permanently removed from the blog. This
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={() => deleteTarget && handleDelete(deleteTarget)}
+            >
+              <Trash2 className="size-4" />
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

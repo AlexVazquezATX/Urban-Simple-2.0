@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { Loader2, Search } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 interface ProspectSelectorProps {
   value: string
@@ -47,16 +47,16 @@ export function ProspectSelector({ value, onValueChange }: ProspectSelectorProps
   return (
     <div className="space-y-2">
       <Select value={value} onValueChange={onValueChange}>
-        <SelectTrigger className="rounded-sm border-warm-200 dark:border-charcoal-700 mt-1">
+        <SelectTrigger className="mt-1">
           <SelectValue placeholder="Select a prospect..." />
         </SelectTrigger>
-        <SelectContent className="rounded-sm">
+        <SelectContent>
           {loading ? (
             <div className="flex items-center justify-center p-4">
-              <Loader2 className="h-4 w-4 animate-spin text-warm-400 dark:text-cream-500" />
+              <Loader2 className="size-4 animate-spin text-muted-foreground" />
             </div>
           ) : filteredProspects.length === 0 ? (
-            <div className="p-4 text-sm text-warm-500 dark:text-cream-400 text-center">
+            <div className="p-4 text-center text-sm text-muted-foreground">
               No prospects found
             </div>
           ) : (
@@ -66,14 +66,14 @@ export function ProspectSelector({ value, onValueChange }: ProspectSelectorProps
                   placeholder="Search prospects..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="h-8 rounded-sm border-warm-200 dark:border-charcoal-700"
+                  className="h-8"
                 />
               </div>
               {filteredProspects.slice(0, 50).map((prospect) => (
                 <SelectItem key={prospect.id} value={prospect.id}>
                   {prospect.companyName}
                   {prospect.status && (
-                    <span className="text-warm-400 dark:text-cream-500 ml-2">({prospect.status})</span>
+                    <span className="ml-2 text-muted-foreground">({prospect.status})</span>
                   )}
                 </SelectItem>
               ))}

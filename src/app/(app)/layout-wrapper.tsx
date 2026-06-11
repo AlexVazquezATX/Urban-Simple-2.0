@@ -45,17 +45,8 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     setIsLoginPage(isLogin)
   }, [pathname])
 
-  // Cmd+K (Mac) / Ctrl+K (Win/Linux) opens the AI assistant from anywhere.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault()
-        setIsAIChatOpen(true)
-      }
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [])
+  // ⌘K is owned by the sidebar's jump-to palette (app-sidebar.tsx); the
+  // AI assistant opens via the gold FAB or the mobile bottom nav.
 
   // Auth check runs only once on mount
   useEffect(() => {
@@ -118,18 +109,18 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-cream-50 dark:bg-charcoal-950">
+      <div data-shell="app" className="flex min-h-screen w-full bg-background">
         <AppSidebar />
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Mobile Header - Only visible on mobile */}
-          <header className="md:hidden sticky top-0 z-20 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-4 py-3">
+          <header className="md:hidden sticky top-0 z-20 bg-sidebar border-b border-sidebar-border px-4 py-3">
             <div className="flex items-center justify-between">
               {/* Left: Menu trigger + Logo */}
               <div className="flex items-center gap-3">
-                <SidebarTrigger className="h-10 w-10 flex items-center justify-center rounded-lg bg-charcoal-100 hover:bg-charcoal-200 transition-colors" />
+                <SidebarTrigger className="h-10 w-10 flex items-center justify-center rounded-lg bg-secondary hover:bg-secondary/70 transition-colors" />
                 <Link href="/dashboard" className="flex items-baseline gap-1">
-                  <span className="font-bold text-lg tracking-tight text-charcoal-900">Urban</span>
-                  <span className="font-display italic text-lg text-bronze-600">Simple</span>
+                  <span className="font-display font-bold text-lg tracking-tight text-foreground">Urban</span>
+                  <span className="font-display italic text-lg text-primary">Simple</span>
                 </Link>
               </div>
 
@@ -142,13 +133,13 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                     className="h-10 w-10 rounded-lg"
                     title="Tasks"
                   >
-                    <CheckSquare className="h-5 w-5 text-charcoal-600" />
+                    <CheckSquare className="h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/tasks?new=true">
                   <Button
                     size="icon"
-                    className="h-10 w-10 rounded-lg bg-ocean-500 hover:bg-ocean-600 text-white"
+                    className="h-10 w-10 rounded-lg"
                     title="Add Task"
                   >
                     <Plus className="h-5 w-5" />
@@ -161,7 +152,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           {/* Desktop Header with Role Switcher — gated on REAL role so the
               dev tool stays visible even while impersonating a non-admin role. */}
           {userRole && isSuperAdmin && (
-            <div className="hidden md:flex sticky top-0 z-10 bg-white dark:bg-charcoal-900 border-b border-cream-200 dark:border-charcoal-700 px-6 py-3 justify-end">
+            <div className="hidden md:flex sticky top-0 z-10 bg-background/90 backdrop-blur border-b border-border px-6 py-3 justify-end">
               <RoleSwitcher
                 currentRole={userRole}
                 realRole={realRole || 'SUPER_ADMIN'}
@@ -174,14 +165,14 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-auto pb-24 md:pb-8">{children}</main>
 
           {/* Mobile Bottom Navigation */}
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white dark:bg-charcoal-900 border-t border-cream-200 dark:border-charcoal-700 px-2 py-2 safe-area-pb">
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-sidebar border-t border-sidebar-border px-2 py-2 safe-area-pb">
             <div className="flex items-center justify-around">
               <Link
                 href="/dashboard"
                 className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
                   pathname === '/dashboard'
-                    ? 'text-ocean-600 bg-ocean-50'
-                    : 'text-charcoal-500 hover:text-charcoal-700'
+                    ? 'text-primary bg-sidebar-accent'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <LayoutDashboard className="h-5 w-5" />
@@ -192,8 +183,8 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 href="/tasks"
                 className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
                   pathname === '/tasks' || pathname?.startsWith('/tasks/')
-                    ? 'text-ocean-600 bg-ocean-50'
-                    : 'text-charcoal-500 hover:text-charcoal-700'
+                    ? 'text-primary bg-sidebar-accent'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <CheckSquare className="h-5 w-5" />
@@ -202,20 +193,20 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
               {/* Center Add Button */}
               <Link href="/tasks?new=true" className="-mt-6">
-                <div className="h-14 w-14 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-lg flex items-center justify-center hover:from-ocean-600 hover:to-ocean-700 transition-all active:scale-95">
+                <div className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-card flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95">
                   <Plus className="h-7 w-7" />
                 </div>
               </Link>
 
               <button
                 onClick={() => setIsAIChatOpen(true)}
-                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-charcoal-500 hover:text-charcoal-700 transition-colors"
+                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
               >
                 <Sparkles className="h-5 w-5" />
                 <span className="text-xs font-medium">AI</span>
               </button>
 
-              <SidebarTrigger className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-charcoal-500 hover:text-charcoal-700 transition-colors">
+              <SidebarTrigger className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                 <Menu className="h-5 w-5" />
                 <span className="text-xs font-medium">More</span>
               </SidebarTrigger>
@@ -223,14 +214,15 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           </nav>
         </div>
 
-        {/* AI Chat Button - Desktop only (mobile uses bottom nav) */}
+        {/* AI assistant FAB — the restyled gold spark. 48px, bottom-right
+            24px inset; soft shadow on light, gold hairline on dark. */}
         <Button
           onClick={() => setIsAIChatOpen(true)}
-          size="lg"
-          className="hidden md:flex fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-glow hover:shadow-glow-lg hover:from-ocean-600 hover:to-ocean-700 hover:-translate-y-1 transition-all duration-300 z-30 group"
+          size="icon"
+          className="hidden md:flex fixed bottom-6 right-6 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-card dark:shadow-none dark:border dark:border-gold-400/25 hover:bg-primary/90 hover:-translate-y-0.5 transition-all duration-200 z-30 group"
           title="Open AI Assistant"
         >
-          <Sparkles className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+          <Sparkles className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
         </Button>
 
         {/* AI Chat Sidebar */}

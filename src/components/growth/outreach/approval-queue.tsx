@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { EmptyState } from '@/components/ui/empty-state'
 import {
   CheckCircle2,
   XCircle,
@@ -19,6 +20,8 @@ import {
   Loader2,
   Pencil,
   RefreshCw,
+  Check,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
@@ -255,25 +258,25 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
   const getChannelIcon = (channel: string) => {
     switch (channel) {
       case 'email':
-        return <Mail className="h-3.5 w-3.5 text-ocean-500" />
+        return <Mail className="size-3" />
       case 'sms':
-        return <MessageSquare className="h-3.5 w-3.5 text-lime-600" />
+        return <MessageSquare className="size-3" />
       case 'linkedin':
-        return <Linkedin className="h-3.5 w-3.5 text-ocean-600" />
+        return <Linkedin className="size-3" />
       case 'instagram':
       case 'instagram_dm':
-        return <Instagram className="h-3.5 w-3.5 text-plum-500" />
+        return <Instagram className="size-3" />
       default:
-        return <Mail className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
+        return <Mail className="size-3" />
     }
   }
 
   if (loading) {
     return (
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4">
-          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Approval Queue</CardTitle>
-          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">Loading...</CardDescription>
+      <Card>
+        <CardHeader>
+          <CardTitle>Approval Queue</CardTitle>
+          <CardDescription>Loading...</CardDescription>
         </CardHeader>
       </Card>
     )
@@ -281,33 +284,29 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
 
   if (messages.length === 0) {
     return (
-      <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-        <CardHeader className="p-4 pb-3">
-          <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Approval Queue</CardTitle>
-          <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
-            First-contact messages awaiting your review
-          </CardDescription>
+      <Card>
+        <CardHeader>
+          <CardTitle>Approval Queue</CardTitle>
+          <CardDescription>First-contact messages awaiting your review</CardDescription>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className="text-center py-10">
-            <CheckCircle2 className="h-10 w-10 mx-auto text-warm-300 dark:text-charcoal-500 mb-3" />
-            <p className="text-sm text-warm-500 dark:text-cream-400">No messages pending approval</p>
-            <p className="text-xs text-warm-400 dark:text-cream-500 mt-1">
-              All first-contact messages have been reviewed
-            </p>
-          </div>
+        <CardContent>
+          <EmptyState
+            icon={CheckCircle2}
+            title="Queue's clear — nothing waiting on you"
+            description="Every first-contact message has been reviewed. New drafts will land here for approval."
+          />
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700">
-      <CardHeader className="p-4 pb-3">
-        <div className="flex items-center justify-between">
+    <Card>
+      <CardHeader>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-display font-medium text-warm-900 dark:text-cream-100">Approval Queue</CardTitle>
-            <CardDescription className="text-xs text-warm-500 dark:text-cream-400">
+            <CardTitle>Approval Queue</CardTitle>
+            <CardDescription className="mt-1">
               {filteredMessages.length}{searchQuery ? ` of ${messages.length}` : ''} first-contact message{filteredMessages.length !== 1 ? 's' : ''} awaiting review
             </CardDescription>
           </div>
@@ -318,38 +317,35 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                   size="sm"
                   variant="outline"
                   onClick={() => handleReject(Array.from(selectedIds))}
-                  className="rounded-sm"
                 >
-                  <XCircle className="h-3.5 w-3.5 mr-1.5" />
+                  <XCircle className="size-3.5" />
                   Reject ({selectedIds.size})
                 </Button>
                 <Button
                   size="sm"
-                  variant="lime"
+                  variant="outline"
                   onClick={() => handleApprove(Array.from(selectedIds))}
                   disabled={approving}
-                  className="rounded-sm"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                  <CheckCircle2 className="size-3.5 text-green-600 dark:text-green-300" />
                   Approve ({selectedIds.size})
                 </Button>
               </>
             )}
             <Button
               size="sm"
-              variant="lime"
+              variant="gold"
               onClick={handleApproveAll}
               disabled={approving}
-              className="rounded-sm"
             >
               {approving ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                  <Loader2 className="size-3.5 animate-spin" />
                   Approving...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                  <CheckCircle2 className="size-3.5" />
                   Approve All
                 </>
               )}
@@ -357,12 +353,12 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="space-y-1.5">
+      <CardContent>
+        <div className="space-y-2.5">
           {filteredMessages.map((message) => (
             <div
               key={message.id}
-              className="rounded-sm border border-warm-200 dark:border-charcoal-700 p-3 hover:border-ocean-400 transition-colors"
+              className="rounded-[12px] border border-border bg-card p-4 transition-colors hover:border-primary/40"
             >
               <div className="flex items-start gap-3">
                 <Checkbox
@@ -370,57 +366,60 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                   onCheckedChange={() => toggleSelect(message.id)}
                   className="mt-0.5"
                 />
-                <div className="flex-1 min-w-0 space-y-2">
+                <div className="min-w-0 flex-1 space-y-2.5">
                   {/* Header */}
                   <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-center gap-1.5">
                         <Link
                           href={`/growth/prospects/${message.prospectId}`}
-                          className="text-sm font-medium text-warm-900 dark:text-cream-100 hover:text-ocean-600"
+                          className="text-sm font-semibold text-foreground hover:text-primary"
                         >
                           {message.prospectName}
                         </Link>
                         {message.isAiGenerated && (
-                          <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-plum-100 text-plum-700 border-plum-200">
-                            <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                          <Badge variant="gold">
+                            <Sparkles className="size-3" />
                             AI
                           </Badge>
                         )}
-                        <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 dark:border-charcoal-700 flex items-center gap-1">
+                        <Badge variant="neutral">
                           {getChannelIcon(message.channel)}
                           {message.channel}
                         </Badge>
                       </div>
                       {message.contactName && (
-                        <p className="text-xs text-warm-500 dark:text-cream-400">
+                        <p className="text-xs text-muted-foreground">
                           To: {message.contactName}
                           {message.contactEmail && ` <${message.contactEmail}>`}
                         </p>
                       )}
                       {message.campaignName && (
-                        <p className="text-[10px] text-warm-400 dark:text-cream-500 mt-0.5">
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
                           Campaign: {message.campaignName}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center gap-1 ml-2">
+                    {/* Per-card approve / dismiss */}
+                    <div className="ml-2 flex items-center gap-1">
                       <Button
-                        size="sm"
+                        size="icon-sm"
                         variant="ghost"
                         onClick={() => handleReject([message.id])}
-                        className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-red-600"
+                        aria-label="Dismiss message"
+                        className="text-muted-foreground hover:text-foreground"
                       >
-                        <XCircle className="h-3.5 w-3.5" />
+                        <X className="size-4" />
                       </Button>
                       <Button
-                        size="sm"
+                        size="icon-sm"
                         variant="ghost"
                         onClick={() => handleApprove([message.id])}
                         disabled={approving}
-                        className="h-7 w-7 p-0 text-warm-500 dark:text-cream-400 hover:text-lime-600"
+                        aria-label="Approve message"
+                        className="text-green-600 hover:text-green-600 dark:text-green-300 dark:hover:text-green-300 hover:bg-green-600/10 dark:hover:bg-green-300/12"
                       >
-                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <Check className="size-4" />
                       </Button>
                     </div>
                   </div>
@@ -428,15 +427,15 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                   {/* Subject (display only when not editing) */}
                   {message.subject && editingId !== message.id && (
                     <div>
-                      <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-0.5">Subject</p>
-                      <p className="text-sm text-warm-900 dark:text-cream-100">{message.subject}</p>
+                      <p className="kicker mb-1 text-muted-foreground">Subject</p>
+                      <p className="text-sm text-foreground">{message.subject}</p>
                     </div>
                   )}
 
                   {/* Message Content */}
                   <div>
-                    <div className="flex items-center justify-between mb-0.5">
-                      <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide">Message</p>
+                    <div className="mb-1 flex items-center justify-between">
+                      <p className="kicker text-muted-foreground">Message</p>
                       {(message.channel === 'linkedin' ||
                         message.channel === 'instagram' ||
                         message.channel === 'instagram_dm') && editingId !== message.id && (
@@ -444,9 +443,9 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                           size="sm"
                           variant="ghost"
                           onClick={() => copyToClipboard(message.body)}
-                          className="h-6 px-2 text-xs text-warm-500 dark:text-cream-400 hover:text-ocean-600"
+                          className="h-6 px-2 text-xs"
                         >
-                          <Copy className="h-3 w-3 mr-1" />
+                          <Copy className="size-3" />
                           Copy
                         </Button>
                       )}
@@ -455,12 +454,12 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                       <div className="space-y-2">
                         {message.channel === 'email' && (
                           <div>
-                            <p className="text-[10px] font-medium text-warm-500 dark:text-cream-400 uppercase tracking-wide mb-0.5">Subject</p>
+                            <p className="kicker mb-1 text-muted-foreground">Subject</p>
                             <Input
                               value={editedSubject}
                               onChange={(e) => setEditedSubject(e.target.value)}
                               placeholder="Email subject"
-                              className="rounded-sm border-warm-200 dark:border-charcoal-700 text-sm"
+                              className="text-sm"
                             />
                           </div>
                         )}
@@ -468,19 +467,18 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                           value={editedBody}
                           onChange={(e) => setEditedBody(e.target.value)}
                           rows={6}
-                          className="rounded-sm border-warm-200 dark:border-charcoal-700 text-sm"
+                          className="text-sm"
                         />
                         <div className="flex gap-2">
                           <Button
                             size="sm"
-                            variant="lime"
+                            variant="gold"
                             onClick={() => handleSaveEdit(message.id)}
                             disabled={savingEdit}
-                            className="rounded-sm"
                           >
                             {savingEdit ? (
                               <>
-                                <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                                <Loader2 className="size-3 animate-spin" />
                                 Saving...
                               </>
                             ) : (
@@ -496,26 +494,25 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                               setEditedSubject('')
                             }}
                             disabled={savingEdit}
-                            className="rounded-sm"
                           >
                             Cancel
                           </Button>
                         </div>
                       </div>
                     ) : regeneratingId === message.id ? (
-                      <div className="flex items-center justify-center py-6 bg-warm-50 dark:bg-charcoal-800 rounded-sm border border-warm-200 dark:border-charcoal-700">
-                        <Loader2 className="h-4 w-4 animate-spin text-plum-500 mr-2" />
-                        <span className="text-xs text-warm-500 dark:text-cream-400">Generating new message...</span>
+                      <div className="flex items-center justify-center rounded-[10px] border border-border bg-secondary/50 py-6">
+                        <Loader2 className="mr-2 size-4 animate-spin text-primary" />
+                        <span className="text-xs text-muted-foreground">Generating new message...</span>
                       </div>
                     ) : (
-                      <div className="text-sm whitespace-pre-wrap bg-warm-50 dark:bg-charcoal-800 p-2.5 rounded-sm border border-warm-200 dark:border-charcoal-700 text-warm-700 dark:text-cream-300">
+                      <div className="whitespace-pre-wrap rounded-[10px] border border-border bg-secondary/50 p-3 text-sm leading-relaxed text-foreground">
                         {message.body}
                       </div>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
+                  <div className="flex items-center gap-2 border-t border-border pt-2">
                     <Button
                       size="sm"
                       variant="ghost"
@@ -525,9 +522,9 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                         setEditedSubject(message.subject || '')
                       }}
                       disabled={regeneratingId === message.id}
-                      className="h-6 px-2 text-xs text-warm-500 dark:text-cream-400 hover:text-ocean-600"
+                      className="h-6 px-2 text-xs"
                     >
-                      <Pencil className="h-3 w-3 mr-1" />
+                      <Pencil className="size-3" />
                       Edit
                     </Button>
                     <Button
@@ -535,21 +532,21 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
                       variant="ghost"
                       onClick={() => handleRegenerate(message.id)}
                       disabled={regeneratingId !== null}
-                      className="h-6 px-2 text-xs text-warm-500 dark:text-cream-400 hover:text-plum-600"
+                      className="h-6 px-2 text-xs"
                     >
                       {regeneratingId === message.id ? (
                         <>
-                          <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                          <Loader2 className="size-3 animate-spin" />
                           Regenerating...
                         </>
                       ) : (
                         <>
-                          <RefreshCw className="h-3 w-3 mr-1" />
+                          <RefreshCw className="size-3" />
                           Regenerate
                         </>
                       )}
                     </Button>
-                    <span className="text-[10px] text-warm-400 dark:text-cream-500 ml-auto">
+                    <span className="ml-auto font-mono text-[10px] tabular-nums text-muted-foreground">
                       Created {format(new Date(message.createdAt), 'MMM d, h:mm a')}
                     </span>
                   </div>

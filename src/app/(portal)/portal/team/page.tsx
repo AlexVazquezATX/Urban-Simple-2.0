@@ -1,9 +1,12 @@
 import { format } from 'date-fns'
-import { Mail, Phone, Users, ShieldCheck } from 'lucide-react'
+import { Mail, Phone, ShieldCheck, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import { InviteTeammateButton } from '@/components/portal/invite-teammate-button'
+import { LiveEmpty, LivePage, LivePageHead } from '@/components/portal/live-shell'
+
+// Team — inner-page shell following the LiveLog card language.
 
 export default async function PortalTeamPage() {
   const ctx = await requirePortalContext()
@@ -25,55 +28,48 @@ export default async function PortalTeamPage() {
   })
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-display font-medium text-warm-900">Team</h1>
-          <p className="mt-1 text-sm text-warm-500">
-            People at {ctx.client.name} who can access this portal. Invite anyone you want included.
-          </p>
-        </div>
-        <InviteTeammateButton />
-      </div>
+    <LivePage>
+      <LivePageHead
+        kicker="Your people"
+        title="Team"
+        sub={`People at ${ctx.client.name} who can access this portal. Invite anyone you want included.`}
+        right={<InviteTeammateButton />}
+      />
 
       {contacts.length === 0 ? (
-        <div className="rounded-sm border border-dashed border-warm-300 bg-white p-8 text-center">
-          <Users className="mx-auto h-8 w-8 text-warm-300" />
-          <p className="mt-2 text-sm text-warm-700">No teammates yet.</p>
-          <p className="text-xs text-warm-500">Invite a GM, kitchen manager, or anyone else who needs access.</p>
-        </div>
+        <LiveEmpty
+          icon={<Users className="h-4.5 w-4.5" />}
+          title="No teammates yet — bring in your crew"
+          sub="Invite a GM, kitchen manager, or anyone else who needs access."
+        />
       ) : (
-        <ul className="space-y-2">
+        <ul className="flex flex-col gap-3">
           {contacts.map((c) => {
             const isYou = c.userId === ctx.userId
             return (
               <li
                 key={c.id}
-                className="flex items-start gap-3 rounded-sm border border-warm-200 bg-white p-3"
+                className="flex items-start gap-3.5 rounded-2xl border border-border bg-card p-4 shadow-soft"
               >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm bg-warm-100 text-warm-700 text-sm font-medium">
+                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gold-600/10 font-display text-sm font-bold text-gold-600">
                   {c.firstName.charAt(0)}
                   {c.lastName.charAt(0)}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-sm font-medium text-warm-900">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">
                       {c.firstName} {c.lastName}
                     </p>
-                    {isYou && (
-                      <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-ocean-100 text-ocean-700 border-ocean-200">
-                        You
-                      </Badge>
-                    )}
-                    <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 capitalize border-warm-300 text-warm-600">
+                    {isYou && <Badge variant="gold">You</Badge>}
+                    <Badge variant="neutral" className="capitalize">
                       {c.role}
                     </Badge>
-                    <Badge className="rounded-sm text-[10px] px-1.5 py-0 bg-lime-100 text-lime-700 border-lime-200">
-                      <ShieldCheck className="mr-0.5 h-2.5 w-2.5" />
+                    <Badge variant="green">
+                      <ShieldCheck className="h-2.5 w-2.5" />
                       Active
                     </Badge>
                   </div>
-                  <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-warm-500">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                     {c.email && (
                       <span className="flex items-center gap-1">
                         <Mail className="h-3 w-3" />
@@ -87,7 +83,9 @@ export default async function PortalTeamPage() {
                       </span>
                     )}
                     {c.portalAccessGranted && (
-                      <span>Joined {format(c.portalAccessGranted, 'MMM yyyy')}</span>
+                      <span className="font-mono tabular-nums">
+                        Joined {format(c.portalAccessGranted, 'MMM yyyy')}
+                      </span>
                     )}
                   </div>
                 </div>
@@ -97,9 +95,10 @@ export default async function PortalTeamPage() {
         </ul>
       )}
 
-      <p className="text-[11px] text-warm-500 text-center">
-        Removing access? Contact your Urban Simple account manager. We&apos;ll add self-service removal soon.
+      <p className="mt-6 text-center text-[11px] text-muted-foreground">
+        Removing access? Contact your Urban Simple account manager. We&apos;ll add self-service
+        removal soon.
       </p>
-    </div>
+    </LivePage>
   )
 }

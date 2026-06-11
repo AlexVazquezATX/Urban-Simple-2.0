@@ -98,13 +98,14 @@ export function formatMargin(marginPct: number | null): string {
   return `${sign}${marginPct.toFixed(1)}%`
 }
 
-// Tailwind class for a margin value: green if healthy, amber if thin,
-// red if negative. Tweak thresholds as the business matures.
+// Tailwind class for a margin value: green if healthy, gold if thin,
+// coral if negative (red is reserved for destructive confirmation).
+// Tweak thresholds as the business matures.
 export function marginToneClass(marginPct: number | null): string {
-  if (marginPct === null) return 'text-warm-500 dark:text-cream-400'
-  if (marginPct < 0) return 'text-red-600 dark:text-red-400 font-medium'
-  if (marginPct < 20) return 'text-amber-600 dark:text-amber-400'
-  return 'text-lime-700 dark:text-lime-400'
+  if (marginPct === null) return 'text-muted-foreground'
+  if (marginPct < 0) return 'text-coral-600 dark:text-coral-300 font-medium'
+  if (marginPct < 20) return 'text-gold-600 dark:text-gold-400'
+  return 'text-green-600 dark:text-green-300'
 }
 
 // Visibility gate. SUPER_ADMIN sees financials. Anyone else sees nothing.

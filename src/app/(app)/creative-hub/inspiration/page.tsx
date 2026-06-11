@@ -34,6 +34,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { PageHeader } from '@/components/layout/page-header'
+import { EmptyState } from '@/components/ui/empty-state'
 import type { InspirationCategory, InspirationStatus } from '@prisma/client'
 
 // Content mode types
@@ -45,7 +47,7 @@ const CONTENT_MODES = {
     name: 'Community',
     description: 'Pure Austin content - no business pitch',
     icon: Heart,
-    color: 'from-rose-500 to-pink-500',
+    color: 'bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400',
     detail: 'NO cleaning mentions, NO CTAs, NO sales pitch. Just celebrating Austin.',
   },
   hybrid: {
@@ -53,7 +55,7 @@ const CONTENT_MODES = {
     name: 'Soft Brand',
     description: 'Community-focused with subtle presence',
     icon: Building2,
-    color: 'from-amber-500 to-orange-500',
+    color: 'bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400',
     detail: 'May mention hospitality industry, but no hard sell.',
   },
   promotional: {
@@ -61,7 +63,7 @@ const CONTENT_MODES = {
     name: 'Promotional',
     description: 'Standard marketing with CTAs',
     icon: Megaphone,
-    color: 'from-blue-500 to-indigo-500',
+    color: 'bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400',
     detail: 'Service highlights, cleaning angles, and calls-to-action.',
   },
 } as const
@@ -107,61 +109,47 @@ const CATEGORY_CONFIG = {
   AUSTIN_LOCAL: {
     label: 'Austin Local',
     icon: MapPin,
-    gradient: 'from-orange-500 to-amber-500',
-    bg: 'bg-orange-50',
-    text: 'text-orange-700',
-    border: 'border-orange-200',
+    tile: 'bg-gold-600/10 text-gold-600 dark:bg-gold-400/12 dark:text-gold-400',
+    badge: 'gold' as const,
   },
   POP_CULTURE: {
     label: 'Pop Culture',
     icon: TrendingUp,
-    gradient: 'from-purple-500 to-pink-500',
-    bg: 'bg-purple-50',
-    text: 'text-purple-700',
-    border: 'border-purple-200',
+    tile: 'bg-coral-600/10 text-coral-600 dark:bg-coral-300/12 dark:text-coral-300',
+    badge: 'coral' as const,
   },
   SEASONAL: {
     label: 'Seasonal',
     icon: Calendar,
-    gradient: 'from-teal-500 to-cyan-500',
-    bg: 'bg-teal-50',
-    text: 'text-teal-700',
-    border: 'border-teal-200',
+    tile: 'bg-teal-600/10 text-teal-600 dark:bg-teal-300/12 dark:text-teal-300',
+    badge: 'teal' as const,
   },
+}
+
+const PLATFORM_TAB_STYLES = {
+  active:
+    'bg-gold-600/10 border border-gold-600/30 text-gold-600 dark:bg-gold-400/12 dark:border-gold-400/25 dark:text-gold-400',
+  hasIdea:
+    'bg-teal-600/10 border border-teal-600/30 text-teal-600 dark:bg-teal-300/12 dark:border-teal-300/25 dark:text-teal-300',
+  idle: 'bg-secondary border border-transparent text-muted-foreground/70',
 }
 
 const PLATFORM_CONFIG = {
   instagram: {
     icon: Instagram,
     label: 'Instagram',
-    color: 'text-pink-600',
-    bg: 'bg-pink-50',
-    border: 'border-pink-200',
-    activeBg: 'bg-pink-500',
   },
   linkedin: {
     icon: Linkedin,
     label: 'LinkedIn',
-    color: 'text-blue-600',
-    bg: 'bg-blue-50',
-    border: 'border-blue-200',
-    activeBg: 'bg-blue-500',
   },
   facebook: {
     icon: Facebook,
     label: 'Facebook',
-    color: 'text-indigo-600',
-    bg: 'bg-indigo-50',
-    border: 'border-indigo-200',
-    activeBg: 'bg-indigo-500',
   },
   twitter: {
     icon: Twitter,
     label: 'X',
-    color: 'text-sky-600',
-    bg: 'bg-sky-50',
-    border: 'border-sky-200',
-    activeBg: 'bg-sky-500',
   },
 }
 
@@ -444,81 +432,71 @@ export default function DailyInspirationPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-5 h-5 animate-spin text-ocean-500" />
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-charcoal-50">
+    <div className="min-h-screen bg-background">
       <div className="flex h-screen">
         {/* LEFT COLUMN - Topics List */}
-        <div className="flex-1 flex flex-col overflow-hidden border-r border-charcoal-200 bg-white">
+        <div className="flex-1 flex flex-col overflow-hidden border-r border-border bg-card">
           {/* Header */}
-          <div className="p-6 border-b border-charcoal-100">
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                    <TimeIcon className="w-4 h-4 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-charcoal-500">
-                    {new Date().toLocaleDateString('en-US', {
-                      weekday: 'long',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </span>
-                </div>
-                <h1 className="text-2xl font-semibold text-charcoal-900">
-                  {briefing?.headline || `${timeGreeting}!`}
-                </h1>
-                <p className="text-charcoal-500 mt-1">
-                  {briefing?.greeting ||
-                    (topics.length > 0
-                      ? `${topics.length} topics ready to inspire your content today`
-                      : 'Click refresh to discover trending topics')}
-                </p>
-              </div>
+          <div className="p-6 border-b border-border">
+            <PageHeader
+              kicker={`CREATIVE HUB · ${new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+              })}`}
+              title={briefing?.headline || `${timeGreeting}!`}
+              subtitle={
+                briefing?.greeting ||
+                (topics.length > 0
+                  ? `${topics.length} topics ready to inspire your content today`
+                  : 'Click refresh to discover trending topics')
+              }
+              className="mb-0"
+              actions={
+                <>
+                  {/* Content Mode Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowModeSelector(!showModeSelector)}
+                  >
+                    <Settings2 className="w-4 h-4 mr-2" />
+                    {CONTENT_MODES[contentMode].name}
+                  </Button>
 
-              <div className="flex items-center gap-2">
-                {/* Content Mode Button */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowModeSelector(!showModeSelector)}
-                  className="border-charcoal-200"
-                >
-                  <Settings2 className="w-4 h-4 mr-2" />
-                  {CONTENT_MODES[contentMode].name}
-                </Button>
-
-                <Button
-                  onClick={generateTopics}
-                  disabled={generating}
-                  size="sm"
-                  className="bg-charcoal-900 hover:bg-charcoal-800 text-white"
-                >
-                  {generating ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                      Refresh
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
+                  <Button
+                    variant="gold"
+                    onClick={generateTopics}
+                    disabled={generating}
+                    size="sm"
+                  >
+                    {generating ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Refresh
+                      </>
+                    )}
+                  </Button>
+                </>
+              }
+            />
 
             {/* Content Mode Selector */}
             {showModeSelector && (
-              <div className="mt-4 rounded-xl border border-charcoal-200 bg-white p-4 shadow-lg">
+              <div className="mt-4 rounded-[14px] border border-border bg-card p-4 shadow-lg">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-charcoal-900">Content Mode</h3>
+                  <h3 className="font-display font-semibold text-foreground">Content Mode</h3>
                   <button
                     onClick={() => setShowModeSelector(false)}
-                    className="w-6 h-6 rounded-full hover:bg-charcoal-100 flex items-center justify-center"
+                    className="w-6 h-6 rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -537,19 +515,19 @@ export default function DailyInspirationPage() {
                           setContentMode(modeId)
                           setShowModeSelector(false)
                         }}
-                        className={`p-3 rounded-lg border-2 text-left transition-all ${
+                        className={`p-3 rounded-[12px] border-2 text-left transition-all ${
                           isSelected
-                            ? 'border-charcoal-900 bg-charcoal-50'
-                            : 'border-charcoal-100 hover:border-charcoal-200'
+                            ? 'border-gold-600/50 bg-gold-600/10 dark:border-gold-400/40 dark:bg-gold-400/12'
+                            : 'border-border hover:border-gold-600/30 dark:hover:border-gold-400/25'
                         }`}
                       >
                         <div
-                          className={`w-8 h-8 rounded-lg bg-gradient-to-br ${mode.color} flex items-center justify-center mb-2`}
+                          className={`w-8 h-8 rounded-[10px] ${mode.color} flex items-center justify-center mb-2`}
                         >
-                          <Icon className="w-4 h-4 text-white" />
+                          <Icon className="w-4 h-4" />
                         </div>
-                        <p className="font-medium text-sm text-charcoal-900">{mode.name}</p>
-                        <p className="text-xs text-charcoal-500 mt-0.5">{mode.description}</p>
+                        <p className="font-medium text-sm text-foreground">{mode.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{mode.description}</p>
                       </button>
                     )
                   })}
@@ -568,17 +546,17 @@ export default function DailyInspirationPage() {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-charcoal-900 text-white'
-                        : 'bg-charcoal-50 text-charcoal-600 hover:bg-charcoal-100'
+                        ? 'text-gold-600 bg-gold-600/10 border-gold-600/30 dark:text-gold-400 dark:bg-gold-400/12 dark:border-gold-400/25'
+                        : 'border-border bg-secondary text-muted-foreground hover:text-foreground'
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     {cat === 'ALL' ? 'All' : config?.label}
                     <span
-                      className={`px-1.5 py-0.5 rounded text-xs ${
-                        isActive ? 'bg-white/20' : 'bg-charcoal-200'
+                      className={`px-1.5 py-0.5 rounded-full font-mono tabular-nums text-xs ${
+                        isActive ? 'bg-gold-600/15 dark:bg-gold-400/15' : 'bg-background'
                       }`}
                     >
                       {categoryCounts[cat]}
@@ -593,14 +571,14 @@ export default function DailyInspirationPage() {
           <div className="flex-1 overflow-y-auto p-6 space-y-6">
             {/* Error State */}
             {error && (
-              <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+              <div className="px-4 py-3 bg-coral-600/10 border border-coral-600/30 dark:bg-coral-300/12 dark:border-coral-300/25 rounded-[14px]">
                 <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <X className="w-4 h-4 text-red-600" />
+                  <div className="w-6 h-6 rounded-full bg-coral-600/15 dark:bg-coral-300/15 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <X className="w-4 h-4 text-coral-600 dark:text-coral-300" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-red-800">Failed to generate topics</p>
-                    <p className="text-sm text-red-600 mt-1">{error}</p>
+                    <p className="text-sm font-medium text-coral-600 dark:text-coral-300">Failed to generate topics</p>
+                    <p className="text-sm text-muted-foreground mt-1">{error}</p>
                   </div>
                 </div>
               </div>
@@ -608,37 +586,30 @@ export default function DailyInspirationPage() {
 
             {/* Empty State */}
             {topics.length === 0 && !generating && !error && (
-              <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-7 h-7 text-orange-600" />
-                </div>
-                <h2 className="text-lg font-semibold text-charcoal-900 mb-2">
-                  No topics yet for today
-                </h2>
-                <p className="text-charcoal-500 mb-6 max-w-sm mx-auto text-sm">
-                  Click Refresh to discover trending Austin news, pop culture moments,
-                  and seasonal content ideas.
-                </p>
-                <Button
-                  onClick={generateTopics}
-                  className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white"
-                >
-                  <Zap className="w-4 h-4 mr-2" />
-                  Discover Topics
-                </Button>
-              </div>
+              <EmptyState
+                icon={Sparkles}
+                title="No topics yet for today"
+                description="Click Refresh to discover trending Austin news, pop culture moments, and seasonal content ideas."
+                className="py-16"
+                action={
+                  <Button variant="outline" onClick={generateTopics}>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Discover Topics
+                  </Button>
+                }
+              />
             )}
 
             {/* Generating State */}
             {generating && (
               <div className="text-center py-16">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-ocean-100 to-ocean-200 flex items-center justify-center mx-auto mb-4">
-                  <Loader2 className="w-7 h-7 text-ocean-600 animate-spin" />
+                <div className="w-16 h-16 rounded-[16px] bg-gold-600/10 dark:bg-gold-400/12 flex items-center justify-center mx-auto mb-4">
+                  <Loader2 className="w-7 h-7 text-gold-600 dark:text-gold-400 animate-spin" />
                 </div>
-                <h2 className="text-lg font-semibold text-charcoal-900 mb-2">
+                <h2 className="font-display text-lg font-semibold text-foreground mb-2">
                   Discovering topics...
                 </h2>
-                <p className="text-charcoal-500 max-w-sm mx-auto text-sm">
+                <p className="text-muted-foreground max-w-sm mx-auto text-sm">
                   AI is searching Austin news, trending topics, and seasonal events.
                 </p>
               </div>
@@ -646,26 +617,26 @@ export default function DailyInspirationPage() {
 
             {/* Pending Approval Section */}
             {pendingTopics.length > 0 && (
-              <div className="rounded-xl border border-amber-200 bg-amber-50/50 overflow-hidden">
+              <div className="rounded-[14px] border border-gold-600/30 bg-gold-600/5 dark:border-gold-400/25 dark:bg-gold-400/5 overflow-hidden">
                 <button
                   onClick={() => setPendingExpanded(!pendingExpanded)}
-                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-50 transition-colors"
+                  className="w-full px-4 py-3 flex items-center justify-between hover:bg-gold-600/10 dark:hover:bg-gold-400/10 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                    <span className="font-medium text-charcoal-900 text-sm">
+                    <div className="w-2 h-2 rounded-full bg-gold-600 dark:bg-gold-400 animate-pulse" />
+                    <span className="font-medium text-foreground text-sm">
                       {pendingTopics.length} topics need your review
                     </span>
                   </div>
                   <ChevronDown
-                    className={`w-4 h-4 text-charcoal-500 transition-transform ${
+                    className={`w-4 h-4 text-muted-foreground transition-transform ${
                       pendingExpanded ? 'rotate-180' : ''
                     }`}
                   />
                 </button>
 
                 {pendingExpanded && (
-                  <div className="divide-y divide-amber-100">
+                  <div className="divide-y divide-gold-600/15 dark:divide-gold-400/15">
                     {pendingTopics.slice(0, pendingLimit).map((topic) => {
                       const config = CATEGORY_CONFIG[topic.category]
                       const Icon = config.icon
@@ -674,37 +645,37 @@ export default function DailyInspirationPage() {
                         <div
                           key={topic.id}
                           onClick={() => handleTopicClick(topic)}
-                          className={`px-4 py-3 flex items-center gap-3 hover:bg-amber-50 transition-colors cursor-pointer ${
-                            selectedTopic?.id === topic.id ? 'bg-amber-100' : ''
+                          className={`px-4 py-3 flex items-center gap-3 hover:bg-gold-600/10 dark:hover:bg-gold-400/10 transition-colors cursor-pointer ${
+                            selectedTopic?.id === topic.id ? 'bg-gold-600/15 dark:bg-gold-400/15' : ''
                           }`}
                         >
                           <div
-                            className={`w-9 h-9 rounded-lg bg-gradient-to-br ${config.gradient} flex items-center justify-center flex-shrink-0`}
+                            className={`w-9 h-9 rounded-[10px] ${config.tile} flex items-center justify-center flex-shrink-0`}
                           >
-                            <Icon className="w-4 h-4 text-white" />
+                            <Icon className="w-4 h-4" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium text-charcoal-900 text-sm truncate">
+                            <p className="font-medium text-foreground text-sm truncate">
                               {topic.title}
                             </p>
-                            <p className="text-xs text-charcoal-500 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {topic.summary}
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
                             <button
                               onClick={(e) => handleApprove(topic.id, e)}
-                              className="w-7 h-7 rounded-full bg-emerald-100 hover:bg-emerald-200 flex items-center justify-center text-emerald-600 transition-colors"
+                              className="w-7 h-7 rounded-full bg-green-600/12 hover:bg-green-600/20 dark:bg-green-300/12 dark:hover:bg-green-300/20 flex items-center justify-center text-green-600 dark:text-green-300 transition-colors"
                             >
                               <Check className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={(e) => handleReject(topic.id, e)}
-                              className="w-7 h-7 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 transition-colors"
+                              className="w-7 h-7 rounded-full bg-coral-600/10 hover:bg-coral-600/20 dark:bg-coral-300/12 dark:hover:bg-coral-300/20 flex items-center justify-center text-coral-600 dark:text-coral-300 transition-colors"
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
-                            <ChevronRight className="w-4 h-4 text-charcoal-400" />
+                            <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           </div>
                         </div>
                       )
@@ -713,7 +684,7 @@ export default function DailyInspirationPage() {
                     {pendingTopics.length > pendingLimit && (
                       <button
                         onClick={() => setPendingLimit((prev) => prev + 10)}
-                        className="w-full px-4 py-2 text-sm text-amber-700 hover:bg-amber-100 transition-colors"
+                        className="w-full px-4 py-2 text-sm text-gold-600 dark:text-gold-400 hover:bg-gold-600/10 dark:hover:bg-gold-400/10 transition-colors"
                       >
                         Show {Math.min(10, pendingTopics.length - pendingLimit)} more
                       </button>
@@ -727,7 +698,7 @@ export default function DailyInspirationPage() {
             {approvedTopics.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-charcoal-900">
+                  <h2 className="text-sm font-display font-semibold text-foreground">
                     Ready to Create
                   </h2>
                   <div className="flex items-center gap-2">
@@ -736,21 +707,20 @@ export default function DailyInspirationPage() {
                         size="sm"
                         variant="ghost"
                         onClick={clearSelection}
-                        className="text-xs text-charcoal-500"
+                        className="text-xs"
                       >
                         Clear ({selectedTopicIds.size})
                       </Button>
                     )}
                     <Button
                       size="sm"
-                      variant={isSelectionMode ? 'default' : 'outline'}
+                      variant={isSelectionMode ? 'secondary' : 'outline'}
                       onClick={() => {
                         setIsSelectionMode(!isSelectionMode)
                         if (isSelectionMode) {
                           setSelectedTopicIds(new Set())
                         }
                       }}
-                      className={isSelectionMode ? 'bg-ocean-600 hover:bg-ocean-700' : ''}
                     >
                       <Layers className="w-3.5 h-3.5 mr-1.5" />
                       {isSelectionMode ? 'Done' : 'Select Multiple'}
@@ -760,17 +730,17 @@ export default function DailyInspirationPage() {
 
                 {/* Batch Create Bar */}
                 {isSelectionMode && selectedTopicIds.size >= 2 && (
-                  <div className="mb-3 px-4 py-3 bg-gradient-to-r from-ocean-500 to-ocean-600 rounded-xl flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-white">
+                  <div className="mb-3 px-4 py-3 bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 rounded-[14px] flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-gold-600 dark:text-gold-400">
                       <CheckSquare className="w-4 h-4" />
                       <span className="text-sm font-medium">
-                        {selectedTopicIds.size} topics selected
+                        <span className="font-mono tabular-nums">{selectedTopicIds.size}</span> topics selected
                       </span>
                     </div>
                     <Button
                       size="sm"
+                      variant="gold"
                       onClick={handleBatchCreate}
-                      className="bg-white text-ocean-700 hover:bg-ocean-50"
                     >
                       Create All
                       <ArrowRight className="w-4 h-4 ml-1.5" />
@@ -795,12 +765,12 @@ export default function DailyInspirationPage() {
                             handleTopicClick(topic)
                           }
                         }}
-                        className={`relative text-left rounded-xl border-2 p-4 transition-all cursor-pointer ${
+                        className={`relative text-left rounded-[12px] border-2 p-4 transition-all cursor-pointer ${
                           isChecked
-                            ? 'border-ocean-500 bg-ocean-50 ring-2 ring-ocean-200'
+                            ? 'border-gold-600/50 bg-gold-600/10 ring-2 ring-gold-600/20 dark:border-gold-400/40 dark:bg-gold-400/12 dark:ring-gold-400/20'
                             : isSelected
-                            ? 'border-ocean-500 bg-ocean-50'
-                            : 'border-charcoal-100 hover:border-charcoal-200 bg-white'
+                            ? 'border-gold-600/50 bg-gold-600/10 dark:border-gold-400/40 dark:bg-gold-400/12'
+                            : 'border-border hover:border-gold-600/30 dark:hover:border-gold-400/25 bg-card'
                         }`}
                       >
                         {/* Selection Checkbox */}
@@ -809,8 +779,8 @@ export default function DailyInspirationPage() {
                             onClick={(e) => toggleTopicSelection(topic.id, e)}
                             className={`absolute top-3 right-3 w-5 h-5 rounded flex items-center justify-center transition-colors ${
                               isChecked
-                                ? 'bg-ocean-500 text-white'
-                                : 'bg-charcoal-100 text-charcoal-400 hover:bg-charcoal-200'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-secondary text-muted-foreground hover:text-foreground'
                             }`}
                           >
                             {isChecked ? (
@@ -821,16 +791,14 @@ export default function DailyInspirationPage() {
                           </button>
                         )}
 
-                        <Badge
-                          className={`${config.bg} ${config.text} border-0 mb-2`}
-                        >
+                        <Badge variant={config.badge} className="mb-2">
                           <Icon className="w-3 h-3 mr-1" />
                           {config.label}
                         </Badge>
-                        <h3 className="font-semibold text-charcoal-900 text-sm line-clamp-2 mb-1 pr-6">
+                        <h3 className="font-semibold text-foreground text-sm line-clamp-2 mb-1 pr-6">
                           {topic.title}
                         </h3>
-                        <p className="text-xs text-charcoal-500 line-clamp-2">
+                        <p className="text-xs text-muted-foreground line-clamp-2">
                           {topic.summary}
                         </p>
                         {topic.relatedHashtags && topic.relatedHashtags.length > 0 && (
@@ -838,7 +806,7 @@ export default function DailyInspirationPage() {
                             {topic.relatedHashtags.slice(0, 3).map((tag) => (
                               <span
                                 key={tag}
-                                className="text-xs text-charcoal-400"
+                                className="text-xs text-muted-foreground"
                               >
                                 #{tag}
                               </span>
@@ -846,7 +814,7 @@ export default function DailyInspirationPage() {
                           </div>
                         )}
                         {topic.sourceName && (
-                          <p className="text-xs text-charcoal-400 mt-2">
+                          <p className="text-xs text-muted-foreground mt-2">
                             via {topic.sourceName}
                           </p>
                         )}
@@ -860,21 +828,21 @@ export default function DailyInspirationPage() {
         </div>
 
         {/* RIGHT COLUMN - Preview Panel */}
-        <div className="w-[420px] flex flex-col bg-charcoal-50">
+        <div className="w-[420px] flex flex-col bg-background">
           {selectedTopic ? (
             <>
               {/* Topic Header */}
-              <div className="p-5 bg-white border-b border-charcoal-100">
+              <div className="p-5 bg-card border-b border-border">
                 <div className="flex items-center gap-2 mb-2">
-                  <Sparkles className="w-4 h-4 text-ocean-500" />
-                  <span className="text-xs font-medium text-ocean-600 uppercase tracking-wide">
+                  <Sparkles className="w-4 h-4 text-gold-600 dark:text-gold-400" />
+                  <span className="kicker text-primary">
                     Selected Topic
                   </span>
                 </div>
-                <h2 className="text-lg font-semibold text-charcoal-900 line-clamp-2">
+                <h2 className="font-display text-lg font-semibold text-foreground line-clamp-2">
                   {selectedTopic.title}
                 </h2>
-                <p className="text-sm text-charcoal-600 mt-2">
+                <p className="text-sm text-muted-foreground mt-2">
                   {selectedTopic.summary}
                 </p>
                 {selectedTopic.sourceUrl && (
@@ -882,7 +850,7 @@ export default function DailyInspirationPage() {
                     href={selectedTopic.sourceUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-xs text-ocean-600 hover:text-ocean-700 mt-2"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:opacity-80 mt-2"
                   >
                     <ExternalLink className="w-3 h-3" />
                     {selectedTopic.sourceName || 'View Source'}
@@ -891,9 +859,9 @@ export default function DailyInspirationPage() {
               </div>
 
               {/* Platform Tabs */}
-              <div className="px-5 pt-4 pb-2 bg-white border-b border-charcoal-100">
+              <div className="px-5 pt-4 pb-2 bg-card border-b border-border">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-charcoal-900">Post Ideas</h3>
+                  <h3 className="font-display font-semibold text-foreground">Post Ideas</h3>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -916,12 +884,12 @@ export default function DailyInspirationPage() {
                       <button
                         key={platform}
                         onClick={() => setSelectedPlatform(platform)}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[9px] text-xs font-medium transition-all ${
                           isActive
-                            ? `${config.activeBg} text-white`
+                            ? PLATFORM_TAB_STYLES.active
                             : hasIdea
-                            ? `${config.bg} ${config.color}`
-                            : 'bg-charcoal-100 text-charcoal-400'
+                            ? PLATFORM_TAB_STYLES.hasIdea
+                            : PLATFORM_TAB_STYLES.idle
                         }`}
                       >
                         <Icon className="w-3.5 h-3.5" />
@@ -936,25 +904,25 @@ export default function DailyInspirationPage() {
               <div className="flex-1 overflow-y-auto p-5">
                 {loadingIdeas ? (
                   <div className="flex flex-col items-center justify-center py-12">
-                    <Loader2 className="w-6 h-6 text-ocean-500 animate-spin mb-3" />
-                    <p className="text-sm text-charcoal-600">Generating ideas...</p>
+                    <Loader2 className="w-6 h-6 text-gold-600 dark:text-gold-400 animate-spin mb-3" />
+                    <p className="text-sm text-muted-foreground">Generating ideas...</p>
                   </div>
                 ) : currentIdea ? (
                   <div className="space-y-4">
                     {/* Angle */}
                     <div>
-                      <p className="text-xs text-charcoal-500 uppercase tracking-wide mb-1">
+                      <p className="kicker text-muted-foreground mb-1">
                         Angle
                       </p>
-                      <p className="text-sm text-charcoal-700">{currentIdea.angle}</p>
+                      <p className="text-sm text-foreground">{currentIdea.angle}</p>
                     </div>
 
                     {/* Hook / Caption Preview */}
-                    <div className="rounded-xl bg-white border border-charcoal-200 p-4">
-                      <p className="text-xs text-charcoal-500 uppercase tracking-wide mb-2">
+                    <div className="rounded-[12px] bg-card border border-border p-4">
+                      <p className="kicker text-muted-foreground mb-2">
                         Opening Hook
                       </p>
-                      <p className="text-charcoal-900 font-medium leading-relaxed">
+                      <p className="text-foreground font-medium leading-relaxed">
                         {currentIdea.hook}
                       </p>
                     </div>
@@ -962,10 +930,10 @@ export default function DailyInspirationPage() {
                     {/* Headline */}
                     {currentIdea.headline && (
                       <div>
-                        <p className="text-xs text-charcoal-500 uppercase tracking-wide mb-1">
+                        <p className="kicker text-muted-foreground mb-1">
                           Headline
                         </p>
-                        <p className="text-sm font-semibold text-charcoal-900">
+                        <p className="text-sm font-semibold text-foreground">
                           {currentIdea.headline}
                         </p>
                       </div>
@@ -974,14 +942,14 @@ export default function DailyInspirationPage() {
                     {/* Hashtags */}
                     {currentIdea.hashtags && currentIdea.hashtags.length > 0 && (
                       <div>
-                        <p className="text-xs text-charcoal-500 uppercase tracking-wide mb-2">
+                        <p className="kicker text-muted-foreground mb-2">
                           Suggested Hashtags
                         </p>
                         <div className="flex flex-wrap gap-1.5">
                           {currentIdea.hashtags.map((tag) => (
                             <span
                               key={tag}
-                              className="inline-flex items-center px-2 py-1 rounded-full bg-charcoal-100 text-charcoal-600 text-xs"
+                              className="inline-flex items-center px-2 py-1 rounded-full bg-secondary border border-border text-muted-foreground text-xs font-semibold"
                             >
                               <Hash className="w-3 h-3 mr-0.5" />
                               {tag}
@@ -992,10 +960,10 @@ export default function DailyInspirationPage() {
                     )}
 
                     {/* Image Preview Placeholder */}
-                    <div className="rounded-xl bg-charcoal-100 aspect-square flex items-center justify-center">
+                    <div className="rounded-[12px] bg-secondary aspect-square flex items-center justify-center">
                       <div className="text-center">
-                        <ImageIcon className="w-8 h-8 text-charcoal-300 mx-auto mb-2" />
-                        <p className="text-xs text-charcoal-400">
+                        <ImageIcon className="w-8 h-8 text-muted-foreground/50 mx-auto mb-2" />
+                        <p className="text-xs text-muted-foreground">
                           Image will be generated in the editor
                         </p>
                       </div>
@@ -1003,13 +971,13 @@ export default function DailyInspirationPage() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <div className="w-12 h-12 rounded-xl bg-charcoal-100 flex items-center justify-center mb-3">
-                      <Sparkles className="w-5 h-5 text-charcoal-400" />
+                    <div className="w-12 h-12 rounded-[12px] bg-gold-600/10 dark:bg-gold-400/12 flex items-center justify-center mb-3">
+                      <Sparkles className="w-5 h-5 text-gold-600 dark:text-gold-400" />
                     </div>
-                    <p className="text-sm text-charcoal-600 mb-3">
+                    <p className="text-sm text-muted-foreground mb-3">
                       No {PLATFORM_CONFIG[selectedPlatform].label} idea yet
                     </p>
-                    <Button size="sm" onClick={regenerateIdeas}>
+                    <Button size="sm" variant="outline" onClick={regenerateIdeas}>
                       <Sparkles className="w-4 h-4 mr-2" />
                       Generate Ideas
                     </Button>
@@ -1019,9 +987,10 @@ export default function DailyInspirationPage() {
 
               {/* Create Button */}
               {currentIdea && (
-                <div className="p-5 bg-white border-t border-charcoal-100">
+                <div className="p-5 bg-card border-t border-border">
                   <Button
-                    className="w-full bg-ocean-600 hover:bg-ocean-700 text-white"
+                    variant="gold"
+                    className="w-full"
                     onClick={() => handleCreatePost(currentIdea)}
                   >
                     Create This Post
@@ -1033,17 +1002,11 @@ export default function DailyInspirationPage() {
           ) : (
             // No topic selected state
             <div className="flex-1 flex items-center justify-center p-8">
-              <div className="text-center">
-                <div className="w-16 h-16 rounded-2xl bg-charcoal-100 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-7 h-7 text-charcoal-300" />
-                </div>
-                <h3 className="font-semibold text-charcoal-900 mb-2">
-                  Select a Topic
-                </h3>
-                <p className="text-sm text-charcoal-500 max-w-xs">
-                  Click on any topic from the list to see post ideas and start creating content.
-                </p>
-              </div>
+              <EmptyState
+                icon={Sparkles}
+                title="Select a topic"
+                description="Click on any topic from the list to see post ideas and start creating content."
+              />
             </div>
           )}
         </div>

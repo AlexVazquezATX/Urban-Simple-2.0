@@ -116,15 +116,15 @@ export function SendInvoiceDialog({
           >
             Cancel
           </Button>
-          <Button onClick={handleSend} disabled={loading || !email}>
+          <Button variant="gold" onClick={handleSend} disabled={loading || !email}>
             {loading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="mr-2 size-4 animate-spin" />
                 Sending...
               </>
             ) : (
               <>
-                <Mail className="mr-2 h-4 w-4" />
+                <Mail className="mr-2 size-4" />
                 Send Invoice
               </>
             )}

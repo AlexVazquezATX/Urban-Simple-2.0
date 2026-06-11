@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { EmptyState } from '@/components/ui/empty-state'
 import { MapPin, Clock, User, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -36,12 +37,15 @@ interface TonightShift {
   serviceLogs: ServiceLog[]
 }
 
-const statusConfig: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  scheduled: { label: 'Scheduled', color: 'bg-warm-100 text-warm-700 border-warm-300 dark:bg-charcoal-800 dark:text-cream-300 dark:border-charcoal-600', icon: Clock },
-  in_progress: { label: 'In Progress', color: 'bg-ocean-50 text-ocean-700 border-ocean-300 dark:bg-ocean-950 dark:text-ocean-300 dark:border-ocean-700', icon: Loader2 },
-  completed: { label: 'Completed', color: 'bg-lime-50 text-lime-700 border-lime-300 dark:bg-lime-950 dark:text-lime-300 dark:border-lime-700', icon: CheckCircle },
-  missed: { label: 'Missed', color: 'bg-red-50 text-red-700 border-red-300 dark:bg-red-950 dark:text-red-300 dark:border-red-700', icon: AlertCircle },
-  cancelled: { label: 'Cancelled', color: 'bg-warm-50 text-warm-500 border-warm-200 dark:bg-charcoal-800 dark:text-cream-500 dark:border-charcoal-700', icon: AlertCircle },
+const statusConfig: Record<
+  string,
+  { label: string; variant: 'neutral' | 'teal' | 'coral' | 'green'; icon: React.ComponentType<{ className?: string }> }
+> = {
+  scheduled: { label: 'Scheduled', variant: 'neutral', icon: Clock },
+  in_progress: { label: 'In progress', variant: 'teal', icon: Loader2 },
+  completed: { label: 'Completed', variant: 'green', icon: CheckCircle },
+  missed: { label: 'Missed', variant: 'coral', icon: AlertCircle },
+  cancelled: { label: 'Cancelled', variant: 'neutral', icon: AlertCircle },
 }
 
 export function LiveOpsView() {
@@ -75,32 +79,32 @@ export function LiveOpsView() {
   }
 
   return (
-    <Card className="rounded-sm border-warm-200 dark:border-charcoal-700 dark:bg-charcoal-900">
-      <CardHeader className="pb-3">
+    <Card className="gap-4">
+      <CardHeader className="pb-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-            Tonight&apos;s Operations
-          </CardTitle>
+          <CardTitle>Tonight&apos;s Operations</CardTitle>
           {!loading && shifts.length > 0 && (
-            <div className="flex gap-2 text-xs">
-              <span className="text-warm-500 dark:text-cream-400">{statusCounts.scheduled} scheduled</span>
-              <span className="text-ocean-600 dark:text-ocean-400">{statusCounts.in_progress} active</span>
-              <span className="text-lime-600 dark:text-lime-400">{statusCounts.completed} done</span>
+            <div className="flex gap-3 font-mono text-[11px] tabular-nums">
+              <span className="text-muted-foreground">{statusCounts.scheduled} scheduled</span>
+              <span className="text-teal-600 dark:text-teal-300">{statusCounts.in_progress} active</span>
+              <span className="text-green-600 dark:text-green-300">{statusCounts.completed} done</span>
             </div>
           )}
         </div>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center py-4 text-warm-400 dark:text-cream-500">
-            <Loader2 className="h-5 w-5 animate-spin mr-2" />
+          <div className="flex items-center justify-center py-4 text-muted-foreground">
+            <Loader2 className="mr-2 size-5 animate-spin" />
             Loading...
           </div>
         ) : shifts.length === 0 ? (
-          <div className="text-center py-4 text-warm-400 dark:text-cream-500">
-            <Clock className="h-6 w-6 mx-auto mb-1.5 opacity-50" />
-            <p className="text-sm">No shifts scheduled for tonight</p>
-          </div>
+          <EmptyState
+            icon={Clock}
+            title="No shifts tonight — enjoy the quiet"
+            description="Tonight's crews and locations will show up here as the schedule fills in."
+            className="py-6"
+          />
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {shifts.map((shift) => {
@@ -116,46 +120,52 @@ export function LiveOpsView() {
                 <div
                   key={shift.id}
                   className={cn(
-                    'rounded-sm border p-3 transition-all dark:bg-charcoal-800',
-                    shift.status === 'in_progress' && 'border-ocean-300 bg-ocean-50/30 dark:border-ocean-700 dark:bg-ocean-950/30',
-                    shift.status === 'completed' && 'border-lime-300 bg-lime-50/30 dark:border-lime-700 dark:bg-lime-950/30',
-                    shift.status === 'missed' && 'border-red-300 bg-red-50/30 dark:border-red-700 dark:bg-red-950/30',
-                    !['in_progress', 'completed', 'missed'].includes(shift.status) && 'border-warm-200 dark:border-charcoal-700'
+                    'rounded-[12px] border p-3 transition-all',
+                    shift.status === 'in_progress' &&
+                      'border-teal-600/30 bg-teal-600/10 dark:border-teal-300/25 dark:bg-teal-300/12',
+                    shift.status === 'completed' &&
+                      'border-green-600/30 bg-green-600/12 dark:border-green-300/25 dark:bg-green-300/12',
+                    shift.status === 'missed' &&
+                      'border-coral-600/30 bg-coral-600/10 dark:border-coral-300/25 dark:bg-coral-300/12',
+                    !['in_progress', 'completed', 'missed'].includes(shift.status) &&
+                      'border-border bg-background'
                   )}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <Badge variant="outline" className={cn('text-[10px] px-1.5 py-0', config.color)}>
-                      <StatusIcon className={cn('h-3 w-3 mr-1', shift.status === 'in_progress' && 'animate-spin')} />
+                  <div className="mb-2 flex items-start justify-between gap-2">
+                    <Badge variant={config.variant}>
+                      <StatusIcon className={cn('mr-1 size-3', shift.status === 'in_progress' && 'animate-spin')} />
                       {config.label}
                     </Badge>
-                    <span className="text-xs text-warm-500 dark:text-cream-400">{shift.startTime} - {shift.endTime}</span>
+                    <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                      {shift.startTime} – {shift.endTime}
+                    </span>
                   </div>
 
                   {locations.map((loc) => (
-                    <div key={loc.id} className="flex items-start gap-1.5 mb-1">
-                      <MapPin className="h-3.5 w-3.5 text-warm-400 dark:text-cream-500 mt-0.5 shrink-0" />
+                    <div key={loc.id} className="mb-1 flex items-start gap-1.5">
+                      <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-warm-800 dark:text-cream-200 truncate">{loc.name}</p>
+                        <p className="truncate text-sm font-medium text-foreground">{loc.name}</p>
                         {loc.client && (
-                          <p className="text-xs text-warm-500 dark:text-cream-400 truncate">{loc.client.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">{loc.client.name}</p>
                         )}
                       </div>
                     </div>
                   ))}
 
                   {shift.associate && (
-                    <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
-                      <User className="h-3 w-3 text-warm-400 dark:text-cream-500" />
-                      <span className="text-xs text-warm-600 dark:text-cream-300">
+                    <div className="mt-2 flex items-center gap-1.5 border-t border-border pt-2">
+                      <User className="size-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">
                         {shift.associate.firstName} {shift.associate.lastName}
                       </span>
                     </div>
                   )}
 
                   {!shift.associate && shift.status === 'scheduled' && (
-                    <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-warm-100 dark:border-charcoal-700">
-                      <AlertCircle className="h-3 w-3 text-amber-500" />
-                      <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Unassigned</span>
+                    <div className="mt-2 flex items-center gap-1.5 border-t border-border pt-2">
+                      <AlertCircle className="size-3 text-coral-600 dark:text-coral-300" />
+                      <span className="text-xs font-medium text-coral-600 dark:text-coral-300">Unassigned</span>
                     </div>
                   )}
                 </div>

@@ -168,19 +168,15 @@ export function ManagerAssignmentDialog(props: ManagerAssignmentDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="ghost" size="sm" className="mt-2 h-7 rounded-sm px-2 text-xs">
+        <Button type="button" variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs">
           <UserCog className="mr-1 h-3 w-3" />
           {props.buttonLabel || 'Assign Manager'}
         </Button>
       </DialogTrigger>
-      <DialogContent className="rounded-sm sm:max-w-md">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-            Assign Manager
-          </DialogTitle>
-          <DialogDescription className="text-sm text-warm-500 dark:text-cream-400">
-            {props.locationLabel}
-          </DialogDescription>
+          <DialogTitle>Assign Manager</DialogTitle>
+          <DialogDescription>{props.locationLabel}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">
@@ -189,7 +185,7 @@ export function ManagerAssignmentDialog(props: ManagerAssignmentDialogProps) {
             onValueChange={setSelectedManagerId}
             disabled={loading || saving}
           >
-            <SelectTrigger className="w-full rounded-sm">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder={loading ? 'Loading managers...' : 'Choose a manager'} />
             </SelectTrigger>
             <SelectContent>
@@ -205,9 +201,9 @@ export function ManagerAssignmentDialog(props: ManagerAssignmentDialogProps) {
         <DialogFooter>
           <Button
             type="button"
+            variant="gold"
             onClick={handleSubmit}
             disabled={loading || saving || !selectedManagerId}
-            className="rounded-sm"
           >
             {saving ? (
               <>

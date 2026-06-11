@@ -1,10 +1,33 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { ArrowLeft, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { ArrowLeft } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
+import { LivePage } from '@/components/portal/live-shell'
+
+// Issue detail — LiveIssues card language: display title + pastel status
+// chip, meta line, body, photo thumbs, and reply panels (gold-tinted avatar
+// circle + name + time) for the comment thread.
+
+const STATUS_CHIP: Record<string, { label: string; classes: string }> = {
+  open: {
+    label: "Open — we're on it",
+    classes: 'border-peach-line bg-peach-bg text-peach-deep',
+  },
+  in_progress: {
+    label: 'In progress',
+    classes: 'border-sky-line bg-sky-bg text-sky-deep',
+  },
+  resolved: {
+    label: 'Resolved',
+    classes: 'border-sage-line bg-sage-bg text-sage-deep',
+  },
+  closed: {
+    label: 'Resolved',
+    classes: 'border-sage-line bg-sage-bg text-sage-deep',
+  },
+}
 
 export default async function IssueDetailPage({
   params,
@@ -29,114 +52,109 @@ export default async function IssueDetailPage({
 
   if (!issue) notFound()
 
-  const statusIcon =
-    issue.status === 'resolved' || issue.status === 'closed' ? (
-      <CheckCircle2 className="h-4 w-4 text-lime-600" />
-    ) : issue.status === 'in_progress' ? (
-      <Clock className="h-4 w-4 text-amber-600" />
-    ) : (
-      <AlertCircle className="h-4 w-4 text-red-600" />
-    )
+  const chip = STATUS_CHIP[issue.status] ?? STATUS_CHIP.open
 
   return (
-    <div className="space-y-4">
+    <LivePage>
       <Link
         href="/portal/issues"
-        className="inline-flex items-center gap-1 text-xs text-warm-500 hover:text-ocean-600"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-3 w-3" />
         Back to issues
       </Link>
 
-      <div className="rounded-sm border border-warm-200 bg-white p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5">{statusIcon}</div>
-          <div className="flex-1">
-            <h1 className="text-lg font-medium text-warm-900">{issue.title}</h1>
-            <p className="mt-1 text-xs text-warm-500">
-              {issue.location.name} • Reported {format(issue.createdAt, 'EEE, MMM d, yyyy')} by {issue.reportedBy.firstName}
-            </p>
-          </div>
-          <Badge
-            className={`shrink-0 rounded-sm text-[10px] px-1.5 py-0 ${
-              issue.severity === 'critical'
-                ? 'bg-red-100 text-red-700 border-red-200'
-                : issue.severity === 'high'
-                  ? 'bg-amber-100 text-amber-700 border-amber-200'
-                  : 'bg-warm-100 text-warm-600 border-warm-200'
-            }`}
+      <div className="mt-4 rounded-[18px] border border-border bg-card p-6 shadow-soft">
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="min-w-0 flex-1 font-display text-[22px] font-bold tracking-[-0.4px] text-foreground">
+            {issue.title}
+          </h1>
+          <span
+            className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-[3px] text-[11.5px] font-semibold ${chip.classes}`}
           >
-            {issue.severity}
-          </Badge>
+            {chip.label}
+          </span>
         </div>
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {issue.location.name} · Reported {format(issue.createdAt, 'EEE, MMM d, yyyy')} by{' '}
+          {issue.reportedBy.firstName} · {issue.category} · {issue.severity}
+          {issue.assignedTo
+            ? ` · with ${issue.assignedTo.firstName} ${issue.assignedTo.lastName}`
+            : ''}
+        </p>
 
         {issue.description && (
-          <p className="text-sm text-warm-700 whitespace-pre-wrap">{issue.description}</p>
-        )}
-
-        <div className="flex flex-wrap items-center gap-2 text-[11px] text-warm-500">
-          <Badge variant="outline" className="rounded-sm text-[10px] px-1.5 py-0 border-warm-300 text-warm-600">
-            {issue.category}
-          </Badge>
-          <span>·</span>
-          <span>Status: <strong className="text-warm-700">{issue.status.replace('_', ' ')}</strong></span>
-          {issue.assignedTo && (
-            <>
-              <span>·</span>
-              <span>Assigned to {issue.assignedTo.firstName} {issue.assignedTo.lastName}</span>
-            </>
-          )}
-        </div>
-
-        {issue.resolvedAt && issue.resolution && (
-          <div className="rounded-sm border border-lime-200 bg-lime-50 p-3">
-            <p className="text-[10px] uppercase tracking-wider text-lime-700">Resolved {format(issue.resolvedAt, 'MMM d')}</p>
-            <p className="mt-1 text-sm text-warm-700 whitespace-pre-wrap">{issue.resolution}</p>
-          </div>
+          <p className="mt-4 whitespace-pre-wrap text-[13.5px] leading-relaxed text-foreground">
+            {issue.description}
+          </p>
         )}
 
         {issue.photos.length > 0 && (
-          <div className="grid grid-cols-3 gap-1.5">
+          <div className="mt-4 flex flex-wrap gap-2">
             {issue.photos.map((url, idx) => (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 key={idx}
                 src={url}
                 alt=""
-                className="h-24 w-full rounded-sm object-cover"
+                className="h-[76px] w-[110px] rounded-[10px] border border-border object-cover"
               />
             ))}
+          </div>
+        )}
+
+        {issue.resolvedAt && issue.resolution && (
+          <div className="mt-4 rounded-[13px] border border-sage-line bg-sage-bg px-4 py-3.5">
+            <p className="font-mono text-[9.5px] uppercase tracking-[1.8px] text-sage-deep">
+              Resolved {format(issue.resolvedAt, 'MMM d')}
+            </p>
+            <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-sage-deep">
+              {issue.resolution}
+            </p>
           </div>
         )}
       </div>
 
       {issue.comments.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-wider text-warm-500">Activity</p>
+        <div className="mt-5 space-y-2.5">
+          <p className="font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
+            Activity
+          </p>
           {issue.comments.map((c) => {
             const isUrbanSimple = c.user.role !== 'CLIENT_USER'
+            const displayName = isUrbanSimple
+              ? 'Urban Simple'
+              : `${c.user.firstName} ${c.user.lastName}`
             return (
               <div
                 key={c.id}
-                className={`rounded-sm border p-3 ${
-                  isUrbanSimple
-                    ? 'border-ocean-200 bg-ocean-50/40'
-                    : 'border-warm-200 bg-white'
-                }`}
+                className="flex gap-3 rounded-[13px] bg-secondary px-4 py-3.5"
               >
-                <p className="text-[11px] text-warm-500">
-                  <strong className="text-warm-700">
-                    {isUrbanSimple ? 'Urban Simple' : `${c.user.firstName} ${c.user.lastName}`}
-                  </strong>
-                  {' • '}
-                  {format(c.createdAt, 'MMM d, h:mm a')}
-                </p>
-                <p className="mt-1 text-sm text-warm-700 whitespace-pre-wrap">{c.comment}</p>
+                <div
+                  className={`grid h-7 w-7 shrink-0 place-items-center rounded-full font-display text-[11px] font-bold ${
+                    isUrbanSimple
+                      ? 'bg-gold-600/10 text-gold-600'
+                      : 'bg-card text-cream-700'
+                  }`}
+                >
+                  {isUrbanSimple ? 'US' : c.user.firstName.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-foreground">
+                    {displayName}{' '}
+                    <span className="font-normal text-muted-foreground">
+                      · {format(c.createdAt, 'MMM d, h:mm a')}
+                    </span>
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-cream-700">
+                    {c.comment}
+                  </p>
+                </div>
               </div>
             )
           })}
         </div>
       )}
-    </div>
+    </LivePage>
   )
 }

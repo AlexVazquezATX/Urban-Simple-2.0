@@ -239,18 +239,18 @@ export function EditableLocationInfo({ location }: EditableLocationInfoProps) {
               </SelectContent>
             </Select>
           </Field>
-          <label className="flex cursor-pointer items-center gap-2 rounded-sm border border-warm-200 bg-warm-50/50 p-3 dark:border-charcoal-700 dark:bg-charcoal-800/50">
+          <label className="flex cursor-pointer items-center gap-2 rounded-[10px] border border-border bg-secondary/50 p-3">
             <Checkbox
               checked={form.isActive}
               onCheckedChange={(c) => set({ isActive: c === true })}
             />
-            <span className="text-sm text-warm-700 dark:text-cream-300">Active location</span>
+            <span className="text-sm text-foreground">Active location</span>
           </label>
         </div>
       ) : (
         <div className="space-y-4">
           {location.logoUrl && (
-            <div className="relative h-64 w-full overflow-hidden rounded-sm border border-warm-200 bg-warm-50">
+            <div className="relative h-64 w-full overflow-hidden rounded-[10px] border border-border bg-secondary">
               <Image
                 src={location.logoUrl}
                 alt={location.name}
@@ -263,59 +263,49 @@ export function EditableLocationInfo({ location }: EditableLocationInfoProps) {
           {addressStr && <ViewRow label="Address">{addressStr}</ViewRow>}
           {location.accessInstructions && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Access Instructions</p>
-              <p className="text-sm text-warm-700 dark:text-cream-300">
+              <p className="text-sm text-muted-foreground">Access Instructions</p>
+              <p className="text-sm text-foreground">
                 {location.accessInstructions}
               </p>
             </div>
           )}
           {location.serviceNotes && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Service Notes</p>
-              <p className="text-sm text-warm-700 dark:text-cream-300">{location.serviceNotes}</p>
+              <p className="text-sm text-muted-foreground">Service Notes</p>
+              <p className="text-sm text-foreground">{location.serviceNotes}</p>
             </div>
           )}
           {location.painPoints && (
             <div>
-              <p className="text-sm text-warm-500 dark:text-cream-400">Pain Points</p>
-              <p className="text-sm text-red-600">{location.painPoints}</p>
+              <p className="text-sm text-muted-foreground">Pain Points</p>
+              <p className="text-sm text-coral-600 dark:text-coral-300">{location.painPoints}</p>
             </div>
           )}
           <div>
-            <Badge
-              className={`rounded-sm px-1.5 py-0 text-[10px] ${
-                location.isActive
-                  ? 'border-lime-200 bg-lime-100 text-lime-700'
-                  : 'border-warm-200 bg-warm-100 text-warm-600'
-              }`}
-            >
+            <Badge variant={location.isActive ? 'green' : 'neutral'}>
               {location.isActive ? 'Active' : 'Inactive'}
             </Badge>
           </div>
           {location.checklistTemplate ? (
-            <div className="rounded-sm border border-warm-200 bg-warm-50/50 p-3 dark:border-charcoal-700 dark:bg-charcoal-800/50">
+            <div className="rounded-[10px] border border-border bg-secondary/50 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4 text-warm-500" />
+                  <CheckSquare className="size-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-warm-900">Assigned Checklist</p>
-                    <p className="text-xs text-warm-500">{location.checklistTemplate.name}</p>
+                    <p className="text-sm font-medium text-foreground">Assigned Checklist</p>
+                    <p className="text-xs text-muted-foreground">{location.checklistTemplate.name}</p>
                   </div>
                 </div>
-                <Link href={`/operations/checklists/${location.checklistTemplate.id}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-sm border-warm-200 text-warm-700 hover:border-ocean-400"
-                  >
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/operations/checklists/${location.checklistTemplate.id}`}>
                     View Checklist
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
               </div>
             </div>
           ) : (
-            <div className="rounded-sm border border-warm-200 bg-warm-50/50 p-3 dark:border-charcoal-700 dark:bg-charcoal-800/50">
-              <p className="text-sm text-warm-500 dark:text-cream-400">
+            <div className="rounded-[10px] border border-border bg-secondary/50 p-3">
+              <p className="text-sm text-muted-foreground">
                 No checklist assigned. Use Edit to assign one.
               </p>
             </div>

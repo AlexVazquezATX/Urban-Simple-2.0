@@ -13,7 +13,10 @@
       "Bash(rm \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple/.claude/launch.json\")",
       "Bash(git -C \"C:/Users/avazq/Documents/Dev/Urban Simple 2.0/urbansimple\" cherry-pick 25b2734)",
       "mcp__Claude_in_Chrome__read_page",
-      "Bash(rm \"C:/Users/avazq/.claude-worktrees/Urban-Simple-2.0/jovial-almeida/.claude/settings.local.json.preupdate-backup\" && echo \"Backup removed.\")"
+      "Bash(rm \"C:/Users/avazq/.claude-worktrees/Urban-Simple-2.0/jovial-almeida/.claude/settings.local.json.preupdate-backup\" && echo \"Backup removed.\")",
+      "mcp__claude_ai_Intuit_QuickBooks__company_info",
+      "mcp__claude_ai_Intuit_QuickBooks__qbo_accounting_get_ar_aging_summary",
+      "mcp__claude_ai_Intuit_QuickBooks__qbo_sales_get_invoices"
     ],
     "additionalDirectories": [
       "C:\\Users\\avazq\\.claude-worktrees\\Urban-Simple-2.0\\jovial-almeida\\.claude"

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { PageHeader } from '@/components/layout/page-header'
 import { MessagesHub } from '@/components/growth/outreach/messages-hub'
 import { QuickCompose } from '@/components/growth/outreach/quick-compose'
 import { TemplateLibrary } from '@/components/growth/outreach/template-library'
@@ -36,41 +37,37 @@ function OutreachContent() {
   }, [tabParam, prospectParam])
 
   return (
-    <div className="p-4 md:p-6 max-w-7xl mx-auto bg-warm-50 dark:bg-charcoal-950 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-display font-medium tracking-tight text-warm-900 dark:text-cream-100">Outreach Hub</h1>
-          <p className="text-sm text-warm-500 dark:text-cream-400 mt-0.5">
-            Review, send, and track your outreach messages
-          </p>
-        </div>
-      </div>
+    <div className="mx-auto min-h-screen max-w-7xl p-4 md:p-6">
+      <PageHeader
+        kicker="GROWTH · OUTREACH"
+        title="Outreach Hub"
+        subtitle="Review, send, and track your outreach messages"
+      />
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 rounded-none bg-white dark:bg-charcoal-900 border-b border-warm-200 dark:border-charcoal-700 p-0 mb-6 h-auto">
-          <TabsTrigger value="messages" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Inbox className="h-3.5 w-3.5 text-ocean-500" />
+        <TabsList className="mb-6 w-full justify-start gap-5 overflow-x-auto">
+          <TabsTrigger value="messages">
+            <Inbox className="size-4" />
             <span className="hidden sm:inline">Messages</span>
           </TabsTrigger>
-          <TabsTrigger value="compose" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Send className="h-3.5 w-3.5 text-lime-600" />
+          <TabsTrigger value="compose">
+            <Send className="size-4" />
             <span className="hidden sm:inline">Compose</span>
           </TabsTrigger>
-          <TabsTrigger value="sequences" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Zap className="h-3.5 w-3.5 text-plum-500" />
+          <TabsTrigger value="sequences">
+            <Zap className="size-4" />
             <span className="hidden sm:inline">Sequences</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <FileText className="h-3.5 w-3.5 text-warm-600 dark:text-cream-400" />
+          <TabsTrigger value="templates">
+            <FileText className="size-4" />
             <span className="hidden sm:inline">Templates</span>
           </TabsTrigger>
-          <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <BarChart3 className="h-3.5 w-3.5 text-plum-500" />
+          <TabsTrigger value="analytics">
+            <BarChart3 className="size-4" />
             <span className="hidden sm:inline">Analytics</span>
           </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-1.5 text-xs py-3 rounded-none data-[state=active]:bg-warm-100 data-[state=active]:dark:bg-charcoal-800 data-[state=active]:text-warm-900 data-[state=active]:dark:text-cream-100 text-warm-500 dark:text-cream-400 hover:bg-warm-50 dark:hover:bg-charcoal-800">
-            <Settings className="h-3.5 w-3.5 text-warm-500 dark:text-cream-400" />
+          <TabsTrigger value="settings">
+            <Settings className="size-4" />
             <span className="hidden sm:inline">Settings</span>
           </TabsTrigger>
         </TabsList>

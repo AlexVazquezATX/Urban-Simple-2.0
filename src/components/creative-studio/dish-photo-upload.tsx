@@ -113,7 +113,7 @@ export function DishPhotoUpload({
   // Show preview if we have an image
   if (value) {
     return (
-      <div className={cn('relative rounded-xl overflow-hidden', className)}>
+      <div className={cn('relative rounded-[14px] overflow-hidden', className)}>
         <img
           src={value}
           alt="Uploaded dish"
@@ -122,7 +122,7 @@ export function DishPhotoUpload({
         {!disabled && (
           <button
             onClick={handleClear}
-            className="absolute top-2.5 right-2.5 p-1.5 bg-charcoal-900/70 hover:bg-charcoal-900 backdrop-blur rounded-full text-white transition-colors"
+            className="absolute top-2.5 right-2.5 p-1.5 bg-ink-950/70 hover:bg-ink-950/90 backdrop-blur rounded-full text-white transition-colors"
             title="Remove image"
           >
             <X className="w-4 h-4" />
@@ -131,7 +131,7 @@ export function DishPhotoUpload({
         {!disabled && (
           <button
             onClick={handleClick}
-            className="absolute bottom-2.5 right-2.5 px-3 py-1.5 bg-white/90 hover:bg-white rounded-full text-charcoal-800 shadow-soft transition-colors flex items-center gap-1.5 text-xs font-medium"
+            className="absolute bottom-2.5 right-2.5 px-3 py-1.5 bg-white/90 hover:bg-white rounded-full text-ink-900 shadow-soft transition-colors flex items-center gap-1.5 text-xs font-medium"
           >
             <Camera className="w-3.5 h-3.5" />
             Change
@@ -155,10 +155,10 @@ export function DishPhotoUpload({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={cn(
-        'relative rounded-xl border-2 border-dashed transition-colors cursor-pointer',
+        'relative rounded-[14px] border-2 border-dashed transition-colors cursor-pointer',
         isDragging
-          ? 'border-bronze-400 bg-bronze-50'
-          : 'border-cream-300 hover:border-bronze-300 bg-cream-50',
+          ? 'border-gold-600/50 bg-gold-600/10 dark:border-gold-400/40 dark:bg-gold-400/12'
+          : 'border-border bg-secondary/40 hover:border-gold-600/40 dark:hover:border-gold-400/40',
         disabled && 'opacity-50 cursor-not-allowed',
         isProcessing && 'pointer-events-none',
         className
@@ -167,28 +167,28 @@ export function DishPhotoUpload({
       <div className="flex flex-col items-center justify-center p-8 text-center">
         {isProcessing ? (
           <>
-            <Loader2 className="w-10 h-10 text-bronze-600 animate-spin mb-3" />
-            <p className="text-sm font-medium text-charcoal-800">Processing image...</p>
-            <p className="text-xs text-warm-500 mt-1">Compressing for upload</p>
+            <Loader2 className="w-10 h-10 text-gold-600 dark:text-gold-400 animate-spin mb-3" />
+            <p className="text-sm font-medium text-foreground">Processing image...</p>
+            <p className="text-xs text-muted-foreground mt-1">Compressing for upload</p>
           </>
         ) : error ? (
           <>
-            <AlertCircle className="w-10 h-10 text-status-error mb-3" />
-            <p className="text-sm font-medium text-status-error">{error}</p>
-            <p className="text-xs text-warm-500 mt-1">Click to try again</p>
+            <AlertCircle className="w-10 h-10 text-coral-600 dark:text-coral-300 mb-3" />
+            <p className="text-sm font-medium text-coral-600 dark:text-coral-300">{error}</p>
+            <p className="text-xs text-muted-foreground mt-1">Click to try again</p>
           </>
         ) : (
           <>
-            <div className="w-14 h-14 rounded-2xl bg-bronze-50 border border-bronze-100 flex items-center justify-center mb-3">
-              <Upload className="w-6 h-6 text-bronze-600" />
+            <div className="w-14 h-14 rounded-[12px] bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25 flex items-center justify-center mb-3">
+              <Upload className="w-6 h-6 text-gold-600 dark:text-gold-400" />
             </div>
-            <p className="text-sm font-medium text-charcoal-900">
+            <p className="text-sm font-medium text-foreground">
               Drop your dish photo here
             </p>
-            <p className="text-xs text-warm-500 mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               or click to browse
             </p>
-            <p className="text-xs text-warm-400 mt-3">
+            <p className="text-xs text-muted-foreground/70 mt-3">
               JPG, PNG, HEIC up to 20MB
             </p>
           </>

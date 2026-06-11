@@ -1,29 +1,23 @@
 import Link from 'next/link'
 import { format } from 'date-fns'
-import {
-  AlertCircle,
-  ArrowRight,
-  Camera,
-  ClipboardList,
-  FileText,
-  MessageCircle,
-  Sparkles,
-  ThumbsUp,
-  Users,
-} from 'lucide-react'
+import { ArrowRight, Camera, Flag, Sparkles } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import { TrialBanner } from '@/components/portal/trial-banner'
+import {
+  LiveHomeNav,
+  LiveManager,
+  LivePhotoPanel,
+  LiveStatTile,
+  LiveTimelineRow,
+  LiveActionRow,
+} from '@/components/portal/live-shell'
 
-// Portal home, redesigned 2026-05-07. Reframed from "ops dashboard" to
-// "your service relationship at a glance":
-//   1. Photography-led hero (last visit photo or warm fallback)
-//   2. Account manager card with face + text-button (the killer retention move)
-//   3. Story-line strip in place of empty zero-stats
-//   4. Two prominent actions (walkthrough + report)
-//   5. Recent photos strip
-//   6. Quiet tools row (collapsed from the old five-tile menu)
-//   7. BackHaus perk demoted to a slim footer card
+// Portal home — LIVE redesign (D · Quiet merge, spec: usp-live-home.jsx).
+// Photo panel left; right column: inline nav, date kicker, display greeting,
+// story line, pastel stat tiles, latest-activity timeline, action rows,
+// photo strip, manager footer. All data fetching preserved from the
+// 2026-05-07 build.
 
 export default async function PortalHomePage() {
   const ctx = await requirePortalContext()
@@ -157,9 +151,8 @@ export default async function PortalHomePage() {
   ])
 
   // Hero photo: prefer last review photo (real proof of work), then a stock
-  // location photo, then nothing — fallback CSS gradient handles the rest.
-  const heroPhoto =
-    lastReview?.photos[0] || locationHero?.photos[0] || null
+  // location photo, then nothing — the panel's gradient fallback handles it.
+  const heroPhoto = lastReview?.photos[0] || locationHero?.photos[0] || null
 
   // Pull a recent-photos strip (max 6 thumbs across recent reviews).
   const recentThumbs = recentReviewsForStrip
@@ -172,287 +165,256 @@ export default async function PortalHomePage() {
     )
     .slice(0, 6)
 
+  const totalRecentPhotos = recentReviewsForStrip.reduce((sum, r) => sum + r.photos.length, 0)
+
   const accountManager = lastShiftWithManager?.manager || null
+
+  const storyLine = buildStoryLine({
+    isSelfServe,
+    lastReview,
+    lastWalkthrough,
+    nextShift,
+    walkthroughCount,
+    recentVisitCount,
+    openIssueCount,
+    clientName: ctx.client.name,
+  })
+
+  // Latest-activity timeline rows from real events (graceful when sparse).
+  const timeline: Array<{ time: string; text: string }> = []
+  if (lastReview) {
+    timeline.push({
+      time: format(lastReview.reviewDate, 'MMM d'),
+      text: `Visit reviewed at ${lastReview.location.name} — ${lastReview.photos.length} ${lastReview.photos.length === 1 ? 'photo' : 'photos'} added`,
+    })
+  }
+  if (lastWalkthrough) {
+    timeline.push({
+      time: format(lastWalkthrough.capturedAt, 'MMM d'),
+      text: `Walkthrough at ${lastWalkthrough.location.name} — ${lastWalkthrough.photoCount} ${lastWalkthrough.photoCount === 1 ? 'photo' : 'photos'} captured`,
+    })
+  }
+  if (nextShift) {
+    timeline.push({
+      time: format(nextShift.date, 'MMM d'),
+      text: `Next visit on the books · crew arrives at ${nextShift.startTime}`,
+    })
+  }
+
+  const photoPanelPill = isSelfServe
+    ? 'Inspection-ready, every day'
+    : lastReview
+      ? `Serviced ${format(lastReview.reviewDate, 'EEEE')} · ready for today's service`
+      : 'We clean while you sleep'
 
   // ──────────────── render ────────────────
 
   return (
-    <div className="space-y-6">
-      {showTrialBanner && ctx.client.portalTrialEndsAt && (
-        <TrialBanner
-          trialEndsAt={ctx.client.portalTrialEndsAt}
-          status={ctx.client.portalStatus}
-        />
-      )}
+    <div className="flex min-h-screen w-full">
+      <LivePhotoPanel
+        photoUrl={heroPhoto}
+        photoAlt={ctx.client.name}
+        brandName={ctx.client.name}
+        logoUrl={ctx.client.logoUrl}
+        pill={photoPanelPill}
+      />
 
-      {/* HERO — photography-led, photographic if we have proof, gradient if not. */}
-      <section className="relative overflow-hidden rounded-2xl bg-warm-900 shadow-lg">
-        <div className="relative aspect-[16/9] sm:aspect-[21/9]">
-          {heroPhoto ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={heroPhoto}
-              alt={`${ctx.client.name}`}
-              className="absolute inset-0 h-full w-full object-cover"
+      <div className="flex min-w-0 flex-1 flex-col px-6 pb-10 pt-8 sm:px-9 lg:px-[clamp(36px,4.5vw,72px)]">
+        <div className="mb-9">
+          <LiveHomeNav />
+        </div>
+
+        {showTrialBanner && ctx.client.portalTrialEndsAt && (
+          <div className="mb-6">
+            <TrialBanner
+              trialEndsAt={ctx.client.portalTrialEndsAt}
+              status={ctx.client.portalStatus}
             />
-          ) : (
-            <div className="absolute inset-0 bg-gradient-to-br from-warm-900 via-warm-800 to-plum-900">
-              <div
-                className="absolute inset-0 opacity-40"
-                style={{
-                  backgroundImage:
-                    'radial-gradient(circle at 20% 20%, rgba(190, 242, 100, 0.25), transparent 45%), radial-gradient(circle at 80% 70%, rgba(244, 114, 182, 0.2), transparent 50%)',
-                }}
+          </div>
+        )}
+
+        <div className="mb-3 font-mono text-[11px] uppercase tracking-[2.4px] text-gold-600">
+          {format(new Date(), 'EEEE · MMMM d')}
+        </div>
+        <h1 className="font-display text-[40px] font-bold leading-[1.05] tracking-[-1.2px] text-foreground">
+          Good morning, {ctx.firstName}.
+        </h1>
+        <p className="mt-3 max-w-[470px] text-[15px] leading-relaxed text-cream-700">
+          {storyLine}
+        </p>
+
+        {/* Pastel stat tiles */}
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          {isSelfServe ? (
+            <>
+              <LiveStatTile
+                palette="sage"
+                label="Walkthroughs"
+                value={
+                  walkthroughCount > 0 ? `${walkthroughCount} this month` : 'Ready to start'
+                }
+                sub={
+                  lastWalkthrough
+                    ? `Last one at ${lastWalkthrough.location.name}, ${format(lastWalkthrough.capturedAt, 'MMM d')}`
+                    : 'Your first walkthrough starts your inspection trail'
+                }
               />
-            </div>
+              <LiveStatTile
+                palette="sky"
+                label="Inspection binder"
+                value={docCount > 0 ? `${docCount} ${docCount === 1 ? 'doc' : 'docs'}` : 'Empty'}
+                sub={
+                  docCount > 0
+                    ? 'Print your inspection packet anytime'
+                    : 'Upload your COI, permits, and training records'
+                }
+              />
+            </>
+          ) : (
+            <>
+              <LiveStatTile
+                palette="sage"
+                label="Kitchen status"
+                value={openIssueCount === 0 ? 'All clear ✦' : `${openIssueCount} open ${openIssueCount === 1 ? 'issue' : 'issues'}`}
+                sub={
+                  openIssueCount === 0
+                    ? recentVisitCount > 0
+                      ? `${recentVisitCount} ${recentVisitCount === 1 ? 'visit' : 'visits'} in the last 30 days`
+                      : 'Your visit history will collect here'
+                    : "We're on it — track progress in Issues"
+                }
+              />
+              <LiveStatTile
+                palette="sky"
+                label="Next visit"
+                value={
+                  nextShift
+                    ? `${format(nextShift.date, 'EEE')} · ${nextShift.startTime}`
+                    : 'Not scheduled'
+                }
+                sub={
+                  nextShift
+                    ? "We'll be in and out while you're closed"
+                    : "Reach out and we'll get you on the calendar"
+                }
+              />
+            </>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-
-          <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-            <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-white/70">
-              {isSelfServe ? 'Your portal' : 'Urban Simple · Your kitchen'}
-            </p>
-            <h1 className="mt-1.5 font-display text-2xl font-medium tracking-tight text-white sm:text-3xl">
-              Good morning, {ctx.firstName}.
-            </h1>
-            <p className="mt-1 max-w-md text-sm text-white/80">
-              {isSelfServe
-                ? `Here's what's happening across ${ctx.client.name}.`
-                : lastReview
-                  ? `Latest visit at ${lastReview.location.name}, ${format(lastReview.reviewDate, 'EEEE')}.`
-                  : `Your team is getting ${ctx.client.name} ready for service.`}
-            </p>
-          </div>
         </div>
-      </section>
 
-      {/* ACCOUNT MANAGER — the relationship beat. Only for cleaning clients. */}
-      {!isSelfServe && (
-        <section className="rounded-2xl border border-warm-200 bg-white p-4 shadow-sm">
-          <div className="flex items-center gap-3.5">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-warm-200 bg-warm-100">
-              {accountManager?.avatarUrl ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={accountManager.avatarUrl}
-                  alt={accountManager.firstName}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-base font-medium text-warm-600">
-                  {accountManager
-                    ? `${accountManager.firstName[0]}${accountManager.lastName[0]}`
-                    : 'US'}
-                </div>
-              )}
+        {/* Latest-activity timeline */}
+        {timeline.length > 0 ? (
+          <div className="mt-4 rounded-2xl bg-secondary px-6 py-5">
+            <div className="mb-3.5 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
+              The latest
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-warm-500">
-                {accountManager ? 'Your account manager' : 'Your team'}
-              </p>
-              <p className="truncate text-sm font-medium text-warm-900">
-                {accountManager
-                  ? `${accountManager.firstName} ${accountManager.lastName}`
-                  : 'Urban Simple'}
-              </p>
-              <p className="truncate text-xs text-warm-500">
-                {accountManager
-                  ? 'Reach out anytime'
-                  : 'Your manager will appear here after your first visit'}
-              </p>
-            </div>
-            {accountManager?.phone ? (
-              <a
-                href={`sms:${accountManager.phone}`}
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-warm-900 px-3.5 py-2 text-xs font-medium text-white hover:bg-warm-800"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Text {accountManager.firstName}
-              </a>
-            ) : (
-              <a
-                href="mailto:hello@urbansimple.net"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-warm-300 bg-white px-3.5 py-2 text-xs font-medium text-warm-800 hover:border-warm-400"
-              >
-                <MessageCircle className="h-3.5 w-3.5" />
-                Email us
-              </a>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* STORY STRIP — replaces empty 0/0 stats with a narrative beat. */}
-      <section className="rounded-2xl border border-warm-200 bg-cream-50 px-4 py-3.5">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-lime-500" />
-          <p className="text-sm leading-relaxed text-warm-800">
-            {buildStoryLine({
-              isSelfServe,
-              lastReview,
-              lastWalkthrough,
-              nextShift,
-              walkthroughCount,
-              recentVisitCount,
-              openIssueCount,
-              clientName: ctx.client.name,
-            })}
-          </p>
-        </div>
-      </section>
-
-      {/* PRIMARY ACTIONS — only two. Walkthrough + Report. */}
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Link
-          href="/portal/walkthrough/new"
-          className="group flex items-center gap-3.5 rounded-2xl border-2 border-lime-200 bg-gradient-to-br from-lime-50 to-cream-50 p-4 transition-colors hover:border-lime-400"
-        >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-lime-100 text-lime-700">
-            <Camera className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-warm-900">Start a walkthrough</p>
-            <p className="mt-0.5 truncate text-xs text-warm-600">
-              {lastWalkthrough
-                ? `Last: ${lastWalkthrough.location.name} · ${format(lastWalkthrough.capturedAt, 'EEE')}`
-                : 'Photo + note capture by zone'}
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-warm-400 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-
-        <Link
-          href="/portal/issues/new"
-          className="group flex items-center gap-3.5 rounded-2xl border border-warm-200 bg-white p-4 transition-colors hover:border-amber-300"
-        >
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
-            <AlertCircle className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-warm-900">Report something</p>
-            <p className="mt-0.5 text-xs text-warm-600">
-              {openIssueCount > 0
-                ? `${openIssueCount} open issue${openIssueCount === 1 ? '' : 's'}`
-                : 'Flag what needs attention'}
-            </p>
-          </div>
-          <ArrowRight className="h-4 w-4 shrink-0 text-warm-400 transition-transform group-hover:translate-x-0.5" />
-        </Link>
-      </section>
-
-      {/* RECENT PHOTOS — only when there's something to show. */}
-      {recentThumbs.length > 0 && (
-        <section>
-          <div className="mb-2 flex items-center justify-between">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-warm-500">
-              Recent photos
-            </p>
-            <Link
-              href="/portal/cleaning-log"
-              className="text-[11px] font-medium text-ocean-600 hover:underline"
-            >
-              See all
-            </Link>
-          </div>
-          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
-            {recentThumbs.map((t, i) => (
-              <Link
+            {timeline.map((row, i) => (
+              <LiveTimelineRow
                 key={i}
-                href={`/portal/cleaning-log#review-${t.reviewId}`}
-                className="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-warm-200 bg-warm-100"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={t.url}
-                  alt={t.locationName}
-                  className="h-full w-full object-cover"
-                />
-              </Link>
+                time={row.time}
+                text={row.text}
+                last={i === timeline.length - 1}
+              />
             ))}
           </div>
-        </section>
-      )}
-
-      {/* QUIET TOOLS — compact horizontal grid, replaces the old five-tile list. */}
-      <section>
-        <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-warm-500">
-          More
-        </p>
-        <div className="grid grid-cols-4 gap-2">
-          {!isSelfServe && (
-            <ToolTile
-              href="/portal/cleaning-log"
-              icon={<ClipboardList className="h-4 w-4" />}
-              label="Log"
-              accent="ocean"
-            />
-          )}
-          <ToolTile
-            href="/portal/walkthroughs"
-            icon={<ThumbsUp className="h-4 w-4" />}
-            label="History"
-            accent="lime"
-          />
-          <ToolTile
-            href="/portal/documents"
-            icon={<FileText className="h-4 w-4" />}
-            label={docCount > 0 ? `Docs · ${docCount}` : 'Docs'}
-            accent="warm"
-          />
-          <ToolTile
-            href="/portal/team"
-            icon={<Users className="h-4 w-4" />}
-            label={teamSize > 0 ? `Team · ${teamSize}` : 'Team'}
-            accent="plum"
-          />
-          {isSelfServe && (
-            // Self-serve clients still need the inspection-packet button as a
-            // primary tool since they don't have the "Log" surface.
-            <ToolTile
-              href="/portal/inspection-packet"
-              icon={<FileText className="h-4 w-4" />}
-              label="Packet"
-              accent="ocean"
-            />
-          )}
-        </div>
-      </section>
-
-      {/* BACKHAUS PERK — slim, footer-style. UR cleaning customers only. */}
-      {!isSelfServe && (
-        <Link
-          href={`https://backhaus.ai/studio/signup?ref=urban-simple-portal&client=${encodeURIComponent(ctx.client.name)}`}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center gap-3 rounded-xl border border-plum-200 bg-plum-50 px-4 py-2.5 transition-colors hover:border-plum-300"
-        >
-          <Sparkles className="h-4 w-4 shrink-0 text-plum-700" />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-medium text-warm-900">
-              Free perk: BackHaus food photography
-            </p>
-            <p className="truncate text-[11px] text-warm-600">
-              Menu-ready images from your phone snaps. Credits on us.
+        ) : (
+          <div className="mt-4 rounded-2xl bg-secondary px-6 py-5">
+            <div className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
+              The latest
+            </div>
+            <p className="text-sm leading-relaxed text-cream-700">
+              Welcome to your portal, {ctx.client.name}. Photos and notes from every visit
+              will collect here — walkthroughs you capture will too.
             </p>
           </div>
-          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-plum-700" />
-        </Link>
-      )}
+        )}
 
-      {/* Recovery handle for the "0 of everything" brand-new client — gives a
-          friendly nudge instead of a silent dashboard. */}
-      {!isSelfServe && !lastReview && !lastWalkthrough && (
-        <div className="rounded-2xl border border-dashed border-warm-300 bg-white p-5 text-center">
-          <Camera className="mx-auto h-7 w-7 text-warm-300" />
-          <p className="mt-2 text-sm font-medium text-warm-900">
-            Welcome to your portal, {ctx.client.name}.
-          </p>
-          <p className="mx-auto mt-1 max-w-xs text-xs text-warm-500">
-            Photos and notes from every visit will collect here. Walkthroughs
-            you capture will too.
-          </p>
+        {/* Primary actions */}
+        <div className="mt-2">
+          <LiveActionRow
+            href="/portal/walkthrough/new"
+            icon={<Camera className="h-[17px] w-[17px]" strokeWidth={1.7} />}
+            title="Start a walkthrough"
+            sub={
+              lastWalkthrough
+                ? `Last: ${lastWalkthrough.location.name} · ${format(lastWalkthrough.capturedAt, 'EEE')}`
+                : 'Photo + note capture by zone'
+            }
+          />
+          <LiveActionRow
+            href="/portal/issues/new"
+            icon={<Flag className="h-[17px] w-[17px]" strokeWidth={1.7} />}
+            title="Report something"
+            sub={
+              openIssueCount > 0
+                ? `${openIssueCount} open ${openIssueCount === 1 ? 'issue' : 'issues'}`
+                : 'Flag what needs attention'
+            }
+          />
         </div>
-      )}
+
+        {/* Recent photos — only when there's something to show */}
+        {recentThumbs.length > 0 && (
+          <div className="mt-5">
+            <div className="mb-2.5 flex items-baseline">
+              <span className="font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
+                The last visit, in photos
+              </span>
+              <Link
+                href="/portal/cleaning-log"
+                className="ml-auto text-[12.5px] font-semibold text-gold-600 hover:underline"
+              >
+                See all {totalRecentPhotos} →
+              </Link>
+            </div>
+            <div className="grid grid-cols-3 gap-2.5">
+              {recentThumbs.slice(0, 3).map((t, i) => (
+                <Link
+                  key={i}
+                  href={`/portal/cleaning-log#review-${t.reviewId}`}
+                  className="relative h-[104px] overflow-hidden rounded-xl border border-border bg-secondary"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={t.url}
+                    alt={t.locationName}
+                    className="h-full w-full object-cover"
+                  />
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* BackHaus perk — quiet footer row. UR cleaning customers only. */}
+        {!isSelfServe && (
+          <Link
+            href={`https://backhaus.ai/studio/signup?ref=urban-simple-portal&client=${encodeURIComponent(ctx.client.name)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-5 flex items-center gap-3 rounded-2xl border border-border bg-card px-4 py-2.5 transition-colors hover:border-cream-500"
+          >
+            <Sparkles className="h-4 w-4 shrink-0 text-gold-600" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-semibold text-foreground">
+                Free perk: BackHaus food photography
+              </p>
+              <p className="truncate text-[11px] text-muted-foreground">
+                Menu-ready images from your phone snaps. Credits on us.
+              </p>
+            </div>
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          </Link>
+        )}
+
+        {/* Manager footer — the relationship beat. */}
+        <LiveManager manager={!isSelfServe ? accountManager : null} />
+
+        {/* Keep team size in the DOM story for screen readers / future use. */}
+        <span className="sr-only">
+          {teamSize} portal {teamSize === 1 ? 'user' : 'users'} on this account
+        </span>
+      </div>
     </div>
   )
 }
@@ -522,37 +484,4 @@ function buildStoryLine(input: StoryLineInput): string {
 
   // Day-zero account: no visits, no shifts. Friendly anticipation copy.
   return `Welcome to ${clientName}. Photos, notes, and visit history will live here as your team gets to work.`
-}
-
-// Compact tool tile — replaces the bulky old five-card list.
-function ToolTile({
-  href,
-  icon,
-  label,
-  accent,
-}: {
-  href: string
-  icon: React.ReactNode
-  label: string
-  accent: 'ocean' | 'lime' | 'plum' | 'warm'
-}) {
-  const accentMap = {
-    ocean: 'bg-ocean-50 text-ocean-600',
-    lime: 'bg-lime-50 text-lime-700',
-    plum: 'bg-plum-50 text-plum-700',
-    warm: 'bg-warm-100 text-warm-700',
-  }
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-1.5 rounded-xl border border-warm-200 bg-white px-2 py-3 transition-colors hover:border-warm-300"
-    >
-      <div
-        className={`flex h-8 w-8 items-center justify-center rounded-lg ${accentMap[accent]}`}
-      >
-        {icon}
-      </div>
-      <span className="truncate text-[11px] font-medium text-warm-800">{label}</span>
-    </Link>
-  )
 }

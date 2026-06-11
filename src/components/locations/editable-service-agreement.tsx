@@ -12,7 +12,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { EditableCard, Field } from '@/components/ui/editable-card'
-import { formatCurrency, formatMargin, marginToneClass } from '@/lib/financials'
+import { formatMargin } from '@/lib/financials'
+import { formatMoney, moneyClass } from '@/lib/format'
+import { marginTone } from './tones'
 import { cn } from '@/lib/utils'
 
 interface AgreementData {
@@ -62,11 +64,9 @@ function Tile({
   valueClass?: string
 }) {
   return (
-    <div className="rounded-sm border border-warm-200 bg-warm-50/50 p-3 dark:border-charcoal-700 dark:bg-charcoal-900/40">
-      <p className="text-[10px] font-medium uppercase tracking-wider text-warm-500 dark:text-cream-400">
-        {label}
-      </p>
-      <p className={cn('mt-1 font-mono font-medium text-warm-900 dark:text-cream-100', valueClass)}>
+    <div className="rounded-[10px] border border-border bg-secondary/40 p-3">
+      <p className="kicker text-muted-foreground">{label}</p>
+      <p className={cn('mt-1 font-medium text-foreground', moneyClass, valueClass)}>
         {value}
       </p>
     </div>
@@ -201,8 +201,8 @@ export function EditableServiceAgreement({
             </Field>
           </div>
 
-          <div className="space-y-3 rounded-sm border border-warm-200 p-3 dark:border-charcoal-700">
-            <p className="text-[10px] font-medium uppercase tracking-wider text-warm-500 dark:text-cream-400">
+          <div className="space-y-3 rounded-[10px] border border-border p-3">
+            <p className="kicker text-muted-foreground">
               Operational costs — optional, profit calculates live
             </p>
             <div className="grid grid-cols-3 gap-3">
@@ -234,28 +234,22 @@ export function EditableServiceAgreement({
                 />
               </Field>
             </div>
-            <div className="grid grid-cols-3 gap-3 rounded-sm bg-warm-50/60 p-2 dark:bg-charcoal-900/40">
+            <div className="grid grid-cols-3 gap-3 rounded-[10px] bg-secondary/50 p-2.5">
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">
-                  Total Cost
-                </p>
-                <p className="font-mono text-sm font-medium text-warm-900 dark:text-cream-100">
-                  {formatCurrency(liveCost)}
+                <p className="kicker text-muted-foreground">Total Cost</p>
+                <p className={cn('text-sm font-medium text-foreground', moneyClass)}>
+                  {formatMoney(liveCost)}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">
-                  Profit
-                </p>
-                <p className={cn('font-mono text-sm font-medium', marginToneClass(liveMargin))}>
-                  {formatCurrency(liveProfit)}
+                <p className="kicker text-muted-foreground">Profit</p>
+                <p className={cn('text-sm font-medium', moneyClass, marginTone(liveMargin))}>
+                  {formatMoney(liveProfit)}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-warm-500 dark:text-cream-400">
-                  Margin
-                </p>
-                <p className={cn('font-mono text-sm font-medium', marginToneClass(liveMargin))}>
+                <p className="kicker text-muted-foreground">Margin</p>
+                <p className={cn('text-sm font-medium', moneyClass, marginTone(liveMargin))}>
                   {formatMargin(liveMargin)}
                 </p>
               </div>
@@ -294,48 +288,48 @@ export function EditableServiceAgreement({
       ) : agreement ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Tile label="Monthly Revenue" value={formatCurrency(revenue)} />
-            <Tile label="Monthly Cost" value={formatCurrency(cost)} />
+            <Tile label="Monthly Revenue" value={formatMoney(revenue)} />
+            <Tile label="Monthly Cost" value={formatMoney(cost)} />
             <Tile
               label="Monthly Profit"
-              value={formatCurrency(profit)}
-              valueClass={marginToneClass(margin)}
+              value={formatMoney(profit)}
+              valueClass={marginTone(margin)}
             />
             <Tile
               label="Margin"
               value={formatMargin(margin)}
-              valueClass={marginToneClass(margin)}
+              valueClass={marginTone(margin)}
             />
           </div>
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between gap-4">
-              <span className="text-warm-500 dark:text-cream-400">Description</span>
-              <span className="text-right font-medium text-warm-900 dark:text-cream-100">
+              <span className="text-muted-foreground">Description</span>
+              <span className="text-right font-medium text-foreground">
                 {agreement.description}
               </span>
             </div>
             <div className="flex justify-between gap-4">
-              <span className="text-warm-500 dark:text-cream-400">Billing Day</span>
-              <span className="font-medium text-warm-900 dark:text-cream-100">
+              <span className="text-muted-foreground">Billing Day</span>
+              <span className="font-mono font-medium tabular-nums text-foreground">
                 Day {agreement.billingDay}
               </span>
             </div>
             <div className="flex justify-between gap-4">
-              <span className="text-warm-500 dark:text-cream-400">Payment Terms</span>
-              <span className="font-medium text-warm-900 dark:text-cream-100">
+              <span className="text-muted-foreground">Payment Terms</span>
+              <span className="font-medium text-foreground">
                 {agreement.paymentTerms.replace(/_/g, ' ')}
               </span>
             </div>
             <div className="flex justify-between gap-4">
-              <span className="text-warm-500 dark:text-cream-400">Start Date</span>
-              <span className="font-medium text-warm-900 dark:text-cream-100">
+              <span className="text-muted-foreground">Start Date</span>
+              <span className="font-mono font-medium tabular-nums text-foreground">
                 {new Date(agreement.startDate).toLocaleDateString()}
               </span>
             </div>
             {agreement.endDate && (
               <div className="flex justify-between gap-4">
-                <span className="text-warm-500 dark:text-cream-400">End Date</span>
-                <span className="font-medium text-warm-900 dark:text-cream-100">
+                <span className="text-muted-foreground">End Date</span>
+                <span className="font-mono font-medium tabular-nums text-foreground">
                   {new Date(agreement.endDate).toLocaleDateString()}
                 </span>
               </div>
@@ -343,10 +337,10 @@ export function EditableServiceAgreement({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-warm-500 dark:text-cream-400">
+        <p className="text-sm text-muted-foreground">
           No financial details yet. Add this location&apos;s monthly charge and your labor,
           material, and other costs to track its profit and margin — use{' '}
-          <span className="font-medium text-warm-700 dark:text-cream-300">
+          <span className="font-medium text-foreground">
             Add financial details
           </span>{' '}
           above.

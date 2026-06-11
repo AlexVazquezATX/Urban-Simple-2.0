@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { ArrowLeft, Sparkles, Loader2, Check, Upload, RefreshCw, Image as ImageIcon, Link as LinkIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Card } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -269,12 +270,12 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
 
         <Card className="p-8">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-full bg-ocean-100 flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-ocean-600" />
+            <div className="w-12 h-12 rounded-full bg-gold-600/10 dark:bg-gold-400/12 flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-gold-600 dark:text-gold-400" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-charcoal-900 dark:text-cream-100">AI Blog Generator</h2>
-              <p className="text-charcoal-600 dark:text-cream-400">Create engaging Austin content in minutes</p>
+              <h2 className="font-display text-2xl font-bold tracking-[-0.5px] text-foreground">AI Blog Generator</h2>
+              <p className="text-muted-foreground">Create engaging Austin content in minutes</p>
             </div>
           </div>
 
@@ -366,7 +367,8 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
             <Button
               onClick={handleGenerateIdeas}
               disabled={loading || !params.category || !params.contentFocus}
-              className="w-full bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700"
+              variant="gold"
+              className="w-full"
             >
               {loading ? (
                 <>
@@ -395,7 +397,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
           Back to Parameters
         </Button>
 
-        <h2 className="text-2xl font-bold text-charcoal-900 dark:text-cream-100 mb-6">
+        <h2 className="font-display text-2xl font-bold tracking-[-0.5px] text-foreground mb-6">
           Select a Post Idea
         </h2>
 
@@ -403,26 +405,23 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
           {ideas && ideas.map((idea, index) => (
             <Card
               key={index}
-              className="p-6 cursor-pointer hover:border-ocean-500 hover:shadow-md transition-all"
+              className="p-6 cursor-pointer hover:border-primary/40 hover:shadow-md transition-all"
               onClick={() => handleSelectIdea(idea)}
             >
-              <h3 className="text-xl font-semibold text-charcoal-900 dark:text-cream-100 mb-2">
+              <h3 className="font-display text-xl font-bold tracking-[-0.3px] text-foreground mb-2">
                 {idea.title}
               </h3>
-              <p className="text-charcoal-600 dark:text-cream-400 mb-3">
-                <strong>Angle:</strong> {idea.angle}
+              <p className="text-muted-foreground mb-3">
+                <strong className="text-foreground">Angle:</strong> {idea.angle}
               </p>
-              <p className="text-charcoal-600 dark:text-cream-400 mb-3">
-                <strong>Hook:</strong> {idea.hook}
+              <p className="text-muted-foreground mb-3">
+                <strong className="text-foreground">Hook:</strong> {idea.hook}
               </p>
               <div className="flex flex-wrap gap-2">
                 {idea.keywords && idea.keywords.map((keyword, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 rounded-full bg-cream-100 dark:bg-charcoal-800 text-charcoal-700 dark:text-cream-300 text-sm"
-                  >
+                  <Badge key={i} variant="neutral">
                     {keyword}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </Card>
@@ -437,14 +436,14 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
     return (
       <div className="p-6 max-w-3xl mx-auto">
         <Card className="p-12 text-center">
-          <Loader2 className="w-16 h-16 mx-auto mb-6 text-ocean-600 animate-spin" />
-          <h2 className="text-2xl font-bold text-charcoal-900 dark:text-cream-100 mb-2">
+          <Loader2 className="w-16 h-16 mx-auto mb-6 text-primary animate-spin" />
+          <h2 className="font-display text-2xl font-bold tracking-[-0.5px] text-foreground mb-2">
             Creating Your Article
           </h2>
-          <p className="text-charcoal-600 dark:text-cream-400 mb-6">
+          <p className="text-muted-foreground mb-6">
             AI is writing a 600-1000 word article and generating a featured image...
           </p>
-          <p className="text-sm text-charcoal-500 dark:text-cream-400">
+          <p className="text-sm text-muted-foreground">
             This may take 30-60 seconds
           </p>
         </Card>
@@ -472,7 +471,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
             <Button
               onClick={() => handlePublish('published')}
               disabled={loading}
-              className="bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700"
+              variant="gold"
             >
               {loading ? (
                 <>
@@ -561,8 +560,8 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
                   )}
                 </div>
               ) : (
-                <div className="aspect-video bg-cream-100 dark:bg-charcoal-800 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-charcoal-400 dark:text-cream-400">
+                <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center">
+                  <div className="text-center text-muted-foreground">
                     <ImageIcon className="w-10 h-10 mx-auto mb-2" />
                     <p className="text-sm">No image selected</p>
                   </div>
@@ -571,8 +570,8 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
 
               {/* Image Options Panel */}
               {showImageOptions && (
-                <div className="mt-4 p-4 bg-cream-50 dark:bg-charcoal-800 rounded-lg border border-cream-200 dark:border-charcoal-700 space-y-4">
-                  <h4 className="text-sm font-semibold text-charcoal-900 dark:text-cream-100">Change Image</h4>
+                <div className="mt-4 p-4 bg-secondary/50 rounded-lg border border-border space-y-4">
+                  <h4 className="text-sm font-semibold text-foreground">Change Image</h4>
 
                   {/* Regenerate AI Image */}
                   <Button
@@ -630,7 +629,7 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="w-full text-xs text-charcoal-500 dark:text-cream-400"
+                    className="w-full text-xs"
                     onClick={() => setShowImageOptions(false)}
                   >
                     Cancel
@@ -641,28 +640,25 @@ export function AIGenerationWizard({ categories, onComplete, onCancel }: AIGener
 
             {/* Metadata */}
             <Card className="p-4">
-              <h3 className="font-semibold mb-4">SEO & Metadata</h3>
+              <h3 className="font-display text-[15px] font-bold tracking-[-0.2px] text-foreground mb-4">SEO & Metadata</h3>
               <div className="space-y-3 text-sm">
                 <div>
                   <Label className="text-xs">Meta Description</Label>
-                  <p className="text-charcoal-600 dark:text-cream-400">{editedPost.metaDescription}</p>
+                  <p className="text-muted-foreground">{editedPost.metaDescription}</p>
                 </div>
                 <div>
                   <Label className="text-xs">Keywords</Label>
                   <div className="flex flex-wrap gap-1 mt-1">
                     {editedPost.keywords && editedPost.keywords.map((keyword: string, i: number) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 rounded-full bg-cream-100 dark:bg-charcoal-800 text-charcoal-700 dark:text-cream-300 text-xs"
-                      >
+                      <Badge key={i} variant="neutral">
                         {keyword}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
                 <div>
                   <Label className="text-xs">Read Time</Label>
-                  <p className="text-charcoal-600 dark:text-cream-400">{editedPost.readTime} minutes</p>
+                  <p className="font-mono text-xs tabular-nums text-muted-foreground">{editedPost.readTime} minutes</p>
                 </div>
               </div>
             </Card>

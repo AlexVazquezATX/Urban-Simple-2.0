@@ -6,8 +6,6 @@ import {
   Users,
   Plus,
   Search,
-  Filter,
-  TrendingUp,
   DollarSign,
   Sparkles,
   UserPlus,
@@ -27,6 +25,25 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { PageHeader } from '@/components/layout/page-header'
+import { StatCard } from '@/components/ui/stat-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { formatMoney } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
@@ -54,18 +71,20 @@ interface Stats {
   revenueThisMonth: number
 }
 
-const PLAN_COLORS: Record<string, string> = {
-  TRIAL: 'bg-gray-100 text-gray-700 border-gray-200',
-  STARTER: 'bg-blue-100 text-blue-700 border-blue-200',
-  PROFESSIONAL: 'bg-purple-100 text-purple-700 border-purple-200',
-  ENTERPRISE: 'bg-amber-100 text-amber-700 border-amber-200',
+type ChipTone = 'neutral' | 'gold' | 'teal' | 'coral' | 'green'
+
+const PLAN_VARIANTS: Record<string, ChipTone> = {
+  TRIAL: 'neutral',
+  STARTER: 'neutral',
+  PROFESSIONAL: 'gold',
+  ENTERPRISE: 'gold',
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  active: 'bg-green-100 text-green-700',
-  paused: 'bg-yellow-100 text-yellow-700',
-  cancelled: 'bg-red-100 text-red-700',
-  expired: 'bg-gray-100 text-gray-500',
+const STATUS_VARIANTS: Record<string, ChipTone> = {
+  active: 'green',
+  paused: 'neutral',
+  cancelled: 'coral',
+  expired: 'neutral',
 }
 
 export default function StudioClientsPage() {
@@ -158,272 +177,221 @@ export default function StudioClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-warm-50 dark:bg-charcoal-950">
-      {/* Header */}
-      <div className="border-b border-warm-200 dark:border-charcoal-700 bg-white dark:bg-charcoal-900">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-lime-100 rounded-sm">
-                <Users className="w-5 h-5 text-lime-700" />
-              </div>
-              <div>
-                <h1 className="text-lg font-display font-medium text-warm-900 dark:text-cream-100">
-                  Studio Clients
-                </h1>
-                <p className="text-sm text-warm-500 dark:text-cream-400">
-                  Manage Creative Studio subscriptions
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="lime"
-              size="sm"
-              className="rounded-sm"
-              onClick={() => setShowAddModal(true)}
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Client
-            </Button>
-          </div>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        kicker="STUDIO · BACKHAUS"
+        title="Studio Clients"
+        subtitle="Manage Creative Studio subscriptions"
+        actions={
+          <Button variant="gold" onClick={() => setShowAddModal(true)}>
+            <Plus className="size-4" />
+            Add Client
+          </Button>
+        }
+      />
 
-      {/* Stats Cards */}
+      {/* KPI row */}
       {stats && (
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
-                <Users className="w-3.5 h-3.5" />
-                Total Clients
-              </div>
-              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                {stats.totalClients}
-              </p>
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-                {stats.activeClients} active
-              </p>
-            </div>
-
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
-                <Sparkles className="w-3.5 h-3.5" />
-                Generations
-              </div>
-              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                {stats.totalGenerationsThisMonth}
-              </p>
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">This month</p>
-            </div>
-
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
-                <UserPlus className="w-3.5 h-3.5" />
-                New Signups
-              </div>
-              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                {stats.recentSignups}
-              </p>
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">Last 7 days</p>
-            </div>
-
-            <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 p-4">
-              <div className="flex items-center gap-2 text-warm-500 dark:text-cream-400 text-xs mb-1">
-                <DollarSign className="w-3.5 h-3.5" />
-                MRR
-              </div>
-              <p className="text-2xl font-display font-medium text-warm-900 dark:text-cream-100">
-                ${stats.revenueThisMonth.toLocaleString()}
-              </p>
-              <p className="text-xs text-warm-500 dark:text-cream-400 mt-1">
-                {stats.trialClients} on trial
-              </p>
-            </div>
-          </div>
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard
+            label="Total Clients"
+            icon={Users}
+            value={stats.totalClients}
+            sub={`${stats.activeClients} active`}
+          />
+          <StatCard
+            label="Generations"
+            icon={Sparkles}
+            value={stats.totalGenerationsThisMonth}
+            sub="This month"
+          />
+          <StatCard
+            label="New Signups"
+            icon={UserPlus}
+            value={stats.recentSignups}
+            sub="Last 7 days"
+          />
+          <StatCard
+            label="MRR"
+            icon={DollarSign}
+            value={formatMoney(stats.revenueThisMonth)}
+            sub={`${stats.trialClients} on trial`}
+          />
         </div>
       )}
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <form onSubmit={handleSearch} className="flex-1 min-w-[200px] max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-warm-400" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search clients..."
-                className="pl-9 rounded-sm"
-              />
-            </div>
-          </form>
-
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-warm-500" />
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 text-sm rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100"
-            >
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="paused">Paused</option>
-              <option value="cancelled">Cancelled</option>
-              <option value="expired">Expired</option>
-            </select>
-
-            <select
-              value={filterPlan}
-              onChange={(e) => setFilterPlan(e.target.value)}
-              className="px-3 py-2 text-sm rounded-sm border border-warm-300 dark:border-charcoal-700 bg-white dark:bg-charcoal-900 dark:text-cream-100"
-            >
-              <option value="">All Plans</option>
-              <option value="TRIAL">Trial</option>
-              <option value="STARTER">Starter</option>
-              <option value="PROFESSIONAL">Professional</option>
-              <option value="ENTERPRISE">Max</option>
-            </select>
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <form onSubmit={handleSearch} className="min-w-[200px] max-w-md flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search clients..."
+              className="pl-9"
+            />
           </div>
+        </form>
+
+        <div className="flex items-center gap-2">
+          <Select
+            value={filterStatus || 'all'}
+            onValueChange={(value) => setFilterStatus(value === 'all' ? '' : value)}
+          >
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="All Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="paused">Paused</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filterPlan || 'all'}
+            onValueChange={(value) => setFilterPlan(value === 'all' ? '' : value)}
+          >
+            <SelectTrigger className="w-[150px]">
+              <SelectValue placeholder="All Plans" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Plans</SelectItem>
+              <SelectItem value="TRIAL">Trial</SelectItem>
+              <SelectItem value="STARTER">Starter</SelectItem>
+              <SelectItem value="PROFESSIONAL">Professional</SelectItem>
+              <SelectItem value="ENTERPRISE">Max</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
       {/* Client List */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 pb-8">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-6 h-6 animate-spin text-warm-400" />
-          </div>
-        ) : clients.length > 0 ? (
-          <div className="bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700 overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-warm-50 dark:bg-charcoal-800 border-b border-warm-200 dark:border-charcoal-700">
-                <tr>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
-                    Client
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
-                    Plan
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
-                    Usage
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
-                    Status
-                  </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-warm-600 dark:text-cream-400 uppercase tracking-wide">
-                    Last Active
-                  </th>
-                  <th className="px-4 py-3"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-warm-100 dark:divide-charcoal-700">
-                {clients.map((client) => (
-                  <tr key={client.id} className="hover:bg-warm-50 dark:hover:bg-charcoal-800 transition-colors">
-                    <td className="px-4 py-3">
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="size-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : clients.length > 0 ? (
+        <div className="overflow-hidden rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-4">Client</TableHead>
+                <TableHead>Plan</TableHead>
+                <TableHead>Usage</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Last Active</TableHead>
+                <TableHead className="pr-4 text-right">
+                  <span className="sr-only">View</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clients.map((client) => {
+                const overLimit = client.generationsUsed > client.generationsLimit
+                return (
+                  <TableRow key={client.id}>
+                    <TableCell className="pl-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-sm bg-warm-100 flex items-center justify-center">
-                          <Building2 className="w-4 h-4 text-warm-500" />
+                        <div className="grid size-9 shrink-0 place-items-center rounded-[10px] bg-secondary">
+                          <Building2 className="size-4 text-muted-foreground" />
                         </div>
-                        <div>
-                          <p className="font-medium text-warm-900 dark:text-cream-100">
+                        <div className="min-w-0">
+                          <p className="font-medium text-foreground">
                             {client.restaurantName || client.companyName}
                           </p>
                           {client.restaurantName && (
-                            <p className="text-xs text-warm-500">{client.companyName}</p>
+                            <p className="text-xs text-muted-foreground">{client.companyName}</p>
                           )}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-1.5">
-                        <Badge
-                          className={cn(
-                            'text-xs rounded-sm',
-                            PLAN_COLORS[client.planTier] || PLAN_COLORS.TRIAL
-                          )}
-                        >
+                        <Badge variant={PLAN_VARIANTS[client.planTier] || 'neutral'}>
                           {client.planTier}
                         </Badge>
                         {client.isComplementary && (
-                          <Badge className="bg-purple-100 text-purple-700 text-xs rounded-sm">
-                            <Gift className="w-3 h-3 mr-0.5" />
+                          <Badge variant="teal">
+                            <Gift />
                             Comp
                           </Badge>
                         )}
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 max-w-[100px] h-2 bg-warm-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 w-[100px] overflow-hidden rounded-full bg-secondary">
                           <div
                             className={cn(
                               'h-full rounded-full',
-                              client.usagePercent >= 90
-                                ? 'bg-red-500'
-                                : client.usagePercent >= 70
-                                  ? 'bg-amber-500'
-                                  : 'bg-lime-500'
+                              overLimit
+                                ? 'bg-coral-600 dark:bg-coral-300'
+                                : 'bg-gold-600 dark:bg-gold-400'
                             )}
                             style={{ width: `${Math.min(client.usagePercent, 100)}%` }}
                           />
                         </div>
-                        <span className="text-xs text-warm-600">
+                        <span
+                          className={cn(
+                            'font-mono text-xs tabular-nums',
+                            overLimit
+                              ? 'text-coral-600 dark:text-coral-300'
+                              : 'text-muted-foreground'
+                          )}
+                        >
                           {client.generationsUsed}/{client.generationsLimit}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Badge
-                        className={cn(
-                          'text-xs rounded-sm',
-                          STATUS_COLORS[client.status] || STATUS_COLORS.active
-                        )}
-                      >
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={STATUS_VARIANTS[client.status] || 'neutral'}>
                         {client.status}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-warm-600 dark:text-cream-400">
+                    </TableCell>
+                    <TableCell className="font-mono text-xs tabular-nums text-muted-foreground">
                       {client.lastActivity
                         ? new Date(client.lastActivity).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                           })
-                        : 'Never'}
-                    </td>
-                    <td className="px-4 py-3">
-                      <Link href={`/admin/studio-clients/${client.id}`}>
-                        <Button variant="ghost" size="sm" className="rounded-sm">
-                          <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-20 bg-white dark:bg-charcoal-900 rounded-sm border border-warm-200 dark:border-charcoal-700">
-            <div className="w-16 h-16 rounded-sm bg-warm-100 flex items-center justify-center mx-auto mb-4">
-              <Users className="w-7 h-7 text-warm-400" />
-            </div>
-            <h3 className="text-sm font-medium text-warm-900 dark:text-cream-100 mb-1">No clients yet</h3>
-            <p className="text-sm text-warm-500 dark:text-cream-400 mb-4">
-              Add your first Creative Studio client
-            </p>
-            <Button
-              variant="lime"
-              size="sm"
-              className="rounded-sm"
-              onClick={() => setShowAddModal(true)}
-            >
-              <Plus className="w-4 h-4 mr-1.5" />
-              Add Client
-            </Button>
-          </div>
-        )}
-      </div>
+                        : '—'}
+                    </TableCell>
+                    <TableCell className="pr-4 text-right">
+                      <Button asChild variant="ghost" size="icon-sm">
+                        <Link
+                          href={`/admin/studio-clients/${client.id}`}
+                          aria-label="View client"
+                        >
+                          <ChevronRight className="size-4" />
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="rounded-[14px] border border-border bg-card shadow-soft dark:shadow-none">
+          <EmptyState
+            icon={Users}
+            title="No studio clients yet"
+            description="Add your first Creative Studio client — their plan, usage, and activity will all live here."
+            action={
+              <Button variant="outline" onClick={() => setShowAddModal(true)}>
+                <Plus className="size-4" />
+                Add Client
+              </Button>
+            }
+            className="py-16"
+          />
+        </div>
+      )}
 
       {/* Add Client Modal */}
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
@@ -442,7 +410,7 @@ export default function StudioClientsPage() {
                   setNewClient({ ...newClient, companyName: e.target.value })
                 }
                 placeholder="Salty Sow"
-                className="rounded-sm mt-1.5"
+                className="mt-1.5"
               />
             </div>
 
@@ -456,7 +424,7 @@ export default function StudioClientsPage() {
                   setNewClient({ ...newClient, email: e.target.value })
                 }
                 placeholder="owner@restaurant.com"
-                className="rounded-sm mt-1.5"
+                className="mt-1.5"
               />
             </div>
 
@@ -469,26 +437,29 @@ export default function StudioClientsPage() {
                   setNewClient({ ...newClient, phone: e.target.value })
                 }
                 placeholder="(512) 555-0123"
-                className="rounded-sm mt-1.5"
+                className="mt-1.5"
               />
             </div>
 
             <div>
               <Label htmlFor="planTier">Plan</Label>
-              <select
-                id="planTier"
+              <Select
                 value={newClient.planTier}
-                onChange={(e) =>
-                  setNewClient({ ...newClient, planTier: e.target.value })
+                onValueChange={(value) =>
+                  setNewClient({ ...newClient, planTier: value })
                 }
                 disabled={newClient.isComplementary}
-                className="w-full px-3 py-2 rounded-sm border border-warm-300 bg-white text-sm mt-1.5 disabled:opacity-50"
               >
-                <option value="TRIAL">Free (10 generations total)</option>
-                <option value="STARTER">Starter ($29/mo, 100 generations)</option>
-                <option value="PROFESSIONAL">Pro ($59/mo, 300 generations)</option>
-                <option value="ENTERPRISE">Max ($99/mo, 1,000 generations)</option>
-              </select>
+                <SelectTrigger id="planTier" className="mt-1.5 w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRIAL">Free (10 generations total)</SelectItem>
+                  <SelectItem value="STARTER">Starter ($29/mo, 100 generations)</SelectItem>
+                  <SelectItem value="PROFESSIONAL">Pro ($59/mo, 300 generations)</SelectItem>
+                  <SelectItem value="ENTERPRISE">Max ($99/mo, 1,000 generations)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2.5">
@@ -504,12 +475,15 @@ export default function StudioClientsPage() {
                     planTier: checked ? 'PROFESSIONAL' : 'TRIAL',
                   })
                 }}
-                className="rounded border-warm-300 text-purple-500 focus:ring-purple-500"
+                className="size-4 rounded border-input accent-primary"
               />
-              <Label htmlFor="isComplementary" className="text-sm text-warm-700 flex items-center gap-1.5">
-                <Gift className="w-3.5 h-3.5 text-purple-500" />
+              <label
+                htmlFor="isComplementary"
+                className="flex items-center gap-1.5 text-sm text-foreground"
+              >
+                <Gift className="size-3.5 text-teal-600 dark:text-teal-300" />
                 Grant complementary Pro access (free, no billing)
-              </Label>
+              </label>
             </div>
 
             <DialogFooter>
@@ -517,24 +491,18 @@ export default function StudioClientsPage() {
                 type="button"
                 variant="outline"
                 onClick={() => setShowAddModal(false)}
-                className="rounded-sm"
               >
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                variant="lime"
-                disabled={addingClient}
-                className="rounded-sm"
-              >
+              <Button type="submit" variant="gold" disabled={addingClient}>
                 {addingClient ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                    <Loader2 className="size-4 animate-spin" />
                     Creating...
                   </>
                 ) : (
                   <>
-                    <Plus className="w-4 h-4 mr-1.5" />
+                    <Plus className="size-4" />
                     Add Client
                   </>
                 )}
