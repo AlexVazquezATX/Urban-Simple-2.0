@@ -35,7 +35,10 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const [impersonating, setImpersonating] = useState(false)
   const [impersonatedClientId, setImpersonatedClientId] = useState<string | null>(null)
   const isSuperAdmin = realRole === 'SUPER_ADMIN'
-  
+  // Tasks is an owner/admin tool — managers and associates never see the
+  // Tasks shortcuts in the mobile chrome (matches the sidebar + middleware).
+  const canUseTasks = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN'
+
   // Track if initial auth check has completed
   const hasCheckedAuth = useRef(false)
 
@@ -124,28 +127,30 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 </Link>
               </div>
 
-              {/* Right: Quick actions */}
-              <div className="flex items-center gap-2">
-                <Link href="/tasks">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-10 w-10 rounded-lg"
-                    title="Tasks"
-                  >
-                    <CheckSquare className="h-5 w-5" />
-                  </Button>
-                </Link>
-                <Link href="/tasks?new=true">
-                  <Button
-                    size="icon"
-                    className="h-10 w-10 rounded-lg"
-                    title="Add Task"
-                  >
-                    <Plus className="h-5 w-5" />
-                  </Button>
-                </Link>
-              </div>
+              {/* Right: Quick actions — Tasks is owner/admin only */}
+              {canUseTasks && (
+                <div className="flex items-center gap-2">
+                  <Link href="/tasks">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-10 w-10 rounded-lg"
+                      title="Tasks"
+                    >
+                      <CheckSquare className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link href="/tasks?new=true">
+                    <Button
+                      size="icon"
+                      className="h-10 w-10 rounded-lg"
+                      title="Add Task"
+                    >
+                      <Plus className="h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </header>
 
@@ -179,24 +184,30 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 <span className="text-xs font-medium">Home</span>
               </Link>
 
-              <Link
-                href="/tasks"
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                  pathname === '/tasks' || pathname?.startsWith('/tasks/')
-                    ? 'text-primary bg-sidebar-accent'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <CheckSquare className="h-5 w-5" />
-                <span className="text-xs font-medium">Tasks</span>
-              </Link>
+              {canUseTasks && (
+                <Link
+                  href="/tasks"
+                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                    pathname === '/tasks' || pathname?.startsWith('/tasks/')
+                      ? 'text-primary bg-sidebar-accent'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <CheckSquare className="h-5 w-5" />
+                  <span className="text-xs font-medium">Tasks</span>
+                </Link>
+              )}
 
-              {/* Center Add Button */}
-              <Link href="/tasks?new=true" className="-mt-6">
-                <div className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-card flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95">
-                  <Plus className="h-7 w-7" />
-                </div>
-              </Link>
+              {/* Center Add Button — only for task users (owner/admin). For
+                  everyone else the floating "+" would dead-end, so it's hidden
+                  and the nav reads Home · AI · More. */}
+              {canUseTasks && (
+                <Link href="/tasks?new=true" className="-mt-6">
+                  <div className="h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-card flex items-center justify-center hover:bg-primary/90 transition-all active:scale-95">
+                    <Plus className="h-7 w-7" />
+                  </div>
+                </Link>
+              )}
 
               <button
                 onClick={() => setIsAIChatOpen(true)}

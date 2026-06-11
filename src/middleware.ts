@@ -149,8 +149,35 @@ export async function middleware(request: NextRequest) {
   const isLoginPage = pathname === '/login' || pathname === '/app/login'
   response.headers.set('x-is-login-page', isLoginPage ? 'true' : 'false')
 
-  // Protect authenticated routes - require login + role check
-  if (pathname.startsWith('/dashboard') || pathname.startsWith('/app') || pathname.startsWith('/clients') || pathname.startsWith('/invoices') || pathname.startsWith('/billing') || pathname.startsWith('/admin') || pathname.startsWith('/creative-studio')) {
+  // Protect authenticated routes - require login + role check.
+  // These prefixes trigger the server-side role lookup so access is
+  // *enforced*, not just hidden in the sidebar.
+  const AUTHED_PREFIXES = [
+    '/dashboard', '/app', '/clients', '/locations', '/operations', '/chat',
+    '/team', '/invoices', '/billing', '/financials', '/growth', '/creative-hub',
+    '/creative-studio', '/pulse', '/chat-analytics', '/tasks', '/admin', '/command',
+  ]
+
+  // Per-section role matrix — mirrors the sidebar's `roles` so what's hidden
+  // from a role's nav is also blocked if they URL-hack to it. Anyone not in
+  // the allow-list is bounced to their own dashboard. Order matters: more
+  // specific prefixes (e.g. /dashboard/blog) must precede general ones.
+  const ROUTE_ROLES: Array<{ prefix: string; allow: string[] }> = [
+    { prefix: '/admin', allow: ['SUPER_ADMIN'] },
+    { prefix: '/dashboard/blog', allow: ['SUPER_ADMIN'] },
+    { prefix: '/pulse', allow: ['SUPER_ADMIN'] },
+    { prefix: '/financials', allow: ['SUPER_ADMIN'] },
+    { prefix: '/tasks', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/billing', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/invoices', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/growth', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/creative-hub', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/creative-studio', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/chat-analytics', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/command', allow: ['SUPER_ADMIN', 'ADMIN'] },
+  ]
+
+  if (AUTHED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
@@ -161,7 +188,7 @@ export async function middleware(request: NextRequest) {
 
     if (user) {
       const realRole = await getUserRole(user.id)
-      const role = applyImpersonation(realRole, request)
+      const role = applyImpersonation(realRole, request) ?? ''
 
       // CLIENT_USER cannot access admin routes — redirect to /portal (the
       // Urban Simple client portal) which is now the default landing for
@@ -170,9 +197,11 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/portal', request.url))
       }
 
-      // Admin routes require SUPER_ADMIN role
-      if (pathname.startsWith('/admin') && role !== 'SUPER_ADMIN') {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+      // Enforce the section role matrix.
+      for (const { prefix, allow } of ROUTE_ROLES) {
+        if (pathname.startsWith(prefix) && !allow.includes(role)) {
+          return NextResponse.redirect(new URL('/dashboard', request.url))
+        }
       }
     }
   }
