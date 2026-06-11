@@ -222,6 +222,8 @@ export async function POST(request: NextRequest) {
       dueDate,
       scheduledDate,
       isStarred = false,
+      loggedMinutes = 0,
+      completionPercent = 0,
       tagIds = [],
       links = [],
     } = body
@@ -248,6 +250,8 @@ export async function POST(request: NextRequest) {
         scheduledDate: scheduledDate ? new Date(scheduledDate) : null,
         isStarred,
         starredAt: isStarred ? new Date() : null,
+        loggedMinutes: Math.max(0, Math.round(Number(loggedMinutes) || 0)),
+        completionPercent: Math.min(100, Math.max(0, Math.round(Number(completionPercent) || 0))),
         // Create tag assignments
         tags: tagIds.length > 0 ? {
           create: tagIds.map((tagId: string) => ({

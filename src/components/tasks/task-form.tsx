@@ -11,11 +11,13 @@ import {
   Link2,
   Star,
   Target,
+  Clock,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
 import {
   Select,
   SelectContent,
@@ -39,6 +41,8 @@ interface Task {
   focusPriority: number | null
   isStarred: boolean
   starredAt: string | null
+  loggedMinutes: number
+  completionPercent: number
   createdAt: string
   project: {
     id: string
@@ -121,6 +125,9 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
   const [dueDate, setDueDate] = useState(task?.dueDate?.split('T')[0] || '')
   const [scheduledDate, setScheduledDate] = useState(task?.scheduledDate?.split('T')[0] || '')
   const [isStarred, setIsStarred] = useState(task?.isStarred || false)
+  const [loggedHours, setLoggedHours] = useState(Math.floor((task?.loggedMinutes || 0) / 60))
+  const [loggedMins, setLoggedMins] = useState((task?.loggedMinutes || 0) % 60)
+  const [completionPercent, setCompletionPercent] = useState(task?.completionPercent || 0)
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>(
     task?.tags.map(t => t.tag.id) || []
   )
@@ -186,6 +193,8 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
           dueDate: dueDate || null,
           scheduledDate: scheduledDate || null,
           isStarred,
+          loggedMinutes: loggedHours * 60 + loggedMins,
+          completionPercent,
           tagIds: selectedTagIds,
         }),
       })
@@ -451,6 +460,56 @@ export function TaskForm({ task, projects, onClose, onSave }: TaskFormProps) {
                 onChange={(e) => setScheduledDate(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Time logged */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Time logged
+            </Label>
+            <div className="flex items-center gap-3">
+              <div className="relative w-24">
+                <Input
+                  type="number"
+                  min={0}
+                  value={loggedHours}
+                  onChange={(e) => setLoggedHours(Math.max(0, parseInt(e.target.value) || 0))}
+                  className="pr-9"
+                  aria-label="Hours"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">hr</span>
+              </div>
+              <div className="relative w-24">
+                <Input
+                  type="number"
+                  min={0}
+                  max={59}
+                  value={loggedMins}
+                  onChange={(e) => setLoggedMins(Math.min(59, Math.max(0, parseInt(e.target.value) || 0)))}
+                  className="pr-11"
+                  aria-label="Minutes"
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">min</span>
+              </div>
+              <span className="text-xs text-muted-foreground">of real work</span>
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <Label>Progress</Label>
+              <span className="font-mono text-sm tabular-nums text-foreground">{completionPercent}%</span>
+            </div>
+            <Slider
+              value={[completionPercent]}
+              min={0}
+              max={100}
+              step={5}
+              onValueChange={([v]) => setCompletionPercent(v)}
+              aria-label="Completion percent"
+            />
           </div>
 
           {/* Tags */}

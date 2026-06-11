@@ -104,6 +104,8 @@ export async function PATCH(
       focusReason,
       focusPriority,
       isStarred,
+      loggedMinutes,
+      completionPercent,
       tagIds,
       links,
     } = body
@@ -118,6 +120,8 @@ export async function PATCH(
       // Set completedAt when marking as done
       if (status === 'done') {
         updateData.completedAt = new Date()
+        // Reaching done implies 100% unless the caller set a value explicitly.
+        if (completionPercent === undefined) updateData.completionPercent = 100
       } else if (status === 'todo' || status === 'in_progress') {
         updateData.completedAt = null
       }
@@ -136,6 +140,12 @@ export async function PATCH(
       updateData.isStarred = isStarred
       // Set starredAt when starring, clear when unstarring
       updateData.starredAt = isStarred ? new Date() : null
+    }
+    if (loggedMinutes !== undefined) {
+      updateData.loggedMinutes = Math.max(0, Math.round(Number(loggedMinutes) || 0))
+    }
+    if (completionPercent !== undefined) {
+      updateData.completionPercent = Math.min(100, Math.max(0, Math.round(Number(completionPercent) || 0)))
     }
 
     // Handle tags update

@@ -2254,6 +2254,10 @@ model Task {
   isStarred Boolean   @default(false) @map("is_starred")
   starredAt DateTime? @map("starred_at")
 
+  // Per-task time + progress tracking (user-entered)
+  loggedMinutes     Int @default(0) @map("logged_minutes")     // total real-work minutes
+  completionPercent Int @default(0) @map("completion_percent") // 0-100
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

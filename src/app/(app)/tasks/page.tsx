@@ -40,6 +40,7 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/layout/page-header'
 import { cn } from '@/lib/utils'
+import { formatMinutes } from '@/lib/format'
 import { TaskForm } from '@/components/tasks/task-form'
 import { TaskDetailPanel } from '@/components/tasks/task-detail-panel'
 import { ProjectForm } from '@/components/tasks/project-form'
@@ -60,6 +61,8 @@ interface Task {
   focusPriority: number | null
   isStarred: boolean
   starredAt: string | null
+  loggedMinutes: number
+  completionPercent: number
   createdAt: string
   project: {
     id: string
@@ -326,6 +329,8 @@ function TasksContent() {
       focusPriority: null,
       isStarred: false,
       starredAt: null,
+      loggedMinutes: 0,
+      completionPercent: 0,
       createdAt: new Date().toISOString(),
       project: assignedProject ? { id: assignedProject.id, name: assignedProject.name, color: assignedProject.color } : null,
       goal: null,
@@ -1195,6 +1200,29 @@ function TaskListRow({
           {task.tags.length > 2 && (
             <span className="text-[11px] text-muted-foreground">+{task.tags.length - 2}</span>
           )}
+
+          {/* Time logged */}
+          {task.loggedMinutes > 0 && (
+            <span className="inline-flex items-center gap-1 font-mono text-[11px] tabular-nums text-muted-foreground">
+              <Clock className="size-3" />
+              {formatMinutes(task.loggedMinutes)}
+            </span>
+          )}
+
+          {/* Completion progress */}
+          {task.completionPercent > 0 && task.status !== 'done' && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-1 w-10 overflow-hidden rounded-full bg-secondary">
+                <span
+                  className="block h-full rounded-full bg-primary"
+                  style={{ width: `${task.completionPercent}%` }}
+                />
+              </span>
+              <span className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                {task.completionPercent}%
+              </span>
+            </span>
+          )}
         </div>
       </div>
 
@@ -1347,7 +1375,30 @@ function TaskCard({
                 {formatDueDate(task.dueDate)}
               </span>
             )}
+
+            {/* Time logged */}
+            {task.loggedMinutes > 0 && (
+              <span className="inline-flex items-center gap-1 font-mono text-[11px] tabular-nums text-muted-foreground">
+                <Clock className="size-3" />
+                {formatMinutes(task.loggedMinutes)}
+              </span>
+            )}
           </div>
+
+          {/* Completion progress */}
+          {task.completionPercent > 0 && task.status !== 'done' && (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="h-1 flex-1 overflow-hidden rounded-full bg-secondary">
+                <span
+                  className="block h-full rounded-full bg-primary"
+                  style={{ width: `${task.completionPercent}%` }}
+                />
+              </span>
+              <span className="font-mono text-[10px] tabular-nums text-muted-foreground">
+                {task.completionPercent}%
+              </span>
+            </div>
+          )}
         </div>
       </div>
     </div>
