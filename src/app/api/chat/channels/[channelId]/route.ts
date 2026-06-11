@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,11 +17,9 @@ export async function PATCH(
     const body = await request.json()
     const { name, description } = body
 
-    // TODO: Get current user from session/auth
-    const currentUser = await prisma.user.findFirst()
-
+    const currentUser = await getCurrentUser()
     if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user is a member of the channel
@@ -87,11 +86,9 @@ export async function DELETE(
   try {
     const { channelId } = await params
 
-    // TODO: Get current user from session/auth
-    const currentUser = await prisma.user.findFirst()
-
+    const currentUser = await getCurrentUser()
     if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Check if user is the owner of the channel

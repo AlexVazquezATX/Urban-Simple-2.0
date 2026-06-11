@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 import { AI_PERSONAS } from '@/lib/ai/prompts'
 
 export const dynamic = 'force-dynamic'
@@ -137,14 +138,9 @@ export async function POST(
       )
     }
 
-    // TODO: Get user from session/auth
-    const user = await prisma.user.findFirst()
-
+    const user = await getCurrentUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Verify channel exists

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,11 +20,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Get current user from session/auth
-    const currentUser = await prisma.user.findFirst()
-
+    const currentUser = await getCurrentUser()
     if (!currentUser) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     if (currentUser.id === otherUserId) {

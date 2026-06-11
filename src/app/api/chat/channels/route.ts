@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,21 +10,14 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Get user from session/auth
-    // For now, we'll fetch all channels from the first company
-    const company = await prisma.company.findFirst()
-    const user = await prisma.user.findFirst()
-
-    if (!company || !user) {
-      return NextResponse.json(
-        { error: 'No company found. Please create a company first.' },
-        { status: 404 }
-      )
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const channels = await prisma.channel.findMany({
       where: {
-        companyId: company.id,
+        companyId: user.companyId,
         isArchived: false,
       },
       include: {
@@ -87,15 +81,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Get user from session/auth
-    const company = await prisma.company.findFirst()
-    const user = await prisma.user.findFirst()
-
-    if (!company || !user) {
-      return NextResponse.json(
-        { error: 'Company or user not found' },
-        { status: 404 }
-      )
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Create slug from name
@@ -107,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Check if slug already exists
     const existingChannel = await prisma.channel.findFirst({
       where: {
-        companyId: company.id,
+        companyId: user.companyId,
         slug,
       },
     })
@@ -122,7 +110,7 @@ export async function POST(request: NextRequest) {
     // Create channel
     const channel = await prisma.channel.create({
       data: {
-        companyId: company.id,
+        companyId: user.companyId,
         name: name.trim(),
         slug,
         description: description?.trim(),
