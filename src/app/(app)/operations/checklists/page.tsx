@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { ClipboardList, Pencil, Plus } from 'lucide-react'
+import { ClipboardList, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/layout/page-header'
-import { ChecklistForm } from '@/components/forms/checklist-form'
+import { NewChecklistButton } from '@/components/operations/new-checklist-button'
 import { DuplicateChecklistButton } from '@/components/operations/duplicate-checklist-button'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -51,14 +51,7 @@ async function ChecklistsList() {
         kicker="OPERATIONS · CHECKLISTS"
         title="Checklist Templates"
         subtitle="Create and manage reusable service checklists"
-        actions={
-          <ChecklistForm>
-            <Button variant="gold">
-              <Plus className="size-4" />
-              New Template
-            </Button>
-          </ChecklistForm>
-        }
+        actions={<NewChecklistButton />}
       />
 
       {templates.length === 0 ? (
@@ -69,12 +62,7 @@ async function ChecklistsList() {
               title="No checklists yet — build your first one"
               description="Templates keep every crew working the same standard, in English and Spanish. Create one and assign it to your locations."
               action={
-                <ChecklistForm>
-                  <Button variant="outline">
-                    <Plus className="size-4" />
-                    Create Your First Template
-                  </Button>
-                </ChecklistForm>
+                <NewChecklistButton variant="outline" label="Create Your First Template" />
               }
             />
           </CardContent>
