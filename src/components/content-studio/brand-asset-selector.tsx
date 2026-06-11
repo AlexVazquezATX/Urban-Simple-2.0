@@ -138,7 +138,7 @@ export function BrandAssetSelector({
         </div>
 
         {/* Asset grid */}
-        <div className="flex-1 overflow-y-auto scrollbar-elegant py-2">
+        <div className="flex-1 overflow-y-auto py-2">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="w-6 h-6 border-2 border-border border-t-gold-600 dark:border-t-gold-400 rounded-full animate-spin" />

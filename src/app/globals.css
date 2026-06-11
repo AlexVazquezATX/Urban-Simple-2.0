@@ -341,6 +341,78 @@
   --color-sidebar-muted: var(--color-ink-500);
 }
 
+/* ============================================================
+   Global scrollbars — one sleek system for every scroll surface
+   (page, kanban columns, tables, modals, panels). Thin rounded
+   pill thumb on an invisible track, no arrow buttons; thumb
+   brightens on hover and turns gold while dragging. Themed per
+   mode via the vars below.
+   ============================================================ */
+:root {
+  --scrollbar-thumb: rgba(156, 147, 126, 0.45);        /* cream-600 */
+  --scrollbar-thumb-hover: rgba(156, 147, 126, 0.75);
+  --scrollbar-thumb-active: var(--color-gold-500);
+}
+
+.dark {
+  --scrollbar-thumb: rgba(111, 106, 94, 0.5);          /* ink-500 */
+  --scrollbar-thumb-hover: rgba(168, 162, 148, 0.55);  /* ink-400 */
+  --scrollbar-thumb-active: var(--color-gold-400);
+}
+
+/* Firefox (no ::-webkit-scrollbar support): thin native, themed thumb,
+   invisible track. Scoped with @supports so Chromium keeps the richer
+   pseudo-element treatment below. */
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
+  }
+}
+
+/* Chromium/WebKit */
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 3px transparent border + padding-box clip = a slim 4px pill floating
+   in a 10px gutter; the border shrinks on hover so the pill grows. */
+*::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 999px;
+  min-height: 36px;
+  min-width: 36px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-thumb-hover);
+  border-width: 2px;
+}
+
+*::-webkit-scrollbar-thumb:active {
+  background-color: var(--scrollbar-thumb-active);
+  border-width: 2px;
+}
+
+/* Kill the square arrow buttons (Windows) and the track corner patch. */
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -540,63 +612,14 @@
     box-shadow: var(--shadow-inner-warm);
   }
 
-  /* Elegant custom scrollbar */
-  .scrollbar-elegant {
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-cream-400) transparent;
+  /* Hide the scrollbar entirely (filmstrips, chip rows) while keeping
+     the element scrollable. */
+  .scrollbar-hide {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
   }
-
-  .scrollbar-elegant::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .scrollbar-elegant::-webkit-scrollbar-track {
-    background: transparent;
-    border-radius: 10px;
-  }
-
-  .scrollbar-elegant::-webkit-scrollbar-thumb {
-    background: var(--color-cream-400);
-    border-radius: 10px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
-    transition: background 0.2s ease;
-  }
-
-  .scrollbar-elegant::-webkit-scrollbar-thumb:hover {
-    background: var(--color-cream-500);
-    background-clip: padding-box;
-  }
-
-  .scrollbar-elegant::-webkit-scrollbar-thumb:active {
-    background: var(--color-gold-400);
-    background-clip: padding-box;
-  }
-
-  /* Sidebar-specific elegant scrollbar */
-  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar {
-    width: 6px;
-  }
-
-  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
-    background: var(--color-cream-400);
-    border-radius: 10px;
-    border: 1px solid transparent;
-    background-clip: padding-box;
-  }
-
-  [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb:hover {
-    background: var(--color-cream-500);
-    background-clip: padding-box;
-  }
-
-  .dark [data-sidebar="content"].scrollbar-elegant::-webkit-scrollbar-thumb {
-    background: var(--color-ink-600);
-    background-clip: padding-box;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 
   /* Safe area padding for iPhone notch/home indicator */

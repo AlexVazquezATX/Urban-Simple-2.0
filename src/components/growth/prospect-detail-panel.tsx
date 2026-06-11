@@ -769,7 +769,7 @@ export function ProspectDetailPanel({
           </TabsList>
 
           {/* Details Tab */}
-          <TabsContent value="details" className="flex-1 overflow-y-auto scrollbar-elegant p-5 space-y-5 mt-0">
+          <TabsContent value="details" className="flex-1 overflow-y-auto p-5 space-y-5 mt-0">
             {/* Contact Information */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -1284,7 +1284,7 @@ export function ProspectDetailPanel({
           </TabsContent>
 
           {/* Activity Tab */}
-          <TabsContent value="activity" className="flex-1 overflow-y-auto scrollbar-elegant p-5 mt-0">
+          <TabsContent value="activity" className="flex-1 overflow-y-auto p-5 mt-0">
             {!prospect.activities || prospect.activities.length === 0 ? (
               <EmptyState
                 icon={Calendar}

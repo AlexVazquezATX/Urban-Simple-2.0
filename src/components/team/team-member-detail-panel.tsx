@@ -288,7 +288,7 @@ export function TeamMemberDetailPanel({
         </div>
 
         {/* Form - Scrollable */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto scrollbar-elegant p-5 space-y-5">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5 space-y-5">
           {/* Status Badge (for existing members) */}
           {member && !isNew && (
             <div className="flex items-center gap-2">

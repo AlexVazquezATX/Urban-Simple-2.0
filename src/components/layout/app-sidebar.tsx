@@ -234,7 +234,7 @@ export function AppSidebar() {
         </button>
       </SidebarHeader>
 
-      <SidebarContent className="scrollbar-elegant px-3 py-2">
+      <SidebarContent className="px-3 py-2">
         {navGroups.map((group) => {
           const visible = group.items.filter((item) => hasAccess(item.roles))
           if (visible.length === 0) return null

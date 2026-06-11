@@ -869,7 +869,7 @@ function TasksContent() {
         </div>
 
         {/* Content Area */}
-        <div className="scrollbar-elegant flex-1 overflow-auto px-4 pb-8 md:px-7">
+        <div className="flex-1 overflow-auto px-4 pb-8 md:px-7">
           {/* Goals Section - shown only when not filtering by project */}
           {(projectFilter === null || projectFilter === 'starred') && (
             <GoalsSection className="mb-4" />

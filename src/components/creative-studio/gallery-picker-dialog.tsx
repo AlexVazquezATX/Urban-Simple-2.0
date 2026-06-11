@@ -94,7 +94,7 @@ export function GalleryPickerDialog({
             <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
           </div>
         ) : items.length > 0 ? (
-          <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto scrollbar-elegant py-2">
+          <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto py-2">
             {items.map((item) => (
               <button
                 key={item.id}
