@@ -9,7 +9,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { StatCard } from '@/components/ui/stat-card'
 import { formatMoney } from '@/lib/format'
 import { canSeeFinancials } from '@/lib/financials'
-import { FocusWidget } from '@/components/dashboard/focus-widget'
+import { OnYourPlate, type PlateGroup, type PlateTask } from '@/components/dashboard/on-your-plate'
 import { TonightsOperations } from '@/components/dashboard/tonights-operations'
 import { NeedsAttention } from '@/components/dashboard/needs-attention'
 import { QuickActions } from '@/components/dashboard/quick-actions'
@@ -82,6 +82,77 @@ async function DashboardStats() {
 
   const monthName = new Date().toLocaleString('en-US', { month: 'long' })
 
+  // "On your plate" — open tasks grouped deterministically (no AI, no
+  // button): overdue → due today → starred/in-progress → up next.
+  const [openTasks, weeklyGoals] = await Promise.all([
+    prisma.task.findMany({
+      where: {
+        userId: user.id,
+        companyId: user.companyId,
+        status: { in: ['todo', 'in_progress'] },
+      },
+      include: {
+        project: { select: { name: true } },
+        goal: { select: { title: true } },
+      },
+      orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
+    }),
+    prisma.goal.findMany({
+      where: {
+        userId: user.id,
+        companyId: user.companyId,
+        period: 'weekly',
+        status: { in: ['active', 'completed'] },
+        periodStart: { lte: today },
+        periodEnd: { gte: today },
+      },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, title: true, progress: true },
+    }),
+  ])
+
+  const toPlateTask = (task: (typeof openTasks)[number]): PlateTask => ({
+    id: task.id,
+    title: task.title,
+    status: task.status,
+    isStarred: task.isStarred,
+    dueDate: task.dueDate?.toISOString() ?? null,
+    projectName: task.project?.name ?? null,
+    goalTitle: task.goal?.title ?? null,
+  })
+
+  const tomorrow = new Date(today)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  const overdueTasks = openTasks.filter(t => t.dueDate && t.dueDate < today)
+  const dueTodayTasks = openTasks.filter(t => t.dueDate && t.dueDate >= today && t.dueDate < tomorrow)
+  const shown = new Set([...overdueTasks, ...dueTodayTasks].map(t => t.id))
+  const inPlayTasks = openTasks.filter(
+    t => !shown.has(t.id) && (t.isStarred || t.status === 'in_progress')
+  )
+  inPlayTasks.forEach(t => shown.add(t.id))
+  const upNextTasks = openTasks.filter(t => !shown.has(t.id))
+
+  // Cap the card at ~7 rows, filling the most urgent groups first.
+  const MAX_ROWS = 7
+  let remaining = MAX_ROWS
+  const takeRows = (tasks: typeof openTasks) => {
+    const taken = tasks.slice(0, remaining)
+    remaining -= taken.length
+    return taken.map(toPlateTask)
+  }
+  const plateGroups: PlateGroup[] = [
+    { key: 'overdue', label: 'Overdue', tasks: takeRows(overdueTasks) },
+    { key: 'today', label: 'Due today', tasks: takeRows(dueTodayTasks) },
+    { key: 'inPlay', label: 'In play', tasks: takeRows(inPlayTasks) },
+    { key: 'upNext', label: 'Up next', tasks: takeRows(upNextTasks) },
+  ]
+  const shownCount = plateGroups.reduce((sum, g) => sum + g.tasks.length, 0)
+  const plateCounts = {
+    open: openTasks.length,
+    overdue: overdueTasks.length,
+    dueToday: dueTodayTasks.length,
+  }
+
   // Net cash flow mini strip — last 6 monthly snapshots (financials-gated)
   const snapshots = canSeeFinancials(user.role)
     ? await prisma.monthlyFinancialSnapshot.findMany({
@@ -140,7 +211,12 @@ async function DashboardStats() {
       {/* Main grid — work cards left, attention rail right */}
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_380px]">
         <div className="flex flex-col gap-4">
-          <FocusWidget />
+          <OnYourPlate
+            groups={plateGroups}
+            weeklyGoals={weeklyGoals}
+            moreCount={openTasks.length - shownCount}
+            counts={plateCounts}
+          />
           <TonightsOperations />
         </div>
         <div className="flex flex-col gap-4">
