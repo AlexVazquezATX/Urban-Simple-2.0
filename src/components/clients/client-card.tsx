@@ -13,9 +13,12 @@ import { marginToneClass } from './margin-tone'
 interface ClientCardProps {
   client: any
   showFinancials?: boolean
+  // When provided, the name + "View Details" open the quick-view panel
+  // instead of navigating to the full page.
+  onView?: (client: any) => void
 }
 
-export function ClientCard({ client, showFinancials = false }: ClientCardProps) {
+export function ClientCard({ client, showFinancials = false, onView }: ClientCardProps) {
   const address = client.address as any
   const addressStr = address
     ? `${address.street || ''} ${address.city || ''} ${address.state || ''} ${address.zip || ''}`.trim()
@@ -45,11 +48,23 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <Link href={`/clients/${client.id}`}>
-              <h3 className="truncate font-display text-base font-bold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
-                {client.name}
-              </h3>
-            </Link>
+            {onView ? (
+              <button
+                type="button"
+                onClick={() => onView(client)}
+                className="block max-w-full text-left"
+              >
+                <h3 className="truncate font-display text-base font-bold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
+                  {client.name}
+                </h3>
+              </button>
+            ) : (
+              <Link href={`/clients/${client.id}`}>
+                <h3 className="truncate font-display text-base font-bold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
+                  {client.name}
+                </h3>
+              </Link>
+            )}
             {client.legalName && (
               <p className="truncate text-xs text-muted-foreground">{client.legalName}</p>
             )}
@@ -145,9 +160,20 @@ export function ClientCard({ client, showFinancials = false }: ClientCardProps) 
         <div className="min-h-2 flex-1" />
 
         <div className="mt-2.5 flex items-center gap-1.5 border-t border-border pt-2.5">
-          <Button asChild variant="ghost" size="sm" className="flex-1">
-            <Link href={`/clients/${client.id}`}>View Details</Link>
-          </Button>
+          {onView ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="flex-1"
+              onClick={() => onView(client)}
+            >
+              View Details
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="sm" className="flex-1">
+              <Link href={`/clients/${client.id}`}>View Details</Link>
+            </Button>
+          )}
           <ClientActionsMenu
             endpoint={`/api/clients/${client.id}`}
             entityLabel={client.name}

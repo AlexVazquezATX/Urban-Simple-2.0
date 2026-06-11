@@ -14,6 +14,9 @@ import { cn } from '@/lib/utils'
 interface LocationCardProps {
   location: LocationCardItem & { financials?: FinancialSummary | null }
   showFinancials?: boolean
+  // When provided, the name + "View Details" open the quick-view panel
+  // instead of navigating to the full page.
+  onView?: (location: any) => void
 }
 
 type AddressLike = {
@@ -45,7 +48,7 @@ type LocationCardItem = {
   }>
 }
 
-export function LocationCard({ location, showFinancials = false }: LocationCardProps) {
+export function LocationCard({ location, showFinancials = false, onView }: LocationCardProps) {
   const address = location.address
   const reviewFreshness = getReviewFreshness(location.reviews?.[0])
   const addressStr =
@@ -70,11 +73,23 @@ export function LocationCard({ location, showFinancials = false }: LocationCardP
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <Link href={`/locations/${location.id}`}>
-              <h3 className="truncate font-display text-[15px] font-semibold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
-                {location.name}
-              </h3>
-            </Link>
+            {onView ? (
+              <button
+                type="button"
+                onClick={() => onView(location)}
+                className="block max-w-full text-left"
+              >
+                <h3 className="truncate font-display text-[15px] font-semibold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
+                  {location.name}
+                </h3>
+              </button>
+            ) : (
+              <Link href={`/locations/${location.id}`}>
+                <h3 className="truncate font-display text-[15px] font-semibold leading-tight tracking-[-0.2px] text-foreground transition-colors hover:text-primary">
+                  {location.name}
+                </h3>
+              </Link>
+            )}
             {location.client && (
               <Link href={`/clients/${location.client.id}`}>
                 <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-primary">
@@ -154,9 +169,20 @@ export function LocationCard({ location, showFinancials = false }: LocationCardP
         <div className="min-h-2 flex-1" />
 
         <div className="mt-2 flex items-center gap-1.5 border-t border-border pt-2">
-          <Button asChild variant="ghost" size="sm" className="h-7 flex-1 text-xs">
-            <Link href={`/locations/${location.id}`}>View Details</Link>
-          </Button>
+          {onView ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 flex-1 text-xs"
+              onClick={() => onView(location)}
+            >
+              View Details
+            </Button>
+          ) : (
+            <Button asChild variant="ghost" size="sm" className="h-7 flex-1 text-xs">
+              <Link href={`/locations/${location.id}`}>View Details</Link>
+            </Button>
+          )}
           <LocationRowActions locationId={location.id} entityLabel={location.name} />
         </div>
       </CardContent>

@@ -29,6 +29,7 @@ import { StatCard } from '@/components/ui/stat-card'
 import { PageHeader } from '@/components/layout/page-header'
 import { LocationCard } from './location-card'
 import { LocationRowActions } from './location-row-actions'
+import { LocationQuickView } from './location-quick-view'
 import { marginTone, reviewBadgeVariant } from './tones'
 import { LocationForm } from '@/components/forms/location-form'
 import { FinancialKPIRow } from '@/components/shared/financial-kpi-row'
@@ -108,6 +109,8 @@ export function LocationsListClient({
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)
   const [query, setQuery] = useState('')
   const [clientFilter, setClientFilter] = useState('all')
+  // Quick-view slide-over: which location (by id) is open in the panel.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const handleViewChange = (mode: ViewMode) => {
     setViewMode(mode)
@@ -153,6 +156,13 @@ export function LocationsListClient({
     }
     return Array.from(map.values())
   }, [filtered])
+
+  // Resolve the open quick-view against the current filtered list so
+  // prev/next steps through exactly what's on screen.
+  const selectedIndex = selectedId
+    ? filtered.findIndex((l) => l.id === selectedId)
+    : -1
+  const selectedLocation = selectedIndex >= 0 ? filtered[selectedIndex] : null
 
   // No locations at all — first-run empty state.
   if (locations.length === 0) {
@@ -317,12 +327,13 @@ export function LocationsListClient({
                               <Building2 className="size-4 text-muted-foreground" />
                             </div>
                           )}
-                          <Link
-                            href={`/locations/${location.id}`}
-                            className="font-medium text-foreground transition-colors hover:text-primary"
+                          <button
+                            type="button"
+                            onClick={() => setSelectedId(location.id)}
+                            className="text-left font-medium text-foreground transition-colors hover:text-primary"
                           >
                             {location.name}
-                          </Link>
+                          </button>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -405,8 +416,8 @@ export function LocationsListClient({
                       )}
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button asChild variant="ghost" size="sm">
-                            <Link href={`/locations/${location.id}`}>View</Link>
+                          <Button variant="ghost" size="sm" onClick={() => setSelectedId(location.id)}>
+                            View
                           </Button>
                           <LocationRowActions
                             locationId={location.id}
@@ -440,6 +451,7 @@ export function LocationsListClient({
                         key={location.id}
                         location={location}
                         showFinancials={showFinancials}
+                        onView={(l) => setSelectedId(l.id)}
                       />
                     ))}
                   </div>
@@ -449,6 +461,27 @@ export function LocationsListClient({
           )}
         </CardContent>
       </Card>
+
+      {selectedIndex >= 0 && selectedLocation && (
+        <LocationQuickView
+          key={selectedLocation.id}
+          location={selectedLocation}
+          showFinancials={showFinancials}
+          position={selectedIndex + 1}
+          total={filtered.length}
+          onClose={() => setSelectedId(null)}
+          onPrev={
+            selectedIndex > 0
+              ? () => setSelectedId(filtered[selectedIndex - 1].id)
+              : undefined
+          }
+          onNext={
+            selectedIndex < filtered.length - 1
+              ? () => setSelectedId(filtered[selectedIndex + 1].id)
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }

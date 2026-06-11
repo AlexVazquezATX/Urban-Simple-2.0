@@ -70,6 +70,15 @@ export async function GET(
           },
           orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         },
+        _count: {
+          select: {
+            invoices: true,
+            payments: true,
+            issues: {
+              where: { status: { in: ['open', 'in_progress'] } },
+            },
+          },
+        },
       },
     })
 

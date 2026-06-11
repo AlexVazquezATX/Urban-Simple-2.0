@@ -31,6 +31,7 @@ import { PageHeader } from '@/components/layout/page-header'
 import { FinancialKPIRow } from '@/components/shared/financial-kpi-row'
 import { ClientCardGrid } from './client-card-grid'
 import { ClientActionsMenu } from './client-actions-menu'
+import { ClientQuickView } from './client-quick-view'
 import { marginToneClass } from './margin-tone'
 import { formatMargin, type FinancialsBandData } from '@/lib/financials'
 import { formatMoney } from '@/lib/format'
@@ -54,6 +55,8 @@ export function ClientsListClient({
   const [viewMode, setViewMode] = useState<ViewMode>(initialViewMode)
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('all')
+  // Quick-view slide-over: which client (by id) is open in the panel.
+  const [selectedId, setSelectedId] = useState<string | null>(null)
 
   const handleViewChange = (mode: ViewMode) => {
     setViewMode(mode)
@@ -131,6 +134,13 @@ export function ClientsListClient({
     }
     return ordered
   }, [filtered, isFiltering, childLocationCount])
+
+  // Resolve the open quick-view against the current (filtered/ordered) list
+  // so prev/next steps through exactly what's on screen.
+  const selectedIndex = selectedId
+    ? displayClients.findIndex((c) => c.id === selectedId)
+    : -1
+  const selectedClient = selectedIndex >= 0 ? displayClients[selectedIndex] : null
 
   // No clients at all — first-run empty state.
   if (clients.length === 0) {
@@ -292,12 +302,13 @@ export function ClientsListClient({
                             </span>
                           </div>
                         )}
-                        <Link
-                          href={`/clients/${client.id}`}
-                          className="transition-colors hover:text-primary"
+                        <button
+                          type="button"
+                          onClick={() => setSelectedId(client.id)}
+                          className="text-left font-medium transition-colors hover:text-primary"
                         >
                           {client.name}
-                        </Link>
+                        </button>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -356,8 +367,8 @@ export function ClientsListClient({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/clients/${client.id}`}>View</Link>
+                        <Button variant="ghost" size="sm" onClick={() => setSelectedId(client.id)}>
+                          View
                         </Button>
                         <ClientActionsMenu
                           endpoint={`/api/clients/${client.id}`}
@@ -371,10 +382,35 @@ export function ClientsListClient({
               </TableBody>
             </Table>
           ) : (
-            <ClientCardGrid clients={displayClients} showFinancials={showFinancials} />
+            <ClientCardGrid
+              clients={displayClients}
+              showFinancials={showFinancials}
+              onView={(client) => setSelectedId(client.id)}
+            />
           )}
         </CardContent>
       </Card>
+
+      {selectedIndex >= 0 && (
+        <ClientQuickView
+          key={selectedClient.id}
+          client={selectedClient}
+          showFinancials={showFinancials}
+          position={selectedIndex + 1}
+          total={displayClients.length}
+          onClose={() => setSelectedId(null)}
+          onPrev={
+            selectedIndex > 0
+              ? () => setSelectedId(displayClients[selectedIndex - 1].id)
+              : undefined
+          }
+          onNext={
+            selectedIndex < displayClients.length - 1
+              ? () => setSelectedId(displayClients[selectedIndex + 1].id)
+              : undefined
+          }
+        />
+      )}
     </div>
   )
 }

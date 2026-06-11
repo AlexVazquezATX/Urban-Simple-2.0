@@ -36,6 +36,9 @@ export async function GET(
             code: true,
           },
         },
+        checklistTemplate: {
+          select: { id: true, name: true },
+        },
         serviceProfile: {
           include: {
             defaultManager: {
@@ -46,6 +49,21 @@ export async function GET(
                 displayName: true,
               },
             },
+          },
+        },
+        assignments: {
+          where: { isActive: true },
+          include: {
+            user: {
+              select: { id: true, firstName: true, lastName: true, displayName: true },
+            },
+          },
+        },
+        _count: {
+          select: {
+            serviceLogs: true,
+            issues: { where: { status: { in: ['open', 'in_progress'] } } },
+            serviceAgreements: { where: { isActive: true } },
           },
         },
       },
