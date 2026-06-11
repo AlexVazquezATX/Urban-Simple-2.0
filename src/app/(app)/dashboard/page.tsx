@@ -140,8 +140,8 @@ async function DashboardStats() {
       {/* Main grid — work cards left, attention rail right */}
       <div className="grid items-start gap-4 lg:grid-cols-[1fr_380px]">
         <div className="flex flex-col gap-4">
-          <TonightsOperations />
           <FocusWidget />
+          <TonightsOperations />
         </div>
         <div className="flex flex-col gap-4">
           <NeedsAttention />

@@ -154,9 +154,40 @@ export async function POST() {
         : 0,
     }))
 
-    // Generate AI recommendations
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+    // Heuristic fallback — used whenever the AI step fails for ANY reason
+    // (missing key, model error, unparseable response), so Generate Focus
+    // always produces a list when open tasks exist.
+    const buildFallbackResponse = () => {
+      const sortedTasks = [...taskData].sort((a, b) => {
+        // Starred first
+        if (a.isStarred && !b.isStarred) return -1
+        if (!a.isStarred && b.isStarred) return 1
+        // Overdue second
+        if (a.isOverdue && !b.isOverdue) return -1
+        if (!a.isOverdue && b.isOverdue) return 1
+        // Tasks with goals third
+        if (a.goal && !b.goal) return -1
+        if (!a.goal && b.goal) return 1
+        // Then by priority
+        const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 }
+        return (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) -
+               (priorityOrder[b.priority as keyof typeof priorityOrder] || 2)
+      })
 
+      return {
+        focusTasks: sortedTasks.slice(0, 4).map((t, i) => ({
+          id: t.id,
+          priority: i + 1,
+          reason: t.isStarred ? 'Starred - your priority' :
+                  t.isOverdue ? 'Overdue - needs attention' :
+                  t.goal ? `Supports: ${t.goal.title}` :
+                  `${t.priority} priority task`,
+        })),
+        summary: 'Here are your top tasks for today based on priority and due dates.',
+      }
+    }
+
+    // Generate AI recommendations
     const prompt = `You are a productivity assistant helping a small business owner (cleaning services company) prioritize their daily tasks.
 
 Today's date: ${today.toISOString().split('T')[0]}
@@ -187,52 +218,36 @@ Return a JSON response with this exact structure:
 
 Focus on being helpful and specific. If a task supports a weekly goal, mention it. The summary should feel like advice from a smart assistant, not a generic statement.`
 
-    const result = await model.generateContent(prompt)
-    const responseText = result.response.text()
-
-    // Parse AI response
     let aiResponse
     try {
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' })
+      const result = await model.generateContent(prompt)
+      const responseText = result.response.text()
+
       // Extract JSON from response (handle markdown code blocks)
       const jsonMatch = responseText.match(/\{[\s\S]*\}/)
       if (!jsonMatch) {
         throw new Error('No JSON found in response')
       }
       aiResponse = JSON.parse(jsonMatch[0])
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', responseText)
-      // Fallback: select top tasks manually
-      const sortedTasks = [...taskData].sort((a, b) => {
-        // Starred first
-        if (a.isStarred && !b.isStarred) return -1
-        if (!a.isStarred && b.isStarred) return 1
-        // Overdue second
-        if (a.isOverdue && !b.isOverdue) return -1
-        if (!a.isOverdue && b.isOverdue) return 1
-        // Tasks with goals third
-        if (a.goal && !b.goal) return -1
-        if (!a.goal && b.goal) return 1
-        // Then by priority
-        const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 }
-        return (priorityOrder[a.priority as keyof typeof priorityOrder] || 2) -
-               (priorityOrder[b.priority as keyof typeof priorityOrder] || 2)
-      })
+    } catch (aiError) {
+      console.error('AI focus generation failed, using heuristic fallback:', aiError)
+      aiResponse = buildFallbackResponse()
+    }
 
-      aiResponse = {
-        focusTasks: sortedTasks.slice(0, 4).map((t, i) => ({
-          id: t.id,
-          priority: i + 1,
-          reason: t.isStarred ? 'Starred - your priority' :
-                  t.isOverdue ? 'Overdue - needs attention' :
-                  t.goal ? `Supports: ${t.goal.title}` :
-                  `${t.priority} priority task`,
-        })),
-        summary: 'Here are your top tasks for today based on priority and due dates.',
-      }
+    // Drop any hallucinated task ids, and fall back if nothing valid survives
+    // (the focus flags were already cleared above, so we must set SOMETHING).
+    const validIds = new Set(tasks.map(t => t.id))
+    let focusSelections = (aiResponse.focusTasks || []).filter(
+      (ft: { id: string }) => validIds.has(ft.id)
+    )
+    if (focusSelections.length === 0) {
+      aiResponse = buildFallbackResponse()
+      focusSelections = aiResponse.focusTasks
     }
 
     // Update tasks with focus data
-    for (const focusTask of aiResponse.focusTasks || []) {
+    for (const focusTask of focusSelections) {
       await prisma.task.update({
         where: { id: focusTask.id },
         data: {

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import { Target, Sparkles, Loader2, Check, Star, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -115,13 +116,18 @@ export function FocusWidget() {
       const response = await fetch('/api/tasks/focus', {
         method: 'POST',
       })
-      if (response.ok) {
-        const data = await response.json()
-        setFocusTasks(data.focusTasks || [])
-        setSummary(data.summary)
+      if (!response.ok) {
+        throw new Error('Focus generation failed')
+      }
+      const data = await response.json()
+      setFocusTasks(data.focusTasks || [])
+      setSummary(data.summary)
+      if (!data.focusTasks?.length) {
+        toast.info(data.summary || 'No open tasks to prioritize — add a task first.')
       }
     } catch (error) {
       console.error('Failed to generate focus:', error)
+      toast.error("Couldn't generate your focus list. Try again in a moment.")
     } finally {
       setGenerating(false)
     }
