@@ -243,6 +243,7 @@ model ApiKey {
   keyHash     String    @unique @map("key_hash")
   keyPrefix   String    @map("key_prefix")
   scopes      String[]  @default([])
+  allowedIps  String[]  @default([]) @map("allowed_ips") // empty = no IP restriction; otherwise key only valid from these source IPs
   isActive    Boolean   @default(true) @map("is_active")
   expiresAt   DateTime? @map("expires_at")
   revokedAt   DateTime? @map("revoked_at")

@@ -8,12 +8,35 @@
 // the only thing that should gate on `realRole`.
 
 import { cache } from 'react'
+import { headers } from 'next/headers'
+import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
+import { authenticateApiKey } from '@/lib/api-key-verify'
 import {
   getImpersonationCookies,
   IMPERSONATION_GATE_EMAIL,
 } from '@/lib/impersonation'
+
+// When there's no Supabase session, fall back to API-key auth using the request
+// headers (e.g. the Mercury agent calling with `Authorization: Bearer us_live_…`).
+// Returns a user shaped exactly like the cookie path, or null.
+async function authenticateFromHeaders() {
+  const h = await headers()
+  const authHeader = h.get('authorization')
+  if (!authHeader) return null
+  const ip =
+    h.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    h.get('x-real-ip') ||
+    null
+  // path/method are injected by middleware (the only layer that sees the real
+  // pathname + verb); used for the BackHaus fence and the audit trail.
+  return authenticateApiKey(authHeader, ip, {
+    path: h.get('x-agent-path'),
+    method: h.get('x-agent-method'),
+    userAgent: h.get('user-agent'),
+  })
+}
 
 // Cache the user lookup within a single request to avoid redundant DB queries
 // React's cache() deduplicates calls within the same request lifecycle
@@ -21,7 +44,8 @@ export const getCurrentUser = cache(async () => {
   const supabase = await createClient()
   const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (!authUser) return null
+  // No browser session → try API-key auth (cookie auth always takes priority).
+  if (!authUser) return authenticateFromHeaders()
 
   // Get user from database - minimal select for performance
   const user = await prisma.user.findUnique({
@@ -91,4 +115,13 @@ export async function requireAuth() {
     throw new Error('Not authenticated')
   }
   return user
+}
+
+// Unified auth for API route handlers: cookie session first, then API key.
+// getCurrentUser() now performs both (the key fallback reads the request
+// headers), so this simply delegates — the `request` arg is kept for the
+// existing call sites and is no longer needed.
+export async function getAuthenticatedUser(request?: NextRequest) {
+  void request // accepted for backward-compat with existing call sites; the key path now reads headers() directly
+  return getCurrentUser()
 }

@@ -70,6 +70,22 @@ function applyImpersonation(realRole: string | null, request: NextRequest): stri
 }
 
 // ============================================
+// AGENT (API-KEY) HANDLING
+// ============================================
+// Programmatic agents (e.g. Mercury) authenticate with
+// `Authorization: Bearer us_live_…`. Middleware does only what it can do
+// reliably here (no DB access — the Edge runtime can't be trusted to reach the
+// DB in every environment):
+//   1. Agents live ONLY on /api/* — a key aimed at a page is bounced to /login.
+//   2. It bridges the real method + pathname to the Node auth layer as request
+//      headers, so api-key-verify can enforce the BackHaus scope fence and
+//      write the audit row with Prisma. Set unconditionally on agent requests
+//      so a client can't spoof these headers.
+// Gated on the us_live_ bearer prefix, so human/cookie traffic is untouched.
+
+const AGENT_KEY_BEARER = 'Bearer us_live_'
+
+// ============================================
 // MIDDLEWARE
 // ============================================
 
@@ -99,6 +115,26 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
   const hostname = request.headers.get('host') || ''
   const isBackhaus = isBackhausDomain(hostname)
+
+  // ---- Agent (API-key) requests ----
+  // Applies on every host, before page/host routing. Gated on the us_live_
+  // bearer prefix so normal cookie traffic is untouched.
+  const authHeader = request.headers.get('authorization')
+  if (authHeader?.startsWith(AGENT_KEY_BEARER)) {
+    // Invariant 1: agents may only touch /api/* — never render pages.
+    if (!pathname.startsWith('/api/')) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Invariant 2: bridge the real method + pathname to the Node auth layer
+    // (api-key-verify) for the BackHaus fence + audit. `set` overwrites any
+    // client-supplied value, so these can't be spoofed. Auth itself is still
+    // enforced by the route handler via getCurrentUser → authenticateApiKey.
+    const agentHeaders = new Headers(request.headers)
+    agentHeaders.set('x-agent-path', pathname)
+    agentHeaders.set('x-agent-method', request.method.toUpperCase())
+    return NextResponse.next({ request: { headers: agentHeaders } })
+  }
 
   // ---- BackHaus domain: only studio routes ----
   if (isBackhaus) {
