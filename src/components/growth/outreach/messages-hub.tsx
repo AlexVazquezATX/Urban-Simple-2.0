@@ -77,6 +77,7 @@ export function MessagesHub() {
   const [approvedMessages, setApprovedMessages] = useState<MessageItem[]>([])
   const [scheduledMessages, setScheduledMessages] = useState<MessageItem[]>([])
   const [sentMessages, setSentMessages] = useState<MessageItem[]>([])
+  const [sentTotal, setSentTotal] = useState(0)
   const [loadingApproved, setLoadingApproved] = useState(true)
   const [loadingScheduled, setLoadingScheduled] = useState(true)
   const [loadingSent, setLoadingSent] = useState(true)
@@ -195,6 +196,7 @@ export function MessagesHub() {
       if (res.ok) {
         const data = await res.json()
         setSentMessages(data.messages || [])
+        setSentTotal(typeof data.total === 'number' ? data.total : (data.messages?.length || 0))
       }
     } catch {
       toast.error('Failed to load sent messages')
@@ -420,8 +422,8 @@ export function MessagesHub() {
           </TabsTrigger>
           <TabsTrigger value="sent">
             Sent
-            {sentMessages.length > 0 && (
-              <span className="font-mono text-xs tabular-nums text-muted-foreground">{sentMessages.length}</span>
+            {sentTotal > 0 && (
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{sentTotal}</span>
             )}
           </TabsTrigger>
         </TabsList>
@@ -713,7 +715,12 @@ export function MessagesHub() {
               ) : (
                 <>
                   <p className="mb-4 text-sm text-foreground">
-                    {filteredSent.length}{searchQuery ? ` of ${sentMessages.length}` : ''} message{filteredSent.length !== 1 ? 's' : ''} sent
+                    {searchQuery
+                      ? `${filteredSent.length} of ${sentMessages.length} loaded`
+                      : `${sentTotal} message${sentTotal !== 1 ? 's' : ''} sent`}
+                    {!searchQuery && sentTotal > sentMessages.length
+                      ? ` · showing most recent ${sentMessages.length}`
+                      : ''}
                   </p>
                   <div className="space-y-2.5">
                     {filteredSent.map((msg) => (

@@ -49,7 +49,14 @@ export async function GET(request: NextRequest) {
       where.step = { gt: 1 }
       where.scheduledAt = { gt: now }
     } else if (view === 'sent') {
-      where.status = 'sent'
+      // A message's `status` advances through its lifecycle as Resend webhooks
+      // arrive (sent → delivered → opened → clicked, or bounced/failed), so a
+      // status='sent' filter only catches the brief window before the delivery
+      // webhook lands — which is why the Sent tab under-counted (9 shown of
+      // hundreds actually sent). `sentAt` is stamped by every real send path
+      // and is never cleared by a webhook, so it's the durable "this actually
+      // went out" signal.
+      where.sentAt = { not: null }
     } else {
       // Default: pending review
       where.approvalStatus = 'pending'
@@ -72,10 +79,17 @@ export async function GET(request: NextRequest) {
       orderBy: view === 'sent'
         ? { sentAt: 'desc' as const }
         : { createdAt: 'asc' as const },
-      take: view === 'sent' ? 100 : undefined,
+      take: view === 'sent' ? 500 : undefined,
     })
 
+    // The Sent list is capped for payload size, but the tab's count badge must
+    // reflect the true number sent — so return a separate count for that view.
+    const total = view === 'sent'
+      ? await prisma.outreachMessage.count({ where })
+      : messages.length
+
     return NextResponse.json({
+      total,
       messages: messages.map((m) => ({
         id: m.id,
         prospectId: m.prospectId,
