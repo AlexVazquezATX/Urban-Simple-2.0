@@ -19,7 +19,8 @@ import { PaymentForm } from '@/components/forms/payment-form'
 import { PaymentHistory } from '@/components/billing/payment-history'
 import { QBSyncButton } from '@/components/billing/qb-sync-button'
 import { formatMoneyExact } from '@/lib/format'
-import { getApiUrl } from '@/lib/api'
+import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -31,19 +32,70 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 async function InvoiceDetail({ id }: { id: string }) {
-  const response = await fetch(getApiUrl(`/api/invoices/${id}`), {
-    cache: 'no-store',
+  const user = await getCurrentUser()
+  if (!user) {
+    return (
+      <div className="text-destructive">
+        Please log in to view this invoice.
+      </div>
+    )
+  }
+
+  // Query Prisma directly (scoped to the user's company) instead of a
+  // server-to-server fetch, which had no cookies and always 401'd.
+  const invoice = await prisma.invoice.findFirst({
+    where: {
+      id,
+      client: {
+        companyId: user.companyId,
+      },
+    },
+    include: {
+      client: {
+        select: {
+          id: true,
+          name: true,
+          legalName: true,
+          billingEmail: true,
+          phone: true,
+          billingAddress: true,
+          paymentTerms: true,
+          taxExempt: true,
+        },
+      },
+      lineItems: {
+        include: {
+          serviceAgreement: {
+            select: {
+              id: true,
+              description: true,
+              location: {
+                select: {
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          sortOrder: 'asc',
+        },
+      },
+      payments: {
+        orderBy: {
+          paymentDate: 'desc',
+        },
+      },
+    },
   })
 
-  if (!response.ok) {
+  if (!invoice) {
     return (
       <div className="text-destructive">
         Failed to load invoice. Please try again.
       </div>
     )
   }
-
-  const invoice = await response.json()
 
   const dueDate = new Date(invoice.dueDate)
   const isOverdue =
@@ -246,9 +298,19 @@ async function InvoiceDetail({ id }: { id: string }) {
           </Card>
         )}
 
-        {/* Payment History */}
+        {/* Payment History — map to plain objects so Decimal instances
+            don't cross the Server→Client boundary un-serialized. */}
         {invoice.payments && invoice.payments.length > 0 && (
-          <PaymentHistory payments={invoice.payments} />
+          <PaymentHistory
+            payments={invoice.payments.map((p) => ({
+              id: p.id,
+              paymentDate: p.paymentDate,
+              amount: Number(p.amount),
+              paymentMethod: p.paymentMethod,
+              referenceNumber: p.referenceNumber,
+              status: p.status,
+            }))}
+          />
         )}
       </div>
     </div>

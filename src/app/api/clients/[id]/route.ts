@@ -19,6 +19,7 @@ export async function GET(
       where: {
         id,
         companyId: user.companyId,
+        deletedAt: null,
       },
       include: {
         branch: {
@@ -28,6 +29,9 @@ export async function GET(
           },
         },
         locations: {
+          where: {
+            deletedAt: null,
+          },
           include: {
             branch: {
               select: {

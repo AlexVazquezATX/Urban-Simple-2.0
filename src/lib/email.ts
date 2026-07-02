@@ -12,7 +12,9 @@ interface SendInvoiceEmailParams {
 export async function sendInvoiceEmail({
   invoiceId,
   to,
-  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+  from = process.env.RESEND_FROM_EMAIL ||
+    process.env.RESEND_OUTREACH_FROM_EMAIL ||
+    'onboarding@resend.dev',
 }: SendInvoiceEmailParams) {
   try {
     // Check if Resend API key is configured
@@ -165,7 +167,9 @@ interface SendPaymentReminderEmailParams {
 export async function sendPaymentReminderEmail({
   invoiceId,
   to,
-  from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
+  from = process.env.RESEND_FROM_EMAIL ||
+    process.env.RESEND_OUTREACH_FROM_EMAIL ||
+    'onboarding@resend.dev',
 }: SendPaymentReminderEmailParams) {
   const subjectFor = (invoiceNumber: string) =>
     `Payment reminder: Invoice ${invoiceNumber} from Urban Simple`

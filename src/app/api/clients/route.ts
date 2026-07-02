@@ -80,11 +80,21 @@ export async function POST(request: NextRequest) {
       branchId,
     } = body
 
-    // Use user's branch if not specified
-    const targetBranchId = branchId || user.branchId
+    // Use user's branch if not specified. A branchless owner (SUPER_ADMIN /
+    // ADMIN in the "all branches" view) has no user.branchId, so fall back to
+    // the company's primary branch rather than 400ing.
+    let targetBranchId = branchId || user.branchId
+    if (!targetBranchId) {
+      const primaryBranch = await prisma.branch.findFirst({
+        where: { companyId: user.companyId, isActive: true },
+        orderBy: { createdAt: 'asc' },
+        select: { id: true },
+      })
+      targetBranchId = primaryBranch?.id
+    }
     if (!targetBranchId) {
       return NextResponse.json(
-        { error: 'Branch ID is required' },
+        { error: 'No branch available to assign this client to' },
         { status: 400 }
       )
     }

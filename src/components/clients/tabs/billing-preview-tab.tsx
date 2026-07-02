@@ -568,7 +568,7 @@ function LineItemRow({
       <TableCell className="py-2 pr-6 text-right font-mono text-sm font-medium tabular-nums text-foreground">
         {item.includedInTotal ? (
           <div className="flex items-center justify-end gap-1">
-            {formatCurrency(hideTax ? item.lineItemTotal : item.lineItemTotal)}
+            {formatCurrency(hideTax ? item.lineItemTotal : item.lineItemTotal + item.lineItemTax)}
             {item.isProRated && <Badge variant="gold">Pro-rated</Badge>}
           </div>
         ) : '$0.00'}
@@ -734,7 +734,7 @@ function ServiceItemsSection({
                       </TableCell>
                     )}
                     <TableCell className="py-2 text-right font-mono text-sm font-medium tabular-nums text-foreground">
-                      {formatCurrency(si.lineItemTotal)}
+                      {formatCurrency(hideTax ? si.lineItemTotal : si.lineItemTotal + si.lineItemTax)}
                     </TableCell>
                     <TableCell className="py-2 pr-6">
                       <ServiceLineItemForm

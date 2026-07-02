@@ -57,13 +57,19 @@ export default async function PrintSchedulePage({
   const monthCells = getMonthDates(year, month)
   const inactiveFacilities = preview.lineItems.filter(li => !li.includedInTotal)
 
+  // Foot the facility summary with the pre-tax facility rows that are actually
+  // displayed (each row shows li.lineItemTotal). Tax + services are broken out
+  // in their own rows/section below so the numbers reconcile.
+  const facilitySubtotal = preview.lineItems
+    .filter(li => li.includedInTotal)
+    .reduce((sum, li) => sum + li.lineItemTotal, 0)
+
+  const money = (n: number) => `$${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+
   return (
-    <html>
-      <head>
-        <title>{preview.clientName} — {MONTH_NAMES[month - 1]} {year} Schedule</title>
-        <style dangerouslySetInnerHTML={{ __html: printStyles }} />
-      </head>
-      <body>
+    <>
+      <style dangerouslySetInnerHTML={{ __html: printStyles }} />
+      <div className="print-schedule-root">
         <div className="print-page">
           {/* Header */}
           <div className="header">
@@ -168,9 +174,9 @@ export default async function PrintSchedulePage({
                     </tr>
                   ))}
                 <tr className="total-row">
-                  <td colSpan={4}>Total ({preview.activeFacilityCount} facilities)</td>
+                  <td colSpan={4}>Facility Subtotal ({preview.activeFacilityCount} facilities)</td>
                   <td className="amount">
-                    ${preview.total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    {money(facilitySubtotal)}
                   </td>
                 </tr>
               </tbody>
@@ -217,6 +223,29 @@ export default async function PrintSchedulePage({
             </div>
           )}
 
+          {/* Reconciling totals — subtotal (facilities + services), tax as its
+              own line, and the grand total that matches the invoice. */}
+          <div className="summary-section totals-section">
+            <table className="summary-table totals-table">
+              <tbody>
+                <tr>
+                  <td>Subtotal</td>
+                  <td className="amount">{money(preview.subtotal)}</td>
+                </tr>
+                {preview.taxAmount > 0 && (
+                  <tr>
+                    <td>Tax ({(preview.taxRate * 100).toFixed(2)}%)</td>
+                    <td className="amount">{money(preview.taxAmount)}</td>
+                  </tr>
+                )}
+                <tr className="total-row">
+                  <td>Total</td>
+                  <td className="amount">{money(preview.total)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           {/* Inactive facilities */}
           {inactiveFacilities.length > 0 && (
             <div className="inactive-section">
@@ -236,22 +265,35 @@ export default async function PrintSchedulePage({
             {preview.clientName} — {MONTH_NAMES[month - 1]} {year} Schedule
           </div>
         </div>
+      </div>
 
-        <script dangerouslySetInnerHTML={{ __html: `window.onload = function() { window.print(); }` }} />
-      </body>
-    </html>
+      <script dangerouslySetInnerHTML={{ __html: `window.onload = function() { window.print(); }` }} />
+    </>
   )
 }
 
 const printStyles = `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  /* Scoped to the print subtree so these don't clobber the app chrome that
+     now wraps this page (it lives inside the (app) layout). */
+  .print-schedule-root * { margin: 0; padding: 0; box-sizing: border-box; }
 
-  body {
+  .print-schedule-root {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #2d2a26;
     font-size: 10px;
+    background: #ffffff;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  @media screen {
+    .print-schedule-root {
+      max-width: 11in;
+      margin: 24px auto;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+    }
   }
 
   .print-page {
@@ -459,6 +501,23 @@ const printStyles = `
     border: 1px solid #e8e4df;
   }
 
+  /* Reconciling totals */
+  .totals-section {
+    display: flex;
+    justify-content: flex-end;
+    page-break-inside: avoid;
+  }
+
+  .totals-table {
+    width: auto;
+    min-width: 260px;
+  }
+
+  .totals-table td:first-child {
+    color: #78736c;
+    font-weight: 500;
+  }
+
   /* Footer */
   .footer {
     margin-top: 20px;
@@ -470,7 +529,20 @@ const printStyles = `
   }
 
   @media print {
-    body { margin: 0; }
+    /* Strip the app chrome (sidebar, headers, FAB) so only the schedule
+       prints. Hide everything, reveal just this subtree, and pull it to the
+       top-left of the page so the hidden chrome leaves no gap. */
+    body * { visibility: hidden !important; }
+    .print-schedule-root, .print-schedule-root * { visibility: visible !important; }
+    .print-schedule-root {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      margin: 0;
+      border-radius: 0;
+      box-shadow: none;
+    }
     .print-page { padding: 0.3in; max-width: 100%; }
 
     @page {

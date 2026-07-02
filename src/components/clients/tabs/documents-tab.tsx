@@ -46,9 +46,10 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
 
   useEffect(() => {
     load()
-    // Re-fetch when the upload modal closes (router.refresh() is enough but
-    // this client-only tab won't see that automatically). Quick & cheap:
-    // load on mount, page refresh reloads.
+    // This tab fetches its own list client-side, so router.refresh() from the
+    // upload/delete buttons won't re-run it. We pass `load` as an explicit
+    // callback to those buttons instead (see below) so new/deleted docs appear
+    // without a full page reload.
   }, [clientId])
 
   const byCategory = new Map<string, PortalDocRow[]>()
@@ -68,7 +69,7 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
               Compliance binder visible to the client&apos;s portal users. Pre-load COIs, training records, etc.
             </CardDescription>
           </div>
-          <UploadDocumentButton endpoint={`/api/clients/${clientId}/documents`} label="Upload" />
+          <UploadDocumentButton endpoint={`/api/clients/${clientId}/documents`} label="Upload" onUploaded={load} />
         </div>
       </CardHeader>
       <CardContent>
@@ -137,6 +138,7 @@ export function DocumentsTab({ clientId }: DocumentsTabProps) {
                             docId={d.id}
                             docName={d.name}
                             endpoint={`/api/clients/${clientId}/documents/${d.id}`}
+                            onDeleted={load}
                           />
                         </li>
                       )

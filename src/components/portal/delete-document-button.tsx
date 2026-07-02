@@ -9,10 +9,12 @@ export function DeleteDocumentButton({
   docId,
   docName,
   endpoint,
+  onDeleted,
 }: {
   docId: string
   docName: string
   endpoint: string
+  onDeleted?: () => void
 }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -25,6 +27,7 @@ export function DeleteDocumentButton({
       if (!res.ok) throw new Error('Failed to delete')
       toast.success('Document deleted')
       router.refresh()
+      onDeleted?.()
     } catch (error: any) {
       toast.error(error.message || 'Delete failed')
     } finally {

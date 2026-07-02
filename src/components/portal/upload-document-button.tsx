@@ -27,8 +27,18 @@ import {
 import { PORTAL_DOC_CATEGORIES } from '@/lib/portal-documents'
 
 // Reusable upload dialog. The endpoint differs between portal and admin
-// contexts so the parent passes it in. Refreshes the page on success.
-export function UploadDocumentButton({ endpoint, label = 'Upload' }: { endpoint: string; label?: string }) {
+// contexts so the parent passes it in. Refreshes the page on success and, when
+// provided, calls onUploaded so client-fetched lists (e.g. the admin documents
+// tab) can re-fetch — router.refresh() alone doesn't re-run their useEffect.
+export function UploadDocumentButton({
+  endpoint,
+  label = 'Upload',
+  onUploaded,
+}: {
+  endpoint: string
+  label?: string
+  onUploaded?: () => void
+}) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -78,6 +88,7 @@ export function UploadDocumentButton({ endpoint, label = 'Upload' }: { endpoint:
       reset()
       setOpen(false)
       router.refresh()
+      onUploaded?.()
     } catch (error: any) {
       toast.error(error.message || 'Upload failed')
     } finally {
