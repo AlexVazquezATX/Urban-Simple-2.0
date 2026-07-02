@@ -98,6 +98,7 @@ export async function POST(request: NextRequest) {
     const channelActivity = channels.map((ch) => {
       const channelMsgs = messages.filter((m) => m.channelId === ch.id)
       return {
+        id: ch.id,
         name: ch.name,
         type: ch.type,
         isAiEnabled: ch.isAiEnabled,
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     // AI assistant interactions
     const aiChannels = channelActivity.filter((ch) => ch.isAiEnabled)
     const aiInteractions = aiChannels.map((ch) => {
-      const channelMsgs = messages.filter((m) => m.channelId === ch.name)
+      const channelMsgs = messages.filter((m) => m.channelId === ch.id)
       const questions = channelMsgs.filter((m) => !m.isAiGenerated).length
       return {
         assistant: ch.name,

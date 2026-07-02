@@ -27,6 +27,14 @@ import {
 import { cn } from '@/lib/utils'
 import type { PulseBriefingItem, PulseTopic } from '@prisma/client'
 
+// PulseBriefing.date is a @db.Date stored at UTC midnight. Rebuild it from its
+// UTC parts as a local calendar date so date-fns formats the stored day and
+// never shifts a day earlier in Central time.
+function toCalendarDate(value: Date | string): Date {
+  const d = new Date(value)
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+}
+
 interface BriefingSummary {
   id: string
   date: Date
@@ -56,7 +64,7 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
 
   // Create a map of dates to briefings for quick lookup
   const briefingsByDate = new Map(
-    briefings.map((b) => [format(new Date(b.date), 'yyyy-MM-dd'), b])
+    briefings.map((b) => [format(toCalendarDate(b.date), 'yyyy-MM-dd'), b])
   )
 
   const monthStart = startOfMonth(currentMonth)
@@ -205,7 +213,7 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                       )}
                     </div>
                     <Link
-                      href={`/pulse/archive/${format(new Date(selectedBriefing.date), 'yyyy-MM-dd')}`}
+                      href={`/pulse/archive/${format(toCalendarDate(selectedBriefing.date), 'yyyy-MM-dd')}`}
                     >
                       <Button className="w-full">
                         View Briefing
@@ -251,12 +259,12 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                   {briefings.slice(0, 10).map((briefing) => (
                     <Link
                       key={briefing.id}
-                      href={`/pulse/archive/${format(new Date(briefing.date), 'yyyy-MM-dd')}`}
+                      href={`/pulse/archive/${format(toCalendarDate(briefing.date), 'yyyy-MM-dd')}`}
                     >
                       <div className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/50 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="text-sm font-medium font-mono tabular-nums">
-                            {format(new Date(briefing.date), 'MMM d, yyyy')}
+                            {format(toCalendarDate(briefing.date), 'MMM d, yyyy')}
                           </div>
                           {briefing.title && (
                             <span className="text-sm text-muted-foreground truncate max-w-[200px]">
@@ -313,7 +321,7 @@ export function PulseArchiveView({ briefings, bookmarkedItems }: PulseArchiveVie
                               </Badge>
                             )}
                             <span className="text-xs text-muted-foreground font-mono tabular-nums">
-                              {format(new Date(item.briefing.date), 'MMM d, yyyy')}
+                              {format(toCalendarDate(item.briefing.date), 'MMM d, yyyy')}
                             </span>
                           </div>
                           <h3 className="font-semibold">{item.title}</h3>

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import { GoogleGenAI, Type } from '@google/genai'
 import { buildBusinessContext, formatContextForAI } from '@/features/ai/lib/context-builder'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
 import type {
   GenerationOptions,
   GenerationResult,
@@ -8,6 +9,43 @@ import type {
   WebSearchResult,
   BusinessInsightsData,
 } from '../types/pulse-types'
+
+const DEFAULT_TIMEZONE = 'America/Chicago'
+
+/**
+ * The company-local calendar date for a briefing, normalized to UTC midnight so
+ * it maps cleanly onto the PulseBriefing.date @db.Date column. Resolving "today"
+ * in the company timezone (not UTC) keeps the morning briefing matching all day:
+ * a plain UTC midnight rolls to tomorrow after ~7pm Central and hides it.
+ */
+export function getBriefingDate(now: Date, timezone: string): Date {
+  const localMidnight = getStartOfLocalDay(now, timezone)
+  return new Date(
+    Date.UTC(
+      localMidnight.getUTCFullYear(),
+      localMidnight.getUTCMonth(),
+      localMidnight.getUTCDate()
+    )
+  )
+}
+
+/** Resolve the company's operating timezone (first branch), defaulting to CT. */
+export async function resolveCompanyTimezone(
+  companyId: string | null | undefined
+): Promise<string> {
+  if (!companyId) return DEFAULT_TIMEZONE
+  const company = await prisma.company.findUnique({
+    where: { id: companyId },
+    select: {
+      branches: {
+        select: { timezone: true },
+        orderBy: { createdAt: 'asc' },
+        take: 1,
+      },
+    },
+  })
+  return company?.branches[0]?.timezone || DEFAULT_TIMEZONE
+}
 
 // Initialize Gemini client - check both possible env var names
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY || process.env.GEMINI_API_KEY || ''
@@ -30,8 +68,17 @@ export async function generateDailyBriefing(
 
   try {
     const { userId, forceRegenerate, topicIds } = options
-    const date = options.date || new Date()
-    date.setUTCHours(0, 0, 0, 0)
+
+    // Resolve the company (for timezone + AR scoping) from the briefing owner.
+    const account = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { companyId: true },
+    })
+    const companyId = account?.companyId ?? null
+    const timezone = await resolveCompanyTimezone(companyId)
+
+    // Company-local "today" so the briefing date stays stable through the evening.
+    const date = getBriefingDate(options.date || new Date(), timezone)
 
     // Check for existing briefing
     const existingBriefing = await prisma.pulseBriefing.findUnique({
@@ -115,7 +162,7 @@ export async function generateDailyBriefing(
       // Get business insights
       let businessInsights: BusinessInsightsData | null = null
       try {
-        businessInsights = await getBusinessInsights()
+        businessInsights = await getBusinessInsights(companyId)
       } catch (err: any) {
         errors.push(`Business insights: ${err.message}`)
       }
@@ -591,10 +638,27 @@ function generateItemImageMeta(
 /**
  * Get business insights from Urban Simple data
  */
-async function getBusinessInsights(): Promise<BusinessInsightsData> {
+async function getBusinessInsights(
+  companyId: string | null
+): Promise<BusinessInsightsData> {
   const now = new Date()
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
   const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000)
+
+  // Only count live clients of this company (soft-deleted clients are excluded).
+  const clientScope = {
+    deletedAt: null,
+    ...(companyId ? { companyId } : {}),
+  }
+
+  // Real receivables only: scoped to the company, positive balance, and never
+  // drafts, voids, or fully-paid invoices (which would inflate the totals and
+  // drift from the billing dashboard).
+  const arBase = {
+    balanceDue: { gt: 0 },
+    status: { notIn: ['void', 'draft', 'paid'] },
+    client: clientScope,
+  }
 
   const [
     recentRevenue,
@@ -624,36 +688,41 @@ async function getBusinessInsights(): Promise<BusinessInsightsData> {
       },
     }),
 
-    // AR aging buckets
+    // AR aging buckets. Boundaries mirror the billing dashboard: "current"
+    // means not yet due or up to 30 days past due, then 31-60, 61-90, and 90+.
     Promise.all([
+      // Current: not yet due or up to 30 days past due
       prisma.invoice.aggregate({
         _sum: { balanceDue: true },
-        where: { balanceDue: { gt: 0 }, dueDate: { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } },
+        where: { ...arBase, dueDate: { gte: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000) } },
       }),
+      // 31-60 days past due
       prisma.invoice.aggregate({
         _sum: { balanceDue: true },
         where: {
-          balanceDue: { gt: 0 },
+          ...arBase,
           dueDate: {
             gte: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
             lt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
           },
         },
       }),
+      // 61-90 days past due
       prisma.invoice.aggregate({
         _sum: { balanceDue: true },
         where: {
-          balanceDue: { gt: 0 },
+          ...arBase,
           dueDate: {
             gte: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000),
             lt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000),
           },
         },
       }),
+      // 90+ days past due
       prisma.invoice.aggregate({
         _sum: { balanceDue: true },
         where: {
-          balanceDue: { gt: 0 },
+          ...arBase,
           dueDate: { lt: new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000) },
         },
       }),
@@ -681,15 +750,17 @@ async function getBusinessInsights(): Promise<BusinessInsightsData> {
       _count: true,
     }),
 
-    // Total clients
-    prisma.client.count({ where: { status: 'active' } }),
+    // Total clients (live, active accounts for this company)
+    prisma.client.count({ where: { ...clientScope, status: 'active' } }),
 
-    // At-risk clients (with overdue invoices)
+    // At-risk clients (live accounts with real overdue invoices)
     prisma.client.count({
       where: {
+        ...clientScope,
         invoices: {
           some: {
             balanceDue: { gt: 0 },
+            status: { notIn: ['void', 'draft', 'paid'] },
             dueDate: { lt: new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000) },
           },
         },
@@ -754,7 +825,7 @@ function createBusinessInsightItems(
   if (totalAR > 0) {
     items.push({
       title: `AR Total: $${totalAR.toLocaleString()}`,
-      summary: `Current: $${insights.arAging.current.toLocaleString()} | 30+ days: $${insights.arAging.overdue30.toLocaleString()} | 60+ days: $${insights.arAging.overdue60.toLocaleString()} | 90+ days: $${insights.arAging.overdue90.toLocaleString()}. ${insights.arAging.overdue90 > 0 ? 'Priority: Follow up on 90+ day accounts.' : 'AR is looking healthy!'}`,
+      summary: `On time (0-30 days): $${insights.arAging.current.toLocaleString()} | 31-60 days: $${insights.arAging.overdue30.toLocaleString()} | 61-90 days: $${insights.arAging.overdue60.toLocaleString()} | 90+ days: $${insights.arAging.overdue90.toLocaleString()}. ${insights.arAging.overdue90 > 0 ? 'Priority: Follow up on 90+ day accounts.' : 'AR is looking healthy!'}`,
     })
   }
 

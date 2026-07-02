@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { generateDailyBriefing } from '@/features/pulse/lib/pulse-generator'
+import {
+  generateDailyBriefing,
+  getBriefingDate,
+  resolveCompanyTimezone,
+} from '@/features/pulse/lib/pulse-generator'
 
 /**
  * GET /api/admin/pulse/briefings/today
@@ -22,9 +26,10 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Get today's date at midnight (UTC)
-    const today = new Date()
-    today.setUTCHours(0, 0, 0, 0)
+    // Resolve "today" in the company timezone so the morning briefing keeps
+    // matching all day (a plain UTC midnight rolls to tomorrow after ~7pm CT).
+    const timezone = await resolveCompanyTimezone(user.companyId)
+    const today = getBriefingDate(new Date(), timezone)
 
     const briefing = await prisma.pulseBriefing.findUnique({
       where: {

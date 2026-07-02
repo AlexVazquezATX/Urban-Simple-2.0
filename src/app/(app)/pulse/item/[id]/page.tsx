@@ -5,11 +5,19 @@ import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, ExternalLink, Calendar, Sparkles, Share2, Twitter, Linkedin, Clock, Tag } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Calendar, Sparkles, Clock, Tag } from 'lucide-react'
 import { PulseItemActions } from '@/components/pulse/pulse-item-actions'
 
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+// PulseBriefing.date is a @db.Date stored at UTC midnight. Rebuild it from its
+// UTC parts as a local calendar date so date-fns formats the stored day and
+// never shifts a day earlier in Central time.
+function toCalendarDate(value: Date | string): Date {
+  const d = new Date(value)
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
 }
 
 export default async function PulseItemPage({ params }: PageProps) {
@@ -167,7 +175,7 @@ export default async function PulseItemPage({ params }: PageProps) {
             <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-8 pb-6 border-b border-border">
               <div className="flex items-center gap-2 font-mono tabular-nums">
                 <Calendar className="h-4 w-4" />
-                {format(new Date(item.briefing.date), 'MMMM d, yyyy')}
+                {format(toCalendarDate(item.briefing.date), 'MMMM d, yyyy')}
               </div>
               <div className="flex items-center gap-2 font-mono tabular-nums">
                 <Clock className="h-4 w-4" />
@@ -244,18 +252,6 @@ export default async function PulseItemPage({ params }: PageProps) {
               <p className="text-sm text-muted-foreground leading-relaxed">
                 This article was curated and synthesized by Pulse AI based on your interests and the latest developments in {item.topic?.name || 'this area'}.
               </p>
-              <div className="flex items-center gap-3 mt-4 pt-4 border-t border-border">
-                <span className="text-sm text-muted-foreground">Share:</span>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Twitter className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Linkedin className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
             </div>
 
             {/* Read Next section */}
@@ -286,17 +282,6 @@ export default async function PulseItemPage({ params }: PageProps) {
                 </div>
               </div>
             )}
-
-            {/* Why This Matters box */}
-            <div className="mt-8 p-6 rounded-2xl bg-gold-600/10 border border-gold-600/30 dark:bg-gold-400/12 dark:border-gold-400/25">
-              <h3 className="kicker mb-3 flex items-center gap-2 text-gold-600 dark:text-gold-400">
-                <Sparkles className="h-4 w-4" />
-                Why This Matters
-              </h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                This insight connects to broader trends affecting your business. Understanding these developments helps you make informed decisions and stay ahead of the competition.
-              </p>
-            </div>
           </aside>
         </div>
       </div>

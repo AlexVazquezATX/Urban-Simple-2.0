@@ -386,7 +386,7 @@ export default function ChatAnalyticsPage() {
         <StatCard
           label="Channels"
           value={analytics.overview.totalChannels}
-          sub={`${analytics.topChannels.length} with activity`}
+          sub={`${analytics.channelActivity.filter((c) => c.messageCount > 0).length} with activity`}
           icon={Hash}
         />
       </div>

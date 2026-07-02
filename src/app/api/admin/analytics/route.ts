@@ -186,8 +186,10 @@ export async function GET(request: NextRequest) {
         messageCount: u._count.messages,
       }))
 
-    // Most active channels
+    // Most active channels — only channels that actually have messages, so the
+    // UI's "N with activity" count and the ranked list reflect real activity.
     const topChannels = channelActivity
+      .filter((c) => c.messageCount > 0)
       .sort((a, b) => b.messageCount - a.messageCount)
       .slice(0, 10)
 

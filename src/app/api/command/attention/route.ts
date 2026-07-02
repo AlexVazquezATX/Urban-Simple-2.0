@@ -28,9 +28,13 @@ export async function GET() {
       where: {
         client: {
           companyId: user.companyId,
+          deletedAt: null,
           ...(user.branchId && { branchId: user.branchId }),
         },
-        status: { in: ['sent', 'partial'] },
+        // Any unpaid invoice with a balance still due (viewed + overdue
+        // included; paid + void excluded) — kept consistent with the
+        // dashboard and money page.
+        status: { in: ['draft', 'sent', 'viewed', 'partial', 'overdue'] },
         dueDate: { lt: today },
         balanceDue: { gt: 0 },
       },

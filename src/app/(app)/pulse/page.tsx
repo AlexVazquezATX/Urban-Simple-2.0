@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { getBriefingDate, resolveCompanyTimezone } from '@/features/pulse/lib/pulse-generator'
 import { PulseBriefingView } from '@/components/pulse/pulse-briefing-view'
 
 export default async function PulsePage() {
@@ -14,9 +15,10 @@ export default async function PulsePage() {
     redirect('/')
   }
 
-  // Get today's date at midnight UTC
-  const today = new Date()
-  today.setUTCHours(0, 0, 0, 0)
+  // Resolve "today" in the company timezone so the morning briefing keeps
+  // matching all day (a plain UTC midnight rolls to tomorrow after ~7pm CT).
+  const timezone = await resolveCompanyTimezone(user.companyId)
+  const today = getBriefingDate(new Date(), timezone)
 
   // Get today's briefing
   const briefing = await prisma.pulseBriefing.findUnique({

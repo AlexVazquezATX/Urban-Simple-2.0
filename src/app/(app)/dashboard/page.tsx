@@ -18,6 +18,7 @@ import { BriefingBanner } from '@/components/dashboard/briefing-banner'
 import { SnapshotButton } from '@/components/dashboard/snapshot-button'
 import { MyNightView } from '@/components/command/my-night-view'
 import { ManagerDashboard } from '@/components/dashboard/manager-dashboard'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
 
 async function DashboardStats() {
   const user = await getCurrentUser()
@@ -26,31 +27,45 @@ async function DashboardStats() {
     return <div>Please log in</div>
   }
 
+  // Resolve the company's operating timezone for "today" boundaries.
+  const firstBranch = await prisma.branch.findFirst({
+    where: { companyId: user.companyId },
+    orderBy: { createdAt: 'asc' },
+    select: { timezone: true },
+  })
+  const timezone = firstBranch?.timezone || 'America/Chicago'
+
   // Query database directly instead of API calls
   const clients = await prisma.client.findMany({
     where: {
       companyId: user.companyId,
       deletedAt: null,
+      status: 'active',
       ...(user.branchId && { branchId: user.branchId }),
     },
   })
 
-  // Get all invoices
+  // Get all invoices (exclude soft-deleted clients so their debt doesn't
+  // inflate live AR).
   const invoices = await prisma.invoice.findMany({
     where: {
       client: {
         companyId: user.companyId,
+        deletedAt: null,
         ...(user.branchId && { branchId: user.branchId }),
       },
     },
   })
 
-  // Calculate AR aging
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  // Calculate AR aging. "today" is the start of the current day in the
+  // company's local timezone, not server/UTC local time.
+  const now = new Date()
+  const today = getStartOfLocalDay(now, timezone)
 
+  // Outstanding = any unpaid invoice with a balance still due. Includes
+  // viewed and overdue; excludes paid and void.
   const outstandingInvoices = invoices.filter(inv =>
-    ['draft', 'sent', 'partial'].includes(inv.status) && Number(inv.balanceDue) > 0
+    ['draft', 'sent', 'viewed', 'partial', 'overdue'].includes(inv.status) && Number(inv.balanceDue) > 0
   )
 
   const arTotal = outstandingInvoices.reduce((sum, inv) => sum + Number(inv.balanceDue), 0)
@@ -67,6 +82,9 @@ async function DashboardStats() {
   const thisYear = new Date().getFullYear()
   const thisMonthRevenue = invoices
     .filter((inv) => {
+      // Only count real invoiced revenue — drafts aren't issued yet and voids
+      // were reversed.
+      if (['void', 'draft'].includes(inv.status)) return false
       const issueDate = new Date(inv.issueDate)
       return (
         issueDate.getMonth() === thisMonth &&
@@ -111,6 +129,20 @@ async function DashboardStats() {
       select: { id: true, title: true, progress: true },
     }),
   ])
+
+  // Recompute weekly-goal progress live from linked tasks (mirrors
+  // /api/goals/current) so checking off tasks moves the bars, rather than
+  // reading a stale stored goal.progress that nothing recomputes here.
+  const weeklyGoalsWithProgress = await Promise.all(
+    weeklyGoals.map(async (goal) => {
+      const [totalTasks, completedTasks] = await Promise.all([
+        prisma.task.count({ where: { goalId: goal.id } }),
+        prisma.task.count({ where: { goalId: goal.id, status: 'done' } }),
+      ])
+      const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : goal.progress
+      return { id: goal.id, title: goal.title, progress }
+    })
+  )
 
   const toPlateTask = (task: (typeof openTasks)[number]): PlateTask => ({
     id: task.id,
@@ -214,7 +246,7 @@ async function DashboardStats() {
         <div className="flex flex-col gap-4">
           <OnYourPlate
             groups={plateGroups}
-            weeklyGoals={weeklyGoals}
+            weeklyGoals={weeklyGoalsWithProgress}
             moreCount={openTasks.length - shownCount}
             counts={plateCounts}
           />

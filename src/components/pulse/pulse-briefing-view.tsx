@@ -35,6 +35,14 @@ import {
 import { cn } from '@/lib/utils'
 import type { PulseBriefing, PulseBriefingItem, PulseTopic } from '@prisma/client'
 
+// PulseBriefing.date is a @db.Date stored at UTC midnight. Rebuild it from its
+// UTC parts as a local calendar date so date-fns formats the stored day and
+// never shifts a day earlier in Central time.
+function toCalendarDate(value: Date | string): Date {
+  const d = new Date(value)
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
+}
+
 interface BriefingWithItems extends PulseBriefing {
   items: (PulseBriefingItem & {
     topic: Pick<PulseTopic, 'id' | 'name' | 'category'> | null
@@ -276,8 +284,8 @@ export function PulseBriefingView({
         className="space-y-8"
       >
         <PageHeader
-          kicker={`PULSE · ${format(new Date(currentBriefing.date), 'EEEE, MMMM d')}`}
-          title={currentBriefing.title || format(new Date(currentBriefing.date), 'EEEE, MMMM d')}
+          kicker={`PULSE · ${format(toCalendarDate(currentBriefing.date), 'EEEE, MMMM d')}`}
+          title={currentBriefing.title || format(toCalendarDate(currentBriefing.date), 'EEEE, MMMM d')}
           subtitle="Your personalized daily briefing"
           actions={
             <>
