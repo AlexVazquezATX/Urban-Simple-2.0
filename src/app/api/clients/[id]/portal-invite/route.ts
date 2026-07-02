@@ -50,7 +50,7 @@ export async function POST(
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const redirectTo = `${baseUrl}/portal/login?invited=true`
+  const redirectTo = `${baseUrl}/portal/set-password`
 
   // If they already have a User record, re-send invite email and skip the
   // role / contact-link work.
@@ -78,6 +78,24 @@ export async function POST(
       if (error) {
         console.warn('[portal-invite] re-invite warning:', error.message)
       }
+    } else {
+      // Existing User row with no login yet: actually send the invite and record
+      // the new authId. Without this the contact is portal-enabled but can never
+      // sign in (mirrors the portal/team route fix for the same case).
+      const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(
+        contact.email,
+        { redirectTo }
+      )
+      if (error || !invited?.user) {
+        return NextResponse.json(
+          { error: error?.message || 'Failed to send invite' },
+          { status: 500 }
+        )
+      }
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { authId: invited.user.id },
+      })
     }
   } else {
     // Create the auth user (sends invite email automatically).

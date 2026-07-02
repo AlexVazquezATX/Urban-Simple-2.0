@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const redirectTo = `${baseUrl}/portal/login?invited=true`
+  const redirectTo = `${baseUrl}/portal/set-password`
 
   const admin = createAdminClient()
 
@@ -81,10 +81,40 @@ export async function POST(request: NextRequest) {
   let userRecordId: string
 
   if (existingUser) {
+    // Don't silently pull an Urban Simple staff account into a client's portal.
+    // Only CLIENT_USER rows are eligible to be linked as portal contacts.
+    if (existingUser.role !== 'CLIENT_USER') {
+      return NextResponse.json(
+        {
+          error:
+            'That email belongs to an Urban Simple staff account and cannot be added as a portal teammate.',
+        },
+        { status: 409 }
+      )
+    }
+
     userRecordId = existingUser.id
     if (existingUser.authId) {
+      // They already have an auth account — re-send the invite magic link.
       const { error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo })
       if (error) console.warn('[portal/team invite] re-invite warn:', error.message)
+    } else {
+      // A User row exists but was never provisioned in Supabase auth. Actually
+      // send the invite now and link the new auth id, instead of pretending an
+      // email went out.
+      const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
+        redirectTo,
+      })
+      if (error || !invited?.user) {
+        return NextResponse.json(
+          { error: error?.message || 'Failed to send invite' },
+          { status: 500 }
+        )
+      }
+      await prisma.user.update({
+        where: { id: existingUser.id },
+        data: { authId: invited.user.id },
+      })
     }
   } else {
     const { data: invited, error: inviteError } =

@@ -3,6 +3,7 @@ import { format, formatDistanceToNow, subMonths } from 'date-fns'
 import { Camera, MapPin, Star } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
 import {
   LiveEmpty,
   LiveFilterPill,
@@ -60,8 +61,21 @@ export default async function CleaningLogPage({
     )
   }
 
-  // Last 90 days of service reviews + shifts.
+  // Company timezone drives the "through today" boundary so tonight's visit
+  // still counts as history while genuinely future shifts are excluded.
+  const clientBranch = await prisma.client.findUnique({
+    where: { id: ctx.client.id },
+    select: { branch: { select: { timezone: true } } },
+  })
+  const timezone = clientBranch?.branch?.timezone || 'America/Chicago'
+
+  // Last 90 days of service reviews + shifts, bounded to end of today so
+  // future scheduled shifts never appear under this history view.
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
+  const endOfToday = getStartOfLocalDay(
+    new Date(Date.now() + 24 * 60 * 60 * 1000),
+    timezone
+  )
 
   const [reviews, shifts] = await Promise.all([
     prisma.serviceReview.findMany({
@@ -87,7 +101,7 @@ export default async function CleaningLogPage({
           { locationId: { in: locationIds } },
           { shiftLocations: { some: { locationId: { in: locationIds } } } },
         ],
-        date: { gte: since },
+        date: { gte: since, lt: endOfToday },
       },
       orderBy: [{ date: 'desc' }],
       take: 30,
@@ -244,6 +258,24 @@ export default async function CleaningLogPage({
                   ? 'border-sky-line bg-sky-bg text-sky-deep'
                   : 'border-border bg-secondary text-muted-foreground'
 
+            // Title must match the shift's real state — a completed crew visit
+            // is never "scheduled", with or without a named manager.
+            const managerName = s.manager
+              ? `${s.manager.firstName} ${s.manager.lastName}`
+              : null
+            const shiftTitle =
+              s.status === 'completed'
+                ? managerName
+                  ? `${managerName} visited`
+                  : 'Crew visit completed'
+                : s.status === 'in_progress'
+                  ? managerName
+                    ? `${managerName} on site`
+                    : 'Crew on site'
+                  : managerName
+                    ? `${managerName} scheduled`
+                    : 'Visit scheduled'
+
             return (
               <article
                 key={`s-${s.id}`}
@@ -254,9 +286,7 @@ export default async function CleaningLogPage({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
-                    {s.manager
-                      ? `${s.manager.firstName} ${s.manager.lastName} visited`
-                      : 'Manager visit scheduled'}
+                    {shiftTitle}
                   </p>
                   <p className="mt-0.5 truncate text-xs text-cream-700">
                     <span className="font-mono tabular-nums">

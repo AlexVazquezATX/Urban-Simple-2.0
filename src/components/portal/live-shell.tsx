@@ -324,6 +324,7 @@ export function LiveEmpty({
 const HOME_LINKS: Array<[href: string, label: string]> = [
   ['/portal', 'Home'],
   ['/portal/walkthrough/new', 'Walkthrough'],
+  ['/portal/walkthroughs', 'Walkthroughs'],
   ['/portal/cleaning-log', 'Log'],
   ['/portal/issues', 'Issues'],
   ['/portal/documents', 'Documents'],

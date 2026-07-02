@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import { ArrowRight, Camera, Flag, Sparkles } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
+import { getLocalHour } from '@/lib/services/autopilot-schedule'
 import { TrialBanner } from '@/components/portal/trial-banner'
 import {
   LiveHomeNav,
@@ -26,6 +27,17 @@ export default async function PortalHomePage() {
   const isSelfServe = ctx.client.isSelfServe
   const showTrialBanner =
     isSelfServe && ctx.client.portalTrialEndsAt && ctx.client.portalStatus === 'trial'
+
+  // Time-of-day greeting in the company timezone (Austin / America/Chicago),
+  // so "Good morning" is honest wherever the request is served from.
+  const clientBranch = await prisma.client.findUnique({
+    where: { id: ctx.client.id },
+    select: { branch: { select: { timezone: true } } },
+  })
+  const timezone = clientBranch?.branch?.timezone || 'America/Chicago'
+  const localHour = getLocalHour(new Date(), timezone)
+  const greeting =
+    localHour < 12 ? 'Good morning' : localHour < 17 ? 'Good afternoon' : 'Good evening'
 
   // ──────────────── data ────────────────
 
@@ -237,7 +249,7 @@ export default async function PortalHomePage() {
           {format(new Date(), 'EEEE · MMMM d')}
         </div>
         <h1 className="font-display text-[40px] font-bold leading-[1.05] tracking-[-1.2px] text-foreground">
-          Good morning, {ctx.firstName}.
+          {greeting}, {ctx.firstName}.
         </h1>
         <p className="mt-3 max-w-[470px] text-[15px] leading-relaxed text-cream-700">
           {storyLine}

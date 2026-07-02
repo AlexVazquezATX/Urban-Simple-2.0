@@ -13,7 +13,8 @@ import { LogoutButton } from '@/components/portal/logout-button'
 
 const LINKS: Array<{ href: string; label: string; match: string }> = [
   { href: '/portal', label: 'Home', match: '/portal' },
-  { href: '/portal/walkthrough/new', label: 'Walkthrough', match: '/portal/walkthrough' },
+  { href: '/portal/walkthrough/new', label: 'Walkthrough', match: '/portal/walkthrough/new' },
+  { href: '/portal/walkthroughs', label: 'Walkthroughs', match: '/portal/walkthroughs' },
   { href: '/portal/cleaning-log', label: 'Cleaning log', match: '/portal/cleaning-log' },
   { href: '/portal/issues', label: 'Issues', match: '/portal/issues' },
   { href: '/portal/documents', label: 'Documents', match: '/portal/documents' },

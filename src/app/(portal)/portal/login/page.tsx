@@ -80,7 +80,7 @@ function PortalLoginContent() {
 
           {justInvited && (
             <div className="mt-6 rounded-2xl border border-sage-line bg-sage-bg p-3.5 text-sm text-sage-deep">
-              You&apos;ve been invited. Sign in with the password you set from your invite email.
+              You&apos;re all set. Sign in with your email and password to enter your portal.
             </div>
           )}
 

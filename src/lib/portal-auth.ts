@@ -69,9 +69,17 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
       displayName: true,
       role: true,
       isActive: true,
+      lastLogin: true,
     },
   })
   if (!user || !user.isActive) return null
+
+  // Stamp lastLogin (throttled to ~12h) so the client-side team roster can
+  // distinguish members who have actually signed in from invited-but-pending
+  // ones. Fire-and-forget; never block the request on it.
+  if (!user.lastLogin || Date.now() - user.lastLogin.getTime() > 12 * 60 * 60 * 1000) {
+    prisma.user.update({ where: { id: user.id }, data: { lastLogin: new Date() } }).catch(() => {})
+  }
 
   // Impersonation path: a gated SUPER_ADMIN can view the portal as a chosen
   // client without being linked to any ClientContact. We synthesize a

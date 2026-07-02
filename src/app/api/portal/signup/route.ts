@@ -96,7 +96,10 @@ export async function POST(request: NextRequest) {
           billingEmail: email,
           status: 'active',
           isSelfServe: true,
-          portalPlan: 'trial',
+          // Persist the plan the user chose (starter/pro). Status stays 'trial'
+          // during the 14-day trial; the selected plan carries through so a
+          // converted trial keeps what they picked.
+          portalPlan: plan,
           portalStatus: 'trial',
           portalTrialEndsAt: trialEndsAt,
           portalSignupOrigin: 'self_serve',

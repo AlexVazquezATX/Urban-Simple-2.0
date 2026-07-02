@@ -1,5 +1,5 @@
 import { format } from 'date-fns'
-import { Mail, Phone, ShieldCheck, Users } from 'lucide-react'
+import { Clock, Mail, Phone, ShieldCheck, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
@@ -27,6 +27,21 @@ export default async function PortalTeamPage() {
     },
   })
 
+  // Resolve each contact's real access state. ClientContact has no direct User
+  // relation, so we look up the linked users and key on lastLogin: a teammate
+  // is "Active" once they've actually signed in, otherwise they're still
+  // "Invited" (invited-but-not-accepted).
+  const linkedUserIds = contacts
+    .map((c) => c.userId)
+    .filter((id): id is string => Boolean(id))
+  const linkedUsers = linkedUserIds.length
+    ? await prisma.user.findMany({
+        where: { id: { in: linkedUserIds } },
+        select: { id: true, lastLogin: true },
+      })
+    : []
+  const lastLoginByUserId = new Map(linkedUsers.map((u) => [u.id, u.lastLogin]))
+
   return (
     <LivePage>
       <LivePageHead
@@ -46,6 +61,10 @@ export default async function PortalTeamPage() {
         <ul className="flex flex-col gap-3">
           {contacts.map((c) => {
             const isYou = c.userId === ctx.userId
+            // Active once they've signed in at least once; otherwise the invite
+            // is still outstanding. "You" are, by definition, signed in now.
+            const hasSignedIn =
+              isYou || (c.userId ? Boolean(lastLoginByUserId.get(c.userId)) : false)
             return (
               <li
                 key={c.id}
@@ -64,10 +83,17 @@ export default async function PortalTeamPage() {
                     <Badge variant="neutral" className="capitalize">
                       {c.role}
                     </Badge>
-                    <Badge variant="green">
-                      <ShieldCheck className="h-2.5 w-2.5" />
-                      Active
-                    </Badge>
+                    {hasSignedIn ? (
+                      <Badge variant="green">
+                        <ShieldCheck className="h-2.5 w-2.5" />
+                        Active
+                      </Badge>
+                    ) : (
+                      <Badge variant="neutral">
+                        <Clock className="h-2.5 w-2.5" />
+                        Invited
+                      </Badge>
+                    )}
                   </div>
                   <div className="mt-1.5 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                     {c.email && (
@@ -84,7 +110,8 @@ export default async function PortalTeamPage() {
                     )}
                     {c.portalAccessGranted && (
                       <span className="font-mono tabular-nums">
-                        Joined {format(c.portalAccessGranted, 'MMM yyyy')}
+                        {hasSignedIn ? 'Joined' : 'Invited'}{' '}
+                        {format(c.portalAccessGranted, 'MMM yyyy')}
                       </span>
                     )}
                   </div>

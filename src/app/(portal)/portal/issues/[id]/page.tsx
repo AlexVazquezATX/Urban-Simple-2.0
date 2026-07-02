@@ -44,6 +44,7 @@ export default async function IssueDetailPage({
       reportedBy: { select: { firstName: true, lastName: true } },
       assignedTo: { select: { firstName: true, lastName: true } },
       comments: {
+        where: { isInternal: false },
         orderBy: { createdAt: 'asc' },
         include: { user: { select: { firstName: true, lastName: true, role: true } } },
       },
