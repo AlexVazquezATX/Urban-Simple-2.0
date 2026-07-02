@@ -21,6 +21,14 @@ export async function POST(request: NextRequest) {
 
     // Verify webhook signature if secret is configured
     const webhookSecret = process.env.RESEND_WEBHOOK_SECRET
+    // Fail closed in production: without the signing secret we can't verify the
+    // sender, so an attacker could spoof delivery/open/bounce/complaint events
+    // (a forged 'complained' even flips a prospect to Do-Not-Contact and cancels
+    // their sequence). Local dev may still run unverified.
+    if (!webhookSecret && process.env.NODE_ENV === 'production') {
+      console.error('[RESEND WEBHOOK] RESEND_WEBHOOK_SECRET is not set — rejecting')
+      return NextResponse.json({ error: 'Webhook not configured' }, { status: 503 })
+    }
     if (webhookSecret) {
       const svixId = request.headers.get('svix-id')
       const svixTimestamp = request.headers.get('svix-timestamp')

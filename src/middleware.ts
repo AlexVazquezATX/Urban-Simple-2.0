@@ -23,7 +23,7 @@ function isBackhausDomain(host: string): boolean {
 const ADMIN_PREFIXES = [
   '/dashboard', '/app', '/clients', '/invoices',
   '/billing', '/admin', '/creative-studio', '/portal',
-  '/command',
+  '/command', '/money', '/pipeline',
 ]
 
 function isAdminRoute(pathname: string): boolean {
@@ -34,12 +34,16 @@ function isAdminRoute(pathname: string): boolean {
 // ROLE LOOKUP (PostgREST — Edge Runtime safe)
 // ============================================
 
+// Returned by getUserRole when the account exists but is deactivated, so the
+// caller can lock them out (distinct from null, which means "lookup failed").
+const INACTIVE_SENTINEL = '__INACTIVE__'
+
 async function getUserRole(authId: string): Promise<string | null> {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   const res = await fetch(
-    `${url}/rest/v1/users?select=role&auth_id=eq.${authId}&limit=1`,
+    `${url}/rest/v1/users?select=role,is_active&auth_id=eq.${authId}&limit=1`,
     {
       headers: {
         'apikey': key,
@@ -55,7 +59,10 @@ async function getUserRole(authId: string): Promise<string | null> {
   }
 
   const rows = await res.json()
-  return rows?.[0]?.role || null
+  const row = rows?.[0]
+  if (!row) return null
+  if (row.is_active === false) return INACTIVE_SENTINEL
+  return row.role || null
 }
 
 // Apply the impersonation cookie on top of the real DB role. Only honored
@@ -192,6 +199,7 @@ export async function middleware(request: NextRequest) {
     '/dashboard', '/app', '/clients', '/locations', '/operations', '/chat',
     '/team', '/invoices', '/billing', '/financials', '/growth', '/creative-hub',
     '/creative-studio', '/pulse', '/chat-analytics', '/tasks', '/admin', '/command',
+    '/money', '/pipeline',
   ]
 
   // Per-section role matrix — mirrors the sidebar's `roles` so what's hidden
@@ -211,7 +219,40 @@ export async function middleware(request: NextRequest) {
     { prefix: '/creative-studio', allow: ['SUPER_ADMIN', 'ADMIN'] },
     { prefix: '/chat-analytics', allow: ['SUPER_ADMIN', 'ADMIN'] },
     { prefix: '/command', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/money', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/pipeline', allow: ['SUPER_ADMIN', 'ADMIN'] },
   ]
+
+  // ---- Staff API boundary ----
+  // The page role-matrix below only matches page prefixes, so /api/* was left
+  // ungoverned by middleware — a signed-in CLIENT_USER (a cleaning-portal
+  // customer, who shares the same companyId) could call staff endpoints like
+  // /api/clients, /api/invoices, /api/users directly. Fence the API here: a
+  // real client may only reach /api/portal/* and public form/infra endpoints.
+  // Gated on the REAL role so a SUPER_ADMIN impersonating a client is unaffected.
+  if (pathname.startsWith('/api/')) {
+    const clientSafeApi =
+      pathname.startsWith('/api/portal') ||
+      pathname.startsWith('/api/dev/switch-role') ||
+      pathname.startsWith('/api/leads') ||
+      pathname.startsWith('/api/quote-request') ||
+      pathname.startsWith('/api/walkthrough-request') ||
+      pathname.startsWith('/api/webhooks') ||
+      pathname.startsWith('/api/cron') ||
+      pathname.startsWith('/api/stripe')
+
+    if (!clientSafeApi) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (user) {
+        const realRole = await getUserRole(user.id)
+        if (realRole === 'CLIENT_USER') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+      }
+    }
+  }
 
   if (AUTHED_PREFIXES.some((p) => pathname.startsWith(p))) {
     const {
@@ -224,6 +265,12 @@ export async function middleware(request: NextRequest) {
 
     if (user) {
       const realRole = await getUserRole(user.id)
+
+      // Deactivated account → treat as logged out.
+      if (realRole === INACTIVE_SENTINEL) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+
       const role = applyImpersonation(realRole, request) ?? ''
 
       // CLIENT_USER cannot access admin routes — redirect to /portal (the
@@ -250,6 +297,11 @@ export async function middleware(request: NextRequest) {
 
     if (user) {
       const realRole = await getUserRole(user.id)
+
+      if (realRole === INACTIVE_SENTINEL) {
+        return NextResponse.redirect(new URL('/login', request.url))
+      }
+
       const role = applyImpersonation(realRole, request)
 
       if (role === 'CLIENT_USER') {
@@ -267,12 +319,18 @@ export async function middleware(request: NextRequest) {
 
     if (user) {
       const realRole = await getUserRole(user.id)
-      const role = applyImpersonation(realRole, request)
 
-      if (role === 'CLIENT_USER') {
-        return NextResponse.redirect(new URL('/portal', request.url))
+      // Deactivated users are let through to the login page (locked out)
+      // instead of being bounced to /dashboard — otherwise they'd ping-pong
+      // between /login and /dashboard forever.
+      if (realRole !== INACTIVE_SENTINEL) {
+        const role = applyImpersonation(realRole, request)
+
+        if (role === 'CLIENT_USER') {
+          return NextResponse.redirect(new URL('/portal', request.url))
+        }
+        return NextResponse.redirect(new URL('/dashboard', request.url))
       }
-      return NextResponse.redirect(new URL('/dashboard', request.url))
     }
   }
 

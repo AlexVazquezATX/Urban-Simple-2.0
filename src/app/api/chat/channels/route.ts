@@ -19,6 +19,13 @@ export async function GET(request: NextRequest) {
       where: {
         companyId: user.companyId,
         isArchived: false,
+        // Direct messages are private to their participants; only surface a DM
+        // to a user who is actually a member of it. Public/team/AI channels
+        // stay visible company-wide as before.
+        OR: [
+          { type: { not: 'direct_message' } },
+          { type: 'direct_message', members: { some: { userId: user.id } } },
+        ],
       },
       include: {
         members: {

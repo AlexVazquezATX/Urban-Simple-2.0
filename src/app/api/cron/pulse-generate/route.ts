@@ -19,12 +19,13 @@ export const maxDuration = 300 // 5 minutes max for briefing generation
  */
 export async function GET(request: NextRequest) {
   try {
-    // Verify cron secret for security
+    // Verify cron secret for security. Fail closed: if CRON_SECRET is unset the
+    // endpoint must NOT run unauthenticated (every other cron uses this posture)
+    // — otherwise anyone could trigger briefing generation.
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET
 
-    // If CRON_SECRET is set, verify it
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       console.warn('Cron job called without valid authorization')
       return NextResponse.json(
         { error: 'Unauthorized' },

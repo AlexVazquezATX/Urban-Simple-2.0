@@ -68,7 +68,9 @@ export async function PATCH(
     }
 
     // Only admins can update users (or users can update themselves)
-    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.id !== id) {
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
+    const isSelf = user.id === id
+    if (!isAdmin && !isSelf) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -86,6 +88,31 @@ export async function PATCH(
       isActive,
       avatarUrl,
     } = body
+
+    // Privileged fields — a non-admin editing their own profile must not be
+    // able to change their role, branch, or active status. Without this a
+    // MANAGER/ASSOCIATE (or a CLIENT_USER hitting the API directly) could PATCH
+    // their own id with { role: 'SUPER_ADMIN' } and take over the company.
+    if (!isAdmin && (role !== undefined || branchId !== undefined || isActive !== undefined)) {
+      return NextResponse.json(
+        { error: 'You cannot change your own role, branch, or active status' },
+        { status: 403 }
+      )
+    }
+
+    // Only a SUPER_ADMIN may grant SUPER_ADMIN (blocks ADMIN self-escalation).
+    if (role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Only a super admin can assign the super admin role' },
+        { status: 403 }
+      )
+    }
+
+    // Reject unknown role values before they reach the DB.
+    const VALID_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE', 'CLIENT_USER']
+    if (role !== undefined && !VALID_ROLES.includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    }
 
     // Verify user exists and belongs to company
     const existing = await prisma.user.findFirst({

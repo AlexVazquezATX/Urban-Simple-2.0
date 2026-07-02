@@ -23,6 +23,31 @@ export async function GET(
       )
     }
 
+    // Authenticate and confine to the caller's company. Previously this route
+    // had no auth at all — anyone could read any channel's messages by id,
+    // across companies. DMs are readable only by their participants.
+    const user = await getCurrentUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const channel = await prisma.channel.findFirst({
+      where: { id: channelId, companyId: user.companyId },
+      select: { id: true, type: true, aiPersona: true, isAiEnabled: true },
+    })
+    if (!channel) {
+      return NextResponse.json({ error: 'Channel not found' }, { status: 404 })
+    }
+    if (channel.type === 'direct_message') {
+      const membership = await prisma.channelMember.findUnique({
+        where: { channelId_userId: { channelId, userId: user.id } },
+        select: { id: true },
+      })
+      if (!membership) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+
     // Fetch messages with user info
     const messages = await prisma.message.findMany({
       where: {
@@ -57,15 +82,6 @@ export async function GET(
         firstName: true,
         lastName: true,
         displayName: true,
-      },
-    })
-
-    // Get channel info to determine AI persona
-    const channel = await prisma.channel.findUnique({
-      where: { id: channelId },
-      select: {
-        aiPersona: true,
-        isAiEnabled: true,
       },
     })
 
@@ -143,9 +159,12 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify channel exists
-    const channel = await prisma.channel.findUnique({
-      where: { id: channelId },
+    // Channel must belong to the caller's company; DMs are writable only by
+    // their participants. (Previously any authenticated user could post into
+    // any channel of any company by id.)
+    const channel = await prisma.channel.findFirst({
+      where: { id: channelId, companyId: user.companyId },
+      select: { id: true, type: true },
     })
 
     if (!channel) {
@@ -153,6 +172,16 @@ export async function POST(
         { error: 'Channel not found' },
         { status: 404 }
       )
+    }
+
+    if (channel.type === 'direct_message') {
+      const membership = await prisma.channelMember.findUnique({
+        where: { channelId_userId: { channelId, userId: user.id } },
+        select: { id: true },
+      })
+      if (!membership) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
 
     // Create message

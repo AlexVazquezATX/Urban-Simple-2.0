@@ -83,6 +83,12 @@ export const getCurrentUser = cache(async () => {
 
   if (!user) return null
 
+  // Deactivated users are treated as logged-out. This is the single identity
+  // resolver for every API route and server component, so returning null here
+  // is what actually revokes a deactivated member's access (setting
+  // isActive=false previously changed nothing).
+  if (!user.isActive) return null
+
   const realRole = user.role
   let effectiveRole = realRole
   let impersonating = false

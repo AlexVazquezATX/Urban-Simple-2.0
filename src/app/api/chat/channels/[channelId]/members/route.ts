@@ -1,7 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import { getCurrentUser } from '@/lib/auth'
 
 export const dynamic = 'force-dynamic'
+
+// Shared guard: this route previously had no authentication at all — anyone
+// (even logged-out) could list members (names + emails), add users to any
+// channel, or remove them, across companies. Require a signed-in user in the
+// channel's company; for membership *changes* (and any DM access) the caller
+// must be a channel member or a company admin.
+type ChannelAuth =
+  | { ok: false; response: NextResponse }
+  | { ok: true; user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>> }
+
+async function authorizeChannel(
+  channelId: string,
+  opts: { requireManage?: boolean } = {}
+): Promise<ChannelAuth> {
+  const user = await getCurrentUser()
+  if (!user) {
+    return { ok: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) }
+  }
+
+  const channel = await prisma.channel.findFirst({
+    where: { id: channelId, companyId: user.companyId },
+    select: { id: true, type: true },
+  })
+  if (!channel) {
+    return { ok: false, response: NextResponse.json({ error: 'Channel not found' }, { status: 404 }) }
+  }
+
+  if (opts.requireManage || channel.type === 'direct_message') {
+    const isAdmin = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
+    if (!isAdmin) {
+      const membership = await prisma.channelMember.findUnique({
+        where: { channelId_userId: { channelId, userId: user.id } },
+        select: { id: true },
+      })
+      if (!membership) {
+        return { ok: false, response: NextResponse.json({ error: 'Forbidden' }, { status: 403 }) }
+      }
+    }
+  }
+
+  return { ok: true, user }
+}
 
 /**
  * GET /api/chat/channels/[channelId]/members
@@ -13,6 +56,9 @@ export async function GET(
 ) {
   try {
     const { channelId } = await params
+
+    const auth = await authorizeChannel(channelId)
+    if (!auth.ok) return auth.response
 
     const members = await prisma.channelMember.findMany({
       where: { channelId },
@@ -79,6 +125,10 @@ export async function POST(
 ) {
   try {
     const { channelId } = await params
+
+    const auth = await authorizeChannel(channelId, { requireManage: true })
+    if (!auth.ok) return auth.response
+
     const body = await request.json()
     const { userId, userIds, role = 'member' } = body
 
@@ -148,6 +198,10 @@ export async function DELETE(
 ) {
   try {
     const { channelId } = await params
+
+    const auth = await authorizeChannel(channelId, { requireManage: true })
+    if (!auth.ok) return auth.response
+
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 

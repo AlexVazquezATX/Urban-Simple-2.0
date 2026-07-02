@@ -101,6 +101,18 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Reject unknown roles, and only let a SUPER_ADMIN mint another SUPER_ADMIN.
+    const VALID_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE', 'CLIENT_USER']
+    if (!VALID_ROLES.includes(role)) {
+      return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
+    }
+    if (role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+      return NextResponse.json(
+        { error: 'Only a super admin can create a super admin' },
+        { status: 403 }
+      )
+    }
+
     // Check if user already exists
     const existing = await prisma.user.findUnique({
       where: { email },
