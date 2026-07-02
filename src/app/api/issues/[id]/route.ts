@@ -11,6 +11,10 @@ const CATEGORIES = new Set(['quality', 'equipment', 'communication', 'safety', '
 const SEVERITIES = new Set(['low', 'medium', 'high', 'critical'])
 const STATUSES = new Set(['open', 'in_progress', 'resolved', 'closed'])
 
+// Issue management is a staff surface — clients read their own issues through
+// the portal, never the admin single-issue endpoint (it exposes internal data).
+const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'])
+
 async function ownedBy(id: string, companyId: string) {
   return prisma.issue.findFirst({
     where: { id, client: { companyId } },
@@ -23,6 +27,9 @@ export async function GET(
 ) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!STAFF_ROLES.has(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { id } = await params
   const issue = await prisma.issue.findFirst({
@@ -50,6 +57,9 @@ export async function PATCH(
 ) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!STAFF_ROLES.has(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { id } = await params
   const existing = await ownedBy(id, user.companyId)
@@ -93,6 +103,9 @@ export async function DELETE(
 ) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!STAFF_ROLES.has(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { id } = await params
   const existing = await ownedBy(id, user.companyId)

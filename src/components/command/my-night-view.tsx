@@ -144,6 +144,10 @@ export function MyNightView({
             const config = statusConfig[loc.status] || statusConfig.pending
             const isActive = loc.status === 'in_progress'
             const isDone = loc.status === 'completed'
+            // A stop with a clock-out has ended for the night, even if the
+            // checklist was only partially completed — offer a read-only "View"
+            // rather than inviting the associate back into a finished visit.
+            const isClockedOut = Boolean(loc.clockOut)
 
             return (
               <Card
@@ -199,13 +203,19 @@ export function MyNightView({
                   {!isDone && loc.checklistId && (
                     <div className="mt-3 border-t border-border pt-3">
                       <Button
-                        variant={isActive ? 'gold' : 'outline'}
+                        variant={isActive && !isClockedOut ? 'gold' : 'outline'}
                         size="sm"
                         className="w-full gap-1.5"
                         asChild
                       >
-                        <Link href={`/operations/checklists/${loc.checklistId}`}>
-                          {isActive ? 'Continue Checklist' : 'Start Checklist'}
+                        <Link
+                          href={`/operations/checklists/${loc.checklistId}/run?shiftId=${loc.shiftId}&locationId=${loc.locationId}`}
+                        >
+                          {isClockedOut
+                            ? 'View checklist'
+                            : isActive
+                              ? 'Continue Checklist'
+                              : 'Start Checklist'}
                           <ChevronRight className="size-3.5" />
                         </Link>
                       </Button>

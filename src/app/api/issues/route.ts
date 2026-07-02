@@ -11,10 +11,17 @@ const CATEGORIES = new Set(['quality', 'equipment', 'communication', 'safety', '
 const SEVERITIES = new Set(['low', 'medium', 'high', 'critical'])
 const STATUSES = new Set(['open', 'in_progress', 'resolved', 'closed'])
 
+// Issue management is a staff surface. Clients report issues through the portal
+// (its own route); they must never read the company-wide admin list.
+const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'])
+
 // GET /api/issues — list issues across the company with optional filters.
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!STAFF_ROLES.has(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
@@ -52,6 +59,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!STAFF_ROLES.has(user.role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const body = await request.json().catch(() => ({}))
   const {

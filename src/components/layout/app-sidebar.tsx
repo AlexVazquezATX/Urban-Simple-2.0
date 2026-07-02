@@ -42,6 +42,7 @@ import {
   Camera,
   Key,
   ThumbsUp,
+  AlertTriangle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DarkModeToggle } from '@/components/ui/dark-mode-toggle'
@@ -67,7 +68,7 @@ export const navGroups: NavGroup[] = [
     label: 'Today',
     items: [
       { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', exact: true, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE', 'CLIENT_USER'] },
-      { href: '/tasks', icon: CheckSquare, label: 'Tasks', roles: ['SUPER_ADMIN'] },
+      { href: '/tasks', icon: CheckSquare, label: 'Tasks', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { href: '/growth', icon: Rocket, label: 'Daily Planner', exact: true, roles: ['SUPER_ADMIN', 'ADMIN'] },
     ],
   },
@@ -77,6 +78,7 @@ export const navGroups: NavGroup[] = [
       { href: '/operations', icon: ClipboardList, label: 'Operations', exact: true, roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { href: '/operations/workforce', icon: ShieldAlert, label: 'Workforce', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { href: '/operations/nightly-reviews', icon: Moon, label: 'Nightly Reviews', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { href: '/operations/issues', icon: AlertTriangle, label: 'Issues', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { href: '/chat', icon: MessageSquare, label: 'Team Chat', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'] },
       { href: '/team', icon: UserCog, label: 'Team', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { href: '/operations/schedule', icon: Calendar, label: 'Schedule', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
