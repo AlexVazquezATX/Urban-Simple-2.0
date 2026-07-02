@@ -4,9 +4,16 @@ import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { scoreProspect } from '@/lib/ai/prospect-scorer'
 
 /**
- * Run scheduled discovery jobs
- * This endpoint should be called by a cron job nightly
+ * Run scheduled discovery jobs.
+ *
+ * GET  — called by the Vercel cron nightly (no body). Delegates to POST, which
+ *        fails closed on the CRON_SECRET bearer check (see POST auth below).
+ * POST — manual/API trigger. Auth via CRON_SECRET bearer OR API key.
  */
+export async function GET(request: NextRequest) {
+  return POST(request)
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Verify auth: cron secret OR API key
@@ -50,7 +57,10 @@ export async function POST(request: NextRequest) {
           },
         })
 
-        // Run discovery (placeholder - integrate with actual discovery APIs)
+        // Run discovery. NOTE: this is currently a documented no-op stub — the
+        // real Places/Yelp integration is not built yet, so it always returns
+        // zero prospects. The job still completes cleanly (0 found / 0 added)
+        // instead of erroring or looking successful-with-data.
         const searchCriteria = job.searchCriteria as any
         const discoveredProspects = await runDiscovery(searchCriteria, job.sources)
 
@@ -176,19 +186,20 @@ export async function POST(request: NextRequest) {
 }
 
 /**
- * Run discovery search (placeholder - integrate with actual APIs)
+ * Discovery search — EXPLICIT NO-OP STUB.
+ *
+ * Real prospect discovery (Google Places API, Yelp API, "Best of" web scraping)
+ * is intentionally out of scope. This function always returns an empty list so
+ * scheduled jobs complete cleanly with 0 results rather than erroring. Wire the
+ * real integrations here when they are built.
  */
 async function runDiscovery(
   criteria: any,
   sources: string[]
 ): Promise<any[]> {
-  // Placeholder - in production, integrate with:
-  // - Google Places API
-  // - Yelp API
-  // - Web scraping for "Best of" articles
-
-  console.log('[DISCOVERY] Running search:', criteria, sources)
-  
-  // Return empty array for now - actual implementation would call APIs
+  console.log(
+    '[DISCOVERY] Stub no-op — no discovery provider integrated; returning 0 prospects.',
+    { criteria, sources }
+  )
   return []
 }

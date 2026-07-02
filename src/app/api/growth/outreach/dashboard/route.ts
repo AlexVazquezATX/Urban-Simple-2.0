@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,15 +10,26 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const now = new Date()
-    const todayStart = new Date(now)
-    todayStart.setHours(0, 0, 0, 0)
-    const todayEnd = new Date(now)
-    todayEnd.setHours(23, 59, 59, 999)
+    // Resolve the company's timezone so "today" / "scheduled today" is bounded
+    // to the business's local day (America/Chicago), not the server's UTC day.
+    const company = await prisma.company.findUnique({
+      where: { id: user.companyId },
+      select: { branches: { select: { timezone: true }, take: 1 } },
+    })
+    const timezone = company?.branches[0]?.timezone || 'America/Chicago'
 
-    const weekStart = new Date(now)
-    weekStart.setDate(now.getDate() - 7)
-    weekStart.setHours(0, 0, 0, 0)
+    const now = new Date()
+    const todayStart = getStartOfLocalDay(now, timezone)
+    // Add 25h then re-snap to local midnight so DST-shifted days still land on
+    // the next local day boundary; use [todayStart, tomorrowStart) for ranges.
+    const tomorrowStart = getStartOfLocalDay(
+      new Date(todayStart.getTime() + 25 * 60 * 60 * 1000),
+      timezone
+    )
+    const weekStart = getStartOfLocalDay(
+      new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000),
+      timezone
+    )
 
     // Get all prospects for company
     const prospects = await prisma.prospect.findMany({
@@ -76,7 +88,7 @@ export async function GET(request: NextRequest) {
         status: 'pending',
         scheduledAt: {
           gte: todayStart,
-          lte: todayEnd,
+          lt: tomorrowStart,
         },
       },
       include: {
@@ -136,13 +148,13 @@ export async function GET(request: NextRequest) {
     const todaysTasks = activities
       .filter((a) => {
         if (a.scheduledAt) {
-          return a.scheduledAt >= todayStart && a.scheduledAt <= todayEnd
+          return a.scheduledAt >= todayStart && a.scheduledAt < tomorrowStart
         }
         // Check if follow-up is due (7 days after last contact)
         if (a.outcome === 'follow_up' && a.completedAt) {
           const followUpDate = new Date(a.completedAt)
           followUpDate.setDate(followUpDate.getDate() + 7)
-          return followUpDate <= todayEnd
+          return followUpDate < tomorrowStart
         }
         return false
       })

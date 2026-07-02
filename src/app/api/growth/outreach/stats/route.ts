@@ -47,7 +47,16 @@ export async function GET(request: NextRequest) {
     const opened = messages.filter(m => m.openedAt).length
     const clicked = messages.filter(m => m.clickedAt).length
     const bounced = messages.filter(m => m.bouncedAt).length
-    const replied = messages.filter(m => m.status === 'replied').length
+    // Replies are logged as ProspectActivity with outcome='interested' (nothing
+    // ever writes OutreachMessage.status='replied'), so derive the metric from
+    // real activity rows instead of a status that stays 0.
+    const replied = await prisma.prospectActivity.count({
+      where: {
+        prospect: { companyId },
+        outcome: 'interested',
+        type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
+      },
+    })
     const failed = messages.filter(m => m.status === 'failed').length
 
     // Rates (based on delivered for open/click, based on sent for delivery/bounce)
@@ -61,7 +70,12 @@ export async function GET(request: NextRequest) {
     const totalOpens = messages.reduce((sum, m) => sum + m.openCount, 0)
     const totalClicks = messages.reduce((sum, m) => sum + m.clickCount, 0)
 
-    // Per-sequence breakdown
+    // Per-sequence / per-step breakdown.
+    // NOTE: the `replied` counts here remain status-based (effectively 0) because
+    // replies are logged as ProspectActivity, which isn't cleanly attributable to
+    // a single campaign/step (a prospect can span sequences). The headline
+    // overview.replied above is the accurate figure; these breakdown columns are
+    // a known gap, not a regression.
     const sequenceMap = new Map<string, { name: string; sent: number; delivered: number; opened: number; clicked: number; replied: number; bounced: number }>()
     for (const m of messages) {
       if (!m.campaign) continue

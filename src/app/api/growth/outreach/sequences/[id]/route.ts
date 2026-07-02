@@ -66,15 +66,46 @@ export async function PATCH(
       return NextResponse.json({ error: 'Sequence not found' }, { status: 404 })
     }
 
-    const updated = await prisma.outreachCampaign.update({
-      where: { id },
-      data: {
-        ...(body.name !== undefined && { name: body.name }),
-        ...(body.description !== undefined && { description: body.description }),
-        ...(body.status !== undefined && { status: body.status }),
-        ...(body.startDate !== undefined && { startDate: body.startDate ? new Date(body.startDate) : null }),
-        ...(body.endDate !== undefined && { endDate: body.endDate ? new Date(body.endDate) : null }),
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const campaign = await tx.outreachCampaign.update({
+        where: { id },
+        data: {
+          ...(body.name !== undefined && { name: body.name }),
+          ...(body.description !== undefined && { description: body.description }),
+          ...(body.status !== undefined && { status: body.status }),
+          ...(body.startDate !== undefined && { startDate: body.startDate ? new Date(body.startDate) : null }),
+          ...(body.endDate !== undefined && { endDate: body.endDate ? new Date(body.endDate) : null }),
+        },
+      })
+
+      // Persist step edits when a messages array is provided. Replace only the
+      // TEMPLATE step records (prospectId = null). Prospect-assigned messages
+      // share this campaignId once a sequence is enrolled/sent, so an unscoped
+      // delete would wipe real prospects' pending AND sent messages (and their
+      // Resend tracking / Sent-tab history). Scope the delete to template rows.
+      if (Array.isArray(body.messages)) {
+        await tx.outreachMessage.deleteMany({ where: { campaignId: id, prospectId: null } })
+        if (body.messages.length > 0) {
+          await tx.outreachMessage.createMany({
+            data: body.messages.map((msg: any, index: number) => ({
+              campaignId: id,
+              step: index + 1,
+              delayDays: msg.delayDays || 0,
+              channel: msg.channel,
+              subject: msg.subject || null,
+              body: msg.body,
+              isAiGenerated: msg.isAiGenerated || false,
+              aiPrompt: msg.aiPrompt || null,
+              status: 'pending',
+            })),
+          })
+        }
+      }
+
+      return tx.outreachCampaign.findUnique({
+        where: { id },
+        include: { messages: { where: { prospectId: null }, orderBy: { step: 'asc' } } },
+      })
     })
 
     return NextResponse.json(updated)

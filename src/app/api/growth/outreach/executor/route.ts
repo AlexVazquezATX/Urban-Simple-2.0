@@ -94,6 +94,48 @@ export async function POST(request: NextRequest) {
       take: 50,
     })
 
+    // Lane 1b: scheduled single sends (Quick Compose "send later").
+    // These are approved, step-1, non-autopilot messages whose scheduledAt has
+    // arrived. The send route pre-approves them; no other lane picks up step 1.
+    const scheduledReady = await prisma.outreachMessage.findMany({
+      where: {
+        approvalStatus: 'approved',
+        status: 'pending',
+        step: 1,
+        scheduledAt: { lte: now },
+        OR: [
+          { campaignId: null },
+          { campaign: { autopilot: false } },
+        ],
+      },
+      include: {
+        prospect: {
+          include: {
+            contacts: { take: 1 },
+            activities: {
+              where: {
+                type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
+                outcome: 'interested',
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 1,
+            },
+          },
+        },
+        campaign: {
+          select: {
+            id: true,
+            name: true,
+            status: true,
+            createdById: true,
+            companyId: true,
+            autopilot: true,
+          },
+        },
+      },
+      take: 50,
+    })
+
     // Lane 2: autopilot messages. Fetch candidates, then enforce per-company
     // window + daily cap in app code (simpler than a monster SQL query).
     const autopilotCandidates = await prisma.outreachMessage.findMany({
@@ -170,11 +212,12 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Count autopilot messages sent since local-midnight.
+      // Count autopilot messages sent since local-midnight. Rely on sentAt, not
+      // status equality: Resend webhooks advance status to delivered/opened/etc.,
+      // so counting status:'sent' would undercount and overshoot the daily cap.
       const localMidnight = getStartOfLocalDay(now, timezone)
       const sentToday = await prisma.outreachMessage.count({
         where: {
-          status: 'sent',
           sentAt: { gte: localMidnight },
           campaign: { autopilot: true, companyId },
         },
@@ -193,7 +236,7 @@ export async function POST(request: NextRequest) {
       autopilotGated.push(...toSend)
     }
 
-    const readyMessages = [...manualReady, ...autopilotGated]
+    const readyMessages = [...manualReady, ...scheduledReady, ...autopilotGated]
 
     const results = []
 
@@ -234,6 +277,29 @@ export async function POST(request: NextRequest) {
           reason: 'campaign_inactive',
         })
         continue
+      }
+
+      // Guard: never send a follow-up (step > 1) before an earlier step has
+      // actually gone out. A prior step counts as sent only if it has a sentAt
+      // timestamp. Leave the follow-up pending so it can fire once step 1 sends.
+      if (message.step > 1) {
+        const priorSent = await prisma.outreachMessage.findFirst({
+          where: {
+            prospectId: message.prospectId,
+            campaignId: message.campaignId,
+            step: { lt: message.step },
+            sentAt: { not: null },
+          },
+          select: { id: true },
+        })
+        if (!priorSent) {
+          results.push({
+            messageId: message.id,
+            action: 'skipped',
+            reason: 'no_prior_step_sent',
+          })
+          continue
+        }
       }
 
       try {
@@ -310,6 +376,7 @@ export async function POST(request: NextRequest) {
       success: true,
       processed: results.length,
       manualReady: manualReady.length,
+      scheduledReady: scheduledReady.length,
       autopilotReady: autopilotGated.length,
       autopilotGated: gatedSummary,
       results,

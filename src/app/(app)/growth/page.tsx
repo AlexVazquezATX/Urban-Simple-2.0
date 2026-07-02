@@ -10,6 +10,8 @@ import { Plus, Phone, Mail, Calendar, Target, Sparkles, Users, Clock, Rocket, Ba
 import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { ProspectForm } from '@/components/growth/prospect-form'
 
 function priorityTone(priority: string): 'coral' | 'gold' | 'neutral' {
   if (priority === 'urgent') return 'coral'
@@ -23,11 +25,20 @@ async function DailyPlannerContent() {
     return <div>Please log in</div>
   }
 
-  // Get today's tasks and priorities
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  // Resolve the company's timezone so "today" means the business's local day
+  // (America/Chicago), not the server's UTC day.
+  const company = await prisma.company.findUnique({
+    where: { id: user.companyId },
+    select: { branches: { select: { timezone: true }, take: 1 } },
+  })
+  const timezone = company?.branches[0]?.timezone || 'America/Chicago'
+
+  // Get today's tasks and priorities — bounded to the company's local day.
+  const now = new Date()
+  const today = getStartOfLocalDay(now, timezone)
+  // Add 25h then re-snap to local midnight so DST-shifted days still land on the
+  // next local day boundary.
+  const tomorrow = getStartOfLocalDay(new Date(today.getTime() + 25 * 60 * 60 * 1000), timezone)
 
   // Get prospects that need contact today
   const prospectsToContact = await prisma.prospect.findMany({
@@ -94,6 +105,7 @@ async function DailyPlannerContent() {
     by: ['status'],
     where: {
       companyId: user.companyId,
+      deletedAt: null,
     },
     _count: {
       id: true,
@@ -119,12 +131,12 @@ async function DailyPlannerContent() {
                 View All Leads
               </Link>
             </Button>
-            <Button asChild variant="gold" size="sm">
-              <Link href="/growth/prospects/new">
+            <ProspectForm>
+              <Button variant="gold" size="sm">
                 <Plus className="size-4" />
                 Add Prospect
-              </Link>
-            </Button>
+              </Button>
+            </ProspectForm>
           </>
         }
       />
@@ -241,7 +253,9 @@ async function DailyPlannerContent() {
                         )}
                         {prospect.contacts[0]?.phone && (
                           <Button asChild variant="ghost" size="icon-sm">
-                            <Link href={`/growth/outreach?prospect=${prospect.id}&channel=phone`}>
+                            {/* QuickCompose has no phone channel; SMS is the
+                                supported phone-based channel. */}
+                            <Link href={`/growth/outreach?prospect=${prospect.id}&channel=sms`}>
                               <Phone className="size-4" />
                             </Link>
                           </Button>

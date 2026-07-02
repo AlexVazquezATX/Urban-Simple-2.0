@@ -3,11 +3,11 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/layout/page-header'
 import { Plus } from 'lucide-react'
-import Link from 'next/link'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { formatMoney } from '@/lib/format'
 import { PipelineBoard } from '@/components/growth/pipeline-board'
+import { ProspectForm } from '@/components/growth/prospect-form'
 
 async function PipelineContent() {
   const user = await getCurrentUser()
@@ -64,12 +64,12 @@ async function PipelineContent() {
           </>
         }
         actions={
-          <Button asChild variant="gold" size="sm">
-            <Link href="/growth/prospects/new">
+          <ProspectForm>
+            <Button variant="gold" size="sm">
               <Plus className="size-4" />
               Add Prospect
-            </Link>
-          </Button>
+            </Button>
+          </ProspectForm>
         }
       />
 

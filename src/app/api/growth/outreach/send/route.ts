@@ -68,7 +68,8 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      // Create scheduled message
+      // Create scheduled message. Pre-approve it so the executor's scheduled
+      // single-send lane fires it at its time; without approval no lane picks it up.
       const scheduledMessage = await prisma.outreachMessage.create({
         data: {
           campaignId: campaign.id,
@@ -79,6 +80,9 @@ export async function POST(request: NextRequest) {
           subject: subject || null,
           body: messageBody,
           status: 'pending',
+          approvalStatus: 'approved',
+          approvedAt: new Date(),
+          approvedById: user.id,
           scheduledAt: new Date(scheduledAt),
         },
       })

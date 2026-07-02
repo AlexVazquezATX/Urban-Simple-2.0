@@ -244,7 +244,9 @@ export function QuickCompose() {
       setScheduleFor('')
       setSelectedTemplate('')
 
-      router.push('/growth/outreach?tab=approval')
+      // The approval queue lives inside the Messages tab; 'approval' is not a
+      // valid tab value and would render a blank page.
+      router.push('/growth/outreach?tab=messages')
     } catch (error: any) {
       console.error('Error queuing message:', error)
       toast.error(error.message || 'Failed to queue message')

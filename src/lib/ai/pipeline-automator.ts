@@ -11,6 +11,12 @@ export async function automatePipelineStage(prospectId: string): Promise<void> {
         orderBy: { createdAt: 'desc' },
         take: 10,
       },
+      // Engagement (opens/clicks) is written by the Resend webhook onto
+      // OutreachMessage, NOT onto ProspectActivity — so we read it from here.
+      outreachMessages: {
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      },
     },
   })
 
@@ -32,11 +38,22 @@ export async function automatePipelineStage(prospectId: string): Promise<void> {
   }
 
   // Rule 2: contacted → engaged (when they open/click)
+  // Reliable signal lives on OutreachMessage (populated by Resend webhooks).
+  // ProspectActivity.openedAt/clickedAt is effectively never set by the webhook
+  // pipeline, so we detect engagement from the sent messages instead. We keep
+  // the activity check as a defensive fallback for any manually-logged opens.
   if (currentStatus === 'contacted') {
-    const hasEngagement = prospect.activities.some(
+    const hasMessageEngagement = prospect.outreachMessages.some(
+      (m) =>
+        m.openedAt !== null ||
+        m.clickedAt !== null ||
+        m.openCount > 0 ||
+        m.clickCount > 0
+    )
+    const hasActivityEngagement = prospect.activities.some(
       (a) => a.openedAt !== null || a.clickedAt !== null
     )
-    if (hasEngagement) {
+    if (hasMessageEngagement || hasActivityEngagement) {
       newStatus = 'engaged'
     }
   }
