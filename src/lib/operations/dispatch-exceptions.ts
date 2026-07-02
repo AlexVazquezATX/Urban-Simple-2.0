@@ -20,6 +20,7 @@ type ShiftLike = {
   endTime: string
   status?: string | null
   managerId?: string | null
+  associateId?: string | null
   manager?: {
     id: string
     firstName: string
@@ -201,7 +202,11 @@ export function findRouteConflicts(shifts: ShiftLike[]): RouteConflict[] {
 
 export function findUnassignedRoutes(shifts: ShiftLike[]): UnassignedRoute[] {
   return shifts
-    .filter((shift) => !shift.managerId)
+    // A shift only lacks required coverage when it has neither a manager nor an
+    // associate. An associate-only shift (managerId null, associateId set) is a
+    // valid single-location assignment, not an unassigned manager route — the
+    // ShiftForm requires exactly one of the two (M10).
+    .filter((shift) => !shift.managerId && !shift.associateId)
     .map((shift) => {
       const locations = getShiftLocations(shift)
 

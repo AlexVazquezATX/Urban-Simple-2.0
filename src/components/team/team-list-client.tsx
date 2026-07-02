@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus, Shield, UserCheck, Users, User } from 'lucide-react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -70,6 +71,18 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
   const [users, setUsers] = useState<TeamMember[]>(initialUsers)
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
   const [isNewMember, setIsNewMember] = useState(false)
+  const [canManage, setCanManage] = useState(false)
+
+  // Creating/editing/deactivating team members is admin-only at the API. Gate
+  // the write actions on the real role so managers don't get buttons that 403.
+  useEffect(() => {
+    fetch('/api/users/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setCanManage(data.role === 'ADMIN' || data.role === 'SUPER_ADMIN')
+      })
+      .catch(() => {})
+  }, [])
 
   const activeUsers = users.filter((u) => u.isActive)
   const inactiveUsers = users.filter((u) => !u.isActive)
@@ -116,9 +129,14 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
         setUsers((prev) =>
           prev.map((u) => (u.id === memberId ? { ...u, isActive: false } : u))
         )
+        toast.success('Team member deactivated')
+      } else {
+        const error = await response.json().catch(() => ({}))
+        toast.error(error.error || 'Failed to deactivate member')
       }
     } catch (error) {
       console.error('Failed to deactivate member:', error)
+      toast.error('Failed to deactivate member')
     }
   }
 
@@ -129,10 +147,12 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
         title="Team"
         subtitle="Manage your team members and their access"
         actions={
-          <Button variant="gold" onClick={handleAddMember}>
-            <Plus className="size-4" />
-            Add Team Member
-          </Button>
+          canManage ? (
+            <Button variant="gold" onClick={handleAddMember}>
+              <Plus className="size-4" />
+              Add Team Member
+            </Button>
+          ) : undefined
         }
       />
 
@@ -176,10 +196,12 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
               title="No team members yet — it starts with one"
               description="Add your first team member to give them access to schedules, checklists, and assignments."
               action={
-                <Button variant="outline" onClick={handleAddMember}>
-                  <Plus className="size-4" />
-                  Add Your First Team Member
-                </Button>
+                canManage ? (
+                  <Button variant="outline" onClick={handleAddMember}>
+                    <Plus className="size-4" />
+                    Add Your First Team Member
+                  </Button>
+                ) : undefined
               }
             />
           ) : (
@@ -344,6 +366,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
           member={selectedMember}
           isNew={isNewMember}
           branches={branches}
+          canManage={canManage}
           onClose={handleClosePanel}
           onSave={handleSaveMember}
           onDelete={handleDeleteMember}

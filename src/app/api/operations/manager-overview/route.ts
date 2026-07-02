@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+
+// Resolve the operational day as the current calendar day in the company's
+// timezone. Shifts store `date` as a @db.Date at UTC midnight of the calendar
+// day, so we express the company-local day the same way (mirrors the
+// timezone-safe parsing in operations/dispatch/route). Using new Date() +
+// setHours on Vercel (UTC) rolls "today" to tomorrow after ~7pm Austin (M8).
+async function getOperationalToday(companyId: string, branchId?: string | null) {
+  const branch = await prisma.branch.findFirst({
+    where: { companyId, ...(branchId ? { id: branchId } : {}) },
+    select: { timezone: true },
+  })
+  const timezone = branch?.timezone || 'America/Chicago'
+  const localStart = getStartOfLocalDay(new Date(), timezone)
+  return new Date(
+    Date.UTC(
+      localStart.getUTCFullYear(),
+      localStart.getUTCMonth(),
+      localStart.getUTCDate()
+    )
+  )
+}
 
 // Operations overview for the Manager dashboard. Deliberately money-free —
 // managers see the floor, not the ledger. Returns: tonight's shift/crew
@@ -16,14 +38,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
-    const dayAfter = new Date(today)
-    dayAfter.setDate(dayAfter.getDate() + 2)
-    const twoDaysAgo = new Date(today)
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
+    const today = await getOperationalToday(user.companyId, user.branchId)
+    const DAY_MS = 24 * 60 * 60 * 1000
+    const tomorrow = new Date(today.getTime() + DAY_MS)
+    const dayAfter = new Date(today.getTime() + 2 * DAY_MS)
+    const twoDaysAgo = new Date(today.getTime() - 2 * DAY_MS)
 
     const branchScope = user.branchId ? { branchId: user.branchId } : {}
 
@@ -81,13 +100,19 @@ export async function GET() {
           take: 8,
         }),
 
-        // Unassigned shifts (today + tomorrow)
+        // Unassigned shifts (today + tomorrow). A manager review route is
+        // intentionally associateId=null (it carries a managerId instead), so
+        // filtering on associateId=null alone flooded this rail with normal
+        // manager routes (M9). A shift only needs coverage when it has neither
+        // an associate nor a manager — mirroring the ShiftForm rule that every
+        // shift must have one or the other.
         prisma.shift.findMany({
           where: {
             branch: { companyId: user.companyId, ...(user.branchId && { id: user.branchId }) },
             date: { gte: today, lt: dayAfter },
             associateId: null,
-            status: 'scheduled',
+            managerId: null,
+            status: { not: 'cancelled' },
           },
           include: {
             shiftLocations: { include: { location: { select: { name: true } } } },

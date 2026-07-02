@@ -74,6 +74,8 @@ interface Associate {
   totalMonthlyPay: number
   totalAccountRevenue: number
   hoursStatus: 'safe' | 'watch' | 'warning' | 'danger'
+  hoursSource?: 'actual' | 'estimate'
+  hasEstimateGap?: boolean
 }
 
 const DAY_LABELS_SHORT = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
@@ -133,7 +135,7 @@ function formatWindow(start: string | null, end: string | null) {
   return `${fmt(start)}${end ? ` - ${fmt(end)}` : ''}`
 }
 
-function AssociateRow({ associate, onUpdate }: { associate: Associate; onUpdate: () => void }) {
+function AssociateRow({ associate, onUpdate, canManage }: { associate: Associate; onUpdate: () => void; canManage: boolean }) {
   const [expanded, setExpanded] = useState(false)
   const [deleteAssociateOpen, setDeleteAssociateOpen] = useState(false)
   const [deleteAssignmentId, setDeleteAssignmentId] = useState<string | null>(null)
@@ -256,9 +258,21 @@ function AssociateRow({ associate, onUpdate }: { associate: Associate; onUpdate:
             {associate.hoursStatus === 'danger' && (
               <AlertTriangle className="size-3.5 shrink-0 text-coral-600 dark:text-coral-300" />
             )}
+            {associate.hasEstimateGap && (
+              <AlertTriangle
+                className="size-3.5 shrink-0 text-gold-600 dark:text-gold-400"
+                aria-label="Hours estimate incomplete"
+              />
+            )}
           </div>
           <div className="text-xs text-muted-foreground">
             <span className="tabular-nums">{associate.totalAccounts}</span> account{associate.totalAccounts !== 1 ? 's' : ''}
+            {associate.hoursSource === 'actual' && (
+              <span className="ml-2 text-green-600 dark:text-green-300">Actual hours</span>
+            )}
+            {associate.hasEstimateGap && (
+              <span className="ml-2 text-gold-600 dark:text-gold-400">Est. incomplete</span>
+            )}
             {associate.phone && <span className="ml-2 font-mono">{associate.phone}</span>}
           </div>
         </button>
@@ -279,25 +293,28 @@ function AssociateRow({ associate, onUpdate }: { associate: Associate; onUpdate:
           <div className="text-[10px] text-muted-foreground">/month</div>
         </div>
 
-        {/* Actions dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="shrink-0"
-              aria-label={`Actions for ${associate.firstName} ${associate.lastName}`}
-            >
-              <MoreHorizontal className="size-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => setDeleteAssociateOpen(true)}>
-              <Trash2 className="size-4" />
-              Remove Associate
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Actions dropdown — removing an associate is admin-only (PATCH
+            /api/users/[id] rejects managers), so hide it for non-admins. */}
+        {canManage && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="shrink-0"
+                aria-label={`Actions for ${associate.firstName} ${associate.lastName}`}
+              >
+                <MoreHorizontal className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={() => setDeleteAssociateOpen(true)}>
+                <Trash2 className="size-4" />
+                Remove Associate
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       {/* Expanded account details */}
@@ -473,7 +490,18 @@ export function WorkforceDashboard() {
   const [associates, setAssociates] = useState<Associate[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'danger' | 'warning' | 'watch'>('all')
+  const [canManage, setCanManage] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    // Removing an associate is admin-only; gate the action on the real role.
+    fetch('/api/users/me')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setCanManage(data.role === 'ADMIN' || data.role === 'SUPER_ADMIN')
+      })
+      .catch(() => {})
+  }, [])
 
   const fetchData = useCallback(async () => {
     try {
@@ -558,7 +586,7 @@ export function WorkforceDashboard() {
           className="w-full cursor-pointer rounded-[14px] text-left focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <StatCard
-            label="Over 40h"
+            label="40h+"
             value={dangerCount}
             icon={AlertTriangle}
             tone={dangerCount > 0 ? 'coral' : 'neutral'}
@@ -614,7 +642,7 @@ export function WorkforceDashboard() {
             <FilterTab
               active={filter === 'danger'}
               onClick={() => setFilter(filter === 'danger' ? 'all' : 'danger')}
-              label="Over 40h"
+              label="40h+"
               count={dangerCount}
               countClass="text-coral-600 dark:text-coral-300"
             />
@@ -664,6 +692,7 @@ export function WorkforceDashboard() {
               key={associate.id}
               associate={associate}
               onUpdate={handleUpdate}
+              canManage={canManage}
             />
           ))
         )}

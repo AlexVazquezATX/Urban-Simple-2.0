@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import {
+  generateRecurringShifts,
+  RecurringPattern,
+} from '@/lib/operations/shift-generator'
 
 // GET /api/shifts - List shifts with filters
 export async function GET(request: NextRequest) {
@@ -166,6 +170,112 @@ export async function POST(request: NextRequest) {
 
     // Use the branch from the first location
     const branchId = locations[0].branchId
+
+    // Recurring shifts: expand the pattern into one shift per matching day so
+    // the user actually gets the multiple shifts the form promises (M11).
+    // Previously this endpoint created a single row and only stashed the
+    // recurringPattern JSON, so a "recurring" shift silently became one shift.
+    if (isRecurring && recurringPattern) {
+      const daysOfWeek: number[] = Array.isArray(recurringPattern.daysOfWeek)
+        ? recurringPattern.daysOfWeek
+        : []
+
+      if (daysOfWeek.length === 0) {
+        return NextResponse.json(
+          { error: 'Select at least one day of week for a recurring shift' },
+          { status: 400 }
+        )
+      }
+
+      const patternStartDate = recurringPattern.startDate || date
+      const pattern: RecurringPattern = {
+        type: 'weekly',
+        daysOfWeek,
+        startTime: recurringPattern.startTime || startTime,
+        endTime: recurringPattern.endTime || endTime,
+        startDate: patternStartDate,
+        endDate: recurringPattern.endDate || undefined,
+      }
+
+      // Bound the expansion. Always cap at a rolling 12-week horizon — even when
+      // an explicit end date is given — so a far-future endDate (endDate is a
+      // free user input) can't expand into thousands of rows in one transaction.
+      const RECURRING_HORIZON_DAYS = 84
+      const rangeStart = new Date(patternStartDate)
+      const horizonEnd = new Date(
+        rangeStart.getTime() + RECURRING_HORIZON_DAYS * 24 * 60 * 60 * 1000
+      )
+      const rangeEnd = pattern.endDate
+        ? new Date(Math.min(new Date(pattern.endDate).getTime(), horizonEnd.getTime()))
+        : horizonEnd
+
+      // The set of dates depends only on the pattern + range, so reuse the
+      // shared generator to resolve which days to schedule, then create a full
+      // shift (with all shiftLocations and the manager/associate) per date.
+      const occurrences = generateRecurringShifts(
+        {
+          locationId: finalLocationIds[0],
+          branchId,
+          associateId: associateId || managerId || '',
+          recurringPattern: pattern,
+          notes,
+        },
+        rangeStart,
+        rangeEnd
+      )
+
+      if (occurrences.length === 0) {
+        return NextResponse.json(
+          { error: 'The recurring pattern produced no shifts in the selected range' },
+          { status: 400 }
+        )
+      }
+
+      const createdShifts = await prisma.$transaction(
+        occurrences.map((occurrence) =>
+          prisma.shift.create({
+            data: {
+              ...(finalLocationIds[0] && {
+                location: { connect: { id: finalLocationIds[0] } },
+              }),
+              branch: { connect: { id: branchId } },
+              ...(associateId && {
+                associate: { connect: { id: associateId } },
+              }),
+              ...(managerId && {
+                manager: { connect: { id: managerId } },
+              }),
+              date: occurrence.date,
+              startTime: pattern.startTime,
+              endTime: pattern.endTime,
+              isRecurring: true,
+              recurringPattern: pattern as any,
+              notes: notes || null,
+              status,
+              shiftLocations: {
+                create: finalLocationIds.map((locId: string, index: number) => ({
+                  locationId: locId,
+                  sortOrder: index,
+                })),
+              },
+            },
+            select: { id: true },
+          })
+        )
+      )
+
+      return NextResponse.json(
+        {
+          created: createdShifts.length,
+          count: createdShifts.length,
+          shiftIds: createdShifts.map((shift) => shift.id),
+          message: `Created ${createdShifts.length} recurring shift${
+            createdShifts.length === 1 ? '' : 's'
+          }`,
+        },
+        { status: 201 }
+      )
+    }
 
     // Create shift with first locationId for now (will support multiple after migration)
     // For manager shifts with multiple locations, we'll store the first one in locationId

@@ -141,7 +141,19 @@ export function ShiftForm({ shift, defaultDate, children }: ShiftFormProps) {
               ? new Date(shift.recurringPattern.endDate).toISOString().split('T')[0]
               : undefined,
           }
-        : undefined,
+        : {
+            // Prefill so a freshly-checked "Recurring" shift is valid to submit:
+            // the pattern start date defaults to the chosen shift date and the
+            // times mirror the shift window. The server expands this into one
+            // shift per selected day of week.
+            type: 'weekly',
+            daysOfWeek: [],
+            startTime: shift?.startTime || '21:00',
+            endTime: shift?.endTime || '02:00',
+            startDate:
+              defaultDate || new Date().toISOString().split('T')[0],
+            endDate: undefined,
+          },
       notes: shift?.notes || '',
     },
   })

@@ -87,6 +87,7 @@ export async function PATCH(
       branchId,
       isActive,
       avatarUrl,
+      password, // Optional — provisions a Supabase login for a member with none
     } = body
 
     // Privileged fields — a non-admin editing their own profile must not be
@@ -136,6 +137,54 @@ export async function PATCH(
     if (branchId !== undefined) updateData.branchId = branchId
     if (isActive !== undefined) updateData.isActive = isActive
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl
+
+    // Provision a login for an existing member that doesn't have one yet.
+    // Mirrors the POST create-auth-user flow. Admin-only, and only when the
+    // member has no authId (never overwrites/rotates an existing login here).
+    if (password) {
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: 'Only an admin can create a login for a member' },
+          { status: 403 }
+        )
+      }
+      if (existing.authId) {
+        return NextResponse.json(
+          { error: 'This member already has a login' },
+          { status: 409 }
+        )
+      }
+      try {
+        const { createClient } = await import('@supabase/supabase-js')
+        const supabaseAdmin = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
+        const { data: authData, error: authError } =
+          await supabaseAdmin.auth.admin.createUser({
+            email: existing.email,
+            password,
+            email_confirm: true,
+          })
+
+        if (authError) {
+          console.error('Failed to create auth user:', authError)
+          return NextResponse.json(
+            { error: 'Failed to create authentication user', details: authError.message },
+            { status: 500 }
+          )
+        }
+
+        updateData.authId = authData.user.id
+      } catch (error: any) {
+        console.error('Auth creation error:', error)
+        return NextResponse.json(
+          { error: 'Failed to create authentication user', details: error.message },
+          { status: 500 }
+        )
+      }
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id },

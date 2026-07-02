@@ -1,6 +1,30 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+
+// Resolve the operational "tonight" as the current calendar day in the
+// company's timezone. Shifts store `date` as a @db.Date at UTC midnight of the
+// calendar day, so we express the company-local day the same way (mirrors the
+// timezone-safe parsing in operations/dispatch/route). Using new Date() +
+// setHours on Vercel (UTC) rolls "today" to tomorrow after ~7pm Austin (M8).
+async function getOperationalDayRange(companyId: string, branchId?: string | null) {
+  const branch = await prisma.branch.findFirst({
+    where: { companyId, ...(branchId ? { id: branchId } : {}) },
+    select: { timezone: true },
+  })
+  const timezone = branch?.timezone || 'America/Chicago'
+  const localStart = getStartOfLocalDay(new Date(), timezone)
+  const today = new Date(
+    Date.UTC(
+      localStart.getUTCFullYear(),
+      localStart.getUTCMonth(),
+      localStart.getUTCDate()
+    )
+  )
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000)
+  return { today, tomorrow }
+}
 
 export async function GET() {
   try {
@@ -10,10 +34,10 @@ export async function GET() {
     }
 
     // Tonight = today's date (shifts are overnight, so "tonight" means today's date)
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    const tomorrow = new Date(today)
-    tomorrow.setDate(tomorrow.getDate() + 1)
+    const { today, tomorrow } = await getOperationalDayRange(
+      user.companyId,
+      user.branchId
+    )
 
     const shifts = await prisma.shift.findMany({
       where: {

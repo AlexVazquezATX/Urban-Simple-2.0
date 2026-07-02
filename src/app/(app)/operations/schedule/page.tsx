@@ -128,6 +128,11 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
     return <div>Please log in</div>
   }
 
+  // Generating dispatch routes is ADMIN/SUPER_ADMIN only (see
+  // /api/operations/dispatch/generate). Hide the button for managers rather
+  // than render an action that 403s.
+  const canGenerateDispatch = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN'
+
   const today = new Date()
   const targetDate = weekOffset === 0 ? today : addWeeks(today, weekOffset)
   const weekStart = startOfWeek(targetDate, { weekStartsOn: 0 })
@@ -322,7 +327,9 @@ async function ScheduleView({ weekOffset = 0 }: { weekOffset: number }) {
                 Schedule Manager
               </Button>
             </ShiftForm>
-            <DispatchGenerateButton rangeStart={weekStart.toISOString().split('T')[0]} />
+            {canGenerateDispatch && (
+              <DispatchGenerateButton rangeStart={weekStart.toISOString().split('T')[0]} />
+            )}
           </>
         }
       />

@@ -68,6 +68,9 @@ interface TeamMemberDetailPanelProps {
   member: TeamMember | null
   isNew?: boolean
   branches: Branch[]
+  // Whether the current viewer may create/edit/deactivate members (admin-only
+  // at the API). Defaults to true so existing callers keep their behavior.
+  canManage?: boolean
   onClose: () => void
   onSave: (savedMember?: TeamMember) => void
   onDelete?: (memberId: string) => void
@@ -103,6 +106,7 @@ export function TeamMemberDetailPanel({
   member,
   isNew,
   branches,
+  canManage = true,
   onClose,
   onSave,
   onDelete,
@@ -111,6 +115,8 @@ export function TeamMemberDetailPanel({
   const [loading, setLoading] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false)
+  // Whether this existing member already has a login (authId). null = unknown/loading.
+  const [hasLogin, setHasLogin] = useState<boolean | null>(null)
 
   // Form state
   const [email, setEmail] = useState(member?.email || '')
@@ -152,6 +158,26 @@ export function TeamMemberDetailPanel({
     setPassword('')
   }, [member])
 
+  // For an existing member, look up whether they already have a login so we can
+  // offer to provision one when they don't (A10).
+  useEffect(() => {
+    if (!member || isNew) {
+      setHasLogin(null)
+      return
+    }
+    let cancelled = false
+    setHasLogin(null)
+    fetch(`/api/users/${member.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setHasLogin(!!data.authId)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [member, isNew])
+
   const handleClose = useCallback(() => {
     setIsVisible(false)
     setTimeout(onClose, 200) // Wait for animation
@@ -159,6 +185,7 @@ export function TeamMemberDetailPanel({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!canManage) return
     if (!firstName.trim() || !lastName.trim() || !email.trim()) return
 
     setLoading(true)
@@ -429,8 +456,9 @@ export function TeamMemberDetailPanel({
             </div>
           )}
 
-          {/* Auth Account Section (for new members or setting password) */}
-          {(!member || isNew) && (
+          {/* Auth Account Section — for new members, and for existing members
+              who don't yet have a login (A10). Admin-only. */}
+          {canManage && ((!member || isNew) || hasLogin === false) && (
             <div className="space-y-4 p-4 border border-border rounded-[12px] bg-secondary/40">
               <div className="flex items-center space-x-3">
                 <Checkbox
@@ -440,10 +468,12 @@ export function TeamMemberDetailPanel({
                 />
                 <div className="space-y-0.5">
                   <Label htmlFor="createAuthAccount" className="font-medium text-foreground">
-                    Create Login Account
+                    {member && !isNew ? 'Add Login Account' : 'Create Login Account'}
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    Allow this user to log in to the platform
+                    {member && !isNew
+                      ? 'This member has no login yet. Set a password to let them log in.'
+                      : 'Allow this user to log in to the platform'}
                   </p>
                 </div>
               </div>
@@ -478,7 +508,7 @@ export function TeamMemberDetailPanel({
 
         {/* Footer Actions - Fixed */}
         <div className="flex items-center justify-between gap-3 px-5 py-4 border-t border-border bg-card">
-          {member && !isNew && onDelete ? (
+          {member && !isNew && onDelete && canManage ? (
             <Button
               type="button"
               variant="ghost"
@@ -492,11 +522,14 @@ export function TeamMemberDetailPanel({
           )}
           <div className="flex items-center gap-3">
             <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
+              {canManage ? 'Cancel' : 'Close'}
             </Button>
             <Button
               onClick={handleSubmit}
-              disabled={loading || !firstName.trim() || !lastName.trim() || !email.trim()}
+              disabled={
+                !canManage || loading || !firstName.trim() || !lastName.trim() || !email.trim()
+              }
+              title={canManage ? undefined : 'Only admins can edit team members'}
               variant="gold"
             >
               {loading ? (
