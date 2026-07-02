@@ -15,6 +15,7 @@ async function MoneyData() {
 
   const companyFilter = {
     companyId: user.companyId,
+    deletedAt: null,
     ...(user.branchId && { branchId: user.branchId }),
   }
 
@@ -23,7 +24,10 @@ async function MoneyData() {
     prisma.invoice.findMany({
       where: {
         client: companyFilter,
-        status: { in: ['draft', 'sent', 'partial'] },
+        // Any unpaid invoice with a balance still due (viewed + overdue
+        // included; paid + void excluded) — kept consistent with the
+        // dashboard and attention feed.
+        status: { in: ['draft', 'sent', 'viewed', 'partial', 'overdue'] },
         balanceDue: { gt: 0 },
       },
       include: {
@@ -78,12 +82,13 @@ async function MoneyData() {
   })
 
   // Invoice summary
+  const outstandingStatuses = ['draft', 'sent', 'viewed', 'partial', 'overdue']
   const totalOutstanding = allInvoices
-    .filter(inv => ['draft', 'sent', 'partial'].includes(inv.status) && Number(inv.balanceDue) > 0)
+    .filter(inv => outstandingStatuses.includes(inv.status) && Number(inv.balanceDue) > 0)
     .reduce((sum, inv) => sum + Number(inv.balanceDue), 0)
 
   const overdueInvs = allInvoices.filter(inv => {
-    if (!['sent', 'partial'].includes(inv.status)) return false
+    if (!outstandingStatuses.includes(inv.status)) return false
     return new Date(inv.dueDate) < today && Number(inv.balanceDue) > 0
   })
 
