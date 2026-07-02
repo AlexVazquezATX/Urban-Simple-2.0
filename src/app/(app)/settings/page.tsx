@@ -16,6 +16,8 @@ const settingsLinks = [
 export default async function SettingsPage() {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+  // Settings links to admin/platform tools — gate to admins only.
+  if (user.role !== 'SUPER_ADMIN' && user.role !== 'ADMIN') redirect('/dashboard')
 
   return (
     <div className="space-y-8">

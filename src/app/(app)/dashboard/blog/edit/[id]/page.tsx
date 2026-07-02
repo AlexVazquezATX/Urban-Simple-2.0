@@ -58,6 +58,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
 import type { BlogPostWithRelations } from '@/lib/services/blog-service'
 import type { BlogCategory } from '@prisma/client'
 import { generateSlug, estimateReadingTime } from '@/lib/ai/blog-generator'
@@ -149,7 +150,7 @@ export default function BlogEditPage() {
     try {
       const readTime = estimateReadingTime(content)
 
-      await fetch(`/api/blog/admin/posts/${postId}`, {
+      const res = await fetch(`/api/blog/admin/posts/${postId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,12 +168,15 @@ export default function BlogEditPage() {
         }),
       })
 
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+
+      toast.success('Changes saved')
       setHasChanges(false)
       // Reload to get fresh data
       await loadData()
     } catch (error) {
       console.error('Failed to save post:', error)
-      alert('Failed to save changes. Please try again.')
+      toast.error('Failed to save changes. Please try again.')
     } finally {
       setSaving(false)
     }
@@ -180,13 +184,15 @@ export default function BlogEditPage() {
 
   async function handleDelete() {
     try {
-      await fetch(`/api/blog/admin/posts/${postId}`, {
+      const res = await fetch(`/api/blog/admin/posts/${postId}`, {
         method: 'DELETE',
       })
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+      toast.success('Post deleted')
       router.push('/dashboard/blog')
     } catch (error) {
       console.error('Failed to delete post:', error)
-      alert('Failed to delete post. Please try again.')
+      toast.error('Failed to delete post. Please try again.')
     }
   }
 

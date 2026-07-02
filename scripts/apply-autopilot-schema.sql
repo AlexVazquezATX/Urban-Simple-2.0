@@ -9,7 +9,7 @@ ALTER TABLE "companies"
   ADD COLUMN IF NOT EXISTS "autopilot_daily_cap" INTEGER NOT NULL DEFAULT 12,
   ADD COLUMN IF NOT EXISTS "autopilot_send_hour_start" INTEGER NOT NULL DEFAULT 9,
   ADD COLUMN IF NOT EXISTS "autopilot_send_hour_end" INTEGER NOT NULL DEFAULT 16,
-  ADD COLUMN IF NOT EXISTS "autopilot_send_days_of_week" INTEGER[] DEFAULT ARRAY[2, 3, 4, 5, 6]::INTEGER[];
+  ADD COLUMN IF NOT EXISTS "autopilot_send_days_of_week" INTEGER[] DEFAULT ARRAY[1, 2, 3, 4, 5]::INTEGER[];
 
 -- Outreach campaigns: autopilot flag
 ALTER TABLE "outreach_campaigns"

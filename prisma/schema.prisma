@@ -34,7 +34,7 @@ model Company {
   autopilotDailyCap          Int     @default(12) @map("autopilot_daily_cap")
   autopilotSendHourStart     Int     @default(9) @map("autopilot_send_hour_start")
   autopilotSendHourEnd       Int     @default(16) @map("autopilot_send_hour_end")
-  autopilotSendDaysOfWeek    Int[]   @default([2, 3, 4, 5, 6]) @map("autopilot_send_days_of_week") // 0=Sun..6=Sat
+  autopilotSendDaysOfWeek    Int[]   @default([1, 2, 3, 4, 5]) @map("autopilot_send_days_of_week") // 0=Sun..6=Sat (Mon-Fri)
 
   branches Branch[]
   users    User[]

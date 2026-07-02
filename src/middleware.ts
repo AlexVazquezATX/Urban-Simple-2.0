@@ -199,7 +199,7 @@ export async function middleware(request: NextRequest) {
     '/dashboard', '/app', '/clients', '/locations', '/operations', '/chat',
     '/team', '/invoices', '/billing', '/financials', '/growth', '/creative-hub',
     '/creative-studio', '/pulse', '/chat-analytics', '/tasks', '/admin', '/command',
-    '/money', '/pipeline',
+    '/money', '/pipeline', '/settings',
   ]
 
   // Per-section role matrix — mirrors the sidebar's `roles` so what's hidden
@@ -208,6 +208,7 @@ export async function middleware(request: NextRequest) {
   // specific prefixes (e.g. /dashboard/blog) must precede general ones.
   const ROUTE_ROLES: Array<{ prefix: string; allow: string[] }> = [
     { prefix: '/admin', allow: ['SUPER_ADMIN'] },
+    { prefix: '/settings', allow: ['SUPER_ADMIN', 'ADMIN'] },
     { prefix: '/dashboard/blog', allow: ['SUPER_ADMIN'] },
     { prefix: '/pulse', allow: ['SUPER_ADMIN'] },
     { prefix: '/financials', allow: ['SUPER_ADMIN'] },
@@ -369,6 +370,12 @@ export async function middleware(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
+
+    // Signed-in users have no business on the portal auth pages — send them
+    // into the portal (mirrors the studio behavior above).
+    if (user && isPortalPublic) {
+      return NextResponse.redirect(new URL('/portal', request.url))
+    }
 
     if (!user && !isPortalPublic) {
       return NextResponse.redirect(new URL('/portal/login', request.url))

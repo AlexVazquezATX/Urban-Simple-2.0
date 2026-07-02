@@ -35,6 +35,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { toast } from 'sonner'
 import { AIGenerationWizard } from './ai-generation-wizard'
 import type { BlogPostWithRelations } from '@/lib/services/blog-service'
 import type { BlogCategory } from '@prisma/client'
@@ -74,27 +75,35 @@ export default function BlogManagementPage() {
   async function handlePublish(post: BlogPostWithRelations) {
     try {
       const newStatus = post.status === 'published' ? 'draft' : 'published'
-      await fetch(`/api/blog/admin/posts/${post.id}`, {
+      const res = await fetch(`/api/blog/admin/posts/${post.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       })
 
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+
+      toast.success(newStatus === 'published' ? 'Post published' : 'Post unpublished')
       await loadData()
     } catch (error) {
       console.error('Failed to update post status:', error)
+      toast.error('Failed to update post status. Please try again.')
     }
   }
 
   async function handleDelete(post: BlogPostWithRelations) {
     try {
-      await fetch(`/api/blog/admin/posts/${post.id}`, {
+      const res = await fetch(`/api/blog/admin/posts/${post.id}`, {
         method: 'DELETE',
       })
 
+      if (!res.ok) throw new Error(`Request failed (${res.status})`)
+
+      toast.success('Post deleted')
       await loadData()
     } catch (error) {
       console.error('Failed to delete post:', error)
+      toast.error('Failed to delete post. Please try again.')
     } finally {
       setDeleteTarget(null)
     }
