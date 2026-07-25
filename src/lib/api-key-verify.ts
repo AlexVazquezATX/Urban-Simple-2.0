@@ -150,8 +150,14 @@ export async function authenticateApiKey(
   // instance can freeze once the response returns, dropping a detached write —
   // an audit row must not be lost. Wrapped so a DB error never breaks the
   // agent's request.
+  // The MCP envelope (/api/mcp) is exempt: every JSON-RPC message arrives as a
+  // POST there, including pure reads (tools/list). The real operation is the
+  // inner self-fetch, which carries the true method + path and is audited
+  // normally — auditing the envelope would double-log mutations and drown the
+  // trail in read noise.
   const method = (ctx.method ?? 'GET').toUpperCase()
-  if (path && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+  const isMcpEnvelope = path === '/api/mcp'
+  if (path && !isMcpEnvelope && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
     try {
       await prisma.auditLog.create({
         data: {

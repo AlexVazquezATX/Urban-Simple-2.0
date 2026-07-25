@@ -1,0 +1,1341 @@
+{
+  "routes": [
+    {
+      "path": "/api/admin/analytics",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/analytics/chat",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/analytics/digest",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/analytics/test",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/feedback",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/briefings",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/briefings/[date]",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/briefings/today",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/items/[id]",
+      "methods": [
+        "GET",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/topics",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/pulse/topics/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/admin/studio-clients",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/admin/studio-clients/[id]",
+      "methods": [
+        "GET",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/admin/studio-clients/stats",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ai/chat",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/ai/conversations",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/ai/conversations/[conversationId]",
+      "methods": [
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/ai/conversations/[conversationId]/messages",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/ai/conversations/[conversationId]/switch",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/ai/log-action",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/billing/ar-aging",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/billing/generate-invoices",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/blog/admin/enhance",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/blog/admin/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/blog/admin/posts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/blog/admin/posts/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/blog/categories",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/blog/posts",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/chat/ai",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/chat/channels",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/chat/channels/[channelId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/chat/channels/[channelId]/favorite",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/chat/channels/[channelId]/members",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/chat/channels/[channelId]/messages",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/chat/channels/create-ai",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/chat/dm",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/checklist-library",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/checklists",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/checklists/[id]",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/checklists/[id]/complete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/checklists/[id]/duplicate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/billing-preview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/billing-preview/delta",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/billing-preview/export",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/billing-preview/export-pdf",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/billing-preview/export-qb",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/changelog",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/contacts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/contacts/[contactId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/documents",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/documents/[docId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/facilities",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/facilities/[facilityId]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/facilities/[facilityId]/overrides",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/facilities/[facilityId]/overrides/[overrideId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/facilities/[facilityId]/seasonal-rules",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/facilities/[facilityId]/seasonal-rules/[ruleId]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/locations",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/portal-invite",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/service-items",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/clients/[id]/service-items/[itemId]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/clients/bulk-delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/command/attention",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/assets",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/content",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/content/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/content/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/images",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/images/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/images/[id]/caption",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/images/[id]/image",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/images/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/inspiration",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/inspiration/topics",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/inspiration/topics/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/inspiration/topics/[id]/quick-post",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/projects",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-hub/projects/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/brand-kit",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/caption",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/content",
+      "methods": [
+        "GET",
+        "POST",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/content/image",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/feedback",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/creative-studio/usage",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/cron/dispatch-regenerate",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/cron/financial-snapshot",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/cron/portal-weekly-digest",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/cron/pulse-generate",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/cron/qbo-sync",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/dev/impersonable-clients",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/dev/switch-role",
+      "methods": [
+        "POST",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/financials/expenses",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/financials/expenses/[id]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/financials/snapshot",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/goals",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/goals/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/goals/current",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/growth/ai/generate-content",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/api-keys",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/api-keys/[id]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/growth/discovery/enrich",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/discovery/hunter-search",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/growth/discovery/jobs",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/discovery/scrape",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/discovery/search",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/email-prospecting/discover",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/email-prospecting/search/domain",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/email-prospecting/search/person",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/email-prospecting/verify",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/approval-queue",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/auto-draft",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/backfill-merge-tags",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/bulk",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/bulk-rewrite",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/command-center",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/dashboard",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/executor",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/queue",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/send",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/send-email",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/sequences",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/sequences/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/sequences/[id]/apply",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/sequences/generate-step",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/stats",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/templates",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/templates/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/growth/outreach/track",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/growth/pipeline/automate",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/[id]/activities",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/[id]/enrich",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/bulk-delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/bulk-update",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/check-duplicates",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/import",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/growth/prospects/new-leads-count",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/invoices",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/invoices/[id]",
+      "methods": [
+        "GET",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/invoices/[id]/reminders",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/invoices/[id]/send",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/invoices/[id]/sync-qb",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/invoices/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/issues",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/issues/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/leads",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/location-assignments",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/location-assignments/[id]",
+      "methods": [
+        "PUT",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/locations",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/locations/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/locations/bulk-delete",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/my-night",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/operations/clock",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/operations/dispatch/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/operations/dispatch/route",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/operations/manager-overview",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/operations/service-reviews",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/operations/tonight",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/operations/tonight-route",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/operations/workforce",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/payments",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/payments/[id]",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/portal/documents",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/portal/documents/[id]",
+      "methods": [
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/portal/issues",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/portal/signup",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/portal/team",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/portal/walkthrough-photo",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/portal/walkthroughs",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/qbo/callback",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/qbo/connect",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/qbo/status",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/qbo/sync",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/quote-request",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/service-agreements",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/service-agreements/[id]",
+      "methods": [
+        "GET",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/shifts",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/shifts/[id]",
+      "methods": [
+        "GET",
+        "PUT",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/shifts/generate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/stripe/checkout",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/stripe/portal",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/stripe/webhook",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/studio/signup",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/tasks",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/tasks/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/tasks/focus",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/tasks/projects",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/tasks/projects/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/tasks/tags",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/translate",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/upload",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/users/[id]",
+      "methods": [
+        "GET",
+        "PATCH",
+        "DELETE"
+      ]
+    },
+    {
+      "path": "/api/users/me",
+      "methods": [
+        "GET",
+        "PATCH"
+      ]
+    },
+    {
+      "path": "/api/walkthrough-request",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/webhooks/resend",
+      "methods": [
+        "POST"
+      ]
+    }
+  ]
+}

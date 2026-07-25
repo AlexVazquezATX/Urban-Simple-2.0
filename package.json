@@ -14,6 +14,8 @@
     "db:seed-chat": "tsx scripts/seed-chat.ts",
     "db:seed-users": "tsx scripts/seed-test-users.ts",
     "setup-merc": "tsx scripts/setup-merc.ts",
+    "setup-claude": "tsx scripts/setup-claude.ts",
+    "generate-api-catalog": "tsx scripts/generate-api-catalog.ts",
     "generate-invoices": "tsx scripts/generate-recurring-invoices.ts",
     "generate-invoices:dry": "tsx scripts/generate-recurring-invoices.ts --dryRun"
   },
