@@ -1,7 +1,9 @@
 # Claude MCP server — manage the backend from anywhere
 
-`https://urbansimple.net/api/mcp` is a remote MCP (Model Context Protocol)
-server built into the app itself. Any Claude Code session — desktop, web
+`https://www.urbansimple.net/api/mcp` is a remote MCP (Model Context Protocol)
+server built into the app itself. (Use the `www` host: the apex domain
+307-redirects to `www`, and HTTP clients strip the `Authorization` header when
+following a cross-origin redirect — the key silently vanishes and you get 401.) Any Claude Code session — desktop, web
 (claude.ai/code), mobile — can connect to it and drive the full Urban Simple
 API surface, top to bottom.
 
@@ -38,7 +40,7 @@ the cloud session's env) and any session in this repo gets the connection.
 From any other machine or repo:
 
 ```bash
-claude mcp add --transport http urbansimple https://urbansimple.net/api/mcp \
+claude mcp add --transport http urbansimple https://www.urbansimple.net/api/mcp \
   --header "Authorization: Bearer us_live_…"
 ```
 

@@ -2,7 +2,7 @@
   "mcpServers": {
     "urbansimple": {
       "type": "http",
-      "url": "https://urbansimple.net/api/mcp",
+      "url": "https://www.urbansimple.net/api/mcp",
       "headers": {
         "Authorization": "Bearer ${URBANSIMPLE_MCP_KEY}"
       }

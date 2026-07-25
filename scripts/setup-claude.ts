@@ -139,7 +139,9 @@ async function main() {
   console.log(`    key id:      ${created.id}`)
   console.log(`    scopes:      [${created.scopes.join(', ')}]`)
   console.log(`    allowedIps:  ${created.allowedIps.length ? created.allowedIps.join(', ') : '(unlocked)'}`)
-  console.log('\n   MCP endpoint:  https://urbansimple.net/api/mcp')
+  // www host on purpose: the apex 307-redirects to www and clients drop the
+  // Authorization header on the cross-origin redirect.
+  console.log('\n   MCP endpoint:  https://www.urbansimple.net/api/mcp')
   console.log('   Header:        Authorization: Bearer ' + rawKey.slice(0, 12) + '…')
   console.log('   Revoke:        DELETE /api/growth/api-keys/' + created.id)
 }
