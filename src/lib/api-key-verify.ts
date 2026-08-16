@@ -9,6 +9,7 @@ import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { backhausScopeForPath, keyAllowsScope } from '@/lib/agent-scopes'
+import { OAUTH_ACCESS_TOKEN_PREFIX, sha256 } from '@/lib/oauth/core'
 
 const API_KEY_PREFIX = 'us_live_'
 
@@ -73,6 +74,71 @@ export interface ApiKeyRequestContext {
   /** User-agent, for the audit trail. */
   userAgent?: string | null
 }
+/** Shared shape for anything that authenticates as a bearer credential. */
+type BearerUser = NonNullable<Awaited<ReturnType<typeof loadUserForBearer>>>
+
+async function loadUserForBearer(userId: string) {
+  return prisma.user.findUnique({ where: { id: userId }, select: USER_SELECT })
+}
+
+/**
+ * Enforcement shared by API keys and OAuth access tokens, run AFTER the
+ * credential itself has been validated: burst cap, BackHaus scope fence,
+ * mutation audit row. Returns false if the request must be denied.
+ */
+async function enforceAgentPolicy(
+  rateKey: string,
+  scopes: string[],
+  userId: string,
+  ip: string | null,
+  ctx: ApiKeyRequestContext,
+): Promise<boolean> {
+  // Burst safety — best-effort, keyed by the credential id.
+  const rl = checkRateLimit(rateKey, {
+    limit: KEY_BURST_LIMIT,
+    windowSeconds: KEY_BURST_WINDOW_SECONDS,
+  })
+  if (!rl.allowed) return false
+
+  // BackHaus fence (fail-closed): the studio subtree requires the opt-in
+  // `backhaus` scope, which the wildcard `*` does NOT grant. `path` is
+  // middleware-set, so a client cannot spoof its way past this.
+  const path = ctx.path ?? null
+  if (path) {
+    const requiredScope = backhausScopeForPath(path)
+    if (requiredScope && !keyAllowsScope(scopes, requiredScope)) return false
+  }
+
+  // Audit every mutation. AWAITED (not fire-and-forget): on serverless the
+  // instance can freeze once the response returns, dropping a detached write —
+  // an audit row must not be lost. Wrapped so a DB error never breaks the
+  // agent's request.
+  //
+  // The MCP envelope (/api/mcp) is exempt: every JSON-RPC message arrives as a
+  // POST there, including pure reads (tools/list). The real operation is the
+  // inner self-fetch, which carries the true method + path and is audited
+  // normally — auditing the envelope would double-log mutations and drown the
+  // trail in read noise.
+  const method = (ctx.method ?? 'GET').toUpperCase()
+  const isMcpEnvelope = path === '/api/mcp'
+  if (path && !isMcpEnvelope && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId,
+          action: method,
+          entityType: 'agent_api',
+          entityId: path,
+          ipAddress: ip,
+          userAgent: ctx.userAgent ?? null,
+        },
+      })
+    } catch (err) {
+      console.error('[agent] audit write failed:', err)
+    }
+  }
+  return true
+}
 
 /**
  * Authenticate a raw `Authorization` header value against the ApiKey table.
@@ -117,24 +183,8 @@ export async function authenticateApiKey(
     if (!ip || !apiKey.allowedIps.includes(ip)) return null
   }
 
-  // Burst safety — best-effort, keyed by the key id.
-  const rl = checkRateLimit(`apikey:${apiKey.id}`, {
-    limit: KEY_BURST_LIMIT,
-    windowSeconds: KEY_BURST_WINDOW_SECONDS,
-  })
-  if (!rl.allowed) return null
-
-  // BackHaus fence (fail-closed): the studio subtree requires the opt-in
-  // `backhaus` scope, which the wildcard `*` does NOT grant. Denying returns
-  // null → the route handler responds 401. `path` is middleware-set, so a
-  // client cannot spoof its way past this.
-  const path = ctx.path ?? null
-  if (path) {
-    const requiredScope = backhausScopeForPath(path)
-    if (requiredScope && !keyAllowsScope(apiKey.scopes, requiredScope)) {
-      return null
-    }
-  }
+  const ok = await enforceAgentPolicy(`apikey:${apiKey.id}`, apiKey.scopes, apiKey.user.id, ip, ctx)
+  if (!ok) return null
 
   // Fire-and-forget usage tracking (loss-tolerant — a dropped counter is fine).
   prisma.apiKey.update({
@@ -145,34 +195,6 @@ export async function authenticateApiKey(
       usageCount: { increment: 1 },
     },
   }).catch(() => {})
-
-  // Audit every mutation. AWAITED (not fire-and-forget): on serverless the
-  // instance can freeze once the response returns, dropping a detached write —
-  // an audit row must not be lost. Wrapped so a DB error never breaks the
-  // agent's request.
-  // The MCP envelope (/api/mcp) is exempt: every JSON-RPC message arrives as a
-  // POST there, including pure reads (tools/list). The real operation is the
-  // inner self-fetch, which carries the true method + path and is audited
-  // normally — auditing the envelope would double-log mutations and drown the
-  // trail in read noise.
-  const method = (ctx.method ?? 'GET').toUpperCase()
-  const isMcpEnvelope = path === '/api/mcp'
-  if (path && !isMcpEnvelope && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
-    try {
-      await prisma.auditLog.create({
-        data: {
-          userId: apiKey.user.id,
-          action: method,
-          entityType: 'agent_api',
-          entityId: path,
-          ipAddress: ip,
-          userAgent: ctx.userAgent ?? null,
-        },
-      })
-    } catch (err) {
-      console.error('[agent] audit write failed:', err)
-    }
-  }
 
   // Shape to match getCurrentUser(): a key holder has no impersonation and its
   // effective role IS its real role.
@@ -187,4 +209,91 @@ export async function authenticateApiKey(
     apiKeyId: apiKey.id,
     apiKeyScopes: apiKey.scopes,
   }
+}
+
+/**
+ * Authenticate an OAuth 2.1 access token (`Bearer us_oat_…`) issued by our own
+ * authorization server (src/app/api/oauth/*). The token acts AS the user who
+ * consented (a SUPER_ADMIN), with the same agent policy as an API key.
+ */
+export async function authenticateOAuthToken(
+  authHeader: string | null,
+  ip: string | null,
+  ctx: ApiKeyRequestContext = {},
+) {
+  if (!authHeader?.startsWith(`Bearer ${OAUTH_ACCESS_TOKEN_PREFIX}`)) return null
+
+  const raw = authHeader.substring(7)
+  const token = await prisma.oAuthToken.findUnique({
+    where: { accessTokenHash: sha256(raw) },
+    select: {
+      id: true,
+      userId: true,
+      clientId: true,
+      scopes: true,
+      accessExpiresAt: true,
+      revokedAt: true,
+    },
+  })
+  if (!token) return null
+  if (token.revokedAt) return null
+  if (token.accessExpiresAt < new Date()) return null
+
+  const user = await loadUserForBearer(token.userId)
+  if (!user || !user.isActive) return null
+
+  const ok = await enforceAgentPolicy(`oauth:${token.id}`, token.scopes, user.id, ip, ctx)
+  if (!ok) return null
+
+  prisma.oAuthToken.update({
+    where: { id: token.id },
+    data: { lastUsedAt: new Date(), lastUsedIp: ip, usageCount: { increment: 1 } },
+  }).catch(() => {})
+
+  const shaped: BearerUser & {
+    role: typeof user.role
+    realRole: typeof user.role
+    impersonating: boolean
+    impersonatedClientId: string | null
+    via: 'oauth'
+    oauthTokenId: string
+    oauthClientId: string
+    apiKeyScopes: string[]
+  } = {
+    ...user,
+    role: user.role,
+    realRole: user.role,
+    impersonating: false,
+    impersonatedClientId: null,
+    via: 'oauth',
+    oauthTokenId: token.id,
+    oauthClientId: token.clientId,
+    apiKeyScopes: token.scopes,
+  }
+  return shaped
+}
+
+/** Is this Authorization header one of our bearer credential formats? */
+export function isAgentBearer(authHeader: string | null): boolean {
+  return (
+    !!authHeader &&
+    (authHeader.startsWith(`Bearer ${API_KEY_PREFIX}`) ||
+      authHeader.startsWith(`Bearer ${OAUTH_ACCESS_TOKEN_PREFIX}`))
+  )
+}
+
+/**
+ * Dispatch on the bearer prefix: API key (`us_live_`) or OAuth access token
+ * (`us_oat_`). Everything else → null.
+ */
+export async function authenticateBearer(
+  authHeader: string | null,
+  ip: string | null,
+  ctx: ApiKeyRequestContext = {},
+) {
+  if (!authHeader) return null
+  if (authHeader.startsWith(`Bearer ${OAUTH_ACCESS_TOKEN_PREFIX}`)) {
+    return authenticateOAuthToken(authHeader, ip, ctx)
+  }
+  return authenticateApiKey(authHeader, ip, ctx)
 }

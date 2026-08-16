@@ -77,5 +77,26 @@ check('BackHaus route reachable (scope granted)', bhText.startsWith('HTTP 200'),
 r = await post({ jsonrpc: '2.0', id: 9, method: 'bogus/method' })
 check('unknown method → -32601', r.json?.error?.code === -32601)
 
+r = await post({ jsonrpc: '2.0', id: 10, method: 'tools/call', params: { name: 'describe_endpoint', arguments: { path: '/api/users' } } })
+const descText = r.json?.result?.content?.[0]?.text ?? ''
+check('describe_endpoint /api/users lists body fields', descText.includes('body fields:') && descText.includes('firstName') && descText.includes('roles: SUPER_ADMIN, ADMIN'), descText.split('\n').find((l) => l.includes('body fields')) ?? '')
+
+r = await post({ jsonrpc: '2.0', id: 11, method: 'tools/call', params: { name: 'describe_endpoint', arguments: { path: '/api/clients/abc123' } } })
+check('describe_endpoint matches concrete path to [id] route', (r.json?.result?.content?.[0]?.text ?? '').startsWith('/api/clients/[id]'))
+
+r = await post({ jsonrpc: '2.0', id: 12, method: 'tools/call', params: { name: 'playbooks', arguments: {} } })
+const pbList = r.json?.result?.content?.[0]?.text ?? ''
+check('playbooks lists onboard-manager', pbList.includes('onboard-manager'), pbList.split('\n')[0])
+
+r = await post({ jsonrpc: '2.0', id: 13, method: 'tools/call', params: { name: 'playbooks', arguments: { name: 'onboard-manager' } } })
+check('playbooks returns content', (r.json?.result?.content?.[0]?.text ?? '').includes('POST /api/users'))
+
+r = await post({ jsonrpc: '2.0', id: 14, method: 'tools/call', params: { name: 'playbooks', arguments: { name: '../../package' } } })
+check('playbooks rejects path traversal', r.json?.result?.isError === true)
+
+r = await post({ jsonrpc: '2.0', id: 15, method: 'tools/list' })
+const toolNames = r.json?.result?.tools?.map((t) => t.name) ?? []
+check('tools/list has 4 tools', toolNames.length === 4 && toolNames.includes('describe_endpoint') && toolNames.includes('playbooks'), toolNames.join(','))
+
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`)
 process.exit(failures === 0 ? 0 : 1)

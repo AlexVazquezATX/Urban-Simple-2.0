@@ -16,6 +16,7 @@
     "setup-merc": "tsx scripts/setup-merc.ts",
     "setup-claude": "tsx scripts/setup-claude.ts",
     "generate-api-catalog": "tsx scripts/generate-api-catalog.ts",
+    "apply-sql": "tsx scripts/apply-sql.ts",
     "generate-invoices": "tsx scripts/generate-recurring-invoices.ts",
     "generate-invoices:dry": "tsx scripts/generate-recurring-invoices.ts --dryRun"
   },
@@ -77,6 +78,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
+    "@types/pg": "^8.21.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

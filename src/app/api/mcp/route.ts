@@ -1,35 +1,54 @@
 // Remote MCP server — lets Claude manage the Urban Simple backend from
 // anywhere over the Model Context Protocol (streamable HTTP, stateless).
 //
-// Auth: the same bearer API keys as every other route (us_live_…, see
-// src/lib/api-key-verify.ts). The endpoint itself only checks that a valid key
-// was presented; each tool call re-enters the API surface via a self-fetch
-// that forwards the SAME key, so per-route auth, the BackHaus scope fence,
-// burst caps, and mutation audit rows all apply exactly as they do for any
-// other agent (docs/merc-agent.md). Kill the key → the MCP server 401s.
+// Auth: any bearer credential the API accepts — an API key (us_live_…) or an
+// OAuth access token issued by our own authorization server (us_oat_…, see
+// src/app/api/oauth/*). The endpoint itself only checks that a valid
+// credential was presented; each tool call re-enters the API surface via a
+// self-fetch that forwards the SAME credential, so per-route auth, the
+// BackHaus scope fence, burst caps, and mutation audit rows all apply exactly
+// as they do for any other agent (docs/merc-agent.md). Revoke it → 401.
+//
+// An unauthenticated request gets `WWW-Authenticate: Bearer resource_metadata=…`
+// pointing at /.well-known/oauth-protected-resource, which is how MCP clients
+// (claude.ai, Claude Code) discover the OAuth flow automatically.
 //
 // Tools:
-//   list_endpoints — browse the generated route catalog (npm run generate-api-catalog)
-//   api_request    — call any /api/* route (full REST surface, one tool)
+//   list_endpoints    — browse the generated route catalog (npm run generate-api-catalog)
+//   describe_endpoint — body fields / query params / role gate / docs for one route
+//   api_request       — call any /api/* route (full REST surface, one tool; JSON or multipart)
+//   playbooks         — Urban Simple operating procedures (docs/playbooks/*.md) to follow "to spec"
 //
 // Protocol notes: stateless JSON-RPC over POST (no Mcp-Session-Id, no SSE
 // stream). Responses are plain JSON, which streamable-HTTP clients accept.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { readdirSync, readFileSync } from 'fs'
+import { join } from 'path'
 import { getCurrentUser } from '@/lib/auth'
+import { getIssuer, oauthEndpoints } from '@/lib/oauth/core'
 import catalog from '@/lib/mcp/api-catalog.json'
+
+type HandlerInfo = { doc?: string; body?: string[]; query?: string[]; required?: string[]; roles?: string[]; multipart?: boolean }
+type RouteInfo = { path: string; methods: string[]; summary?: string; handlers: Record<string, HandlerInfo> }
+const ROUTES = catalog.routes as unknown as RouteInfo[]
+
+// Playbooks live in docs/playbooks/*.md and are traced into the serverless
+// bundle via next.config `outputFileTracingIncludes`.
+const PLAYBOOKS_DIR = join(process.cwd(), 'docs', 'playbooks')
 
 export const maxDuration = 60
 
 const PROTOCOL_VERSIONS = ['2025-06-18', '2025-03-26', '2024-11-05']
 const LATEST_PROTOCOL = PROTOCOL_VERSIONS[0]
 
-const SERVER_INFO = { name: 'urbansimple', version: '1.0.0' }
+const SERVER_INFO = { name: 'urbansimple', version: '1.1.0' }
 
 const SERVER_INSTRUCTIONS = [
   'Remote control surface for the Urban Simple backend (urbansimple.net).',
-  'Use list_endpoints to discover routes, then api_request to call them.',
-  'You are authenticated as a SUPER_ADMIN service account: standard REST semantics apply',
+  'Workflow: call playbooks first when asked to do a business process (onboarding, billing, etc.) so you follow the house procedure;',
+  'use list_endpoints / describe_endpoint to discover routes and their body fields, then api_request to call them.',
+  'You are authenticated with SUPER_ADMIN privileges: standard REST semantics apply',
   '(GET reads, POST creates, PATCH updates, DELETE removes). Mutations are audit-logged.',
   'Prefer narrow queries (filters, pagination params) — large list responses are truncated.',
 ].join(' ')
@@ -38,15 +57,30 @@ const TOOLS = [
   {
     name: 'list_endpoints',
     description:
-      'List the Urban Simple API routes reachable through api_request. ' +
+      'List the Urban Simple API routes reachable through api_request, with a one-line summary each. ' +
       'Optionally filter by path prefix (e.g. "/api/clients") or a substring search. ' +
-      'Dynamic segments appear in [brackets] (e.g. /api/clients/[id]).',
+      'Dynamic segments appear in [brackets] (e.g. /api/clients/[id]). Use describe_endpoint for details.',
     inputSchema: {
       type: 'object',
       properties: {
         prefix: { type: 'string', description: 'Only routes starting with this path prefix' },
-        search: { type: 'string', description: 'Only routes whose path contains this substring' },
+        search: { type: 'string', description: 'Only routes whose path or summary contains this substring' },
       },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true },
+  },
+  {
+    name: 'describe_endpoint',
+    description:
+      'Describe one API route: per-method doc, JSON body fields, query params, "required" hints, and role gate, ' +
+      'extracted from the route source. Pass the catalog path with [brackets] (e.g. /api/clients/[id]) or a concrete path.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Route path, e.g. /api/users or /api/clients/[id]' },
+      },
+      required: ['path'],
       additionalProperties: false,
     },
     annotations: { readOnlyHint: true },
@@ -55,8 +89,9 @@ const TOOLS = [
     name: 'api_request',
     description:
       'Call an Urban Simple backend API route. The request runs with the same credentials ' +
-      'as this MCP connection (SUPER_ADMIN service key), so all normal authorization, ' +
-      'auditing, and rate limits apply. Returns the HTTP status and response body.',
+      'as this MCP connection (SUPER_ADMIN), so all normal authorization, ' +
+      'auditing, and rate limits apply. Returns the HTTP status and response body. ' +
+      'Send JSON via `body`, or multipart/form-data via `form` + `files` (base64) for upload routes.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -79,10 +114,46 @@ const TOOLS = [
         body: {
           description: 'JSON request body for POST/PUT/PATCH',
         },
+        form: {
+          type: 'object',
+          description: 'Multipart text fields (key → string). Use with `files` for upload routes.',
+          additionalProperties: { type: 'string' },
+        },
+        files: {
+          type: 'array',
+          description:
+            'Multipart file parts (base64-encoded). Presence of `files` or `form` switches the request to multipart/form-data.',
+          items: {
+            type: 'object',
+            properties: {
+              field: { type: 'string', description: 'Form field name the route expects (often "file")' },
+              filename: { type: 'string' },
+              contentType: { type: 'string', description: 'MIME type, e.g. application/pdf' },
+              dataBase64: { type: 'string', description: 'File bytes, base64' },
+            },
+            required: ['field', 'filename', 'dataBase64'],
+            additionalProperties: false,
+          },
+        },
       },
       required: ['method', 'path'],
       additionalProperties: false,
     },
+  },
+  {
+    name: 'playbooks',
+    description:
+      'Urban Simple operating procedures ("how we do X here"): onboarding a manager, setting up a client, ' +
+      'billing runs, etc. Call with no arguments to list them; pass `name` to read one. ' +
+      'ALWAYS consult the relevant playbook before performing a multi-step business process so it is done to spec.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Playbook name (filename without .md), e.g. "onboard-manager"' },
+      },
+      additionalProperties: false,
+    },
+    annotations: { readOnlyHint: true },
   },
 ] as const
 
@@ -105,14 +176,83 @@ function toolText(text: string, isError = false) {
 function runListEndpoints(args: Record<string, unknown>) {
   const prefix = typeof args.prefix === 'string' ? args.prefix : null
   const search = typeof args.search === 'string' ? args.search.toLowerCase() : null
-  const routes = (catalog.routes as Array<{ path: string; methods: string[] }>).filter(
+  const routes = ROUTES.filter(
     (r) =>
       (!prefix || r.path.startsWith(prefix)) &&
-      (!search || r.path.toLowerCase().includes(search)),
+      (!search || r.path.toLowerCase().includes(search) || (r.summary ?? '').toLowerCase().includes(search)),
   )
   if (routes.length === 0) return toolText('No routes matched.')
-  const lines = routes.map((r) => `${r.methods.join(',')}  ${r.path}`)
+  const lines = routes.map((r) => {
+    const firstDoc = Object.values(r.handlers).find((h) => h.doc)?.doc
+    const summary = (r.summary || firstDoc || '').replace(/\s+/g, ' ').slice(0, 110)
+    return `${r.methods.join(',').padEnd(18)} ${r.path}${summary ? `  — ${summary}` : ''}`
+  })
   return toolText(`${routes.length} route(s):\n${lines.join('\n')}`)
+}
+
+/** Match a concrete path (e.g. /api/clients/abc) to a catalog route with [params]. */
+function findRoute(path: string): RouteInfo | undefined {
+  const exact = ROUTES.find((r) => r.path === path)
+  if (exact) return exact
+  const segs = path.split('/').filter(Boolean)
+  return ROUTES.find((r) => {
+    const rs = r.path.split('/').filter(Boolean)
+    if (rs.length !== segs.length) return false
+    return rs.every((seg, i) => (seg.startsWith('[') && seg.endsWith(']')) || seg === segs[i])
+  })
+}
+
+function runDescribeEndpoint(args: Record<string, unknown>) {
+  const path = typeof args.path === 'string' ? args.path.trim() : ''
+  const route = path ? findRoute(path) : undefined
+  if (!route) return toolText(`No route matches "${path}". Use list_endpoints to browse.`, true)
+  const out: string[] = [route.path]
+  if (route.summary) out.push(route.summary)
+  for (const method of route.methods) {
+    const h = route.handlers[method] ?? {}
+    out.push('', `${method}${h.multipart ? '  (multipart/form-data — use api_request form/files)' : ''}`)
+    if (h.doc) out.push(`  ${h.doc}`)
+    if (h.roles?.length) out.push(`  roles: ${h.roles.join(', ')}`)
+    if (h.query?.length) out.push(`  query: ${h.query.join(', ')}`)
+    if (h.body?.length) out.push(`  body fields: ${h.body.join(', ')}`)
+    if (h.required?.length) out.push(`  required: ${h.required.join(' | ')}`)
+  }
+  out.push('', 'Note: fields are extracted from source heuristically; a 400 response will name anything missing.')
+  return toolText(out.join('\n'))
+}
+
+function listPlaybookFiles(): string[] {
+  try {
+    return readdirSync(PLAYBOOKS_DIR)
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => f.slice(0, -3))
+      .sort()
+  } catch {
+    return []
+  }
+}
+
+function runPlaybooks(args: Record<string, unknown>) {
+  const name = typeof args.name === 'string' ? args.name.trim() : ''
+  const names = listPlaybookFiles()
+  if (!name) {
+    if (names.length === 0) return toolText('No playbooks yet. Add markdown files under docs/playbooks/ in the repo.')
+    const lines = names.map((n) => {
+      let title = ''
+      try {
+        const first = readFileSync(join(PLAYBOOKS_DIR, `${n}.md`), 'utf8').split('\n').find((l) => l.startsWith('# '))
+        title = first ? first.slice(2).trim() : ''
+      } catch {
+        /* ignore */
+      }
+      return `- ${n}${title ? ` — ${title}` : ''}`
+    })
+    return toolText(`${names.length} playbook(s):\n${lines.join('\n')}`)
+  }
+  if (!/^[a-z0-9\-_]+$/i.test(name) || !names.includes(name)) {
+    return toolText(`Unknown playbook "${name}". Available: ${names.join(', ') || '(none)'}`, true)
+  }
+  return toolText(readFileSync(join(PLAYBOOKS_DIR, `${name}.md`), 'utf8'))
 }
 
 async function runApiRequest(request: NextRequest, args: Record<string, unknown>) {
@@ -144,7 +284,24 @@ async function runApiRequest(request: NextRequest, args: Record<string, unknown>
     'user-agent': `urbansimple-mcp (${request.headers.get('user-agent') ?? 'unknown client'})`,
   }
   const init: RequestInit = { method, headers, signal: AbortSignal.timeout(45_000) }
-  if (method !== 'GET' && args.body !== undefined) {
+  const files = Array.isArray(args.files) ? (args.files as Array<Record<string, unknown>>) : null
+  const form = args.form && typeof args.form === 'object' ? (args.form as Record<string, unknown>) : null
+  if (method !== 'GET' && (files || form)) {
+    // Multipart: text fields + base64-decoded file parts. fetch sets the
+    // boundary header itself.
+    const fd = new FormData()
+    for (const [k, v] of Object.entries(form ?? {})) if (v !== undefined && v !== null) fd.append(k, String(v))
+    for (const f of files ?? []) {
+      const field = typeof f.field === 'string' ? f.field : 'file'
+      const filename = typeof f.filename === 'string' ? f.filename : 'upload.bin'
+      const contentType = typeof f.contentType === 'string' ? f.contentType : 'application/octet-stream'
+      const data = typeof f.dataBase64 === 'string' ? f.dataBase64 : ''
+      const bytes = Buffer.from(data, 'base64')
+      if (bytes.length > 10 * 1024 * 1024) return toolText(`File ${filename} exceeds the 10 MB MCP upload limit`, true)
+      fd.append(field, new Blob([new Uint8Array(bytes)], { type: contentType }), filename)
+    }
+    init.body = fd
+  } else if (method !== 'GET' && args.body !== undefined) {
     headers['content-type'] = 'application/json'
     init.body = JSON.stringify(args.body)
   }
@@ -197,6 +354,10 @@ async function handleMessage(request: NextRequest, msg: Record<string, unknown>)
       switch (params.name) {
         case 'list_endpoints':
           return rpcResult(id, runListEndpoints(args))
+        case 'describe_endpoint':
+          return rpcResult(id, runDescribeEndpoint(args))
+        case 'playbooks':
+          return rpcResult(id, runPlaybooks(args))
         case 'api_request':
           return rpcResult(id, await runApiRequest(request, args))
         default:
@@ -208,15 +369,26 @@ async function handleMessage(request: NextRequest, msg: Record<string, unknown>)
   }
 }
 
+function unauthorized(request: NextRequest, message: string) {
+  const e = oauthEndpoints(getIssuer(request.nextUrl.origin))
+  return NextResponse.json(
+    { jsonrpc: '2.0', id: null, error: { code: -32001, message } },
+    {
+      status: 401,
+      headers: {
+        'WWW-Authenticate': `Bearer realm="urbansimple", resource_metadata="${e.protected_resource_metadata}"`,
+      },
+    },
+  )
+}
+
 export async function POST(request: NextRequest) {
-  // Key-only endpoint: MCP clients always present the bearer key. Cookie
-  // sessions are rejected so a browser can never be tricked into driving this.
+  // Bearer-only endpoint: MCP clients always present a key or OAuth token.
+  // Cookie sessions are rejected so a browser can never be tricked into
+  // driving this.
   const user = await getCurrentUser()
-  if (!user || !('via' in user) || user.via !== 'api_key') {
-    return NextResponse.json(
-      { jsonrpc: '2.0', id: null, error: { code: -32001, message: 'Unauthorized: MCP requires an API key' } },
-      { status: 401 },
-    )
+  if (!user || !('via' in user) || !user.via) {
+    return unauthorized(request, 'Unauthorized: MCP requires an API key or OAuth access token')
   }
 
   let body: unknown

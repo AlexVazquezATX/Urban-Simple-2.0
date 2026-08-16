@@ -199,6 +199,10 @@ model User {
   // API Keys
   apiKeys ApiKey[]
 
+  // OAuth (remote MCP connectors, e.g. claude.ai)
+  oauthAuthorizationCodes OAuthAuthorizationCode[]
+  oauthTokens             OAuthToken[]
+
   // Workforce / Time Tracking
   timeEntries        TimeEntry[]          @relation("AssociateTimeEntries")
   timeEntryEdits     TimeEntry[]          @relation("TimeEntryEditor")
@@ -258,6 +262,80 @@ model ApiKey {
   @@index([userId])
   @@index([companyId])
   @@map("api_keys")
+}
+
+// ============================================
+// OAUTH 2.1 AUTHORIZATION SERVER
+// ============================================
+// Lets remote MCP clients (claude.ai web/mobile, Claude Code) obtain their own
+// bearer tokens by sending the user through the admin login + a consent screen,
+// instead of hand-copying an API key. See docs/claude-mcp.md.
+
+// A registered OAuth client (usually via Dynamic Client Registration).
+model OAuthClient {
+  id                      String    @id @default(cuid()) // == client_id
+  clientName              String?   @map("client_name")
+  clientUri               String?   @map("client_uri")
+  redirectUris            String[]  @map("redirect_uris")
+  tokenEndpointAuthMethod String    @default("none") @map("token_endpoint_auth_method") // none | client_secret_post | client_secret_basic
+  clientSecretHash        String?   @map("client_secret_hash") // null for public clients
+  createdIp               String?   @map("created_ip")
+  lastUsedAt              DateTime? @map("last_used_at")
+  createdAt               DateTime  @default(now()) @map("created_at")
+
+  authorizationCodes OAuthAuthorizationCode[]
+  tokens             OAuthToken[]
+
+  @@map("oauth_clients")
+}
+
+// A short-lived, single-use authorization code (PKCE S256 required).
+model OAuthAuthorizationCode {
+  id                  String    @id @default(cuid())
+  codeHash            String    @unique @map("code_hash")
+  clientId            String    @map("client_id")
+  userId              String    @map("user_id")
+  redirectUri         String    @map("redirect_uri")
+  codeChallenge       String    @map("code_challenge")
+  codeChallengeMethod String    @default("S256") @map("code_challenge_method")
+  scope               String
+  resource            String?
+  expiresAt           DateTime  @map("expires_at")
+  usedAt              DateTime? @map("used_at")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("oauth_authorization_codes")
+}
+
+// An issued access token (+ its paired refresh token). Only hashes are stored.
+model OAuthToken {
+  id               String    @id @default(cuid())
+  accessTokenHash  String    @unique @map("access_token_hash")
+  refreshTokenHash String?   @unique @map("refresh_token_hash")
+  clientId         String    @map("client_id")
+  userId           String    @map("user_id")
+  scope            String
+  scopes           String[]  @default([]) // agent-scope model applied to API calls (see agent-scopes.ts)
+  accessExpiresAt  DateTime  @map("access_expires_at")
+  refreshExpiresAt DateTime? @map("refresh_expires_at")
+  revokedAt        DateTime? @map("revoked_at")
+  lastUsedAt       DateTime? @map("last_used_at")
+  lastUsedIp       String?   @map("last_used_ip")
+  usageCount       Int       @default(0) @map("usage_count")
+  createdIp        String?   @map("created_ip")
+  createdAt        DateTime  @default(now()) @map("created_at")
+
+  client OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  user   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([clientId])
+  @@map("oauth_tokens")
 }
 
 // ============================================

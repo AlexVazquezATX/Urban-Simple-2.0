@@ -12,14 +12,16 @@ import { headers } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { authenticateApiKey } from '@/lib/api-key-verify'
+import { authenticateBearer } from '@/lib/api-key-verify'
 import {
   getImpersonationCookies,
   IMPERSONATION_GATE_EMAIL,
 } from '@/lib/impersonation'
 
-// When there's no Supabase session, fall back to API-key auth using the request
-// headers (e.g. the Mercury agent calling with `Authorization: Bearer us_live_…`).
+// When there's no Supabase session, fall back to bearer auth using the request
+// headers: an API key (`Authorization: Bearer us_live_…`, e.g. the Mercury
+// agent) or an OAuth access token issued by our own authorization server
+// (`Bearer us_oat_…`, e.g. claude.ai connected via /api/mcp).
 // Returns a user shaped exactly like the cookie path, or null.
 async function authenticateFromHeaders() {
   const h = await headers()
@@ -31,7 +33,7 @@ async function authenticateFromHeaders() {
     null
   // path/method are injected by middleware (the only layer that sees the real
   // pathname + verb); used for the BackHaus fence and the audit trail.
-  return authenticateApiKey(authHeader, ip, {
+  return authenticateBearer(authHeader, ip, {
     path: h.get('x-agent-path'),
     method: h.get('x-agent-method'),
     userAgent: h.get('user-agent'),

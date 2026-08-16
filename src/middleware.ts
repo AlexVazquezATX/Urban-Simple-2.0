@@ -79,18 +79,28 @@ function applyImpersonation(realRole: string | null, request: NextRequest): stri
 // ============================================
 // AGENT (API-KEY) HANDLING
 // ============================================
-// Programmatic agents (e.g. Mercury) authenticate with
-// `Authorization: Bearer us_live_…`. Middleware does only what it can do
-// reliably here (no DB access — the Edge runtime can't be trusted to reach the
-// DB in every environment):
+// Programmatic agents authenticate with a bearer credential: an API key
+// (`Authorization: Bearer us_live_…`, e.g. Mercury) or an OAuth access token
+// issued by our own authorization server (`Bearer us_oat_…`, e.g. claude.ai
+// connected to /api/mcp). Middleware does only what it can do reliably here
+// (no DB access — the Edge runtime can't be trusted to reach the DB in every
+// environment):
 //   1. Agents live ONLY on /api/* — a key aimed at a page is bounced to /login.
 //   2. It bridges the real method + pathname to the Node auth layer as request
 //      headers, so api-key-verify can enforce the BackHaus scope fence and
 //      write the audit row with Prisma. Set unconditionally on agent requests
 //      so a client can't spoof these headers.
-// Gated on the us_live_ bearer prefix, so human/cookie traffic is untouched.
+// Gated on the bearer prefixes, so human/cookie traffic is untouched.
 
-const AGENT_KEY_BEARER = 'Bearer us_live_'
+const AGENT_BEARER_PREFIXES = ['Bearer us_live_', 'Bearer us_oat_']
+
+// Post-login destination: only a same-origin absolute path is honored (used by
+// the OAuth consent page to bounce an unauthenticated admin through /login).
+function safeNextPath(raw: string | null): string | null {
+  if (!raw) return null
+  if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) return null
+  return raw
+}
 
 // ============================================
 // MIDDLEWARE
@@ -127,7 +137,7 @@ export async function middleware(request: NextRequest) {
   // Applies on every host, before page/host routing. Gated on the us_live_
   // bearer prefix so normal cookie traffic is untouched.
   const authHeader = request.headers.get('authorization')
-  if (authHeader?.startsWith(AGENT_KEY_BEARER)) {
+  if (authHeader && AGENT_BEARER_PREFIXES.some((p) => authHeader.startsWith(p))) {
     // Invariant 1: agents may only touch /api/* — never render pages.
     if (!pathname.startsWith('/api/')) {
       return NextResponse.redirect(new URL('/login', request.url))
@@ -330,7 +340,8 @@ export async function middleware(request: NextRequest) {
         if (role === 'CLIENT_USER') {
           return NextResponse.redirect(new URL('/portal', request.url))
         }
-        return NextResponse.redirect(new URL('/dashboard', request.url))
+        const next = safeNextPath(request.nextUrl.searchParams.get('next'))
+        return NextResponse.redirect(new URL(next ?? '/dashboard', request.url))
       }
     }
   }

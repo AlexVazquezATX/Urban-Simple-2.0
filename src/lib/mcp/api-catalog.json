@@ -4,70 +4,232 @@
       "path": "/api/admin/analytics",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "days"
+          ],
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/analytics Fetch aggregated chat analytics for administrators"
+        }
+      }
     },
     {
       "path": "/api/admin/analytics/chat",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "required": [
+            "Access denied. Super admin privileges required.",
+            "Message is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/admin/analytics/chat Chat with the Analytics AI about team chat data"
+        }
+      }
     },
     {
       "path": "/api/admin/analytics/digest",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/admin/analytics/digest Generate a daily or weekly digest of team activity"
+        }
+      }
     },
     {
       "path": "/api/admin/analytics/test",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/admin/analytics/test Simple test endpoint to diagnose auth and basic data access"
+        }
+      }
     },
     {
       "path": "/api/admin/feedback",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "category",
+            "page"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/briefings",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "page",
+            "limit"
+          ],
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/pulse/briefings List all briefings for the current user with pagination"
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/briefings/[date]",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/pulse/briefings/[date] Get a briefing by date (YYYY-MM-DD format)"
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/briefings/today",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/pulse/briefings/today Get today's briefing for the current user"
+        },
+        "POST": {
+          "body": [
+            "forceRegenerate",
+            "topicIds"
+          ],
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/admin/pulse/briefings/today Generate or regenerate today's briefing"
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "date",
+            "forceRegenerate",
+            "topicIds"
+          ],
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/admin/pulse/generate Manually trigger briefing generation with options"
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/items/[id]",
       "methods": [
         "GET",
         "PATCH"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "PATCH /api/admin/pulse/items/[id] Update a briefing item (bookmark, mark as read)"
+        },
+        "GET": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/pulse/items/[id] Get a single briefing item with full content"
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/topics",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "active"
+          ],
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/pulse/topics List all topics for the current user"
+        },
+        "POST": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/admin/pulse/topics Create a new topic"
+        }
+      }
     },
     {
       "path": "/api/admin/pulse/topics/[id]",
@@ -75,96 +237,308 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/admin/pulse/topics/[id] Get a single topic by ID"
+        },
+        "PATCH": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "PATCH /api/admin/pulse/topics/[id] Update a topic"
+        },
+        "DELETE": {
+          "required": [
+            "Access denied. Super admin privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "DELETE /api/admin/pulse/topics/[id] Delete a topic"
+        }
+      }
     },
     {
       "path": "/api/admin/studio-clients",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "summary": "Studio Clients Admin API GET - List all studio clients with filtering POST - Create a new studio client",
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "planTier",
+            "search",
+            "limit",
+            "offset"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        },
+        "POST": {
+          "body": [
+            "companyName",
+            "email",
+            "phone",
+            "planTier",
+            "monthlyGenerationsLimit",
+            "isComplementary"
+          ],
+          "required": [
+            "Company name is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/admin/studio-clients/[id]",
       "methods": [
         "GET",
         "PATCH"
-      ]
+      ],
+      "summary": "Studio Client Detail API GET - Get detailed info for a single client PATCH - Update a client's subscription",
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        },
+        "PATCH": {
+          "body": [
+            "planTier",
+            "monthlyGenerationsLimit",
+            "status",
+            "monthlyRate",
+            "isComplementary"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/admin/studio-clients/stats",
       "methods": [
         "GET"
-      ]
+      ],
+      "summary": "Studio Admin Stats API GET - Get dashboard statistics",
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/ai/chat",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "message",
+            "includeContext",
+            "conversationId",
+            "images"
+          ],
+          "required": [
+            "Authentication required",
+            "Message or image is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        },
+        "GET": {
+          "doc": "Health check endpoint"
+        }
+      }
     },
     {
       "path": "/api/ai/conversations",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/ai/conversations - List all conversations"
+        },
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/ai/conversations - Create new conversation"
+        }
+      }
     },
     {
       "path": "/api/ai/conversations/[conversationId]",
       "methods": [
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "DELETE /api/ai/conversations/[conversationId] - Delete conversation"
+        }
+      }
     },
     {
       "path": "/api/ai/conversations/[conversationId]/messages",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/ai/conversations/[conversationId]/messages - Get conversation messages"
+        }
+      }
     },
     {
       "path": "/api/ai/conversations/[conversationId]/switch",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/ai/conversations/[conversationId]/switch - Switch to conversation"
+        }
+      }
     },
     {
       "path": "/api/ai/log-action",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Audit-trail endpoint for AI-driven actions. Called by the chat's preview card after a chain finishes; writes one AuditLog row per successful action so the natural-language prompt + the effective change are visible in the per-record changelog UI alongside hand-made edits. Fire-and-forget on the clien",
+      "handlers": {
+        "POST": {
+          "body": [
+            "prompt",
+            "actions",
+            "results"
+          ]
+        }
+      }
     },
     {
       "path": "/api/billing/ar-aging",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "bucket"
+          ],
+          "doc": "GET /api/billing/ar-aging - Get AR aging report"
+        }
+      }
     },
     {
       "path": "/api/billing/generate-invoices",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "dryRun",
+            "billingDay",
+            "targetDate"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "POST /api/billing/generate-invoices - Manually trigger invoice generation"
+        }
+      }
     },
     {
       "path": "/api/blog/admin/enhance",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/blog/admin/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/blog/admin/posts",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "categoryId",
+            "limit"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET all posts (admin view - includes drafts)"
+        },
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST create new blog post"
+        }
+      }
     },
     {
       "path": "/api/blog/admin/posts/[id]",
@@ -172,45 +546,123 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET single blog post by ID"
+        },
+        "PATCH": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "PATCH update blog post"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "DELETE blog post"
+        }
+      }
     },
     {
       "path": "/api/blog/categories",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/blog/posts",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "categoryId",
+            "limit",
+            "offset"
+          ]
+        }
+      }
     },
     {
       "path": "/api/chat/ai",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/chat/channels",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/chat/channels Fetch all channels for the current user's company"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "description",
+            "type"
+          ],
+          "required": [
+            "Channel name is required"
+          ],
+          "doc": "POST /api/chat/channels Create a new channel"
+        }
+      }
     },
     {
       "path": "/api/chat/channels/[channelId]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "name",
+            "description"
+          ],
+          "doc": "PATCH /api/chat/channels/[channelId] Update channel details (name, description)"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/chat/channels/[channelId] Delete a channel (only owner can delete)"
+        }
+      }
     },
     {
       "path": "/api/chat/channels/[channelId]/favorite",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "isFavorite"
+          ],
+          "required": [
+            "Channel ID is required"
+          ],
+          "doc": "POST /api/chat/channels/[channelId]/favorite Toggle favorite status for a channel"
+        }
+      }
     },
     {
       "path": "/api/chat/channels/[channelId]/members",
@@ -218,41 +670,155 @@
         "GET",
         "POST",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/chat/channels/[channelId]/members Get all members of a channel"
+        },
+        "POST": {
+          "body": [
+            "userId",
+            "userIds",
+            "role"
+          ],
+          "required": [
+            "At least one user ID is required"
+          ],
+          "doc": "POST /api/chat/channels/[channelId]/members Add member(s) to a channel (supports batch invite)"
+        },
+        "DELETE": {
+          "query": [
+            "userId"
+          ],
+          "required": [
+            "User ID is required"
+          ],
+          "doc": "DELETE /api/chat/channels/[channelId]/members Remove a member from a channel"
+        }
+      }
     },
     {
       "path": "/api/chat/channels/[channelId]/messages",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "required": [
+            "Channel ID is required"
+          ],
+          "doc": "GET /api/chat/channels/[channelId]/messages Fetch messages for a specific channel"
+        },
+        "POST": {
+          "body": [
+            "content"
+          ],
+          "required": [
+            "Channel ID is required",
+            "Message content is required"
+          ],
+          "doc": "POST /api/chat/channels/[channelId]/messages Send a new message to a channel"
+        }
+      }
     },
     {
       "path": "/api/chat/channels/create-ai",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ]
+        },
+        "GET": {
+          "doc": "GET endpoint to list available AI personas"
+        }
+      }
     },
     {
       "path": "/api/chat/dm",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "userId"
+          ],
+          "required": [
+            "User ID is required"
+          ],
+          "doc": "POST /api/chat/dm Create or find existing DM channel between current user and another user"
+        }
+      }
     },
     {
       "path": "/api/checklist-library",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "sectionTypeId",
+            "includeInactive"
+          ],
+          "doc": "GET /api/checklist-library - List section types with their items"
+        },
+        "POST": {
+          "body": [
+            "sectionTypeId",
+            "text",
+            "textEs",
+            "frequency",
+            "requiresPhoto",
+            "priority"
+          ],
+          "required": [
+            "sectionTypeId and text are required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "POST /api/checklist-library - Add custom item to library (admin only)"
+        }
+      }
     },
     {
       "path": "/api/checklists",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "includeLocations"
+          ],
+          "doc": "GET /api/checklists - List all checklist templates"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "nameEs",
+            "description",
+            "sections",
+            "isActive"
+          ],
+          "required": [
+            "Name is required"
+          ],
+          "doc": "POST /api/checklists - Create new checklist template"
+        }
+      }
     },
     {
       "path": "/api/checklists/[id]",
@@ -260,26 +826,95 @@
         "GET",
         "PUT",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/checklists/[id] - Get checklist template details"
+        },
+        "PUT": {
+          "body": [
+            "name",
+            "nameEs",
+            "description",
+            "sections",
+            "isActive"
+          ],
+          "doc": "PUT /api/checklists/[id] - Update checklist template"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/checklists/[id] - Delete checklist template"
+        }
+      }
     },
     {
       "path": "/api/checklists/[id]/complete",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "shiftId",
+            "locationId",
+            "checklistData",
+            "priorityItemsCompleted",
+            "overallNotes",
+            "photos",
+            "status"
+          ],
+          "required": [
+            "shiftId and locationId are required"
+          ],
+          "doc": "POST /api/checklists/[id]/complete Records a field completion of a checklist template for a specific shift+location. `id` is the ChecklistTemplate id. This writes the checked-off item state onto the ServiceLog (checklistData) and marks it completed/partial. It never mutates the company template itself — associates run the template, they do not edit it.  Body: {   shiftId: string,   locationId: str"
+        }
+      }
     },
     {
       "path": "/api/checklists/[id]/duplicate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "name"
+          ],
+          "required": [
+            "name is required and must be a non-empty string"
+          ],
+          "doc": "POST /api/checklists/[id]/duplicate - Duplicate a checklist template"
+        }
+      }
     },
     {
       "path": "/api/clients",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients - List all clients"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "legalName",
+            "billingEmail",
+            "phone",
+            "address",
+            "billingAddress",
+            "logoUrl",
+            "paymentTerms",
+            "preferredPaymentMethod",
+            "taxExempt",
+            "notes",
+            "status",
+            "branchId"
+          ],
+          "doc": "POST /api/clients - Create new client"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]",
@@ -287,78 +922,262 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients/[id] - Get client by ID"
+        },
+        "PATCH": {
+          "body": [
+            "name",
+            "legalName",
+            "billingEmail",
+            "phone",
+            "address",
+            "billingAddress",
+            "logoUrl",
+            "paymentTerms",
+            "preferredPaymentMethod",
+            "taxExempt",
+            "notes",
+            "status",
+            "parentClientId"
+          ],
+          "doc": "PATCH /api/clients/[id] - Update client"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/clients/[id] - Soft-delete client. Cascades soft-delete to the client's locations and deactivates active service agreements so financial rollups don't keep including them. History (invoices, payments, contracts) is preserved."
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/billing-preview",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "year",
+            "month"
+          ],
+          "doc": "GET /api/clients/[id]/billing-preview?year=2026&month=3"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/billing-preview/delta",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "year",
+            "month"
+          ],
+          "doc": "GET /api/clients/[id]/billing-preview/delta?year=2026&month=3 Compares requested month with the previous month"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/billing-preview/export",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "year",
+            "month",
+            "hideTax"
+          ],
+          "doc": "GET /api/clients/[id]/billing-preview/export?year=2026&month=3"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/billing-preview/export-pdf",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "body": [
+            "push",
+            "length"
+          ],
+          "query": [
+            "year",
+            "month",
+            "hideTax"
+          ],
+          "doc": "GET /api/clients/[id]/billing-preview/export-pdf?year=2026&month=3"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/billing-preview/export-qb",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "year",
+            "month",
+            "hideTax"
+          ],
+          "doc": "GET /api/clients/[id]/billing-preview/export-qb?year=2026&month=3"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/changelog",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "cursor",
+            "limit"
+          ],
+          "doc": "GET /api/clients/[id]/changelog?cursor=xxx&limit=50"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/contacts",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients/[id]/contacts - List all contacts for a client"
+        },
+        "POST": {
+          "body": [
+            "firstName",
+            "lastName",
+            "email",
+            "phone",
+            "role",
+            "isPortalUser"
+          ],
+          "doc": "POST /api/clients/[id]/contacts - Create new contact"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/contacts/[contactId]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "firstName",
+            "lastName",
+            "email",
+            "phone",
+            "role",
+            "isPortalUser"
+          ],
+          "doc": "PATCH /api/clients/[id]/contacts/[contactId] - Update contact"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/clients/[id]/contacts/[contactId] - Delete contact"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/documents",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "GET /api/clients/[id]/documents — admin list of all portal documents for a given client. Used by the admin Documents tab on /clients/[id]."
+        },
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "multipart": true,
+          "doc": "POST /api/clients/[id]/documents — admin uploads a doc on behalf of the client. Form fields: file, name?, category?, description?, expiresAt?"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/documents/[docId]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "name",
+            "category",
+            "description",
+            "expiresAt"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "PATCH /api/clients/[id]/documents/[docId] — admin updates document metadata."
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "DELETE /api/clients/[id]/documents/[docId] — admin removes a document."
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/facilities",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients/[id]/facilities - List facility profiles for a client"
+        },
+        "POST": {
+          "body": [
+            "locationId",
+            "category",
+            "defaultMonthlyRate",
+            "rateType",
+            "taxBehavior",
+            "status",
+            "goLiveDate",
+            "seasonalRulesEnabled",
+            "normalDaysOfWeek",
+            "normalFrequencyPerWeek",
+            "scopeOfWorkNotes",
+            "sortOrder"
+          ],
+          "doc": "POST /api/clients/[id]/facilities - Create a facility profile"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/facilities/[facilityId]",
@@ -366,54 +1185,213 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients/[id]/facilities/[facilityId]"
+        },
+        "PATCH": {
+          "body": [
+            "category",
+            "defaultMonthlyRate",
+            "rateType",
+            "taxBehavior",
+            "status",
+            "goLiveDate",
+            "pauseStartDate",
+            "pauseEndDate",
+            "seasonalRulesEnabled",
+            "normalDaysOfWeek",
+            "normalFrequencyPerWeek",
+            "scopeOfWorkNotes",
+            "sortOrder"
+          ],
+          "doc": "PATCH /api/clients/[id]/facilities/[facilityId]"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/clients/[id]/facilities/[facilityId] - Soft delete (set CLOSED)"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/facilities/[facilityId]/overrides",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "year"
+          ],
+          "doc": "GET /api/clients/[id]/facilities/[facilityId]/overrides"
+        },
+        "POST": {
+          "body": [
+            "year",
+            "month",
+            "overrideStatus",
+            "overrideFrequency",
+            "overrideDaysOfWeek",
+            "overrideRate",
+            "overrideNotes",
+            "pauseStartDay",
+            "pauseEndDay"
+          ],
+          "required": [
+            "Year and month are required"
+          ],
+          "doc": "POST /api/clients/[id]/facilities/[facilityId]/overrides"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/facilities/[facilityId]/overrides/[overrideId]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "overrideStatus",
+            "overrideFrequency",
+            "overrideDaysOfWeek",
+            "overrideRate",
+            "overrideNotes",
+            "pauseStartDay",
+            "pauseEndDay"
+          ],
+          "doc": "PATCH /api/clients/[id]/facilities/[facilityId]/overrides/[overrideId]"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/clients/[id]/facilities/[facilityId]/overrides/[overrideId]"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/facilities/[facilityId]/seasonal-rules",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients/[id]/facilities/[facilityId]/seasonal-rules"
+        },
+        "POST": {
+          "body": [
+            "activeMonths",
+            "pausedMonths",
+            "effectiveYearStart",
+            "effectiveYearEnd",
+            "notes",
+            "isActive"
+          ],
+          "doc": "POST /api/clients/[id]/facilities/[facilityId]/seasonal-rules"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/facilities/[facilityId]/seasonal-rules/[ruleId]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "activeMonths",
+            "pausedMonths",
+            "effectiveYearStart",
+            "effectiveYearEnd",
+            "notes",
+            "isActive"
+          ],
+          "doc": "PATCH /api/clients/[id]/facilities/[facilityId]/seasonal-rules/[ruleId]"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/clients/[id]/facilities/[facilityId]/seasonal-rules/[ruleId]"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/locations",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "name",
+            "address",
+            "logoUrl",
+            "accessInstructions",
+            "serviceNotes",
+            "painPoints",
+            "checklistTemplateId",
+            "equipmentInventory",
+            "branchId",
+            "serviceProfile"
+          ],
+          "doc": "POST /api/clients/[id]/locations - Create location for client"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/portal-invite",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "contactId"
+          ],
+          "required": [
+            "contactId is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/clients/[id]/portal-invite — admin-only. Invites a ClientContact to the Urban Simple Portal. Creates a Supabase auth user (with a magic-link invite email), creates a User row with role CLIENT_USER, and links the ClientContact to that User. Idempotent on re-invite (re-sends the email).  Body: { contactId: string }"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/service-items",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "year",
+            "month"
+          ],
+          "doc": "GET /api/clients/[id]/service-items?year=2026&month=2"
+        },
+        "POST": {
+          "body": [
+            "year",
+            "month",
+            "description",
+            "unitRate",
+            "facilityProfileId",
+            "quantity",
+            "taxBehavior",
+            "notes",
+            "performedDate",
+            "status"
+          ],
+          "required": [
+            "Year, month, description, and unitRate are required"
+          ],
+          "doc": "POST /api/clients/[id]/service-items"
+        }
+      }
     },
     {
       "path": "/api/clients/[id]/service-items/[itemId]",
@@ -421,19 +1399,53 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/clients/[id]/service-items/[itemId]"
+        },
+        "PATCH": {
+          "body": [
+            "facilityProfileId",
+            "description",
+            "quantity",
+            "unitRate",
+            "taxBehavior",
+            "notes",
+            "performedDate",
+            "status",
+            "year",
+            "month"
+          ],
+          "doc": "PATCH /api/clients/[id]/service-items/[itemId]"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/clients/[id]/service-items/[itemId]"
+        }
+      }
     },
     {
       "path": "/api/clients/bulk-delete",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "ids"
+          ],
+          "doc": "POST /api/clients/bulk-delete — soft-delete a set of clients in one go. Cascades soft-delete to each client's locations and deactivates active service agreements so financial rollups stop counting them."
+        }
+      }
     },
     {
       "path": "/api/command/attention",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/creative-hub/assets",
@@ -441,14 +1453,80 @@
         "GET",
         "POST",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "category",
+            "search"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        },
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "multipart": true
+        },
+        "DELETE": {
+          "query": [
+            "id"
+          ],
+          "required": [
+            "Asset ID required"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-hub/content",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "platform",
+            "contentType",
+            "status",
+            "limit",
+            "includeStats"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET - List content for company"
+        },
+        "POST": {
+          "body": [
+            "projectId",
+            "contentType",
+            "platform",
+            "headline",
+            "primaryText",
+            "description",
+            "callToAction",
+            "hashtags",
+            "adFormat",
+            "imageId",
+            "isAiGenerated",
+            "aiModel",
+            "aiGenerationData",
+            "variationGroup",
+            "variationLabel"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST - Create new content"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/content/[id]",
@@ -456,26 +1534,117 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET - Get single content item"
+        },
+        "PATCH": {
+          "body": [
+            "status",
+            "approvedAt",
+            "approvedById"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "PATCH - Update content"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "DELETE - Delete content"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/content/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "action"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-hub/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prompt",
+            "stylePreset",
+            "aspectRatio",
+            "brandAssetIds",
+            "referenceImages",
+            "referenceModes"
+          ],
+          "required": [
+            "Prompt is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-hub/images",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "imageType",
+            "category",
+            "projectId",
+            "status",
+            "limit",
+            "includeStats"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET - List images for company"
+        },
+        "POST": {
+          "body": [
+            "projectId",
+            "name",
+            "imageUrl",
+            "imageBase64",
+            "imageType",
+            "aspectRatio",
+            "width",
+            "height",
+            "isAiGenerated",
+            "aiPrompt",
+            "aiModel",
+            "tags",
+            "category",
+            "photoCredit"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST - Upload/create image"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/images/[id]",
@@ -483,39 +1652,162 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET - Get single image"
+        },
+        "PATCH": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "PATCH - Update image"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "DELETE - Delete image"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/images/[id]/caption",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "platform"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-hub/images/[id]/image",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Serve a creative image as binary. Returns the image directly (not wrapped in JSON) so <img src=\"...\"> can load it natively. This avoids sending massive base64 strings in gallery listing responses. Supports ?w=300 for thumbnail sizing (future enhancement)."
+        }
+      }
     },
     {
       "path": "/api/creative-hub/images/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "action",
+            "imageType",
+            "aspectRatio",
+            "customPrompt",
+            "serviceContext",
+            "style",
+            "projectId",
+            "name",
+            "saveToLibrary",
+            "imageStyle",
+            "platform",
+            "topic",
+            "imageBase64",
+            "imageUrl",
+            "aiPrompt",
+            "aiModel",
+            "count"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-hub/inspiration",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "summary": "Daily Inspiration API GET - Get today's briefing with topics POST - Trigger generation of new topics",
+      "handlers": {
+        "GET": {
+          "query": [
+            "date"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Get today's briefing"
+        },
+        "POST": {
+          "body": [
+            "date",
+            "contentMode"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Trigger topic generation"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/inspiration/topics",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "summary": "Inspiration Topics API GET - List topics with filters POST - Create a manual topic",
+      "handlers": {
+        "GET": {
+          "query": [
+            "date",
+            "category",
+            "status"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Get topics with optional filters"
+        },
+        "POST": {
+          "body": [
+            "title",
+            "summary",
+            "category",
+            "forDate",
+            "context",
+            "subcategory",
+            "sourceUrl",
+            "sourceName",
+            "postIdeas",
+            "suggestedHooks",
+            "relatedHashtags",
+            "relevanceScore"
+          ],
+          "required": [
+            "Missing required fields: title, summary, category"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Create a manual topic"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/inspiration/topics/[id]",
@@ -523,20 +1815,88 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "summary": "Individual Topic API GET - Get topic details PATCH - Update topic (approve/reject/edit) DELETE - Remove topic",
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Get topic details"
+        },
+        "PATCH": {
+          "body": [
+            "action",
+            "reason"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Update topic (approve, reject, or edit)"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Delete topic"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/inspiration/topics/[id]/quick-post",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Quick Post Ideas API POST - Generate instant post ideas for a topic",
+      "handlers": {
+        "POST": {
+          "body": [
+            "platform",
+            "contentMode",
+            "tone",
+            "length",
+            "emoji",
+            "cta",
+            "regenerate"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "Generate quick post ideas"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/projects",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "status"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET - List projects for company"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "description",
+            "campaignGoal",
+            "targetAudience",
+            "brandVoice",
+            "defaultTone"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST - Create new project"
+        }
+      }
     },
     {
       "path": "/api/creative-hub/projects/[id]",
@@ -544,7 +1904,27 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET - Get single project with content"
+        },
+        "PATCH": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "PATCH - Update project"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "DELETE - Delete project"
+        }
+      }
     },
     {
       "path": "/api/creative-studio/brand-kit",
@@ -553,13 +1933,83 @@
         "POST",
         "PUT",
         "DELETE"
-      ]
+      ],
+      "summary": "Restaurant Creative Studio - Brand Kit API CRUD operations for restaurant brand kits",
+      "handlers": {
+        "GET": {
+          "query": [
+            "default"
+          ],
+          "doc": "GET - List brand kits for company"
+        },
+        "POST": {
+          "body": [
+            "restaurantName",
+            "primaryColor",
+            "logoUrl",
+            "iconUrl",
+            "secondaryColor",
+            "accentColor",
+            "brandPhotos",
+            "cuisineType",
+            "preferredStyle",
+            "isDefault"
+          ],
+          "required": [
+            "Restaurant name is required",
+            "Primary color is required"
+          ],
+          "doc": "POST - Create new brand kit"
+        },
+        "PUT": {
+          "body": [
+            "id",
+            "restaurantName",
+            "logoUrl",
+            "iconUrl",
+            "primaryColor",
+            "secondaryColor",
+            "accentColor",
+            "brandPhotos",
+            "cuisineType",
+            "preferredStyle",
+            "isDefault"
+          ],
+          "required": [
+            "Brand kit ID is required"
+          ],
+          "doc": "PUT - Update brand kit"
+        },
+        "DELETE": {
+          "query": [
+            "id"
+          ],
+          "required": [
+            "Brand kit ID is required"
+          ],
+          "doc": "DELETE - Remove brand kit"
+        }
+      }
     },
     {
       "path": "/api/creative-studio/caption",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Creative Studio — Caption Writer API POST: given the context of a just-generated image (food photo or branded post), returns a ready-to-post Instagram caption + hashtags for restaurant clients. Text-only generation (fast/cheap); image-aware captions are a possible future enhancement.",
+      "handlers": {
+        "POST": {
+          "body": [
+            "mode",
+            "dishDescription",
+            "cuisineType",
+            "outputFormat",
+            "headline",
+            "postType",
+            "restaurantName"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-studio/content",
@@ -568,106 +2018,353 @@
         "POST",
         "PUT",
         "DELETE"
-      ]
+      ],
+      "summary": "Restaurant Creative Studio - Content API CRUD operations for generated studio content",
+      "handlers": {
+        "GET": {
+          "query": [
+            "id",
+            "mode",
+            "status",
+            "outputFormat",
+            "limit",
+            "offset",
+            "includeStats",
+            "recent"
+          ],
+          "doc": "GET - List content for company"
+        },
+        "POST": {
+          "body": [
+            "mode",
+            "brandKitId",
+            "outputFormat",
+            "sourceImageUrl",
+            "generatedImageUrl",
+            "headline",
+            "bodyText",
+            "hashtags",
+            "aiPrompt",
+            "aiModel",
+            "status",
+            "platform"
+          ],
+          "required": [
+            "Mode is required"
+          ],
+          "doc": "POST - Create/save content"
+        },
+        "PUT": {
+          "body": [
+            "id",
+            "status",
+            "headline",
+            "bodyText",
+            "hashtags",
+            "platform"
+          ],
+          "required": [
+            "Content ID is required"
+          ],
+          "doc": "PUT - Update content"
+        },
+        "DELETE": {
+          "query": [
+            "id"
+          ],
+          "required": [
+            "Content ID is required"
+          ],
+          "doc": "DELETE - Remove content"
+        }
+      }
     },
     {
       "path": "/api/creative-studio/content/image",
       "methods": [
         "GET"
-      ]
+      ],
+      "summary": "Image serving endpoint for Creative Studio content Serves generated images directly as binary with proper caching headers. This avoids sending multi-MB base64 strings in JSON list responses.",
+      "handlers": {
+        "GET": {
+          "query": [
+            "id"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-studio/feedback",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "rating",
+            "category",
+            "message"
+          ],
+          "required": [
+            "Rating and message are required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-studio/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Restaurant Creative Studio - Generate API Handles AI image generation for: - Food photo enhancement (multimodal with dish reference) - Branded promotional posts",
+      "handlers": {
+        "POST": {
+          "body": [
+            "mode",
+            "saveToLibrary",
+            "dishPhotoBase64",
+            "dishDescription",
+            "outputFormat",
+            "cuisineType",
+            "style",
+            "styleReferenceBase64",
+            "additionalInstructions",
+            "postType",
+            "headline",
+            "brandKitId",
+            "aspectRatio",
+            "logoBase64",
+            "logoPlacement",
+            "logoSize",
+            "logoOpacity",
+            "applyBrandColors",
+            "sourceImageBase64"
+          ],
+          "required": [
+            "Dish photo is required",
+            "Output format is required",
+            "Post type is required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/creative-studio/usage",
       "methods": [
         "GET"
-      ]
+      ],
+      "summary": "Creative Studio Usage API GET - Returns current plan tier, usage stats, and billing status",
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/cron/dispatch-regenerate",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {}
+      }
     },
     {
       "path": "/api/cron/financial-snapshot",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {}
+      }
     },
     {
       "path": "/api/cron/portal-weekly-digest",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {}
+      }
     },
     {
       "path": "/api/cron/pulse-generate",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/cron/pulse-generate Cron job endpoint to generate daily briefings for all SUPER_ADMIN users Vercel Cron Configuration (vercel.json): { \"crons\": [{ \"path\": \"/api/cron/pulse-generate\", \"schedule\": \"0 11 * * *\"  // 6 AM CST (11 UTC) }] }"
+        },
+        "POST": {
+          "doc": "POST /api/cron/pulse-generate Manual trigger endpoint (useful for testing)"
+        }
+      }
     },
     {
       "path": "/api/cron/qbo-sync",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {}
+      }
     },
     {
       "path": "/api/dev/impersonable-clients",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "GET /api/dev/impersonable-clients Returns active clients the gated SUPER_ADMIN can impersonate as a portal user. Used by the role-switcher UI when CLIENT_USER is selected."
+        }
+      }
     },
     {
       "path": "/api/dev/switch-role",
       "methods": [
         "POST",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "role",
+            "clientId"
+          ],
+          "required": [
+            "clientId is required when impersonating CLIENT_USER"
+          ],
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "doc": "POST /api/dev/switch-role Body: { role: 'SUPER_ADMIN'|'ADMIN'|'MANAGER'|'ASSOCIATE'|'CLIENT_USER', clientId?: string } - Requires real DB role of SUPER_ADMIN AND email === IMPERSONATION_GATE_EMAIL. - For CLIENT_USER, a clientId is required so the portal can render that client's data instead of trying to find a non-existent ClientContact for the SUPER_ADMIN user. - Setting role === 'SUPER_ADMIN' cl"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/dev/switch-role Clear impersonation cookies. Permissive on purpose — any authenticated user can clear their own impersonation state. Worst case: a non-admin who somehow has stale cookies clears them and is restored to their real role. That's exactly the recovery path we want anyone in a stuck state to have."
+        }
+      }
     },
     {
       "path": "/api/financials/expenses",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/financials/expenses — list all recurring expenses for the company."
+        },
+        "POST": {
+          "body": [
+            "name",
+            "category",
+            "expenseType",
+            "monthlyAmount",
+            "vendor",
+            "paymentMethod",
+            "billingDay",
+            "startDate",
+            "endDate",
+            "isActive",
+            "notes"
+          ],
+          "required": [
+            "Name is required"
+          ],
+          "doc": "POST /api/financials/expenses — create a new recurring expense."
+        }
+      }
     },
     {
       "path": "/api/financials/expenses/[id]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "name",
+            "category",
+            "expenseType",
+            "monthlyAmount",
+            "vendor",
+            "paymentMethod",
+            "billingDay",
+            "startDate",
+            "endDate",
+            "isActive",
+            "notes"
+          ],
+          "doc": "PATCH /api/financials/expenses/[id] — update recurring expense."
+        },
+        "DELETE": {
+          "doc": "DELETE /api/financials/expenses/[id] — hard delete (no foreign keys depend on these rows, and there's no \"history\" concept where soft-delete adds value)."
+        }
+      }
     },
     {
       "path": "/api/financials/snapshot",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "year",
+            "month"
+          ],
+          "doc": "POST /api/financials/snapshot — admin-triggered snapshot capture. Used by the dashboard \"Snapshot now\" button to backfill or re-record the current month's totals on demand.  Body: { year?: number, month?: number } — defaults to current month."
+        }
+      }
     },
     {
       "path": "/api/goals",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "period",
+            "status",
+            "periodStart",
+            "periodEnd",
+            "includeTaskCount",
+            "includeChildren"
+          ],
+          "doc": "GET /api/goals - List goals with filters"
+        },
+        "POST": {
+          "body": [
+            "title",
+            "description",
+            "period",
+            "periodStart",
+            "periodEnd",
+            "parentId",
+            "color"
+          ],
+          "required": [
+            "Title is required",
+            "Period start and end dates are required"
+          ],
+          "doc": "POST /api/goals - Create a new goal"
+        }
+      }
     },
     {
       "path": "/api/goals/[id]",
@@ -675,169 +2372,531 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/goals/[id] - Get a single goal with tasks"
+        },
+        "PATCH": {
+          "body": [
+            "title",
+            "description",
+            "status",
+            "progress",
+            "color",
+            "sortOrder",
+            "parentId"
+          ],
+          "doc": "PATCH /api/goals/[id] - Update a goal"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/goals/[id] - Delete a goal"
+        }
+      }
     },
     {
       "path": "/api/goals/current",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "date"
+          ],
+          "doc": "GET /api/goals/current - Get current week's and month's goals"
+        }
+      }
     },
     {
       "path": "/api/growth/ai/generate-content",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectData",
+            "channel",
+            "sms",
+            "linkedin",
+            "friendly",
+            "casual",
+            "follow_up",
+            "introduction"
+          ],
+          "required": [
+            "Prospect data and channel are required"
+          ],
+          "doc": "POST /api/growth/ai/generate-content - Generate outreach content using AI"
+        }
+      }
     },
     {
       "path": "/api/growth/api-keys",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "GET /api/growth/api-keys - List API keys for company"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "description"
+          ],
+          "required": [
+            "Name is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/growth/api-keys - Create a new API key"
+        }
+      }
     },
     {
       "path": "/api/growth/api-keys/[id]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "name",
+            "description",
+            "isActive"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "PATCH /api/growth/api-keys/[id] - Update or deactivate an API key"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "DELETE /api/growth/api-keys/[id] - Revoke (soft delete) an API key"
+        }
+      }
     },
     {
       "path": "/api/growth/discovery/enrich",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectData"
+          ],
+          "required": [
+            "Prospect data is required"
+          ],
+          "doc": "POST /api/growth/discovery/enrich - AI enrichment for prospect data"
+        }
+      }
     },
     {
       "path": "/api/growth/discovery/hunter-search",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "required": [
+            "domain parameter required. Example: ?domain=mmlhospitality.com"
+          ],
+          "doc": "GET /api/growth/discovery/hunter-search?domain=mmlhospitality.com Test endpoint to see what Hunter finds for a given domain"
+        }
+      }
     },
     {
       "path": "/api/growth/discovery/jobs",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "Run scheduled discovery jobs. GET  — called by the Vercel cron nightly (no body). Delegates to POST, which fails closed on the CRON_SECRET bearer check (see POST auth below). POST — manual/API trigger. Auth via CRON_SECRET bearer OR API key."
+        },
+        "POST": {}
+      }
     },
     {
       "path": "/api/growth/discovery/scrape",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "url"
+          ],
+          "required": [
+            "URL is required"
+          ],
+          "doc": "POST /api/growth/discovery/scrape - Extract businesses from a URL using AI"
+        }
+      }
     },
     {
       "path": "/api/growth/discovery/search",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "location",
+            "city",
+            "state",
+            "type",
+            "priceLevel",
+            "minRating",
+            "sources"
+          ],
+          "required": [
+            "Location is required. Provide"
+          ],
+          "doc": "POST /api/growth/discovery/search - Search for prospects using external APIs"
+        }
+      }
     },
     {
       "path": "/api/growth/email-prospecting/discover",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "businessName",
+            "city",
+            "state",
+            "website"
+          ],
+          "required": [
+            "businessName and city are required"
+          ],
+          "doc": "POST /api/growth/email-prospecting/discover Discover business owners and their emails This is the BEST method for hospitality businesses"
+        }
+      }
     },
     {
       "path": "/api/growth/email-prospecting/search/domain",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "domain",
+            "titles",
+            "seniorities",
+            "method",
+            "limit",
+            "verifyEmails"
+          ],
+          "required": [
+            "Domain is required"
+          ],
+          "doc": "POST /api/growth/email-prospecting/search/domain - Search for contacts at a company domain"
+        }
+      }
     },
     {
       "path": "/api/growth/email-prospecting/search/person",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "firstName",
+            "lastName",
+            "domain",
+            "method",
+            "verifyEmail"
+          ],
+          "required": [
+            "firstName, lastName, and domain are required"
+          ],
+          "doc": "POST /api/growth/email-prospecting/search/person - Find a specific person's email"
+        }
+      }
     },
     {
       "path": "/api/growth/email-prospecting/verify",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "email",
+            "prospectContactId"
+          ],
+          "required": [
+            "Email is required"
+          ],
+          "doc": "POST /api/growth/email-prospecting/verify - Verify an email address"
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/approval-queue",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "view"
+          ],
+          "doc": "GET /api/growth/outreach/approval-queue?view=pending|approved|sent"
+        },
+        "POST": {
+          "body": [
+            "messageIds",
+            "action",
+            "messageId",
+            "body",
+            "subject",
+            "customInstructions",
+            "toOverrides",
+            "replace"
+          ],
+          "required": [
+            "Message ID required",
+            "Message IDs required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/auto-draft",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectIds",
+            "templateId",
+            "campaignId",
+            "bodyOverride",
+            "channelOverride",
+            "tone",
+            "purpose"
+          ],
+          "required": [
+            "Prospect IDs required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/backfill-merge-tags",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "doc": "POST /api/growth/outreach/backfill-merge-tags One-time backfill: resolve {{merge_tags}} in existing outreach messages that were created before the apply endpoint added tag resolution."
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/bulk",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectIds",
+            "channel",
+            "subject",
+            "body"
+          ],
+          "required": [
+            "Missing required fields",
+            "Email subject is required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/bulk-rewrite",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "trim"
+          ],
+          "required": [
+            "messages array is required — each item needs { id, body } and optionally { subject }"
+          ],
+          "doc": "POST /api/growth/outreach/bulk-rewrite Bulk update message subjects and bodies. Payload: { messages: [{ id, subject?, body }] }"
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/command-center",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/growth/outreach/dashboard",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/growth/outreach/executor",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "Sequence Executor - Runs as a cron job to send pending outreach messages. Two lanes: 1. Manual follow-ups — approvalStatus='approved', step > 1. No cap, no window. 2. Autopilot (campaign.autopilot=true) — all steps, auto-approved, gated by the company's send window + daily cap. The first send of step 1 is how prospects auto-imported via CSV get their initial cold email."
+        },
+        "POST": {
+          "body": [
+            "replace"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectId",
+            "channel",
+            "templateId",
+            "tone",
+            "purpose",
+            "customInstructions"
+          ],
+          "required": [
+            "Prospect ID required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/queue",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectId",
+            "to",
+            "subject",
+            "body",
+            "channel"
+          ],
+          "required": [
+            "Missing required fields"
+          ],
+          "doc": "POST /api/growth/outreach/queue - Queue a message for human review"
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/send",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectId",
+            "to",
+            "subject",
+            "body",
+            "channel",
+            "scheduledAt"
+          ],
+          "required": [
+            "Missing required fields",
+            "Subject is required for email"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/send-email",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectId",
+            "to",
+            "subject",
+            "body",
+            "templateId"
+          ],
+          "required": [
+            "Missing required fields"
+          ],
+          "doc": "POST /api/growth/outreach/send-email - Send outreach email"
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/sequences",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {
+          "body": [
+            "name",
+            "description",
+            "messages",
+            "startDate",
+            "endDate"
+          ],
+          "required": [
+            "Missing required fields"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/sequences/[id]",
@@ -845,32 +2904,99 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "PATCH": {
+          "body": [
+            "name",
+            "description",
+            "status",
+            "startDate",
+            "endDate",
+            "messages"
+          ]
+        },
+        "DELETE": {}
+      }
     },
     {
       "path": "/api/growth/outreach/sequences/[id]/apply",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospectIds"
+          ],
+          "required": [
+            "prospectIds array is required"
+          ],
+          "doc": "POST /api/growth/outreach/sequences/[id]/apply — Apply a sequence to prospects"
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/sequences/generate-step",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "channel",
+            "stepNumber",
+            "totalSteps",
+            "sequenceName",
+            "sequenceDescription",
+            "tone",
+            "previousStepsContext"
+          ],
+          "required": [
+            "Missing required fields: channel, stepNumber, totalSteps, sequenceName"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/stats",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/growth/outreach/stats"
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/templates",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "channel"
+          ]
+        },
+        "POST": {
+          "body": [
+            "name",
+            "category",
+            "channel",
+            "subject",
+            "body",
+            "variables",
+            "aiInstructions"
+          ],
+          "required": [
+            "Missing required fields"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/outreach/templates/[id]",
@@ -878,27 +3004,102 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "PATCH": {
+          "body": [
+            "name",
+            "category",
+            "channel",
+            "subject",
+            "body",
+            "variables",
+            "aiInstructions",
+            "isActive"
+          ]
+        },
+        "DELETE": {}
+      }
     },
     {
       "path": "/api/growth/outreach/track",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "msg",
+            "type",
+            "url"
+          ],
+          "doc": "Track email opens and clicks Called by tracking pixels and link redirects"
+        }
+      }
     },
     {
       "path": "/api/growth/pipeline/automate",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {
+          "body": [
+            "companyId"
+          ],
+          "required": [
+            "Company ID required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/growth/prospects",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "search",
+            "assignedToId",
+            "source"
+          ],
+          "doc": "GET /api/growth/prospects - List prospects"
+        },
+        "POST": {
+          "body": [
+            "companyName",
+            "legalName",
+            "industry",
+            "businessType",
+            "address",
+            "website",
+            "phone",
+            "estimatedSize",
+            "employeeCount",
+            "annualRevenue",
+            "priceLevel",
+            "status",
+            "priority",
+            "estimatedValue",
+            "source",
+            "sourceDetail",
+            "tags",
+            "notes",
+            "branchId",
+            "assignedToId",
+            "contacts",
+            "discoveryData"
+          ],
+          "doc": "POST /api/growth/prospects - Create prospect"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/[id]",
@@ -906,94 +3107,299 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/growth/prospects/[id] - Get prospect details"
+        },
+        "PATCH": {
+          "body": [
+            "companyName",
+            "legalName",
+            "industry",
+            "businessType",
+            "address",
+            "website",
+            "phone",
+            "estimatedSize",
+            "employeeCount",
+            "annualRevenue",
+            "priceLevel",
+            "status",
+            "priority",
+            "estimatedValue",
+            "source",
+            "sourceDetail",
+            "tags",
+            "notes",
+            "branchId",
+            "assignedToId",
+            "lostReason",
+            "convertedToClientId",
+            "discoveryData",
+            "contact",
+            "contacts",
+            "doNotContact"
+          ],
+          "doc": "PATCH /api/growth/prospects/[id] - Update prospect"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/growth/prospects/[id] - Delete prospect"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/[id]/activities",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "type",
+            "channel",
+            "title",
+            "description",
+            "outcome",
+            "scheduledAt",
+            "completedAt",
+            "subject",
+            "messageBody",
+            "duration",
+            "metadata"
+          ],
+          "doc": "POST /api/growth/prospects/[id]/activities - Create activity"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/[id]/enrich",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "doc": "POST /api/growth/prospects/[id]/enrich - AI enrichment for prospect"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/bulk-delete",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "ids"
+          ],
+          "doc": "POST /api/growth/prospects/bulk-delete - Soft-delete multiple prospects at once. Also cancels any pending outreach messages so deleted prospects stop the funnel."
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/bulk-update",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "ids",
+            "data"
+          ],
+          "doc": "POST /api/growth/prospects/bulk-update - Update multiple prospects at once"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/check-duplicates",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "companyNames"
+          ],
+          "required": [
+            "Company names array is required"
+          ],
+          "doc": "POST /api/growth/prospects/check-duplicates - Check for duplicate company names"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/import",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "prospects",
+            "applyFreshTag",
+            "autoEnroll"
+          ],
+          "required": [
+            "Prospects array is required"
+          ],
+          "doc": "POST /api/growth/prospects/import - Bulk import prospects"
+        }
+      }
     },
     {
       "path": "/api/growth/prospects/new-leads-count",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/invoices",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "clientId"
+          ],
+          "doc": "GET /api/invoices - List all invoices"
+        },
+        "POST": {
+          "body": [
+            "clientId",
+            "lineItems",
+            "issueDate",
+            "dueDate",
+            "taxAmount",
+            "notes",
+            "terms"
+          ],
+          "required": [
+            "clientId is required",
+            "lineItems is required (at least one item)"
+          ],
+          "doc": "POST /api/invoices — create an invoice (status 'draft' by default). Required: clientId, lineItems[] with at least one item. dueDate is required unless the client has paymentTerms set (then we derive net N days from issueDate). issueDate defaults to today. invoiceNumber auto-generated by generateInvoiceNumber(). Sending the invoice is a SEPARATE action — this endpoint only creates the record."
+        }
+      }
     },
     {
       "path": "/api/invoices/[id]",
       "methods": [
         "GET",
         "PATCH"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/invoices/[id] - Get invoice by ID"
+        },
+        "PATCH": {
+          "body": [
+            "status",
+            "notes",
+            "sentAt"
+          ],
+          "doc": "PATCH /api/invoices/[id] - Update invoice"
+        }
+      }
     },
     {
       "path": "/api/invoices/[id]/reminders",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "reminderType"
+          ],
+          "doc": "POST /api/invoices/[id]/reminders - Create payment reminder"
+        }
+      }
     },
     {
       "path": "/api/invoices/[id]/send",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "to"
+          ],
+          "doc": "POST /api/invoices/[id]/send - Send invoice via email"
+        }
+      }
     },
     {
       "path": "/api/invoices/[id]/sync-qb",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "doc": "POST /api/invoices/[id]/sync-qb - Push invoice to QuickBooks  Not implemented yet. The integration currently mirrors FROM QuickBooks (see src/lib/qbo/sync.ts); pushing portal-created invoices to QBO is phase 2. This endpoint used to fake a sync by writing placeholder ids into the database, which made invoices look synced when they were not."
+        }
+      }
     },
     {
       "path": "/api/invoices/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "month",
+            "year",
+            "agreementIds"
+          ],
+          "doc": "POST /api/invoices/generate - Generate invoices from active service agreements"
+        }
+      }
     },
     {
       "path": "/api/issues",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "summary": "Admin-side issue endpoints. Mirrors the portal POST (which lets a client report an issue from their portal) but adds: admin-only create / list, with admin extras like assignedToId, status, and full filtering. Scoped to the user's company via the location→client→companyId chain.",
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "severity",
+            "locationId",
+            "clientId",
+            "assignedToId"
+          ],
+          "doc": "GET /api/issues — list issues across the company with optional filters."
+        },
+        "POST": {
+          "body": [
+            "locationId",
+            "title",
+            "description",
+            "category",
+            "severity",
+            "status",
+            "assignedToId",
+            "photos"
+          ],
+          "required": [
+            "locationId is required",
+            "title is required"
+          ],
+          "doc": "POST /api/issues — admin creates an issue on a location. Required: locationId, title. Optional: clientId (derived from location if absent), category, severity, description, status, assignedToId, photos[]."
+        }
+      }
     },
     {
       "path": "/api/issues/[id]",
@@ -1001,33 +3407,101 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "summary": "Single-issue admin endpoints. GET / PATCH / DELETE, all scoped to the user's company via the issue→client→companyId chain. PATCH supports partial updates of any user-editable field (notably status + resolution for resolving). DELETE is hard delete — the IssueComment relation cascades on delete.",
+      "handlers": {
+        "GET": {},
+        "PATCH": {
+          "body": [
+            "title",
+            "description",
+            "category",
+            "severity",
+            "status",
+            "resolution",
+            "assignedToId",
+            "photos"
+          ]
+        },
+        "DELETE": {}
+      }
     },
     {
       "path": "/api/leads",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {}
+      }
     },
     {
       "path": "/api/location-assignments",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "locationId",
+            "userId",
+            "isActive"
+          ],
+          "doc": "GET /api/location-assignments - List all location assignments"
+        },
+        "POST": {
+          "body": [
+            "locationId",
+            "userId",
+            "monthlyPay",
+            "startDate",
+            "endDate",
+            "isActive"
+          ],
+          "required": [
+            "Location ID, User ID, monthly pay, and start date are required"
+          ],
+          "doc": "POST /api/location-assignments - Create new location assignment"
+        }
+      }
     },
     {
       "path": "/api/location-assignments/[id]",
       "methods": [
         "PUT",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PUT": {
+          "body": [
+            "monthlyPay",
+            "startDate",
+            "endDate",
+            "isActive",
+            "estimatedHoursPerVisit",
+            "cleaningWindowStart",
+            "cleaningWindowEnd",
+            "daysOfWeek",
+            "nightsPerWeek"
+          ],
+          "doc": "PUT /api/location-assignments/[id] - Update location assignment"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/location-assignments/[id] - Delete location assignment"
+        }
+      }
     },
     {
       "path": "/api/locations",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/locations - List all locations"
+        }
+      }
     },
     {
       "path": "/api/locations/[id]",
@@ -1035,178 +3509,643 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/locations/[id] - Get location by ID"
+        },
+        "PATCH": {
+          "body": [
+            "name",
+            "address",
+            "logoUrl",
+            "accessInstructions",
+            "serviceNotes",
+            "painPoints",
+            "checklistTemplateId",
+            "equipmentInventory",
+            "isActive",
+            "clientId",
+            "serviceProfile"
+          ],
+          "doc": "PATCH /api/locations/[id] - Update location"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/locations/[id] - Soft-delete location. Records deletedAt + deletedById, sets isActive=false, deactivates active service agreements for this location so financial rollups stop counting it. History (invoices, service logs, reviews) is preserved."
+        }
+      }
     },
     {
       "path": "/api/locations/bulk-delete",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "ids"
+          ],
+          "doc": "POST /api/locations/bulk-delete — soft-delete a set of locations. Deactivates active service agreements for those locations so financial rollups stop counting them."
+        }
+      }
+    },
+    {
+      "path": "/api/mcp",
+      "methods": [
+        "GET",
+        "POST",
+        "DELETE"
+      ],
+      "summary": "Remote MCP server — lets Claude manage the Urban Simple backend from anywhere over the Model Context Protocol (streamable HTTP, stateless). Auth: any bearer credential the API accepts — an API key (us_live_…) or an OAuth access token issued by our own authorization server (us_oat_…, see src/app/api/",
+      "handlers": {
+        "POST": {},
+        "GET": {
+          "doc": "Stateless server: no SSE stream to open, no session to delete."
+        },
+        "DELETE": {}
+      }
     },
     {
       "path": "/api/my-night",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
+    },
+    {
+      "path": "/api/oauth/authorize",
+      "methods": [
+        "POST"
+      ],
+      "summary": "Consent decision endpoint — the POST target of /oauth/authorize's form. Cookie-authenticated (SUPER_ADMIN only), same-origin only. On approve it mints a single-use PKCE-bound authorization code and 302s back to the client.",
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN"
+          ],
+          "multipart": true
+        }
+      }
+    },
+    {
+      "path": "/api/oauth/register",
+      "methods": [
+        "POST"
+      ],
+      "summary": "RFC 7591 — OAuth 2.0 Dynamic Client Registration. Public by design: MCP clients (claude.ai, Claude Code, inspectors) register themselves before starting the authorization flow. Registration grants nothing on its own — a token still requires a SUPER_ADMIN to sign in and approve the consent screen for",
+      "handlers": {
+        "POST": {
+          "body": [
+            "redirect_uris",
+            "grant_types",
+            "response_types",
+            "token_endpoint_auth_method",
+            "client_name",
+            "client_uri"
+          ]
+        }
+      }
+    },
+    {
+      "path": "/api/oauth/revoke",
+      "methods": [
+        "POST"
+      ],
+      "summary": "RFC 7009 — token revocation. Accepts an access or refresh token; revoking either kills the whole pair. Always 200 (per spec) unless the client itself fails to authenticate.",
+      "handlers": {
+        "POST": {}
+      }
+    },
+    {
+      "path": "/api/oauth/token",
+      "methods": [
+        "POST"
+      ],
+      "summary": "OAuth 2.1 token endpoint. grant_type=authorization_code  code + code_verifier (PKCE S256, mandatory) grant_type=refresh_token       rotating refresh tokens (old one revoked) Access tokens are `us_oat_…` bearers accepted by the whole API surface via authenticateOAuthToken (src/lib/api-key-verify.ts).",
+      "handlers": {
+        "POST": {}
+      }
     },
     {
       "path": "/api/operations/clock",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "shiftId",
+            "locationId",
+            "action"
+          ],
+          "doc": "POST /api/operations/clock Captures the actual hours worked for a shift+location by writing ServiceLog.clockIn / clockOut. This is the source of truth the workforce compliance math consumes, so it must be correct and tamper-resistant: the caller can only clock in/out on a shift they are personally assigned to.  Body: { shiftId: string, locationId: string, action: 'in' | 'out' }"
+        }
+      }
     },
     {
       "path": "/api/operations/dispatch/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "rangeStart",
+            "rangeEnd"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ]
+        }
+      }
     },
     {
       "path": "/api/operations/dispatch/route",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "locationId",
+            "managerId",
+            "date"
+          ],
+          "required": [
+            "Location and valid route date are required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ]
+        }
+      }
     },
     {
       "path": "/api/operations/manager-overview",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "Operations overview for the Manager dashboard. Deliberately money-free — managers see the floor, not the ledger. Returns: tonight's shift/crew summary, last night's review photos (proof of work), and an ops-only attention list (quality issues, open issues, unassigned shifts)."
+        }
+      }
     },
     {
       "path": "/api/operations/service-reviews",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "reviewId",
+            "shiftId",
+            "locationId",
+            "checklistItems",
+            "painPoints",
+            "photos",
+            "overallRating",
+            "notes"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ]
+        }
+      }
     },
     {
       "path": "/api/operations/tonight",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {}
+      }
     },
     {
       "path": "/api/operations/tonight-route",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "required": [
+            "Access denied. Manager privileges required."
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ]
+        }
+      }
     },
     {
       "path": "/api/operations/workforce",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ]
+        }
+      }
     },
     {
       "path": "/api/payments",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "invoiceId",
+            "clientId"
+          ],
+          "doc": "GET /api/payments - List all payments"
+        },
+        "POST": {
+          "body": [
+            "clientId",
+            "invoiceId",
+            "amount",
+            "paymentMethod",
+            "referenceNumber",
+            "paymentDate",
+            "notes"
+          ],
+          "doc": "POST /api/payments - Record a new payment"
+        }
+      }
     },
     {
       "path": "/api/payments/[id]",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/payments/[id] - Get payment by ID"
+        }
+      }
     },
     {
       "path": "/api/portal/documents",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/portal/documents — list all documents for the authenticated client."
+        },
+        "POST": {
+          "multipart": true,
+          "doc": "POST /api/portal/documents — portal user uploads a document for their client. Form fields: file, name, category, description?, expiresAt?"
+        }
+      }
     },
     {
       "path": "/api/portal/documents/[id]",
       "methods": [
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "PATCH": {
+          "body": [
+            "name",
+            "category",
+            "description",
+            "expiresAt"
+          ],
+          "doc": "PATCH /api/portal/documents/[id] — update name/category/description/expiresAt. Only the uploader (or any portal user from the same client) can edit."
+        },
+        "DELETE": {
+          "doc": "DELETE /api/portal/documents/[id] — removes the file from storage and the row."
+        }
+      }
     },
     {
       "path": "/api/portal/issues",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/portal/issues — list issues for the authenticated client."
+        },
+        "POST": {
+          "body": [
+            "locationId",
+            "category",
+            "severity",
+            "title",
+            "description"
+          ],
+          "required": [
+            "Location and title are required"
+          ],
+          "doc": "POST /api/portal/issues — create a new issue from the portal."
+        }
+      }
     },
     {
       "path": "/api/portal/signup",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "businessName",
+            "businessType",
+            "ownerFirstName",
+            "ownerLastName",
+            "email",
+            "password",
+            "locationName",
+            "locationAddress",
+            "plan"
+          ],
+          "required": [
+            "Business name required",
+            "Owner first name required",
+            "Valid email required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/portal/team",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/portal/team — list all portal users for the authenticated client."
+        },
+        "POST": {
+          "body": [
+            "firstName",
+            "lastName",
+            "email",
+            "phone",
+            "role"
+          ],
+          "required": [
+            "First name required",
+            "Valid email required"
+          ],
+          "doc": "POST /api/portal/team — invite a new teammate to the portal. Any active portal user can invite a teammate to their own client. Mirrors the admin portal-invite flow but scoped to the inviter's own client.  Body: { firstName, lastName, email, phone?, role? }"
+        }
+      }
     },
     {
       "path": "/api/portal/walkthrough-photo",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "multipart": true,
+          "doc": "POST /api/portal/walkthrough-photo — upload a single walkthrough photo and return its public URL. The capture UI calls this once per photo so the user sees thumbnails immediately while the rest of the walkthrough is still being filled out. The URLs are then submitted with the walkthrough record itself.  Files go under `walkthroughs/<companyId>/<clientId>/<filename>` in the existing `images` Supaba"
+        }
+      }
     },
     {
       "path": "/api/portal/walkthroughs",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/portal/walkthroughs — list recent walkthroughs for the user's client."
+        },
+        "POST": {
+          "body": [
+            "locationId",
+            "zones",
+            "notes"
+          ],
+          "required": [
+            "locationId required",
+            "At least one zone with photos or notes is required"
+          ],
+          "doc": "POST /api/portal/walkthroughs — record a new walkthrough. Body: { locationId, zones: WalkthroughZone[], notes? } Photos must already be uploaded (use /api/portal/walkthrough-photo endpoint to upload, then pass the URLs here)."
+        }
+      }
     },
     {
       "path": "/api/qbo/callback",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "code",
+            "realmId",
+            "state"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "GET /api/qbo/callback - Intuit redirects here after the user authorizes"
+        }
+      }
     },
     {
       "path": "/api/qbo/connect",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "GET /api/qbo/connect - Start the QuickBooks OAuth flow (admin only)"
+        }
+      }
     },
     {
       "path": "/api/qbo/status",
       "methods": [
         "GET"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/qbo/status - Connection state for the current company"
+        }
+      }
     },
     {
       "path": "/api/qbo/sync",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/qbo/sync - Manually pull invoices and payments from QuickBooks"
+        }
+      }
     },
     {
       "path": "/api/quote-request",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "propertyType",
+            "kitchenCount",
+            "kitchenSquareFootages",
+            "diningAreaCount",
+            "diningAreaSquareFootages",
+            "bathroomCount",
+            "bathroomSquareFootages",
+            "nightlyEquipment",
+            "hoodsFilters",
+            "diningAreas",
+            "bathrooms",
+            "frequency",
+            "name",
+            "email",
+            "phone",
+            "company",
+            "message",
+            "estimate"
+          ],
+          "required": [
+            "Name, email, and phone are required"
+          ],
+          "doc": "POST /api/quote-request - Create quote request from public form"
+        }
+      }
     },
     {
       "path": "/api/service-agreements",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "active"
+          ],
+          "doc": "GET /api/service-agreements - List all service agreements"
+        },
+        "POST": {
+          "body": [
+            "clientId",
+            "locationId",
+            "description",
+            "monthlyAmount",
+            "monthlyLaborCost",
+            "monthlyMaterialCost",
+            "monthlyOtherCost",
+            "billingDay",
+            "paymentTerms",
+            "startDate",
+            "endDate"
+          ],
+          "doc": "POST /api/service-agreements - Create new service agreement"
+        }
+      }
     },
     {
       "path": "/api/service-agreements/[id]",
       "methods": [
         "GET",
         "PATCH"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/service-agreements/[id] - Get service agreement by ID"
+        },
+        "PATCH": {
+          "body": [
+            "description",
+            "monthlyAmount",
+            "monthlyLaborCost",
+            "monthlyMaterialCost",
+            "monthlyOtherCost",
+            "billingDay",
+            "paymentTerms",
+            "startDate",
+            "endDate",
+            "isActive"
+          ],
+          "doc": "PATCH /api/service-agreements/[id] - Update service agreement"
+        }
+      }
     },
     {
       "path": "/api/shifts",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "startDate",
+            "endDate",
+            "locationId",
+            "associateId",
+            "status"
+          ],
+          "doc": "GET /api/shifts - List shifts with filters"
+        },
+        "POST": {
+          "body": [
+            "locationIds",
+            "locationId",
+            "managerId",
+            "date",
+            "startTime",
+            "endTime",
+            "isRecurring",
+            "recurringPattern",
+            "notes",
+            "status"
+          ],
+          "required": [
+            "At least one location, associate or manager, date, start time, and end time are required"
+          ],
+          "doc": "POST /api/shifts - Create shift(s)"
+        }
+      }
     },
     {
       "path": "/api/shifts/[id]",
@@ -1214,44 +4153,160 @@
         "GET",
         "PUT",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/shifts/[id] - Get shift details"
+        },
+        "PUT": {
+          "body": [
+            "locationIds",
+            "locationId",
+            "managerId",
+            "date",
+            "startTime",
+            "endTime",
+            "isRecurring",
+            "recurringPattern",
+            "notes",
+            "status"
+          ],
+          "doc": "PUT /api/shifts/[id] - Update shift"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/shifts/[id] - Delete shift"
+        }
+      }
     },
     {
       "path": "/api/shifts/generate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "locationId",
+            "associateId",
+            "managerId",
+            "recurringPattern",
+            "notes",
+            "rangeStart",
+            "rangeEnd"
+          ],
+          "required": [
+            "Location, associate, recurring pattern, range start, and range end are required"
+          ],
+          "doc": "POST /api/shifts/generate - Generate recurring shifts"
+        }
+      }
     },
     {
       "path": "/api/stripe/checkout",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Stripe Checkout API POST - Create a Stripe Checkout session for subscription purchase",
+      "handlers": {
+        "POST": {}
+      }
     },
     {
       "path": "/api/stripe/portal",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Stripe Customer Portal API POST - Create a Customer Portal session for subscription management",
+      "handlers": {
+        "POST": {
+          "body": [
+            "returnUrl"
+          ]
+        }
+      }
     },
     {
       "path": "/api/stripe/webhook",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Stripe Webhook Handler Processes Stripe subscription lifecycle events. This is the single source of truth — all DB subscription updates flow through here.",
+      "handlers": {
+        "POST": {}
+      }
     },
     {
       "path": "/api/studio/signup",
       "methods": [
         "POST"
-      ]
+      ],
+      "summary": "Studio Signup API POST - Create a new studio customer account Creates: Supabase auth user + Company + User (CLIENT_USER) + auto TRIAL subscription",
+      "handlers": {
+        "POST": {
+          "body": [
+            "email",
+            "password",
+            "restaurantName",
+            "firstName",
+            "lastName"
+          ],
+          "required": [
+            "All fields are required"
+          ]
+        }
+      }
     },
     {
       "path": "/api/tasks",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "projectId",
+            "priority",
+            "isFocusTask",
+            "isStarred",
+            "focusDate",
+            "dueBefore",
+            "dueAfter",
+            "includeProject",
+            "includeGoal",
+            "includeTags",
+            "includeLinks",
+            "includeStats",
+            "starredFirst",
+            "limit",
+            "orderBy",
+            "order"
+          ],
+          "doc": "GET /api/tasks - List tasks with filters"
+        },
+        "POST": {
+          "body": [
+            "title",
+            "description",
+            "status",
+            "priority",
+            "projectId",
+            "goalId",
+            "dueDate",
+            "scheduledDate",
+            "isStarred",
+            "loggedMinutes",
+            "completionPercent",
+            "tagIds",
+            "links"
+          ],
+          "required": [
+            "Title is required"
+          ],
+          "doc": "POST /api/tasks - Create a new task"
+        }
+      }
     },
     {
       "path": "/api/tasks/[id]",
@@ -1259,21 +4314,81 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/tasks/[id] - Get a single task"
+        },
+        "PATCH": {
+          "body": [
+            "title",
+            "description",
+            "status",
+            "priority",
+            "projectId",
+            "goalId",
+            "dueDate",
+            "scheduledDate",
+            "kanbanOrder",
+            "isFocusTask",
+            "focusDate",
+            "focusReason",
+            "focusPriority",
+            "isStarred",
+            "loggedMinutes",
+            "completionPercent",
+            "tagIds",
+            "links"
+          ],
+          "doc": "PATCH /api/tasks/[id] - Update a task"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/tasks/[id] - Delete a task"
+        }
+      }
     },
     {
       "path": "/api/tasks/focus",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/tasks/focus - Get today's focus tasks"
+        },
+        "POST": {
+          "doc": "POST /api/tasks/focus - Generate AI daily focus"
+        }
+      }
     },
     {
       "path": "/api/tasks/projects",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "status",
+            "includeTaskCount"
+          ],
+          "doc": "GET /api/tasks/projects - List all projects"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "description",
+            "color",
+            "dueDate"
+          ],
+          "required": [
+            "Name is required"
+          ],
+          "doc": "POST /api/tasks/projects - Create a new project"
+        }
+      }
     },
     {
       "path": "/api/tasks/projects/[id]",
@@ -1281,7 +4396,26 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/tasks/projects/[id] - Get a single project with tasks"
+        },
+        "PATCH": {
+          "body": [
+            "name",
+            "description",
+            "color",
+            "status",
+            "dueDate",
+            "sortOrder"
+          ],
+          "doc": "PATCH /api/tasks/projects/[id] - Update a project"
+        },
+        "DELETE": {
+          "doc": "DELETE /api/tasks/projects/[id] - Delete a project"
+        }
+      }
     },
     {
       "path": "/api/tasks/tags",
@@ -1289,26 +4423,94 @@
         "GET",
         "POST",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/tasks/tags - List all tags"
+        },
+        "POST": {
+          "body": [
+            "name",
+            "color"
+          ],
+          "required": [
+            "Name is required"
+          ],
+          "doc": "POST /api/tasks/tags - Create a new tag"
+        },
+        "DELETE": {
+          "query": [
+            "id"
+          ],
+          "required": [
+            "Tag ID is required"
+          ],
+          "doc": "DELETE /api/tasks/tags - Delete a tag (via query param)"
+        }
+      }
     },
     {
       "path": "/api/translate",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "texts",
+            "context"
+          ],
+          "doc": "POST /api/translate - Translate text to Spanish using OpenAI"
+        }
+      }
     },
     {
       "path": "/api/upload",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "multipart": true,
+          "doc": "POST /api/upload - Upload image to Supabase Storage"
+        }
+      }
     },
     {
       "path": "/api/users",
       "methods": [
         "GET",
         "POST"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "includeInactive",
+            "role"
+          ],
+          "doc": "GET /api/users Get all users in the company"
+        },
+        "POST": {
+          "body": [
+            "email",
+            "firstName",
+            "lastName",
+            "displayName",
+            "phone",
+            "role",
+            "branchId",
+            "password"
+          ],
+          "required": [
+            "email, firstName, lastName, and role are required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/users Create a new team member"
+        }
+      }
     },
     {
       "path": "/api/users/[id]",
@@ -1316,26 +4518,93 @@
         "GET",
         "PATCH",
         "DELETE"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/users/[id] Get a specific user"
+        },
+        "PATCH": {
+          "body": [
+            "firstName",
+            "lastName",
+            "displayName",
+            "phone",
+            "role",
+            "branchId",
+            "isActive",
+            "avatarUrl",
+            "password"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "PATCH /api/users/[id] Update a user"
+        },
+        "DELETE": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "DELETE /api/users/[id] Delete (deactivate) a user"
+        }
+      }
     },
     {
       "path": "/api/users/me",
       "methods": [
         "GET",
         "PATCH"
-      ]
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/users/me Get current user's information"
+        },
+        "PATCH": {
+          "body": [
+            "emailSignature",
+            "signatureLogoUrl"
+          ],
+          "doc": "PATCH /api/users/me Update current user's settings (e.g., email signature)"
+        }
+      }
     },
     {
       "path": "/api/walkthrough-request",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "name",
+            "email",
+            "phone",
+            "company",
+            "propertyType",
+            "message"
+          ],
+          "required": [
+            "Name, email, and phone are required"
+          ],
+          "doc": "POST /api/walkthrough-request - Create walkthrough request from public form"
+        }
+      }
     },
     {
       "path": "/api/webhooks/resend",
       "methods": [
         "POST"
-      ]
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "type",
+            "data"
+          ],
+          "doc": "POST /api/webhooks/resend Receives Resend webhook events for email tracking: email.delivered, email.opened, email.clicked, email.bounced, email.complained Setup in Resend dashboard: 1. Go to Webhooks → Add Webhook 2. URL: https://www.krew42.com/api/webhooks/resend 3. Events: email.delivered, email.opened, email.clicked, email.bounced, email.complained 4. Copy the signing secret → set RESEND_WEBHOO"
+        }
+      }
     }
   ]
 }
