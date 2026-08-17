@@ -593,6 +593,23 @@
       }
     },
     {
+      "path": "/api/branches",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "query": [
+            "includeInactive"
+          ],
+          "roles": [
+            "CLIENT_USER"
+          ],
+          "doc": "GET /api/branches List the company's branches (Austin, Dallas, …). Staff only. Used when onboarding team members — a user's `branchId` scopes what a MANAGER sees. Query: includeInactive=true to include deactivated branches."
+        }
+      }
+    },
+    {
       "path": "/api/chat/ai",
       "methods": [
         "POST"
