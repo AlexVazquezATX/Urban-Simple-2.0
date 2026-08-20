@@ -112,7 +112,9 @@ const TOOLS = [
           additionalProperties: true,
         },
         body: {
-          description: 'JSON request body for POST/PUT/PATCH',
+          description:
+            'JSON request body for POST/PUT/PATCH. Pass a JSON object/array directly ' +
+            '(a JSON-encoded string is tolerated but discouraged).',
         },
         form: {
           type: 'object',
@@ -255,10 +257,41 @@ function runPlaybooks(args: Record<string, unknown>) {
   return toolText(readFileSync(join(PLAYBOOKS_DIR, `${name}.md`), 'utf8'))
 }
 
+/**
+ * MCP clients (claude.ai among them) sometimes pass structured tool arguments
+ * as JSON-ENCODED STRINGS rather than objects. Forwarding such a string
+ * through JSON.stringify double-encodes it: the route's request.json() parses
+ * to a string, every field read comes back undefined, and a PATCH silently
+ * no-ops with 200. Coerce: strings that parse as JSON become the parsed
+ * value; strings that don't are a hard tool error (never forward junk).
+ */
+function coerceJsonArg(value: unknown, label: string): { ok: true; value: unknown } | { ok: false; error: string } {
+  if (typeof value !== 'string') return { ok: true, value }
+  const trimmed = value.trim()
+  if (!trimmed) return { ok: true, value: undefined }
+  try {
+    return { ok: true, value: JSON.parse(trimmed) }
+  } catch {
+    return {
+      ok: false,
+      error:
+        `\`${label}\` was passed as a string that is not valid JSON. ` +
+        `Pass ${label} as a JSON object (preferred) or a JSON-encoded string.`,
+    }
+  }
+}
+
 async function runApiRequest(request: NextRequest, args: Record<string, unknown>) {
   const method = typeof args.method === 'string' ? args.method.toUpperCase() : ''
   if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     return toolText(`Unsupported method: ${String(args.method)}`, true)
+  }
+
+  // Un-stringify structured args before any of them are used below.
+  for (const label of ['body', 'query', 'form', 'files'] as const) {
+    const coerced = coerceJsonArg(args[label], label)
+    if (!coerced.ok) return toolText(coerced.error, true)
+    args = { ...args, [label]: coerced.value }
   }
 
   const path = typeof args.path === 'string' ? args.path : ''

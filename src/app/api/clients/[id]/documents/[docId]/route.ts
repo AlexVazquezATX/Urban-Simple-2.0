@@ -31,6 +31,14 @@ export async function PATCH(
   if (body.description !== undefined) data.description = body.description ? String(body.description).trim() : null
   if (body.expiresAt !== undefined) data.expiresAt = body.expiresAt ? new Date(body.expiresAt) : null
 
+  // Empty/unparseable body → nothing to update. Fail loudly, don't echo 200.
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json(
+      { error: 'No updatable fields in body', updatableFields: ['name', 'category', 'description', 'expiresAt'] },
+      { status: 400 },
+    )
+  }
+
   const updated = await prisma.portalDocument.update({ where: { id: docId }, data })
   return NextResponse.json(updated)
 }

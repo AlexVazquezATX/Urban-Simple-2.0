@@ -83,7 +83,27 @@ export async function PATCH(
     }
 
     const { id } = await params
-    const body = await request.json()
+
+    // A PATCH whose body is missing, unparseable, or contains no updatable
+    // field must fail loudly — returning 200 with the unchanged record reads
+    // as "saved" to any caller (person, agent, or cron).
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 })
+    }
+    const UPDATABLE_FIELDS = [
+      'companyName', 'legalName', 'industry', 'businessType', 'address', 'website',
+      'phone', 'estimatedSize', 'employeeCount', 'annualRevenue', 'priceLevel',
+      'status', 'priority', 'estimatedValue', 'source', 'sourceDetail', 'tags',
+      'notes', 'branchId', 'assignedToId', 'lostReason', 'convertedToClientId',
+      'discoveryData', 'contact', 'contacts', 'doNotContact',
+    ]
+    if (!UPDATABLE_FIELDS.some((f) => f in body)) {
+      return NextResponse.json(
+        { error: 'No updatable fields in body', updatableFields: UPDATABLE_FIELDS },
+        { status: 400 },
+      )
+    }
 
     // Verify prospect belongs to user's company
     const existing = await prisma.prospect.findFirst({

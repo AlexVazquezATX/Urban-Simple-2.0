@@ -98,5 +98,52 @@ r = await post({ jsonrpc: '2.0', id: 15, method: 'tools/list' })
 const toolNames = r.json?.result?.tools?.map((t) => t.name) ?? []
 check('tools/list has 4 tools', toolNames.length === 4 && toolNames.includes('describe_endpoint') && toolNames.includes('playbooks'), toolNames.join(','))
 
+// ---- Write round-trip: the body must actually persist, not just 200 ----
+// Regression for the claude.ai double-encode bug: `body` is sent as a
+// JSON-ENCODED STRING here on purpose. Creates a scratch prospect, PATCHes
+// notes + a contact, re-GETs and asserts the DATA changed, then deletes it.
+async function apiReq(id, argsObj) {
+  const res = await post({ jsonrpc: '2.0', id, method: 'tools/call', params: { name: 'api_request', arguments: argsObj } })
+  const text = res.json?.result?.content?.[0]?.text ?? ''
+  const nl = text.indexOf('\n')
+  let json = null
+  try { json = JSON.parse(text.slice(nl + 1)) } catch { /* non-JSON body */ }
+  return { text, status: parseInt(text.match(/^HTTP (\d+)/)?.[1] ?? '0', 10), json }
+}
+
+const created = await apiReq(20, { method: 'POST', path: '/api/growth/prospects', body: { companyName: 'MCP Smoke Test (safe to delete)', source: 'other', notes: 'created by scripts/test-mcp.mjs' } })
+check('write: create scratch prospect', created.status === 200 || created.status === 201, `HTTP ${created.status}`)
+const pid = created.json?.id ?? created.json?.prospect?.id
+if (pid) {
+  const patched = await apiReq(21, { method: 'PATCH', path: `/api/growth/prospects/${pid}`,
+    body: JSON.stringify({ notes: 'round-trip-ok', contacts: [{ firstName: 'Round', lastName: 'Trip', email: 'roundtrip@example.com' }] }) })
+  check('write: PATCH with STRING body → 200', patched.status === 200, `HTTP ${patched.status}`)
+  const got = await apiReq(22, { method: 'GET', path: `/api/growth/prospects/${pid}` })
+  const gotP = got.json?.prospect ?? got.json
+  check('write: notes actually persisted', gotP?.notes === 'round-trip-ok', `notes=${JSON.stringify(gotP?.notes)}`)
+  check('write: contact persisted with email', Array.isArray(gotP?.contacts) && gotP.contacts.some((c) => c.email === 'roundtrip@example.com'), `contacts=${gotP?.contacts?.length}`)
+
+  const emptyPatch = await apiReq(23, { method: 'PATCH', path: `/api/growth/prospects/${pid}`, body: {} })
+  check('write: empty PATCH → 400, not silent 200', emptyPatch.status === 400, `HTTP ${emptyPatch.status}`)
+
+  const cleaned = await apiReq(24, { method: 'POST', path: '/api/growth/prospects/bulk-delete', body: { ids: [pid] } })
+  check('write: scratch prospect cleaned up', cleaned.status === 200, `HTTP ${cleaned.status}`)
+} else {
+  failures++
+  console.log('FAIL  write: could not create scratch prospect — skipping round-trip')
+}
+
+// ---- Pagination envelope ----
+const paged = await apiReq(25, { method: 'GET', path: '/api/growth/prospects', query: { limit: 10, page: 1 } })
+check('pagination: {data, pagination} envelope', Array.isArray(paged.json?.data) && paged.json?.pagination?.limit === 10, `keys=${paged.json ? Object.keys(paged.json).join(',') : 'none'}`)
+check('pagination: ≤10 records', (paged.json?.data?.length ?? 99) <= 10, `${paged.json?.data?.length} records`)
+check('pagination: under 60k chars (not truncated)', !paged.text.includes('[response truncated'), `${paged.text.length} chars`)
+check('pagination: lean (no discoveryData)', !(paged.json?.data ?? []).some((p) => 'discoveryData' in p && p.discoveryData !== undefined))
+
+const badStatus = await apiReq(26, { method: 'GET', path: '/api/growth/prospects', query: { status: 'NEW', limit: 1 } })
+check('status filter is case-insensitive', badStatus.status === 200, `HTTP ${badStatus.status}`)
+const invalidStatus = await apiReq(27, { method: 'GET', path: '/api/growth/prospects', query: { status: 'bogus' } })
+check('invalid status → 400 naming valid values', invalidStatus.status === 400 && (invalidStatus.json?.validStatuses ?? []).includes('new'))
+
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`)
 process.exit(failures === 0 ? 0 : 1)
