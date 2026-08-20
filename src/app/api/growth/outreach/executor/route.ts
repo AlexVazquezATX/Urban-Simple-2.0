@@ -7,6 +7,11 @@ import {
   getStartOfLocalDay,
   isWithinSendWindow,
 } from '@/lib/services/autopilot-schedule'
+import {
+  findDuplicateAlreadySent,
+  findUnresolvedMergeTags,
+  isValidEmail,
+} from '@/lib/services/outreach-guards'
 
 // Initialize Resend lazily
 let resend: Resend | null = null
@@ -297,6 +302,49 @@ export async function POST(request: NextRequest) {
             messageId: message.id,
             action: 'skipped',
             reason: 'no_prior_step_sent',
+          })
+          continue
+        }
+      }
+
+      // Guard: never send a body/subject with unresolved {{merge tags}}. Skip
+      // (not cancel) so the message stays visible in the queue for repair via
+      // backfill-merge-tags or an edit.
+      const unresolvedTags = findUnresolvedMergeTags(message.subject, message.body)
+      if (unresolvedTags.length > 0) {
+        console.warn(`[EXECUTOR GUARD] message ${message.id} skipped: unresolved merge tags ${unresolvedTags.join(', ')}`)
+        results.push({
+          messageId: message.id,
+          action: 'skipped',
+          reason: 'unresolved_merge_tags',
+          tags: unresolvedTags,
+        })
+        continue
+      }
+
+      // Guard: email channel needs a plausible recipient address.
+      const recipientEmail = message.prospect.contacts?.[0]?.email ?? null
+      if (message.channel === 'email' && !isValidEmail(recipientEmail)) {
+        console.warn(`[EXECUTOR GUARD] message ${message.id} skipped: missing/invalid recipient email ${JSON.stringify(recipientEmail)}`)
+        results.push({
+          messageId: message.id,
+          action: 'skipped',
+          reason: recipientEmail ? 'invalid_recipient_email' : 'no_recipient_email',
+        })
+        continue
+      }
+
+      // Guard: identical body already sent to this address (duplicate
+      // prospect records produce duplicate queued messages).
+      if (message.channel === 'email' && recipientEmail) {
+        const dupId = await findDuplicateAlreadySent(message.body, recipientEmail, message.id)
+        if (dupId) {
+          console.warn(`[EXECUTOR GUARD] message ${message.id} skipped: identical body already sent to ${recipientEmail} (message ${dupId})`)
+          results.push({
+            messageId: message.id,
+            action: 'skipped',
+            reason: 'duplicate_already_sent',
+            duplicateOf: dupId,
           })
           continue
         }

@@ -5,7 +5,25 @@ import {
   generateOutreachMessage,
   type ProspectData,
 } from '@/lib/ai/outreach-composer'
+import {
+  findDuplicateAlreadySent,
+  findUnresolvedMergeTags,
+  isValidEmail,
+} from '@/lib/services/outreach-guards'
 import { Resend } from 'resend'
+
+// Canonical action vocabulary for POST. Anything else is a 400 — an
+// unrecognized action used to fall through to the approve/reject branch and
+// silently REJECT the messages while returning {success:true}.
+const VALID_ACTIONS = [
+  'approve',      // messageIds[] → approvalStatus 'approved' (pending review → ready to send)
+  'reject',       // messageIds[] → approvalStatus 'rejected' + status 'cancelled'
+  'unreject',     // messageIds[] → restore rejected/cancelled (unsent) rows to pending review
+  'approve_all',  // approve every pending step-1 message
+  'edit',         // messageId + body (+subject) → replace content
+  'regenerate',   // messageId (+customInstructions) → AI-rewrite content
+  'send',         // messageIds[] (+toOverrides) → send approved messages now
+] as const
 
 // Initialize Resend lazily
 let resend: Resend | null = null
@@ -135,8 +153,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Request body must be a JSON object' }, { status: 400 })
+    }
     const { messageIds, action } = body
+
+    if (!(VALID_ACTIONS as readonly string[]).includes(action)) {
+      return NextResponse.json(
+        { error: `Invalid action ${JSON.stringify(action ?? null)}`, validActions: VALID_ACTIONS },
+        { status: 400 },
+      )
+    }
+
+    // ── Unreject: restore rejected (unsent) messages to pending review ──
+    if (action === 'unreject') {
+      if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+        return NextResponse.json({ error: 'Message IDs required' }, { status: 400 })
+      }
+      const updated = await prisma.outreachMessage.updateMany({
+        where: {
+          id: { in: messageIds },
+          prospect: { companyId: user.companyId },
+          sentAt: null,
+          OR: [{ approvalStatus: 'rejected' }, { status: 'cancelled' }],
+        },
+        data: {
+          approvalStatus: 'pending',
+          status: 'pending',
+          approvedAt: null,
+          approvedById: null,
+        },
+      })
+      return NextResponse.json({ success: true, updated: updated.count })
+    }
 
     // ── Approve All ──
     if (action === 'approve_all') {
@@ -312,12 +362,28 @@ export async function POST(request: NextRequest) {
             continue
           }
 
+          // Never send a body/subject that still contains unresolved {{merge tags}}.
+          const unresolved = findUnresolvedMergeTags(msg.subject, msg.body)
+          if (unresolved.length > 0) {
+            console.warn(`[SEND GUARD] message ${msg.id} blocked: unresolved merge tags ${unresolved.join(', ')}`)
+            results.push({ messageId: msg.id, status: 'blocked', reason: `Unresolved merge tags: ${unresolved.join(', ')} — run backfill-merge-tags or edit the message` })
+            continue
+          }
+
           if (msg.channel === 'email') {
             // Use override email if provided, otherwise fall back to contact's email
             const toEmail = toOverrides[msg.id] || msg.prospect?.contacts[0]?.email
 
-            if (!toEmail) {
-              results.push({ messageId: msg.id, status: 'failed', reason: 'No email address — edit the "To" field before sending' })
+            if (!isValidEmail(toEmail)) {
+              results.push({ messageId: msg.id, status: 'failed', reason: toEmail ? `Invalid recipient email "${toEmail}"` : 'No email address — edit the "To" field before sending' })
+              continue
+            }
+
+            // Duplicate-prospect protection: identical body already sent to this address.
+            const dupId = await findDuplicateAlreadySent(msg.body, toEmail, msg.id)
+            if (dupId) {
+              console.warn(`[SEND GUARD] message ${msg.id} blocked: identical body already sent to ${toEmail} (message ${dupId})`)
+              results.push({ messageId: msg.id, status: 'blocked', reason: `Identical message already sent to ${toEmail} (likely duplicate prospect record)` })
               continue
             }
 

@@ -159,5 +159,13 @@ check('priority filter (case-insensitive)', highPri.status === 200 && (highPri.j
 const badPri = await apiReq(32, { method: 'GET', path: '/api/growth/prospects', query: { priority: 'bogus' } })
 check('invalid priority → 400 naming valid values', badPri.status === 400 && (badPri.json?.validPriorities ?? []).includes('urgent'))
 
+// ---- Approval-queue action enum ----
+const badAction = await apiReq(33, { method: 'POST', path: '/api/growth/outreach/approval-queue', body: { messageIds: ['nonexistent'], action: '__probe_invalid__' } })
+check('approval-queue: unknown action → 400 naming valid actions', badAction.status === 400 && (badAction.json?.validActions ?? []).includes('unreject'), (badAction.json?.validActions ?? []).join(','))
+const noAction = await apiReq(34, { method: 'POST', path: '/api/growth/outreach/approval-queue', body: { messageIds: ['nonexistent'] } })
+check('approval-queue: missing action → 400', noAction.status === 400)
+const unrejNothing = await apiReq(35, { method: 'POST', path: '/api/growth/outreach/approval-queue', body: { messageIds: ['nonexistent'], action: 'unreject' } })
+check('approval-queue: unreject is a valid action', unrejNothing.status === 200 && unrejNothing.json?.updated === 0, JSON.stringify(unrejNothing.json))
+
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`)
 process.exit(failures === 0 ? 0 : 1)

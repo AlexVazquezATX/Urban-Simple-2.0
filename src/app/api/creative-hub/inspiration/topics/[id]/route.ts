@@ -66,6 +66,15 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json()
 
+    // `action` is optional (absent → general field update below), but a
+    // PRESENT unknown action must not silently fall through to a no-op 200.
+    if (body.action !== undefined && body.action !== 'approve' && body.action !== 'reject') {
+      return NextResponse.json(
+        { error: `Invalid action ${JSON.stringify(body.action)}`, validActions: ['approve', 'reject'] },
+        { status: 400 },
+      )
+    }
+
     // Handle approve action
     if (body.action === 'approve') {
       const updated = await approveTopic(id, user.id)
