@@ -3083,14 +3083,17 @@
         "GET": {
           "query": [
             "status",
+            "priority",
             "search",
             "assignedToId",
             "source",
+            "sortBy",
+            "sortOrder",
             "limit",
             "page",
             "offset"
           ],
-          "doc": "GET /api/growth/prospects - List prospects Filters: status (case-insensitive; 400 on unknown value), search, assignedToId, source. Two response shapes: - No pagination params → legacy bare array with full includes (what the web UI's bulk-sender / prospect-selector consume). Unchanged. - Any of limit / page / offset → `{ data, pagination }` envelope with a LEAN projection: `discoveryData` and `acti"
+          "doc": "GET /api/growth/prospects - List prospects Filters: status, priority (both case-insensitive; 400 on unknown values), search, assignedToId, source. Sorting: sortBy (createdAt | updatedAt | companyName | priority | status | estimatedValue | lastContactedAt) + sortOrder (asc | desc, default desc). Default without sortBy stays priority-then-createdAt. For \"newest leads\": ?status=new&sortBy=createdAt&s"
         },
         "POST": {
           "body": [

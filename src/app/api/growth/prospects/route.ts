@@ -8,11 +8,28 @@ const PROSPECT_STATUSES = [
   'proposal_sent', 'won', 'lost', 'nurturing',
 ]
 
+// Valid priorities (mirrors the schema comment on Prospect.priority).
+const PROSPECT_PRIORITIES = ['low', 'medium', 'high', 'urgent']
+
+// Sortable columns. NOTE: priority/status are plain strings in the DB, so
+// sorting them is alphabetical (urgent > medium > low > high for desc) — the
+// same caveat the default sort has always had.
+const SORTABLE_FIELDS = [
+  'createdAt', 'updatedAt', 'companyName', 'priority', 'status',
+  'estimatedValue', 'lastContactedAt',
+] as const
+type SortField = (typeof SORTABLE_FIELDS)[number]
+
 /**
  * GET /api/growth/prospects - List prospects
  *
- * Filters: status (case-insensitive; 400 on unknown value), search,
- * assignedToId, source.
+ * Filters: status, priority (both case-insensitive; 400 on unknown values),
+ * search, assignedToId, source.
+ *
+ * Sorting: sortBy (createdAt | updatedAt | companyName | priority | status |
+ * estimatedValue | lastContactedAt) + sortOrder (asc | desc, default desc).
+ * Default without sortBy stays priority-then-createdAt. For "newest leads":
+ * ?status=new&sortBy=createdAt&sortOrder=desc&limit=25
  *
  * Two response shapes:
  * - No pagination params → legacy bare array with full includes (what the
@@ -38,14 +55,40 @@ export async function GET(request: NextRequest) {
         { status: 400 },
       )
     }
+    const rawPriority = searchParams.get('priority')
+    const priority = rawPriority ? rawPriority.trim().toLowerCase() : null
+    if (priority && !PROSPECT_PRIORITIES.includes(priority)) {
+      return NextResponse.json(
+        { error: `Invalid priority "${rawPriority}"`, validPriorities: PROSPECT_PRIORITIES },
+        { status: 400 },
+      )
+    }
     const search = searchParams.get('search')
     const assignedToId = searchParams.get('assignedToId')
     const source = searchParams.get('source')
+
+    const rawSortBy = searchParams.get('sortBy')
+    if (rawSortBy && !(SORTABLE_FIELDS as readonly string[]).includes(rawSortBy)) {
+      return NextResponse.json(
+        { error: `Invalid sortBy "${rawSortBy}"`, validSortFields: SORTABLE_FIELDS },
+        { status: 400 },
+      )
+    }
+    const rawSortOrder = searchParams.get('sortOrder')?.toLowerCase()
+    if (rawSortOrder && rawSortOrder !== 'asc' && rawSortOrder !== 'desc') {
+      return NextResponse.json(
+        { error: `Invalid sortOrder "${searchParams.get('sortOrder')}"`, validSortOrders: ['asc', 'desc'] },
+        { status: 400 },
+      )
+    }
+    const sortBy = rawSortBy as SortField | null
+    const sortOrder: 'asc' | 'desc' = rawSortOrder === 'asc' ? 'asc' : 'desc'
 
     const where = {
       companyId: user.companyId,
       deletedAt: null,
       ...(status && { status }),
+      ...(priority && { priority }),
       ...(assignedToId && { assignedToId }),
       ...(source && { source }),
       ...(search && {
@@ -55,7 +98,11 @@ export async function GET(request: NextRequest) {
         ],
       }),
     }
-    const orderBy = [{ priority: 'desc' as const }, { createdAt: 'desc' as const }]
+    // Explicit sortBy wins (createdAt tiebreak for stable paging); otherwise
+    // the long-standing default of priority-then-newest.
+    const orderBy = sortBy
+      ? [{ [sortBy]: sortOrder }, ...(sortBy !== 'createdAt' ? [{ createdAt: 'desc' as const }] : [])]
+      : [{ priority: 'desc' as const }, { createdAt: 'desc' as const }]
 
     const wantsPagination =
       searchParams.has('limit') || searchParams.has('page') || searchParams.has('offset')

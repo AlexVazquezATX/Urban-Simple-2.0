@@ -145,5 +145,19 @@ check('status filter is case-insensitive', badStatus.status === 200, `HTTP ${bad
 const invalidStatus = await apiReq(27, { method: 'GET', path: '/api/growth/prospects', query: { status: 'bogus' } })
 check('invalid status → 400 naming valid values', invalidStatus.status === 400 && (invalidStatus.json?.validStatuses ?? []).includes('new'))
 
+// ---- Sorting + priority filter ----
+const newest = await apiReq(28, { method: 'GET', path: '/api/growth/prospects', query: { sortBy: 'createdAt', sortOrder: 'desc', limit: 5 } })
+const newestDates = (newest.json?.data ?? []).map((p) => p.createdAt)
+check('sortBy=createdAt desc actually sorts', newestDates.length > 1 && newestDates.every((d, i) => i === 0 || d <= newestDates[i - 1]), newestDates.slice(0, 3).join(' > '))
+const oldest = await apiReq(29, { method: 'GET', path: '/api/growth/prospects', query: { sortBy: 'createdAt', sortOrder: 'asc', limit: 5 } })
+const oldestFirst = oldest.json?.data?.[0]?.createdAt
+check('sortOrder=asc flips the order', !!oldestFirst && !!newestDates[0] && oldestFirst < newestDates[0], `asc[0]=${oldestFirst}`)
+const badSort = await apiReq(30, { method: 'GET', path: '/api/growth/prospects', query: { sortBy: 'bogus', limit: 1 } })
+check('invalid sortBy → 400 naming valid fields', badSort.status === 400 && (badSort.json?.validSortFields ?? []).includes('createdAt'))
+const highPri = await apiReq(31, { method: 'GET', path: '/api/growth/prospects', query: { priority: 'HIGH', limit: 5 } })
+check('priority filter (case-insensitive)', highPri.status === 200 && (highPri.json?.data ?? []).every((p) => p.priority === 'high'), `${highPri.json?.data?.length ?? 0} rows`)
+const badPri = await apiReq(32, { method: 'GET', path: '/api/growth/prospects', query: { priority: 'bogus' } })
+check('invalid priority → 400 naming valid values', badPri.status === 400 && (badPri.json?.validPriorities ?? []).includes('urgent'))
+
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`)
 process.exit(failures === 0 ? 0 : 1)
