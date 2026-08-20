@@ -5,6 +5,32 @@
 
 import { prisma } from '@/lib/db'
 
+/**
+ * Reply-To for all outreach sends. Point this at the Resend Inbound address
+ * (e.g. reply@in.urbansimple.net) so prospect replies flow into
+ * /api/webhooks/resend as `email.received` events and land on the prospect's
+ * activity timeline. Unset → no Reply-To header (replies go to the From
+ * address's normal inbox, invisible to the CRM).
+ */
+export function outreachReplyTo(): { replyTo: string } | Record<string, never> {
+  const addr = process.env.OUTREACH_REPLY_TO
+  return addr ? { replyTo: addr } : {}
+}
+
+/**
+ * A real User id to attribute automated outreach activity to (FK on
+ * ProspectActivity.userId — the old `'system'` fallback violated it). Prefers
+ * the company's first active SUPER_ADMIN.
+ */
+export async function resolveOutreachActorId(companyId: string): Promise<string | null> {
+  const admin = await prisma.user.findFirst({
+    where: { companyId, role: 'SUPER_ADMIN', isActive: true },
+    orderBy: { createdAt: 'asc' },
+    select: { id: true },
+  })
+  return admin?.id ?? null
+}
+
 /** Matches unresolved merge tags like {{notes}} / {{ firstName }}. */
 export const MERGE_TAG_RE = /\{\{[^}]*\}\}/
 

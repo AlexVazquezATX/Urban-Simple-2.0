@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { Resend } from 'resend'
+import { outreachReplyTo } from '@/lib/services/outreach-guards'
 
 // Initialize Resend lazily to avoid build-time errors
 let resend: Resend | null = null
@@ -143,6 +144,7 @@ export async function POST(request: NextRequest) {
         to,
         subject,
         html: emailHtml,
+        ...outreachReplyTo(),
       })
 
       if (error) {

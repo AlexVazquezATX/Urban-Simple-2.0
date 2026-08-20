@@ -9,6 +9,7 @@ import {
   findDuplicateAlreadySent,
   findUnresolvedMergeTags,
   isValidEmail,
+  outreachReplyTo,
 } from '@/lib/services/outreach-guards'
 import { Resend } from 'resend'
 
@@ -412,6 +413,7 @@ export async function POST(request: NextRequest) {
               to: toEmail,
               subject: msg.subject || 'Hello',
               html: emailHtml,
+              ...outreachReplyTo(),
             })
 
             if (emailError) {

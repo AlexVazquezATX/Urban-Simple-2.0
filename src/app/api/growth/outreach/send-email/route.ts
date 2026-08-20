@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/db'
 import { Resend } from 'resend'
+import { outreachReplyTo } from '@/lib/services/outreach-guards'
 
 // POST /api/growth/outreach/send-email - Send outreach email
 export async function POST(request: NextRequest) {
@@ -61,6 +62,7 @@ export async function POST(request: NextRequest) {
       to,
       subject,
       html: emailHtml,
+      ...outreachReplyTo(),
     })
 
     if (error) {

@@ -11,6 +11,8 @@ import {
   findDuplicateAlreadySent,
   findUnresolvedMergeTags,
   isValidEmail,
+  outreachReplyTo,
+  resolveOutreachActorId,
 } from '@/lib/services/outreach-guards'
 
 // Initialize Resend lazily
@@ -78,7 +80,7 @@ export async function POST(request: NextRequest) {
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
-                outcome: 'interested',
+                outcome: { in: ['interested', 'replied'] },
               },
               orderBy: { createdAt: 'desc' },
               take: 1,
@@ -120,7 +122,7 @@ export async function POST(request: NextRequest) {
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
-                outcome: 'interested',
+                outcome: { in: ['interested', 'replied'] },
               },
               orderBy: { createdAt: 'desc' },
               take: 1,
@@ -156,7 +158,7 @@ export async function POST(request: NextRequest) {
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
-                outcome: 'interested',
+                outcome: { in: ['interested', 'replied'] },
               },
               orderBy: { createdAt: 'desc' },
               take: 1,
@@ -261,7 +263,7 @@ export async function POST(request: NextRequest) {
 
       // Check if prospect replied (stop sequence on reply)
       const hasReply = message.prospect.activities.some(
-        (a) => a.outcome === 'interested' && a.createdAt > message.createdAt
+        (a) => (a.outcome === 'interested' || a.outcome === 'replied') && a.createdAt > message.createdAt
       )
 
       if (hasReply) {
@@ -365,11 +367,15 @@ export async function POST(request: NextRequest) {
             },
           })
 
-          // Log activity
-          await prisma.prospectActivity.create({
+          // Log activity. userId is a real FK — attribute to the campaign
+          // creator, else the company's SUPER_ADMIN (the old 'system' string
+          // violated the constraint and threw).
+          const actorId = message.campaign?.createdById
+            || (await resolveOutreachActorId(message.prospect.companyId))
+          if (actorId) await prisma.prospectActivity.create({
             data: {
               prospectId: message.prospectId!, // guaranteed non-null by guard above
-              userId: message.campaign?.createdById || 'system', // Use campaign creator as user
+              userId: actorId,
               type: message.channel === 'email' ? 'email' : 
                     message.channel === 'sms' ? 'sms' :
                     message.channel === 'linkedin' ? 'linkedin' :
@@ -483,6 +489,7 @@ async function sendMessage(message: any): Promise<{ sent: boolean; emailId?: str
       to: recipientEmail,
       subject: message.subject || 'Hello',
       html: emailHtml,
+      ...outreachReplyTo(),
     })
 
     if (error) {

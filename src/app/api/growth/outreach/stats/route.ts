@@ -47,13 +47,13 @@ export async function GET(request: NextRequest) {
     const opened = messages.filter(m => m.openedAt).length
     const clicked = messages.filter(m => m.clickedAt).length
     const bounced = messages.filter(m => m.bouncedAt).length
-    // Replies are logged as ProspectActivity with outcome='interested' (nothing
-    // ever writes OutreachMessage.status='replied'), so derive the metric from
-    // real activity rows instead of a status that stays 0.
+    // Replies: `'replied'` = auto-ingested via Resend Inbound
+    // (/api/webhooks/resend, email.received); `'interested'` = human-logged.
+    // Count both as a reply.
     const replied = await prisma.prospectActivity.count({
       where: {
         prospect: { companyId },
-        outcome: 'interested',
+        outcome: { in: ['interested', 'replied'] },
         type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
       },
     })
