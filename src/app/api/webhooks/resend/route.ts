@@ -45,11 +45,11 @@ async function handleInboundReply(data: Record<string, unknown>) {
   const fromEmail = extractEmail(data?.from)
   if (!fromEmail) return NextResponse.json({ received: true, matched: false, reason: 'no_parseable_sender' })
 
-  // Never ingest our own outbound address (loop guard).
-  const ourFrom = (process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || '').toLowerCase()
-  if (ourFrom && fromEmail === ourFrom) {
-    return NextResponse.json({ received: true, matched: false, reason: 'own_address' })
-  }
+  // Loop safety note: we deliberately do NOT drop mail from our own outbound
+  // From address here. The From can legitimately BE a prospect contact (the
+  // test account is alex@… replying to alex@…), and an early own-address
+  // check silently ate that reply. True loops can't occur: nothing in the
+  // system sends TO the inbound domain, and unmatched senders fall out below.
 
   // Sender → prospect. Same address on several records (duplicate prospects,
   // shared owner inbox) → most recently contacted wins.
