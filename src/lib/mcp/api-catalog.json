@@ -1465,6 +1465,88 @@
       }
     },
     {
+      "path": "/api/communications",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "body": [
+            "slice"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "GET /api/communications — the Comms Hub feed. All correspondence (in + out) across outreach, billing, portal, transactional. Filters: view=attention|all (attention = inbound needing a human), direction, category, state, prospectId, clientId, invoiceId, contact=<email> (matches either side), q=<search subject/body>. Pagination: limit (default 25, max 100), page or offset. Returns { data, pagination"
+        }
+      }
+    },
+    {
+      "path": "/api/communications/[id]",
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "GET /api/communications/[id] — full message + its thread (same threadKey, chronological) + resolved entity names."
+        },
+        "PATCH": {
+          "body": [
+            "triageState",
+            "assignedToId",
+            "snoozedUntil"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "PATCH /api/communications/[id] — triage: { triageState?, assignedToId?, snoozedUntil? }."
+        }
+      }
+    },
+    {
+      "path": "/api/communications/[id]/draft",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/communications/[id]/draft — AI-draft a reply to an inbound message, for human review in the composer (nothing is sent or stored). Follows the house outreach rules (no em dashes, no placeholders, no invented facts, walkthrough/email CTAs only, signs as Alex)."
+        }
+      }
+    },
+    {
+      "path": "/api/communications/[id]/reply",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "trim"
+          ],
+          "required": [
+            "body is required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/communications/[id]/reply — reply to an inbound message from the backend. Sends via Resend with threading headers (In-Reply-To/References when the original Message-ID is known) so it lands in the sender's existing email thread; logs to the hub; marks the original handled; records a prospect activity when linked. Body: { body: string, subject?: string }"
+        }
+      }
+    },
+    {
       "path": "/api/creative-hub/assets",
       "methods": [
         "GET",
@@ -2697,8 +2779,8 @@
             "replace"
           ],
           "required": [
-            "Message ID required",
-            "Message IDs required"
+            "Message IDs required",
+            "Message ID required"
           ]
         }
       }
@@ -4629,8 +4711,7 @@
           "body": [
             "type",
             "data"
-          ],
-          "doc": "POST /api/webhooks/resend Receives Resend webhook events for email tracking: email.delivered, email.opened, email.clicked, email.bounced, email.complained Setup in Resend dashboard: 1. Go to Webhooks → Add Webhook 2. URL: https://www.krew42.com/api/webhooks/resend 3. Events: email.delivered, email.opened, email.clicked, email.bounced, email.complained 4. Copy the signing secret → set RESEND_WEBHOO"
+          ]
         }
       }
     }

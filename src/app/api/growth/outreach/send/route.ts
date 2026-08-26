@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { Resend } from 'resend'
 import { outreachReplyTo } from '@/lib/services/outreach-guards'
+import { logComm } from '@/lib/comms/log'
 
 // Initialize Resend lazily to avoid build-time errors
 let resend: Resend | null = null
@@ -192,6 +193,22 @@ export async function POST(request: NextRequest) {
         resendEmailId: emailId || null,
       },
     })
+
+    // Comms Hub (fire-and-forget)
+    if (channel === 'email') {
+      void logComm({
+        companyId: user.companyId,
+        direction: 'outbound',
+        category: 'outreach',
+        toEmail: typeof to === 'string' ? to : null,
+        subject: subject || null,
+        body: messageBody,
+        prospectId,
+        userId: user.id,
+        resendEmailId: emailId ?? null,
+        sentAt: now,
+      })
+    }
 
     // Log successful activity
     const activity = await prisma.prospectActivity.create({

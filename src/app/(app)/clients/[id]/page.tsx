@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ClientHeader } from './_sections/client-header'
 import { ClientFinancialsSection } from './_sections/client-financials-section'
+import { ClientCommunicationsSection } from './_sections/client-communications-section'
 import { ClientDetailContent } from './_sections/client-detail-content'
 
 function HeaderSkeleton() {
@@ -84,6 +85,8 @@ export default async function ClientDetailPage({
       </Suspense>
       <Suspense fallback={<FinancialsSkeleton />}>
         <ClientFinancialsSection id={id} />
+
+        <ClientCommunicationsSection id={id} />
       </Suspense>
       <Suspense fallback={<ContentSkeleton />}>
         <ClientDetailContent id={id} />

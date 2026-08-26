@@ -167,5 +167,20 @@ check('approval-queue: missing action → 400', noAction.status === 400)
 const unrejNothing = await apiReq(35, { method: 'POST', path: '/api/growth/outreach/approval-queue', body: { messageIds: ['nonexistent'], action: 'unreject' } })
 check('approval-queue: unreject is a valid action', unrejNothing.status === 200 && unrejNothing.json?.updated === 0, JSON.stringify(unrejNothing.json))
 
+// ---- Comms Hub ----
+const comms = await apiReq(36, { method: 'GET', path: '/api/communications', query: { view: 'all', limit: 5 } })
+check('comms: feed envelope with counts', comms.status === 200 && Array.isArray(comms.json?.data) && typeof comms.json?.counts?.attention === 'number', `total=${comms.json?.pagination?.total}, attention=${comms.json?.counts?.attention}`)
+const commsBadCat = await apiReq(37, { method: 'GET', path: '/api/communications', query: { category: 'bogus' } })
+check('comms: invalid category → 400 naming valid values', commsBadCat.status === 400 && (commsBadCat.json?.validCategories ?? []).includes('billing'))
+if (comms.json?.data?.length > 0) {
+  const first = comms.json.data[0]
+  const detail = await apiReq(38, { method: 'GET', path: `/api/communications/${first.id}` })
+  check('comms: detail returns message + thread', detail.status === 200 && Array.isArray(detail.json?.thread) && detail.json?.message?.id === first.id, `thread=${detail.json?.thread?.length}`)
+  const emptyPatch = await apiReq(39, { method: 'PATCH', path: `/api/communications/${first.id}`, body: {} })
+  check('comms: empty PATCH → 400', emptyPatch.status === 400)
+} else {
+  console.log('SKIP  comms detail checks (no rows yet — run backfill-comms)')
+}
+
 console.log(failures === 0 ? '\nALL PASS' : `\n${failures} FAILURE(S)`)
 process.exit(failures === 0 ? 0 : 1)

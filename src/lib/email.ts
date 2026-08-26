@@ -2,6 +2,7 @@ import { Resend } from 'resend'
 import { InvoiceEmail } from '@/emails/invoice-email'
 import { PaymentReminderEmail } from '@/emails/payment-reminder-email'
 import { prisma } from '@/lib/db'
+import { logComm } from '@/lib/comms/log'
 
 interface SendInvoiceEmailParams {
   invoiceId: string
@@ -29,6 +30,8 @@ export async function sendInvoiceEmail({
       include: {
         client: {
           select: {
+            id: true,
+            companyId: true,
             name: true,
             billingEmail: true,
           },
@@ -113,6 +116,20 @@ export async function sendInvoiceEmail({
       },
     })
 
+    // Comms Hub (fire-and-forget)
+    void logComm({
+      companyId: invoice.client.companyId,
+      direction: 'outbound',
+      category: 'billing',
+      fromEmail: from,
+      toEmail: to,
+      subject: `Invoice ${invoice.invoiceNumber} from Urban Simple`,
+      body: `Invoice ${invoice.invoiceNumber} — total ${totalAmount}, balance due ${balanceDue}, due ${dueDate}.`,
+      clientId: invoice.client.id,
+      invoiceId,
+      resendEmailId: data?.id ?? null,
+    })
+
     // Update invoice status if it was draft
     if (invoice.status === 'draft') {
       await prisma.invoice.update({
@@ -184,7 +201,7 @@ export async function sendPaymentReminderEmail({
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: {
-        client: { select: { name: true } },
+        client: { select: { id: true, companyId: true, name: true } },
       },
     })
     if (!invoice) {
@@ -235,6 +252,20 @@ export async function sendPaymentReminderEmail({
         status: 'sent',
         sentAt: new Date(),
       },
+    })
+
+    // Comms Hub (fire-and-forget)
+    void logComm({
+      companyId: invoice.client.companyId,
+      direction: 'outbound',
+      category: 'billing',
+      fromEmail: from,
+      toEmail: to,
+      subject: subjectFor(invoice.invoiceNumber),
+      body: `Payment reminder — invoice ${invoice.invoiceNumber}, balance ${balanceDue}, ${daysPastDue} day(s) past due.`,
+      clientId: invoice.client.id,
+      invoiceId,
+      resendEmailId: data?.id ?? null,
     })
 
     return {

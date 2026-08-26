@@ -3,6 +3,7 @@ import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/db'
 import { Resend } from 'resend'
 import { outreachReplyTo } from '@/lib/services/outreach-guards'
+import { logComm } from '@/lib/comms/log'
 
 // POST /api/growth/outreach/send-email - Send outreach email
 export async function POST(request: NextRequest) {
@@ -88,6 +89,21 @@ export async function POST(request: NextRequest) {
         sentAt: now,
         resendEmailId: data?.id || null,
       },
+    })
+
+    // Comms Hub (fire-and-forget)
+    void logComm({
+      companyId: user.companyId,
+      direction: 'outbound',
+      category: 'outreach',
+      fromEmail: from,
+      toEmail: to,
+      subject,
+      body: emailBody,
+      prospectId,
+      userId: user.id,
+      resendEmailId: data?.id ?? null,
+      sentAt: now,
     })
 
     // Create activity record

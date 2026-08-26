@@ -265,6 +265,74 @@ model ApiKey {
 }
 
 // ============================================
+// COMMUNICATIONS HUB
+// ============================================
+// One row per email in or out of the business — outreach, billing,
+// portal, transactional, and inbound replies — so all correspondence has a
+// single queryable home (/communications). Deliberately relation-free:
+// entity links are plain ids resolved at read time, so this table can absorb
+// any message source without schema coupling. See docs/comms-hub.md.
+
+model CommMessage {
+  id        String @id @default(cuid())
+  companyId String @map("company_id")
+  direction String // outbound | inbound
+  channel   String @default("email")
+  category  String // outreach | billing | portal | transactional | reply | other
+
+  fromEmail String? @map("from_email")
+  toEmail   String? @map("to_email")
+  subject   String?
+  body      String? @db.Text
+
+  // Entity links (any subset may be set)
+  prospectId String? @map("prospect_id")
+  clientId   String? @map("client_id")
+  invoiceId  String? @map("invoice_id")
+  userId     String? @map("user_id") // sender/actor
+
+  // Provider + threading
+  resendEmailId   String? @unique @map("resend_email_id")
+  messageIdHeader String? @map("message_id_header")
+  threadKey       String? @map("thread_key") // counterpart email + normalized subject
+
+  // Lifecycle
+  status      String    @default("logged") // logged, sent, delivered, opened, clicked, bounced, failed, received
+  sentAt      DateTime? @map("sent_at")
+  deliveredAt DateTime? @map("delivered_at")
+  openedAt    DateTime? @map("opened_at")
+  clickedAt   DateTime? @map("clicked_at")
+  bouncedAt   DateTime? @map("bounced_at")
+  receivedAt  DateTime? @map("received_at")
+
+  // Triage (inbound)
+  triageState  String?   @map("triage_state") // needs_reply | done | snoozed
+  assignedToId String?   @map("assigned_to_id")
+  snoozedUntil DateTime? @map("snoozed_until")
+
+  // AI enrichment (inbound)
+  aiCategory String? @map("ai_category") // interested | not_interested | question | ooo | unsubscribe | other
+  aiSummary  String? @map("ai_summary") @db.Text
+
+  // Backfill provenance (idempotency)
+  sourceType String? @map("source_type") // outreach_message | email_log | prospect_activity | live
+  sourceId   String? @map("source_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([sourceType, sourceId])
+  @@index([companyId, createdAt])
+  @@index([companyId, direction, triageState])
+  @@index([clientId])
+  @@index([prospectId])
+  @@index([toEmail])
+  @@index([fromEmail])
+  @@index([threadKey])
+  @@map("comm_messages")
+}
+
+// ============================================
 // OAUTH 2.1 AUTHORIZATION SERVER
 // ============================================
 // Lets remote MCP clients (claude.ai web/mobile, Claude Code) obtain their own

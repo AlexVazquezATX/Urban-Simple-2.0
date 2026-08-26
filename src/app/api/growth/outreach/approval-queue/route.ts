@@ -11,6 +11,7 @@ import {
   isValidEmail,
   outreachReplyTo,
 } from '@/lib/services/outreach-guards'
+import { logComm } from '@/lib/comms/log'
 import { Resend } from 'resend'
 
 // Canonical action vocabulary for POST. Anything else is a 400 — an
@@ -429,6 +430,20 @@ export async function POST(request: NextRequest) {
                 sentAt: new Date(),
                 resendEmailId: emailData?.id || null,
               },
+            })
+
+            // Comms Hub (fire-and-forget)
+            void logComm({
+              companyId: user.companyId,
+              direction: 'outbound',
+              category: 'outreach',
+              fromEmail: fromEmail,
+              toEmail: toEmail,
+              subject: msg.subject,
+              body: msg.body,
+              prospectId: msg.prospectId,
+              userId: user.id,
+              resendEmailId: emailData?.id ?? null,
             })
 
             // Log activity

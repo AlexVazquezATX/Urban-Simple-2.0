@@ -14,6 +14,7 @@ import {
   outreachReplyTo,
   resolveOutreachActorId,
 } from '@/lib/services/outreach-guards'
+import { logComm } from '@/lib/comms/log'
 
 // Initialize Resend lazily
 let resend: Resend | null = null
@@ -365,6 +366,20 @@ export async function POST(request: NextRequest) {
               sentAt: new Date(),
               resendEmailId: sendResult.emailId || null,
             },
+          })
+
+          // Comms Hub (fire-and-forget)
+          void logComm({
+            companyId: message.prospect.companyId,
+            direction: 'outbound',
+            category: 'outreach',
+            fromEmail: process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || null,
+            toEmail: recipientEmail,
+            subject: message.subject,
+            body: message.body,
+            prospectId: message.prospectId,
+            userId: message.campaign?.createdById ?? null,
+            resendEmailId: sendResult.emailId ?? null,
           })
 
           // Log activity. userId is a real FK — attribute to the campaign

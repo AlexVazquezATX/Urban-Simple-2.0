@@ -43,6 +43,7 @@ import {
   Key,
   ThumbsUp,
   AlertTriangle,
+  Inbox,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DarkModeToggle } from '@/components/ui/dark-mode-toggle'
@@ -92,6 +93,7 @@ export const navGroups: NavGroup[] = [
       { href: '/growth/prospects', icon: Users, label: 'Prospects', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { href: '/growth/pipeline', icon: TrendingUp, label: 'Pipeline', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { href: '/growth/outreach', icon: Mail, label: 'Outreach', roles: ['SUPER_ADMIN', 'ADMIN'] },
+      { href: '/communications', icon: Inbox, label: 'Comms Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { href: '/growth/discovery', icon: Search, label: 'AI Discovery', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { href: '/creative-hub', icon: Palette, label: 'Creative Hub', roles: ['SUPER_ADMIN', 'ADMIN'] },
       { href: '/dashboard/blog', icon: Sparkles, label: 'Blog', roles: ['SUPER_ADMIN'] },

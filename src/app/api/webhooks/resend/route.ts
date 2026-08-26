@@ -3,6 +3,8 @@ import { prisma } from '@/lib/db'
 import crypto from 'crypto'
 import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
 import { resolveOutreachActorId } from '@/lib/services/outreach-guards'
+import { logComm, stampCommByResendId } from '@/lib/comms/log'
+import { classifyInbound } from '@/lib/comms/classify'
 
 /**
  * POST /api/webhooks/resend
@@ -78,6 +80,44 @@ async function handleInboundReply(data: Record<string, unknown>) {
 
   const actorId = await resolveOutreachActorId(prospect.companyId)
   const now = new Date()
+
+  // AI triage (fail-soft): category + one-line summary.
+  const classification = await classifyInbound(subject, bodyText)
+
+  // Comms Hub row (the inbox lane feeds off triageState).
+  const messageIdHeader =
+    typeof (data as Record<string, unknown>)?.message_id === 'string'
+      ? ((data as Record<string, unknown>).message_id as string)
+      : typeof (data?.headers as Record<string, unknown> | undefined)?.['message-id'] === 'string'
+        ? ((data!.headers as Record<string, string>)['message-id'])
+        : null
+  void logComm({
+    companyId: prospect.companyId,
+    direction: 'inbound',
+    category: 'reply',
+    fromEmail,
+    toEmail: extractEmail(data?.to),
+    subject,
+    body: bodyText || null,
+    prospectId: prospect.id,
+    resendEmailId: typeof data?.email_id === 'string' ? data.email_id : null,
+    messageIdHeader,
+    receivedAt: now,
+    // OOO autoresponders don't need a human; everything else starts in the inbox.
+    triageState: classification?.category === 'ooo' ? 'done' : 'needs_reply',
+    aiCategory: classification?.category ?? null,
+    aiSummary: classification?.summary ?? null,
+  })
+
+  // Explicit unsubscribe → Do Not Contact + cancel their sequence, same as a
+  // spam complaint (conservative: only on a confident classification).
+  if (classification?.category === 'unsubscribe') {
+    await prisma.prospect.update({
+      where: { id: prospect.id },
+      data: { doNotContact: true, doNotContactAt: now },
+    }).catch(() => {})
+    console.warn(`[RESEND INBOUND] Unsubscribe detected from ${fromEmail} — prospect ${prospect.id} marked Do Not Contact`)
+  }
 
   if (actorId) {
     // `outcome: 'replied'` = auto-detected reply. (Human-judged interest stays
@@ -197,6 +237,7 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'email.delivered':
+        void stampCommByResendId(emailId, 'delivered')
         await prisma.outreachMessage.update({
           where: { id: message.id },
           data: {
@@ -207,6 +248,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'email.opened':
+        void stampCommByResendId(emailId, 'opened')
         await prisma.outreachMessage.update({
           where: { id: message.id },
           data: {
@@ -218,6 +260,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'email.clicked':
+        void stampCommByResendId(emailId, 'clicked')
         await prisma.outreachMessage.update({
           where: { id: message.id },
           data: {
@@ -229,6 +272,7 @@ export async function POST(request: NextRequest) {
         break
 
       case 'email.bounced':
+        void stampCommByResendId(emailId, 'bounced')
         await prisma.outreachMessage.update({
           where: { id: message.id },
           data: {

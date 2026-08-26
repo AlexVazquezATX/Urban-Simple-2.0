@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db'
 
 interface AttentionItem {
   id: string
-  type: 'overdue_invoice' | 'quality_issue' | 'prospect_reply' | 'unassigned_shift'
+  type: 'overdue_invoice' | 'quality_issue' | 'prospect_reply' | 'unassigned_shift' | 'email_needs_reply'
   title: string
   subtitle: string
   urgency: 'high' | 'medium' | 'low'
@@ -123,6 +123,38 @@ export async function GET() {
         actionUrl: `/growth/prospects/${msg.prospect.id}`,
         createdAt: msg.sentAt?.toISOString() || msg.createdAt.toISOString(),
       })
+    }
+
+    // 3b. Comms Hub: inbound emails still awaiting a human reply (SLA nudge —
+    // anything older than 48h escalates to high urgency).
+    try {
+      const nowTs = new Date() // `today` above is midnight-truncated; SLA math needs real now
+      const waiting = await prisma.commMessage.findMany({
+        where: {
+          companyId: user.companyId,
+          direction: 'inbound',
+          triageState: 'needs_reply',
+          OR: [{ snoozedUntil: null }, { snoozedUntil: { lte: nowTs } }],
+        },
+        orderBy: { receivedAt: 'asc' },
+        take: 10,
+      })
+      for (const msg of waiting) {
+        const ageHours = msg.receivedAt ? (nowTs.getTime() - msg.receivedAt.getTime()) / 36e5 : 0
+        items.push({
+          id: `comm-${msg.id}`,
+          type: 'email_needs_reply',
+          title: `Reply waiting: ${msg.fromEmail ?? 'unknown sender'}`,
+          subtitle: msg.aiSummary || msg.subject || 'Inbound email',
+          urgency: ageHours > 48 ? 'high' : 'medium',
+          actionUrl: '/communications',
+          createdAt: (msg.receivedAt ?? msg.createdAt).toISOString(),
+        })
+      }
+    } catch (err) {
+      // comm_messages table may not exist yet (schema pending) — never break
+      // the command center over the newest section.
+      console.error('[attention] comms section skipped:', err)
     }
 
     // 4. Service reviews with issues (recent, unresolved)

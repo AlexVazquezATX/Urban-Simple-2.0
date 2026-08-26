@@ -17,6 +17,7 @@
     "setup-claude": "tsx scripts/setup-claude.ts",
     "generate-api-catalog": "tsx scripts/generate-api-catalog.ts",
     "apply-sql": "tsx scripts/apply-sql.ts",
+    "backfill-comms": "tsx scripts/backfill-comms.ts",
     "generate-invoices": "tsx scripts/generate-recurring-invoices.ts",
     "generate-invoices:dry": "tsx scripts/generate-recurring-invoices.ts --dryRun"
   },
