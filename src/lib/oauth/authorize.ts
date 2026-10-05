@@ -8,7 +8,7 @@
 //     redirect_uri with the state echoed.
 
 import { prisma } from '@/lib/db'
-import { OAUTH_SCOPE, redirectUriMatches } from '@/lib/oauth/core'
+import { OAUTH_SCOPE, OAUTH_CRM_READ_SCOPE, crmResource, getIssuer, parseOAuthScope, redirectUriMatches } from '@/lib/oauth/core'
 
 export interface AuthorizeParams {
   client_id?: string
@@ -37,7 +37,7 @@ export type AuthorizeValidation =
   | { kind: 'fatal'; message: string }
   | { kind: 'redirect'; redirectUri: string; error: string; description: string; state?: string }
 
-export async function validateAuthorizeRequest(p: AuthorizeParams): Promise<AuthorizeValidation> {
+export async function validateAuthorizeRequest(p: AuthorizeParams, issuer = getIssuer()): Promise<AuthorizeValidation> {
   if (!p.client_id) return { kind: 'fatal', message: 'Missing client_id.' }
   const client = await prisma.oAuthClient.findUnique({
     where: { id: p.client_id },
@@ -67,17 +67,20 @@ export async function validateAuthorizeRequest(p: AuthorizeParams): Promise<Auth
   if (!/^[A-Za-z0-9\-_]{43,128}$/.test(p.code_challenge)) {
     return fail('invalid_request', 'Malformed code_challenge')
   }
-  if (p.scope) {
-    const requested = p.scope.split(/\s+/).filter(Boolean)
-    if (requested.some((s) => s !== OAUTH_SCOPE)) {
-      return fail('invalid_scope', `Only the "${OAUTH_SCOPE}" scope is available`)
-    }
+  const readOnlyResource = p.resource === crmResource(issuer)
+  const scope = parseOAuthScope(p.scope?.trim() || (readOnlyResource ? OAUTH_CRM_READ_SCOPE : OAUTH_SCOPE))
+  if (!scope) return fail('invalid_scope', 'Request exactly one scope: mcp or crm:read')
+  if (readOnlyResource && scope !== OAUTH_CRM_READ_SCOPE) {
+    return fail('invalid_scope', 'The CRM resource accepts only crm:read')
+  }
+  if (scope === OAUTH_CRM_READ_SCOPE && !readOnlyResource) {
+    return fail('invalid_target', 'crm:read requires the canonical /api/mcp/crm resource')
   }
 
   return {
     kind: 'ok',
     client: { id: client.id, clientName: client.clientName, clientUri: client.clientUri },
-    params: { ...p, client_id: client.id, redirect_uri: redirectUri, code_challenge: p.code_challenge },
+    params: { ...p, scope, client_id: client.id, redirect_uri: redirectUri, code_challenge: p.code_challenge },
   }
 }
 

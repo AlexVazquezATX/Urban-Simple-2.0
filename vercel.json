@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "codex/scoped-oauth-ava": false
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/lead-deliveries",

@@ -19,11 +19,41 @@ export const ACCESS_TOKEN_TTL_SECONDS = 60 * 60 // 1h
 export const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60 // 30d (rotated on use)
 export const AUTH_CODE_TTL_SECONDS = 10 * 60 // 10m
 
-// The single scope this server issues. Consent is restricted to SUPER_ADMIN,
-// so a token = full backend access (the agent-scope model still applies per
-// request via `OAuthToken.scopes`, which is set to the full grant).
+// Legacy full-backend consent stays separate from the new read-only grant.
+// Both require human SUPER_ADMIN consent; OAuthToken.scopes enforces the policy.
 export const OAUTH_SCOPE = 'mcp'
 export const OAUTH_TOKEN_AGENT_SCOPES = ['*', 'backhaus']
+export const OAUTH_CRM_READ_SCOPE = 'crm:read'
+export const CRM_MCP_PATH = '/api/mcp/crm'
+
+/** Each consent grants one policy. Never combine the limited and full grants. */
+export function parseOAuthScope(scope?: string | null): string | null {
+  const requested = [...new Set((scope ?? OAUTH_SCOPE).trim().split(/\s+/).filter(Boolean))]
+  if (requested.length !== 1) return null
+  return requested[0] === OAUTH_SCOPE || requested[0] === OAUTH_CRM_READ_SCOPE ? requested[0] : null
+}
+
+export function oauthAgentScopes(scope: string): string[] | null {
+  const parsed = parseOAuthScope(scope)
+  if (parsed === OAUTH_CRM_READ_SCOPE) return [OAUTH_CRM_READ_SCOPE]
+  return parsed === OAUTH_SCOPE ? [...OAUTH_TOKEN_AGENT_SCOPES] : null
+}
+
+export function isCrmReadGrant(scopes: string[]): boolean {
+  return scopes.length === 1 && scopes[0] === OAUTH_CRM_READ_SCOPE
+}
+
+/** Limited OAuth grants use refreshExpiresAt as the original consent deadline.
+ * Every rotation preserves it, and the final access token is capped to it.
+ * This reuses existing columns; no schema or live grant changes are required.
+ */
+export function crmOAuthGrantValid(scope: string, scopes: string[], deadline: Date | null, now = Date.now()): boolean {
+  return scope !== OAUTH_CRM_READ_SCOPE || (isCrmReadGrant(scopes) && !!deadline && deadline.getTime() > now)
+}
+
+export function crmResource(issuer: string): string {
+  return `${issuer}${CRM_MCP_PATH}`
+}
 
 export function randomHex(bytes = 32): string {
   return crypto.randomBytes(bytes).toString('hex')

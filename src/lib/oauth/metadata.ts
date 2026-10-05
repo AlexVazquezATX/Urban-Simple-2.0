@@ -1,7 +1,7 @@
 // Discovery documents for the OAuth authorization server (RFC 8414) and the
 // MCP protected resource (RFC 9728). Shared by the .well-known routes.
 import { NextRequest, NextResponse } from 'next/server'
-import { getIssuer, oauthEndpoints, OAUTH_SCOPE } from '@/lib/oauth/core'
+import { getIssuer, oauthEndpoints, OAUTH_SCOPE, OAUTH_CRM_READ_SCOPE, CRM_MCP_PATH, crmResource } from '@/lib/oauth/core'
 
 export function authorizationServerMetadata(request: NextRequest) {
   const e = oauthEndpoints(getIssuer(request.nextUrl.origin))
@@ -11,7 +11,7 @@ export function authorizationServerMetadata(request: NextRequest) {
     token_endpoint: e.token_endpoint,
     registration_endpoint: e.registration_endpoint,
     revocation_endpoint: e.revocation_endpoint,
-    scopes_supported: [OAUTH_SCOPE],
+    scopes_supported: [OAUTH_SCOPE, OAUTH_CRM_READ_SCOPE],
     response_types_supported: ['code'],
     response_modes_supported: ['query'],
     grant_types_supported: ['authorization_code', 'refresh_token'],
@@ -24,12 +24,13 @@ export function authorizationServerMetadata(request: NextRequest) {
 
 export function protectedResourceMetadata(request: NextRequest) {
   const e = oauthEndpoints(getIssuer(request.nextUrl.origin))
+  const readOnly = request.nextUrl.pathname.endsWith(CRM_MCP_PATH)
   return {
-    resource: e.resource,
+    resource: readOnly ? crmResource(e.issuer) : e.resource,
     authorization_servers: [e.issuer],
-    scopes_supported: [OAUTH_SCOPE],
+    scopes_supported: [readOnly ? OAUTH_CRM_READ_SCOPE : OAUTH_SCOPE],
     bearer_methods_supported: ['header'],
-    resource_name: 'Urban Simple backend (MCP)',
+    resource_name: readOnly ? 'Urban Simple CRM (read only, 30-day grant)' : 'Urban Simple backend (MCP)',
   }
 }
 

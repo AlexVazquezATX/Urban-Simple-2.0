@@ -12,7 +12,12 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import {
   ACCESS_TOKEN_TTL_SECONDS,
   REFRESH_TOKEN_TTL_SECONDS,
-  OAUTH_TOKEN_AGENT_SCOPES,
+  OAUTH_CRM_READ_SCOPE,
+  crmOAuthGrantValid,
+  crmResource,
+  getIssuer,
+  oauthAgentScopes,
+  parseOAuthScope,
   generateAccessToken,
   generateRefreshToken,
   sha256,
@@ -32,10 +37,20 @@ function err(error: string, description: string, status = 400) {
   return NextResponse.json({ error, error_description: description }, { status, headers: HEADERS })
 }
 
-async function issueTokens(args: { clientId: string; userId: string; scope: string; ip: string | null }) {
+async function issueTokens(args: {
+  clientId: string; userId: string; scope: string; scopes: string[]; ip: string | null
+  grantExpiresAt?: Date | null
+}) {
+  const now = Date.now()
+  if (!crmOAuthGrantValid(args.scope, args.scopes, args.grantExpiresAt ?? null, now)) {
+    return err('invalid_grant', 'Read-only consent has expired or is invalid; authorize again')
+  }
+  const refreshExpiresAt = args.scope === OAUTH_CRM_READ_SCOPE
+    ? args.grantExpiresAt!
+    : new Date(now + REFRESH_TOKEN_TTL_SECONDS * 1000)
+  const accessExpiresAt = new Date(Math.min(now + ACCESS_TOKEN_TTL_SECONDS * 1000, refreshExpiresAt.getTime()))
   const accessToken = generateAccessToken()
   const refreshToken = generateRefreshToken()
-  const now = Date.now()
   await prisma.oAuthToken.create({
     data: {
       accessTokenHash: sha256(accessToken),
@@ -43,9 +58,9 @@ async function issueTokens(args: { clientId: string; userId: string; scope: stri
       clientId: args.clientId,
       userId: args.userId,
       scope: args.scope,
-      scopes: OAUTH_TOKEN_AGENT_SCOPES,
-      accessExpiresAt: new Date(now + ACCESS_TOKEN_TTL_SECONDS * 1000),
-      refreshExpiresAt: new Date(now + REFRESH_TOKEN_TTL_SECONDS * 1000),
+      scopes: args.scopes,
+      accessExpiresAt,
+      refreshExpiresAt,
       createdIp: args.ip,
     },
   })
@@ -53,7 +68,7 @@ async function issueTokens(args: { clientId: string; userId: string; scope: stri
     {
       access_token: accessToken,
       token_type: 'Bearer',
-      expires_in: ACCESS_TOKEN_TTL_SECONDS,
+      expires_in: Math.floor((accessExpiresAt.getTime() - now) / 1000),
       refresh_token: refreshToken,
       scope: args.scope,
     },
@@ -86,7 +101,7 @@ export async function POST(request: NextRequest) {
       })
       if (!record) return err('invalid_grant', 'Unknown authorization code')
       if (record.clientId !== client.id) return err('invalid_grant', 'Code was issued to a different client')
-      if (record.expiresAt < new Date()) return err('invalid_grant', 'Authorization code expired')
+      if (record.expiresAt <= new Date()) return err('invalid_grant', 'Authorization code expired')
       if (record.usedAt) {
         // Replay: RFC 6749 §4.1.2 says revoke everything derived from it.
         await prisma.oAuthToken.updateMany({
@@ -97,7 +112,17 @@ export async function POST(request: NextRequest) {
       }
       // redirect_uri must match when it was used in the authorization request
       // (it always is here — we store it on the code).
-      if (redirectUri && redirectUri !== record.redirectUri) {
+      const scope = parseOAuthScope(record.scope)
+      const scopes = scope ? oauthAgentScopes(scope) : null
+      if (!scope || !scopes) return err('invalid_grant', 'Unsupported consent scope')
+      if (params.scope !== undefined && parseOAuthScope(params.scope) !== scope) {
+        return err('invalid_scope', 'Requested scope differs from consent')
+      }
+      const readOnly = scope === OAUTH_CRM_READ_SCOPE
+      if (readOnly && (record.resource !== crmResource(getIssuer(request.nextUrl.origin)) || params.resource !== record.resource)) {
+        return err('invalid_target', 'Read-only token requires its consented CRM resource')
+      }
+      if ((readOnly || redirectUri) && redirectUri !== record.redirectUri) {
         return err('invalid_grant', 'redirect_uri mismatch')
       }
       if (record.codeChallengeMethod !== 'S256' || !verifyPkceS256(verifier, record.codeChallenge)) {
@@ -115,7 +140,10 @@ export async function POST(request: NextRequest) {
       if (!user?.isActive) return err('invalid_grant', 'User is not active')
 
       prisma.oAuthClient.update({ where: { id: client.id }, data: { lastUsedAt: new Date() } }).catch(() => {})
-      return issueTokens({ clientId: client.id, userId: record.userId, scope: record.scope, ip })
+      return issueTokens({
+        clientId: client.id, userId: record.userId, scope, scopes, ip,
+        grantExpiresAt: readOnly ? new Date(record.createdAt.getTime() + REFRESH_TOKEN_TTL_SECONDS * 1000) : undefined,
+      })
     }
 
     case 'refresh_token': {
@@ -128,8 +156,19 @@ export async function POST(request: NextRequest) {
       if (!existing) return err('invalid_grant', 'Unknown refresh token')
       if (existing.clientId !== client.id) return err('invalid_grant', 'Refresh token was issued to a different client')
       if (existing.revokedAt) return err('invalid_grant', 'Refresh token revoked')
-      if (existing.refreshExpiresAt && existing.refreshExpiresAt < new Date()) {
+      if (existing.refreshExpiresAt && existing.refreshExpiresAt <= new Date()) {
         return err('invalid_grant', 'Refresh token expired')
+      }
+
+      const scope = parseOAuthScope(existing.scope)
+      if (!scope || !crmOAuthGrantValid(scope, existing.scopes, existing.refreshExpiresAt)) {
+        return err('invalid_grant', 'Read-only consent is invalid or expired')
+      }
+      if (params.scope !== undefined && parseOAuthScope(params.scope) !== scope) {
+        return err('invalid_scope', 'Refresh cannot change the consented scope; authorize again')
+      }
+      if (scope === OAUTH_CRM_READ_SCOPE && params.resource !== crmResource(getIssuer(request.nextUrl.origin))) {
+        return err('invalid_target', 'Read-only refresh requires its CRM resource')
       }
 
       const user = await prisma.user.findUnique({ where: { id: existing.userId }, select: { isActive: true } })
@@ -143,7 +182,10 @@ export async function POST(request: NextRequest) {
       if (retired.count !== 1) return err('invalid_grant', 'Refresh token already rotated')
 
       prisma.oAuthClient.update({ where: { id: client.id }, data: { lastUsedAt: new Date() } }).catch(() => {})
-      return issueTokens({ clientId: client.id, userId: existing.userId, scope: existing.scope, ip })
+      return issueTokens({
+        clientId: client.id, userId: existing.userId, scope, scopes: [...existing.scopes], ip,
+        grantExpiresAt: scope === OAUTH_CRM_READ_SCOPE ? existing.refreshExpiresAt : undefined,
+      })
     }
 
     default:

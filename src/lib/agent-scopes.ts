@@ -66,7 +66,7 @@ export function agentRequestAllowed(scopes: string[], path?: string | null, meth
   const required = backhausScopeForPath(path)
   if (required && !keyAllowsScope(scopes, required)) return false
   if (!limited) return true
-  if (path === '/api/mcp') return method.toUpperCase() === 'POST'
+  if (path === '/api/mcp' || path === '/api/mcp/crm') return method.toUpperCase() === 'POST'
   if (method.toUpperCase() !== 'GET') return false
   return path === '/api/users/me' || path === '/api/growth/lead-deliveries' ||
     /^\/api\/growth\/prospects(?:\/[A-Za-z0-9_-]+(?:\/activities)?)?$/.test(path)

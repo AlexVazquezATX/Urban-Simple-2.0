@@ -7,7 +7,9 @@
 
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { getCurrentUser } from '@/lib/auth'
+import { getIssuer, OAUTH_CRM_READ_SCOPE } from '@/lib/oauth/core'
 import { AUTHORIZE_PARAM_KEYS, buildRedirect, validateAuthorizeRequest, type AuthorizeParams } from '@/lib/oauth/authorize'
 
 export const dynamic = 'force-dynamic'
@@ -50,7 +52,9 @@ export default async function OAuthAuthorizePage({
     if (typeof v === 'string') params[k] = v
   }
 
-  const validation = await validateAuthorizeRequest(params)
+  const requestHeaders = await headers()
+  const origin = `${requestHeaders.get('x-forwarded-proto') === 'http' ? 'http' : 'https'}://${requestHeaders.get('host') ?? 'www.urbansimple.net'}`
+  const validation = await validateAuthorizeRequest(params, getIssuer(origin))
   if (validation.kind === 'fatal') {
     return <ErrorCard title="Can't continue" message={validation.message} />
   }
@@ -87,22 +91,26 @@ export default async function OAuthAuthorizePage({
   const { client } = validation
   const redirectHost = new URL(validation.params.redirect_uri).host
   const appName = client.clientName?.trim() || 'An application'
+  const readOnly = validation.params.scope === OAUTH_CRM_READ_SCOPE
 
   return (
     <Shell>
       <p className="text-xs uppercase tracking-wider text-charcoal-400 mb-2">Connection request</p>
       <h1 className="text-xl font-display font-semibold text-charcoal-900 mb-4">
-        <span className="text-bronze-600">{appName}</span> wants to manage your Urban Simple backend
+        <span className="text-bronze-600">{appName}</span> wants to {readOnly ? 'read your Urban Simple CRM' : 'manage your Urban Simple backend'}
       </h1>
 
       <ul className="text-sm text-charcoal-700 space-y-2 mb-6">
         <li className="flex gap-2">
           <span className="text-bronze-500">•</span>
-          Full read and write access to every area: clients, operations, billing, workforce, growth, BackHaus.
+          {readOnly
+            ? 'Read CRM prospects, contacts, activities, lead delivery health, and your own identity in your company. No writes, outreach sends, billing, operations, or BackHaus access.'
+            : 'Full read and write access to every area: clients, operations, billing, workforce, growth, BackHaus.'}
         </li>
         <li className="flex gap-2">
           <span className="text-bronze-500">•</span>
-          Acts as <strong className="font-medium">{user.email}</strong>. Every change is audit-logged.
+          Acts as <strong className="font-medium">{user.email}</strong> in <strong className="font-medium">{user.company.name}</strong>.
+          {' '}{readOnly ? 'Scope: crm:read. Access expires 30 days after approval; refreshing cannot extend it.' : 'Every change is audit-logged.'}
         </li>
         <li className="flex gap-2">
           <span className="text-bronze-500">•</span>
@@ -112,7 +120,7 @@ export default async function OAuthAuthorizePage({
 
       <form method="POST" action="/api/oauth/authorize" className="space-y-3">
         {AUTHORIZE_PARAM_KEYS.map((k) =>
-          params[k] ? <input key={k} type="hidden" name={k} value={params[k]} /> : null,
+          validation.params[k] ? <input key={k} type="hidden" name={k} value={validation.params[k]} /> : null,
         )}
         <button
           type="submit"

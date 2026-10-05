@@ -9,7 +9,7 @@ import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { agentRequestAllowed } from '@/lib/agent-scopes'
-import { OAUTH_ACCESS_TOKEN_PREFIX, sha256 } from '@/lib/oauth/core'
+import { CRM_MCP_PATH, OAUTH_ACCESS_TOKEN_PREFIX, crmOAuthGrantValid, sha256 } from '@/lib/oauth/core'
 
 const API_KEY_PREFIX = 'us_live_'
 
@@ -117,7 +117,7 @@ async function enforceAgentPolicy(
   // normally — auditing the envelope would double-log mutations and drown the
   // trail in read noise.
   const method = (ctx.method ?? 'GET').toUpperCase()
-  const isMcpEnvelope = path === '/api/mcp'
+  const isMcpEnvelope = path === '/api/mcp' || path === CRM_MCP_PATH
   if (path && !isMcpEnvelope && method !== 'GET' && method !== 'HEAD' && method !== 'OPTIONS') {
     try {
       await prisma.auditLog.create({
@@ -211,7 +211,7 @@ export async function authenticateApiKey(
 /**
  * Authenticate an OAuth 2.1 access token (`Bearer us_oat_…`) issued by our own
  * authorization server (src/app/api/oauth/*). The token acts AS the user who
- * consented (a SUPER_ADMIN), with the same agent policy as an API key.
+ * consented (a SUPER_ADMIN), restricted by the token's own agent scopes.
  */
 export async function authenticateOAuthToken(
   authHeader: string | null,
@@ -228,13 +228,16 @@ export async function authenticateOAuthToken(
       userId: true,
       clientId: true,
       scopes: true,
+      scope: true,
       accessExpiresAt: true,
+      refreshExpiresAt: true,
       revokedAt: true,
     },
   })
   if (!token) return null
   if (token.revokedAt) return null
-  if (token.accessExpiresAt < new Date()) return null
+  if (token.accessExpiresAt <= new Date()) return null
+  if (!crmOAuthGrantValid(token.scope, token.scopes, token.refreshExpiresAt)) return null
 
   const user = await loadUserForBearer(token.userId)
   if (!user || !user.isActive) return null
