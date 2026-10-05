@@ -4,7 +4,12 @@ Code changes do not establish a live connection. No service account, key,
 OAuth grant, or connector configuration was created for Ava in this task.
 Do not share Claude's, Merc's, or another agent's credential.
 
-## Recommended exact grant
+For a hosted OAuth client, see [Ava scoped OAuth](ava-scoped-oauth.md). That
+proposal requires approved deployment and separate action-time consent; no
+connection is established by the code. The key-only option below is suitable
+only for a client that supports an independent protected bearer credential.
+
+## Optional key-only grant
 
 After this code is deployed, request action-time approval for a dedicated,
 key-only Ava service user in the verified Urban Simple company, with role
@@ -48,8 +53,9 @@ scope names remain labels rather than newly enforced restrictions.
 Current OAuth advertises `mcp`, requires SUPER_ADMIN consent, and issues token
 agent scopes `["*", "backhaus"]`. That is full backend access, including
 financial/admin surfaces. Do not approve Ava through that flow to obtain a
-supposedly read-only connection. Narrow OAuth is future work; the enforced API
-key grant is the smaller change here. Do not open/approve an OAuth consent flow
+supposedly read-only connection. The scoped OAuth proposal uses a separate
+read-only resource after approved deployment. The legacy `/api/mcp` consent
+remains broad. Do not open/approve an OAuth consent flow
 without returning its exact scope/action to Alex for approval.
 
 After approval and provisioning, verify the new identity and allowed CRM GETs,
