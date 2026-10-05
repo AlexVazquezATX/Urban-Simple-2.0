@@ -58,7 +58,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, description } = body
+    const { name, description, scopes } = body
+    // Only expose the enforceable limited grant here. Omitted scopes preserve
+    // the existing UI behavior; mixed grants must not masquerade as read-only.
+    if (scopes !== undefined && (!Array.isArray(scopes) || scopes.length !== 1 || scopes[0] !== 'crm:read')) {
+      return NextResponse.json({ error: 'Explicit scopes must be ["crm:read"]' }, { status: 400 })
+    }
 
     if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 })
@@ -76,12 +81,16 @@ export async function POST(request: NextRequest) {
         description: description?.trim() || null,
         keyHash,
         keyPrefix,
+        scopes: scopes ?? [],
+        expiresAt: scopes ? new Date(Date.now() + 30 * 24 * 60 * 60_000) : null,
       },
       select: {
         id: true,
         name: true,
         keyPrefix: true,
         createdAt: true,
+        scopes: true,
+        expiresAt: true,
       },
     })
 

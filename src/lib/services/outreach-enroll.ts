@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import type { Prisma } from '@prisma/client'
 import { nextSendSlot, slotAfterDays } from './autopilot-schedule'
 
 // Shared enrollment logic used by both the manual "apply sequence" route and
@@ -83,7 +84,7 @@ export async function enrollProspectInSequence(args: {
   companyId: string
   userId: string
   company: CompanyAutopilot | null // required when template.autopilot = true
-}): Promise<{ campaignId: string; messagesCreated: number } | { skipped: true; reason: string }> {
+}, db: Prisma.TransactionClient = prisma): Promise<{ campaignId: string; messagesCreated: number } | { skipped: true; reason: string }> {
   const { template, prospect, companyId, userId, company } = args
 
   if (template.messages.length === 0) {
@@ -91,7 +92,7 @@ export async function enrollProspectInSequence(args: {
   }
 
   // Guard: already enrolled in this sequence with an active/draft campaign?
-  const existing = await prisma.outreachCampaign.findFirst({
+  const existing = await db.outreachCampaign.findFirst({
     where: {
       companyId,
       prospectId: prospect.id,
@@ -109,7 +110,7 @@ export async function enrollProspectInSequence(args: {
   }
 
   // Create the per-prospect campaign.
-  const campaign = await prisma.outreachCampaign.create({
+  const campaign = await db.outreachCampaign.create({
     data: {
       companyId,
       prospectId: prospect.id,
@@ -171,7 +172,7 @@ export async function enrollProspectInSequence(args: {
       ? 'pending'
       : 'approved'
 
-    await prisma.outreachMessage.create({
+    await db.outreachMessage.create({
       data: {
         campaignId: campaign.id,
         prospectId: prospect.id,
@@ -193,7 +194,7 @@ export async function enrollProspectInSequence(args: {
     ? `${template.messages.length}-step autopilot sequence started. First send scheduled ${scheduledTimes[0]?.toISOString() ?? 'immediately'}.`
     : `${template.messages.length}-step sequence started. Step 1 queued for review.`
 
-  await prisma.prospectActivity.create({
+  await db.prospectActivity.create({
     data: {
       prospectId: prospect.id,
       userId,

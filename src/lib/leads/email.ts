@@ -1,107 +1,70 @@
-import { Resend } from 'resend'
+import { render } from '@react-email/components'
 import { NotificationToAlex } from '@/emails/NotificationToAlex'
 import { AutoResponder } from '@/emails/AutoResponder'
 import {
-  BUSINESS_TYPES,
-  CURRENT_CLEANING_OPTIONS,
-  SQUARE_FOOTAGE_BUCKETS,
-  START_TIMING_OPTIONS,
-  labelFor,
-  type LeadPayload,
+  BUSINESS_TYPES, CURRENT_CLEANING_OPTIONS, SQUARE_FOOTAGE_BUCKETS,
+  START_TIMING_OPTIONS, labelFor, type LeadPayload,
 } from './schema'
 
-const FROM_NOTIFICATION = 'Urban Simple Leads <leads@urbansimple.net>'
-const FROM_AUTORESPONDER = 'Alex Vazquez <alex@urbansimple.net>'
-const REPLY_TO_AUTORESPONDER = 'alex@urbansimple.net'
-
-function getResend(): Resend | null {
-  const key = process.env.RESEND_API_KEY
-  if (!key) {
-    console.error('[leads/email] RESEND_API_KEY is not set; skipping email send')
-    return null
-  }
-  return new Resend(key)
+export type LeadEmailKind = 'notification' | 'autoresponder'
+export type LeadEmailRequest = {
+  from: string
+  to: string[]
+  subject: string
+  html: string
+  reply_to?: string
 }
 
-function formatSubmittedAt(iso: string): string {
-  try {
-    return new Date(iso).toLocaleString('en-US', {
-      timeZone: 'America/Chicago',
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    })
-  } catch {
-    return iso
+export async function buildLeadEmail(payload: LeadPayload, kind: LeadEmailKind): Promise<LeadEmailRequest> {
+  if (kind === 'autoresponder') {
+    return {
+      from: 'Alex Vazquez <alex@urbansimple.net>',
+      to: [payload.email],
+      reply_to: 'alex@urbansimple.net',
+      subject: 'We got your walkthrough request - Urban Simple',
+      html: await render(AutoResponder({
+        firstName: payload.name.trim().split(/\s+/)[0] || 'there',
+        businessName: payload.business_name,
+      })),
+    }
+  }
+  const businessTypeLabel = payload.business_type ? labelFor(BUSINESS_TYPES, payload.business_type) : ''
+  return {
+    from: 'Urban Simple Leads <leads@urbansimple.net>',
+    to: [process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'],
+    subject: `New walkthrough request: ${payload.business_name}${businessTypeLabel ? ` (${businessTypeLabel})` : ''}`,
+    html: await render(NotificationToAlex({
+      name: payload.name,
+      businessName: payload.business_name,
+      businessTypeLabel,
+      location: payload.location,
+      squareFootageLabel: payload.square_footage_bucket ? labelFor(SQUARE_FOOTAGE_BUCKETS, payload.square_footage_bucket) : '',
+      currentCleaningLabel: payload.current_cleaning ? labelFor(CURRENT_CLEANING_OPTIONS, payload.current_cleaning) : '',
+      startTimingLabel: payload.start_timing ? labelFor(START_TIMING_OPTIONS, payload.start_timing) : '',
+      phone: payload.phone || '', email: payload.email, notes: payload.notes,
+      utmSource: payload.utm_source, utmMedium: payload.utm_medium,
+      utmCampaign: payload.utm_campaign, referrer: payload.referrer,
+      submittedAtFormatted: new Date(payload.submitted_at).toLocaleString('en-US', {
+        timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'short',
+      }),
+    })),
   }
 }
 
-export async function sendLeadEmails(payload: LeadPayload): Promise<void> {
-  const resend = getResend()
-  if (!resend) return
-
-  const to = process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'
-
-  const businessTypeLabel = payload.business_type
-    ? labelFor(BUSINESS_TYPES, payload.business_type)
-    : ''
-  const squareFootageLabel = payload.square_footage_bucket
-    ? labelFor(SQUARE_FOOTAGE_BUCKETS, payload.square_footage_bucket)
-    : ''
-  const currentCleaningLabel = payload.current_cleaning
-    ? labelFor(CURRENT_CLEANING_OPTIONS, payload.current_cleaning)
-    : ''
-  const startTimingLabel = payload.start_timing
-    ? labelFor(START_TIMING_OPTIONS, payload.start_timing)
-    : ''
-  const submittedAtFormatted = formatSubmittedAt(payload.submitted_at)
-
-  const firstName = payload.name?.trim().split(/\s+/)[0] || ''
-
-  const subjectType = businessTypeLabel ? ` (${businessTypeLabel})` : ''
-
-  const notification = resend.emails
-    .send({
-      from: FROM_NOTIFICATION,
-      to,
-      subject: `New walkthrough request: ${payload.business_name}${subjectType}`,
-      react: NotificationToAlex({
-        name: payload.name || '',
-        businessName: payload.business_name,
-        businessTypeLabel,
-        location: payload.location,
-        squareFootageLabel,
-        currentCleaningLabel,
-        startTimingLabel,
-        phone: payload.phone || '',
-        email: payload.email,
-        notes: payload.notes,
-        utmSource: payload.utm_source,
-        utmMedium: payload.utm_medium,
-        utmCampaign: payload.utm_campaign,
-        referrer: payload.referrer,
-        submittedAtFormatted,
-      }),
-    })
-    .then(({ error }) => {
-      if (error) console.error('[leads/email] notification failed', error)
-    })
-    .catch((err) => console.error('[leads/email] notification threw', err))
-
-  const autoresponder = resend.emails
-    .send({
-      from: FROM_AUTORESPONDER,
-      to: payload.email,
-      replyTo: REPLY_TO_AUTORESPONDER,
-      subject: 'We got your walkthrough request — Urban Simple',
-      react: AutoResponder({
-        firstName: firstName || 'there',
-        businessName: payload.business_name,
-      }),
-    })
-    .then(({ error }) => {
-      if (error) console.error('[leads/email] autoresponder failed', error)
-    })
-    .catch((err) => console.error('[leads/email] autoresponder threw', err))
-
-  await Promise.all([notification, autoresponder])
+// The outbox persists this exact body before calling Resend. A transport timeout
+// is ambiguous, so retries always carry the SAME key and body, for at most 23h.
+export async function sendLeadEmail(body: LeadEmailRequest, idempotencyKey: string): Promise<string> {
+  if (!process.env.RESEND_API_KEY) throw new Error('resend_not_configured')
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST', redirect: 'error', signal: AbortSignal.timeout(10_000),
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey,
+    },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) throw new Error(`resend_http_${response.status}`)
+  const result = await response.json() as { id?: unknown }
+  if (typeof result.id !== 'string' || !result.id) throw new Error('resend_missing_message_id')
+  return result.id
 }
