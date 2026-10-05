@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Check, ChevronDown, Loader2, Plus, Send } from 'lucide-react'
+import { isTrackableLeadResponse, queueMetaLeadEvent } from '@/lib/leads/analytics'
 import {
   BUSINESS_TYPES,
   CURRENT_CLEANING_OPTIONS,
@@ -36,16 +37,13 @@ function readUtms(): UtmState {
   }
 }
 
-function fireLeadAnalytics() {
+function fireLeadAnalytics(submissionId: string) {
   if (typeof window === 'undefined') return
   try {
     const w = window as unknown as {
-      fbq?: (...args: unknown[]) => void
       gtag?: (...args: unknown[]) => void
     }
-    if (typeof w.fbq === 'function') {
-      w.fbq('track', 'Lead')
-    }
+    queueMetaLeadEvent(submissionId)
     if (typeof w.gtag === 'function') {
       w.gtag('event', 'generate_lead', {
         event_category: 'walkthrough',
@@ -153,7 +151,7 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Submission failed')
       }
-      if (!data.duplicate) fireLeadAnalytics()
+      if (isTrackableLeadResponse(data)) fireLeadAnalytics(submission.current.id)
       setSubmitted(true)
     } catch (err) {
       console.error('[walkthrough] submit failed', err)

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { NextRequest } from 'next/server'
 import { prisma } from '../../src/lib/db'
 import { leadFingerprint } from '../../src/lib/leads/intake'
+import { isTrackableLeadResponse } from '../../src/lib/leads/analytics'
 import { POST } from '../../src/app/api/leads/route'
 import { GET as cronGet } from '../../src/app/api/cron/lead-deliveries/route'
 import { buildLeadEmail, sendLeadEmail } from '../../src/lib/leads/email'
@@ -78,7 +79,9 @@ test('CRM receipt + two delivery jobs commit before success; no external HTTP', 
   const before = requests.length
   const response = await POST(request())
   assert.equal(response.status, 200)
-  assert.deepEqual(await response.json(), { ok: true, duplicate: false, notifications: 'queued' })
+  const receipt = await response.json()
+  assert.deepEqual(receipt, { ok: true, accepted: true, duplicate: false, notifications: 'queued' })
+  assert.equal(isTrackableLeadResponse(receipt), true)
   assert.equal(requests.length, before)
   assert.deepEqual(writes.map(w => w.model), ['prospect', 'intake'])
   assert.deepEqual(writes[1].data.deliveries, { create: [{ kind: 'notification' }, { kind: 'autoresponder' }] })
@@ -105,7 +108,9 @@ test('same submission replay reuses receipt without new CRM or notification writ
   prior = { id: 'existing', companyId: 'company-test', payloadHash: leadFingerprint(payload) }
   const response = await POST(request())
   assert.equal(response.status, 200)
-  assert.equal((await response.json()).duplicate, true)
+  const receipt = await response.json()
+  assert.equal(receipt.duplicate, true)
+  assert.equal(isTrackableLeadResponse(receipt), false)
   assert.deepEqual(writes, [])
 })
 
@@ -124,13 +129,19 @@ test('cross-company receipt is never reused', async () => {
 test('exact-content repeat within 15 minutes collapses without a submission ID', async () => {
   recent = { id: 'existing', companyId: 'company-test', payloadHash: leadFingerprint(payload) }
   const response = await POST(request({ ...input, submission_id: undefined }))
-  assert.equal((await response.json()).duplicate, true)
+  const receipt = await response.json()
+  assert.equal(receipt.duplicate, true)
+  assert.equal(isTrackableLeadResponse(receipt), false)
   assert.deepEqual(writes, [])
 })
 
 test('invalid body and honeypot produce no database writes', async () => {
   assert.equal((await POST(request({ email: 'bad' }))).status, 400)
-  assert.equal((await POST(request({ ...input, website: 'spam' }))).status, 200)
+  const honeypot = await POST(request({ ...input, website: 'spam' }))
+  assert.equal(honeypot.status, 200)
+  const receipt = await honeypot.json()
+  assert.deepEqual(receipt, { ok: true, accepted: false })
+  assert.equal(isTrackableLeadResponse(receipt), false)
   const invalid = new NextRequest('http://localhost/api/leads', { method: 'POST', body: '{' })
   assert.equal((await POST(invalid)).status, 400)
   assert.deepEqual(writes, [])
