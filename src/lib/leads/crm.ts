@@ -7,9 +7,6 @@ import {
   type LeadPayload,
 } from './schema'
 
-const CRM_ENDPOINT =
-  process.env.CRM_PROSPECTS_URL || 'https://www.urbansimple.net/api/growth/prospects'
-
 function splitName(fullName: string): { firstName: string; lastName: string } {
   const trimmed = fullName.trim()
   const firstSpace = trimmed.indexOf(' ')
@@ -101,65 +98,5 @@ export function buildCrmPayload(payload: LeadPayload) {
       utm_campaign: payload.utm_campaign ?? null,
       referrer: payload.referrer ?? null,
     },
-  }
-}
-
-/**
- * Posts the lead to the CRM and returns the created prospect's ID
- * (or null if the post failed for any reason). Failure is non-fatal —
- * we still want emails to go out either way.
- */
-export async function postLeadToCrm(payload: LeadPayload): Promise<string | null> {
-  console.log('[leads/crm] start', {
-    apiKeyPresent: !!process.env.US_CRM_API_KEY,
-    endpoint: CRM_ENDPOINT,
-    business: payload.business_name,
-  })
-
-  const apiKey = process.env.US_CRM_API_KEY
-  if (!apiKey) {
-    console.error('[leads/crm] US_CRM_API_KEY is not set; skipping CRM post')
-    return null
-  }
-
-  const body = buildCrmPayload(payload)
-
-  try {
-    const res = await fetch(CRM_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(body),
-    })
-
-    const text = await res.text().catch(() => '')
-
-    if (!res.ok) {
-      console.error('[leads/crm] CRM post failed', {
-        status: res.status,
-        body: text,
-      })
-      return null
-    }
-
-    try {
-      const created = JSON.parse(text) as { id?: string }
-      if (created.id) {
-        console.log('[leads/crm] prospect created', { id: created.id })
-        return created.id
-      }
-      console.warn('[leads/crm] CRM 200 but no id in response', {
-        bodyPreview: text.slice(0, 500),
-      })
-      return null
-    } catch (err) {
-      console.error('[leads/crm] failed to parse CRM response', err)
-      return null
-    }
-  } catch (err) {
-    console.error('[leads/crm] CRM post threw', err)
-    return null
   }
 }

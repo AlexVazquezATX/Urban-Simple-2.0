@@ -65,6 +65,7 @@ const startTimingEnum = z.enum([
 ])
 
 export const leadFormSchema = z.object({
+  submission_id: z.uuid().optional(),
   name: z.string().trim().min(1, 'We need this to find you.').max(160),
   business_name: z
     .string()

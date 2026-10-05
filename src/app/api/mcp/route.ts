@@ -26,6 +26,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { readdirSync, readFileSync } from 'fs'
 import { join } from 'path'
 import { getCurrentUser } from '@/lib/auth'
+import { agentRequestAllowed } from '@/lib/agent-scopes'
 import { getIssuer, oauthEndpoints } from '@/lib/oauth/core'
 import catalog from '@/lib/mcp/api-catalog.json'
 
@@ -281,7 +282,7 @@ function coerceJsonArg(value: unknown, label: string): { ok: true; value: unknow
   }
 }
 
-async function runApiRequest(request: NextRequest, args: Record<string, unknown>) {
+async function runApiRequest(request: NextRequest, args: Record<string, unknown>, scopes: string[]) {
   const method = typeof args.method === 'string' ? args.method.toUpperCase() : ''
   if (!['GET', 'POST', 'PUT', 'PATCH', 'DELETE'].includes(method)) {
     return toolText(`Unsupported method: ${String(args.method)}`, true)
@@ -296,11 +297,14 @@ async function runApiRequest(request: NextRequest, args: Record<string, unknown>
 
   const path = typeof args.path === 'string' ? args.path : ''
   // Only the API surface is reachable, and never this endpoint itself.
-  if (!/^\/api\/[a-zA-Z0-9\-_.~/%]*$/.test(path) || path.includes('..')) {
+  if (!/^\/api\/[a-zA-Z0-9\-_.~/]*$/.test(path) || path.includes('..')) {
     return toolText(`Invalid path: must be a clean /api/... path (got "${path}")`, true)
   }
   if (path === '/api/mcp' || path.startsWith('/api/mcp/')) {
     return toolText('Refusing recursive call to /api/mcp.', true)
+  }
+  if (!agentRequestAllowed(scopes, path, method)) {
+    return toolText('Forbidden: credential scope does not permit this operation.', true)
   }
 
   const url = new URL(path, request.nextUrl.origin)
@@ -316,7 +320,7 @@ async function runApiRequest(request: NextRequest, args: Record<string, unknown>
     authorization: request.headers.get('authorization') ?? '',
     'user-agent': `urbansimple-mcp (${request.headers.get('user-agent') ?? 'unknown client'})`,
   }
-  const init: RequestInit = { method, headers, signal: AbortSignal.timeout(45_000) }
+  const init: RequestInit = { method, headers, redirect: 'error', signal: AbortSignal.timeout(45_000) }
   const files = Array.isArray(args.files) ? (args.files as Array<Record<string, unknown>>) : null
   const form = args.form && typeof args.form === 'object' ? (args.form as Record<string, unknown>) : null
   if (method !== 'GET' && (files || form)) {
@@ -359,7 +363,7 @@ async function runApiRequest(request: NextRequest, args: Record<string, unknown>
   return toolText(`${header}\n${bodyText}${note}`, response.status >= 400)
 }
 
-async function handleMessage(request: NextRequest, msg: Record<string, unknown>) {
+async function handleMessage(request: NextRequest, msg: Record<string, unknown>, scopes: string[]) {
   const id = (msg.id ?? null) as JsonRpcId
   const method = msg.method
   const params = (msg.params ?? {}) as Record<string, unknown>
@@ -392,7 +396,7 @@ async function handleMessage(request: NextRequest, msg: Record<string, unknown>)
         case 'playbooks':
           return rpcResult(id, runPlaybooks(args))
         case 'api_request':
-          return rpcResult(id, await runApiRequest(request, args))
+          return rpcResult(id, await runApiRequest(request, args, scopes))
         default:
           return rpcError(id, -32602, `Unknown tool: ${String(params.name)}`)
       }
@@ -442,7 +446,7 @@ export async function POST(request: NextRequest) {
   for (const msg of messages as Array<Record<string, unknown>>) {
     // Notifications (no id) get no response body.
     if (msg.id === undefined || msg.id === null) continue
-    responses.push(await handleMessage(request, msg))
+    responses.push(await handleMessage(request, msg, user.apiKeyScopes))
   }
 
   if (responses.length === 0) return new NextResponse(null, { status: 202 })

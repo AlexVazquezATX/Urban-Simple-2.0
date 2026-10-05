@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AnimatePresence, motion } from 'framer-motion'
@@ -71,6 +71,7 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
   const [firstNameError, setFirstNameError] = useState<string | null>(null)
   const [lastNameError, setLastNameError] = useState<string | null>(null)
   const [optionalOpen, setOptionalOpen] = useState(false)
+  const submission = useRef<{ body: string; id: string } | null>(null)
 
   useEffect(() => {
     setUtm(readUtms())
@@ -135,18 +136,24 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
       utm_campaign: utm.utm_campaign,
       referrer: utm.referrer,
     }
+    const body = JSON.stringify(payload)
+    // Retain the ID after an ambiguous network failure. Editing the request
+    // creates a new ID; server-side exact-content dedup also covers both forms.
+    if (submission.current?.body !== body) {
+      submission.current = { body, id: crypto.randomUUID() }
+    }
 
     try {
       const res = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, submission_id: submission.current.id }),
       })
       const data = await res.json().catch(() => ({ ok: false }))
       if (!res.ok || !data.ok) {
         throw new Error(data.error || 'Submission failed')
       }
-      fireLeadAnalytics()
+      if (!data.duplicate) fireLeadAnalytics()
       setSubmitted(true)
     } catch (err) {
       console.error('[walkthrough] submit failed', err)
@@ -170,7 +177,7 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
         </div>
         <h3 className="font-display text-2xl font-semibold text-cream-50">Got it.</h3>
         <p className="mt-2 text-cream-200">
-          A confirmation is on its way to your inbox. We will reach out by email or text shortly to lock in a time for your walkthrough.
+          Your request has been saved. We will reach out by email or text to arrange your walkthrough.
         </p>
       </div>
     )

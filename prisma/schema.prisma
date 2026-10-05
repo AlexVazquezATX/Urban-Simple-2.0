@@ -41,6 +41,7 @@ model Company {
 
   // Business Development
   prospects         Prospect[]
+  leadIntakes       LeadIntake[]
   outreachCampaigns OutreachCampaign[]
   discoveryJobs     AIDiscoveryJob[]
   contentTemplates  ContentTemplate[]
@@ -1469,6 +1470,7 @@ model Prospect {
   activities       ProspectActivity[]
   campaigns        OutreachCampaign[]
   outreachMessages OutreachMessage[]
+  leadIntakes      LeadIntake[]
 
   @@index([companyId, status])
   @@index([companyId, agentQueued])
@@ -1476,6 +1478,50 @@ model Prospect {
   @@index([source])
   @@index([createdAt])
   @@map("prospects")
+}
+
+// Website receipt + delivery outbox. Written atomically with the CRM prospect.
+model LeadIntake {
+  id           String   @id @default(cuid())
+  companyId    String   @map("company_id")
+  prospectId   String   @map("prospect_id")
+  submissionId String   @unique @map("submission_id")
+  payloadHash  String   @map("payload_hash")
+  payload      Json
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  prospect   Prospect       @relation(fields: [prospectId], references: [id], onDelete: Restrict)
+  deliveries LeadDelivery[]
+
+  @@index([companyId, payloadHash, createdAt])
+  @@index([prospectId])
+  @@map("lead_intakes")
+}
+
+model LeadDelivery {
+  id             String    @id @default(cuid())
+  intakeId       String    @map("intake_id")
+  kind           String    // notification, autoresponder, enrollment
+  status         String    @default("pending") // pending, processing, sent, failed
+  attempts       Int       @default(0)
+  nextAttemptAt  DateTime  @default(now()) @map("next_attempt_at")
+  lockedUntil    DateTime? @map("locked_until")
+  lockToken      String?   @map("lock_token")
+  firstAttemptAt DateTime? @map("first_attempt_at")
+  lastError      String?   @map("last_error")
+  providerId     String?   @map("provider_id")
+  request        Json?     // immutable provider body after the first attempt
+  sentAt         DateTime? @map("sent_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  intake LeadIntake @relation(fields: [intakeId], references: [id], onDelete: Cascade)
+
+  @@unique([intakeId, kind])
+  @@index([status, nextAttemptAt])
+  @@index([status, lockedUntil])
+  @@map("lead_deliveries")
 }
 
 model ProspectContact {

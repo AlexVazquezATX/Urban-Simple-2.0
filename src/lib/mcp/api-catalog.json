@@ -2280,6 +2280,17 @@
       }
     },
     {
+      "path": "/api/cron/lead-deliveries",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/cron/lead-deliveries - authenticated delivery worker; no lead data returned."
+        }
+      }
+    },
+    {
       "path": "/api/cron/portal-weekly-digest",
       "methods": [
         "GET",
@@ -2548,7 +2559,8 @@
         "POST": {
           "body": [
             "name",
-            "description"
+            "description",
+            "scopes"
           ],
           "required": [
             "Name is required"
@@ -2751,6 +2763,36 @@
             "Email is required"
           ],
           "doc": "POST /api/growth/email-prospecting/verify - Verify an email address"
+        }
+      }
+    },
+    {
+      "path": "/api/growth/lead-deliveries",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "GET /api/growth/lead-deliveries - company-scoped delivery health and failures."
+        }
+      }
+    },
+    {
+      "path": "/api/growth/lead-deliveries/[id]/retry",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/growth/lead-deliveries/[id]/retry - requeue a failed job within its safe retry window."
         }
       }
     },
@@ -3542,7 +3584,9 @@
         "POST"
       ],
       "handlers": {
-        "POST": {}
+        "POST": {
+          "doc": "POST /api/leads - persist a walkthrough lead and delivery jobs atomically."
+        }
       }
     },
     {

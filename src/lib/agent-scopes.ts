@@ -14,10 +14,10 @@ export const WILDCARD_SCOPE = '*'
 // Sensitive scopes that '*' does NOT cover — must be granted explicitly.
 export const OPT_IN_SCOPES = ['backhaus'] as const
 
-// Standard scope catalog (documentation + future per-route enforcement).
-// Today only `backhaus` is actively enforced (see BACKHAUS_API_PREFIXES); the
-// rest are forward-looking so a key can be dialed back later without code changes.
+// `backhaus` and the new `crm:read` grant are enforced. The other catalog entries
+// remain legacy labels; do not advertise them as restrictions until enforced.
 export const SCOPE_CATALOG = {
+  'crm:read': 'Read CRM prospects, activities, delivery health, and own identity only; enforced allowlist',
   ops: 'Schedules, shifts, dispatch, clients, locations, checklists',
   workforce: 'Time entries, hours, compliance data',
   financials: 'Invoices, billing, financial snapshots, QBO sync',
@@ -54,4 +54,20 @@ export function keyAllowsScope(scopes: string[], required: string): boolean {
  */
 export function backhausScopeForPath(pathname: string): string | null {
   return BACKHAUS_API_PREFIXES.some((p) => pathname.startsWith(p)) ? 'backhaus' : null
+}
+
+/** The new limited grant is enforced in bearer auth AND before MCP self-fetch.
+ * Legacy grants retain their existing behavior; '*' never grants BackHaus.
+ * Missing request context fails closed for limited credentials.
+ */
+export function agentRequestAllowed(scopes: string[], path?: string | null, method?: string | null): boolean {
+  const limited = scopes.includes('crm:read') && !scopes.includes('*')
+  if (!path || !method) return !limited
+  const required = backhausScopeForPath(path)
+  if (required && !keyAllowsScope(scopes, required)) return false
+  if (!limited) return true
+  if (path === '/api/mcp') return method.toUpperCase() === 'POST'
+  if (method.toUpperCase() !== 'GET') return false
+  return path === '/api/users/me' || path === '/api/growth/lead-deliveries' ||
+    /^\/api\/growth\/prospects(?:\/[A-Za-z0-9_-]+(?:\/activities)?)?$/.test(path)
 }

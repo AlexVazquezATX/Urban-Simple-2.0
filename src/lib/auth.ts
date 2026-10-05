@@ -12,7 +12,7 @@ import { headers } from 'next/headers'
 import type { NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { prisma } from '@/lib/db'
-import { authenticateBearer } from '@/lib/api-key-verify'
+import { authenticateBearer, isAgentBearer } from '@/lib/api-key-verify'
 import {
   getImpersonationCookies,
   IMPERSONATION_GATE_EMAIL,
@@ -43,6 +43,9 @@ async function authenticateFromHeaders() {
 // Cache the user lookup within a single request to avoid redundant DB queries
 // React's cache() deduplicates calls within the same request lifecycle
 export const getCurrentUser = cache(async () => {
+  // A supplied agent credential owns this request, even if browser cookies are
+  // also present. Never let a session bypass a limited or revoked bearer key.
+  if (isAgentBearer((await headers()).get('authorization'))) return authenticateFromHeaders()
   const supabase = await createClient()
   const { data: { user: authUser } } = await supabase.auth.getUser()
 

@@ -8,7 +8,7 @@
 import crypto from 'crypto'
 import { prisma } from '@/lib/db'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { backhausScopeForPath, keyAllowsScope } from '@/lib/agent-scopes'
+import { agentRequestAllowed } from '@/lib/agent-scopes'
 import { OAUTH_ACCESS_TOKEN_PREFIX, sha256 } from '@/lib/oauth/core'
 
 const API_KEY_PREFIX = 'us_live_'
@@ -104,10 +104,7 @@ async function enforceAgentPolicy(
   // `backhaus` scope, which the wildcard `*` does NOT grant. `path` is
   // middleware-set, so a client cannot spoof its way past this.
   const path = ctx.path ?? null
-  if (path) {
-    const requiredScope = backhausScopeForPath(path)
-    if (requiredScope && !keyAllowsScope(scopes, requiredScope)) return false
-  }
+  if (!agentRequestAllowed(scopes, path, ctx.method)) return false
 
   // Audit every mutation. AWAITED (not fire-and-forget): on serverless the
   // instance can freeze once the response returns, dropping a detached write —

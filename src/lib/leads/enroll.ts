@@ -1,61 +1,33 @@
-/**
- * Enroll a freshly-created prospect into the walkthrough hot-leads
- * outreach sequence. Configuration:
- *
- *   WALKTHROUGH_OUTREACH_SEQUENCE_ID  — the sequence to drop leads into
- *   CRM_BASE_URL                      — defaults to https://www.urbansimple.net
- *   US_CRM_API_KEY                    — same key used for the prospects POST
- *
- * Failures are logged and swallowed. We never block the form submission
- * on enrollment — emails and the prospect record both already exist by
- * the time we get here.
- */
-const CRM_BASE_URL = process.env.CRM_BASE_URL || 'https://www.urbansimple.net'
+import { prisma } from '@/lib/db'
+import { enrollProspectInSequence } from '@/lib/services/outreach-enroll'
 
-export async function enrollLeadInSequence(prospectId: string): Promise<void> {
-  const sequenceId = process.env.WALKTHROUGH_OUTREACH_SEQUENCE_ID
-  if (!sequenceId) {
-    console.warn(
-      '[leads/enroll] WALKTHROUGH_OUTREACH_SEQUENCE_ID not set; skipping enrollment',
-    )
-    return
-  }
-
-  const apiKey = process.env.US_CRM_API_KEY
-  if (!apiKey) {
-    console.warn('[leads/enroll] US_CRM_API_KEY not set; skipping enrollment')
-    return
-  }
-
-  const url = `${CRM_BASE_URL}/api/growth/outreach/sequences/${sequenceId}/apply`
-
-  console.log('[leads/enroll] start', { sequenceId, prospectId })
-
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({ prospectIds: [prospectId] }),
+// Enrollment uses the same database as intake, with one atomic transaction so
+// a crash cannot leave a half-created campaign that then looks "already enrolled".
+export async function enrollLeadInSequence(prospectId: string, companyId: string, sequenceId: string): Promise<string> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${prospectId + sequenceId}, 2))`
+    const template = await tx.outreachCampaign.findFirst({
+      where: { id: sequenceId, companyId, prospectId: null },
+      include: { messages: { orderBy: { step: 'asc' } } },
     })
-
-    const text = await res.text().catch(() => '')
-
-    if (!res.ok) {
-      console.error('[leads/enroll] enrollment failed', {
-        status: res.status,
-        body: text.slice(0, 500),
-      })
-      return
+    if (!template || !template.messages.length) throw new Error('enrollment_template_invalid')
+    const creator = await tx.user.findFirst({ where: { id: template.createdById, companyId, isActive: true } })
+    if (!creator) throw new Error('enrollment_creator_invalid')
+    const prospect = await tx.prospect.findFirst({
+      where: { id: prospectId, companyId, deletedAt: null }, include: { contacts: true },
+    })
+    if (!prospect || prospect.doNotContact) throw new Error('enrollment_prospect_unavailable')
+    const company = await tx.company.findUnique({
+      where: { id: companyId }, include: { branches: { where: { isActive: true, code: 'AUS' }, take: 1 } },
+    })
+    const result = await enrollProspectInSequence({
+      template, prospect, companyId, userId: template.createdById,
+      company: company ? { ...company, timezone: company.branches[0]?.timezone || 'America/Chicago' } : null,
+    }, tx)
+    if ('skipped' in result) {
+      if (result.reason === 'already_enrolled') return 'already_enrolled'
+      throw new Error('enrollment_skipped')
     }
-
-    console.log('[leads/enroll] enrollment ok', {
-      prospectId,
-      bodyPreview: text.slice(0, 200),
-    })
-  } catch (err) {
-    console.error('[leads/enroll] enrollment threw', err)
-  }
+    return result.campaignId
+  }, { timeout: 10_000 })
 }
