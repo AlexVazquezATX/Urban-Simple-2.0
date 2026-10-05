@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Invalid submission' }, { status: 400 })
   }
   const data = parsed.data
-  if (data.website?.trim()) return NextResponse.json({ ok: true })
+  if (data.website?.trim()) return NextResponse.json({ ok: true, accepted: false })
   const payload: LeadPayload = {
     source: 'urbansimple.net/walkthrough',
     submitted_at: new Date().toISOString(),
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
   try {
     const receipt = await persistLead(payload, data.submission_id)
-    return NextResponse.json({ ok: true, duplicate: receipt.duplicate, notifications: 'queued' })
+    return NextResponse.json({ ok: true, accepted: true, duplicate: receipt.duplicate, notifications: 'queued' })
   } catch (error) {
     if (error instanceof LeadConflictError) {
       return NextResponse.json({ ok: false, error: 'Submission ID already used for a different request' }, { status: 409 })
