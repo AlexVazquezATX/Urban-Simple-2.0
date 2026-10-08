@@ -89,6 +89,106 @@ test('CRM receipt + two delivery jobs commit before success; no external HTTP', 
   assert.equal(writes[0].data.companyId, 'company-test')
 })
 
+// Active walkthrough creative URL values, verified read-only on 2026-10-08.
+const creativeValues = ['off_ticket_v1', 'carousel_v1', 'reel_v3'] as const
+
+for (const utm_content of creativeValues) {
+  test(`creative ${utm_content} persists in intake JSON and CRM with existing attribution`, async () => {
+    const attribution = {
+      utm_source: 'meta', utm_medium: 'paid_social',
+      utm_campaign: 'us_austin_walkthrough_20261005', utm_content,
+      referrer: 'https://www.facebook.com/',
+    }
+    const before = requests.length
+    const response = await POST(request({ ...input, ...attribution }))
+    assert.equal(response.status, 200)
+    const receipt = await response.json()
+    assert.equal(isTrackableLeadResponse(receipt), true)
+    assert.deepEqual(writes.map(w => w.model), ['prospect', 'intake'])
+    for (const [key, value] of Object.entries(attribution)) {
+      assert.equal((writes[0].data.discoveryData as Record<string, unknown>)[key], value)
+      assert.equal((writes[1].data.payload as Record<string, unknown>)[key], value)
+    }
+    assert.deepEqual(writes[1].data.deliveries, { create: [{ kind: 'notification' }, { kind: 'autoresponder' }] })
+    assert.equal(requests.length, before)
+  })
+}
+
+test('missing or empty creative remains optional and preserves campaign attribution', async () => {
+  for (const utm_content of [undefined, '']) {
+    writes = []
+    const response = await POST(request({ ...input, utm_content }))
+    assert.equal(response.status, 200)
+    const stored = writes[1].data.payload as Record<string, unknown>
+    const discovery = writes[0].data.discoveryData as Record<string, unknown>
+    assert.equal(discovery.utm_content, null)
+    assert.equal(discovery.utm_campaign, payload.utm_campaign)
+    assert.equal(stored.utm_campaign, payload.utm_campaign)
+    assert.equal(Object.hasOwn(JSON.parse(JSON.stringify(stored)), 'utm_content'), false)
+  }
+})
+
+test('creative length is bounded at 200 characters and preserves URL-decoded text', async () => {
+  for (const utm_content of ['x'.repeat(200), 'creative + café & variant/2']) {
+    writes = []
+    const response = await POST(request({ ...input, utm_content }))
+    assert.equal(response.status, 200)
+    assert.equal((writes[1].data.payload as Record<string, unknown>).utm_content, utm_content)
+    assert.equal((writes[0].data.discoveryData as Record<string, unknown>).utm_content, utm_content)
+  }
+})
+
+test('invalid or oversized creative input is rejected before database or external writes', async () => {
+  const before = requests.length
+  for (const utm_content of [null, 42, true, {}, ['off_ticket_v1'], 'x'.repeat(201)]) {
+    const response = await POST(request({ ...input, utm_content }))
+    assert.equal(response.status, 400)
+    const receipt = await response.json()
+    assert.equal(isTrackableLeadResponse(receipt), false)
+    assert.deepEqual(writes, [])
+  }
+  assert.equal(requests.length, before)
+})
+
+test('creative replay is deduplicated with or without its submission ID', async () => {
+  const creativePayload = { ...payload, utm_content: creativeValues[0] }
+  const existing = { id: 'existing', companyId: 'company-test', payloadHash: leadFingerprint(creativePayload) }
+  prior = existing
+  let response = await POST(request({ ...input, utm_content: creativeValues[0] }))
+  assert.equal(response.status, 200)
+  let receipt = await response.json()
+  assert.equal(receipt.duplicate, true)
+  assert.equal(isTrackableLeadResponse(receipt), false)
+  prior = null
+  recent = existing
+  response = await POST(request({ ...input, utm_content: creativeValues[0], submission_id: undefined }))
+  assert.equal(response.status, 200)
+  receipt = await response.json()
+  assert.equal(receipt.duplicate, true)
+  assert.equal(isTrackableLeadResponse(receipt), false)
+  assert.deepEqual(writes, [])
+})
+
+test('changing only the creative changes the fingerprint and cannot replace a saved receipt', async () => {
+  const hashes = creativeValues.map(utm_content => leadFingerprint({ ...payload, utm_content }))
+  assert.equal(new Set(hashes).size, creativeValues.length)
+  assert.ok(hashes.every(hash => hash !== leadFingerprint(payload)))
+  prior = { id: 'existing', companyId: 'company-test', payloadHash: hashes[0] }
+  const response = await POST(request({ ...input, utm_content: creativeValues[1] }))
+  assert.equal(response.status, 409)
+  assert.equal(isTrackableLeadResponse(await response.json()), false)
+  assert.deepEqual(writes, [])
+})
+
+test('a honeypot with creative attribution stays unaccepted and cannot track a Lead', async () => {
+  const response = await POST(request({ ...input, utm_content: creativeValues[0], website: 'spam' }))
+  assert.equal(response.status, 200)
+  const receipt = await response.json()
+  assert.deepEqual(receipt, { ok: true, accepted: false })
+  assert.equal(isTrackableLeadResponse(receipt), false)
+  assert.deepEqual(writes, [])
+})
+
 test('outbox failure rolls back intake and CRM and returns retryable 503', async () => {
   failOutbox = true
   const response = await POST(request())

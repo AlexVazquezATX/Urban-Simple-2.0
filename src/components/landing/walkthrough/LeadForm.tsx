@@ -19,6 +19,7 @@ type UtmState = {
   utm_source?: string
   utm_medium?: string
   utm_campaign?: string
+  utm_content?: string
   referrer?: string
 }
 
@@ -30,6 +31,7 @@ function readUtms(): UtmState {
       utm_source: params.get('utm_source') || undefined,
       utm_medium: params.get('utm_medium') || undefined,
       utm_campaign: params.get('utm_campaign') || undefined,
+      utm_content: params.get('utm_content') || undefined,
       referrer: document.referrer || undefined,
     }
   } catch {
@@ -132,6 +134,7 @@ export function LeadForm({ formId = 'lead-form', variant = 'hero' }: LeadFormPro
       utm_source: utm.utm_source,
       utm_medium: utm.utm_medium,
       utm_campaign: utm.utm_campaign,
+      utm_content: utm.utm_content,
       referrer: utm.referrer,
     }
     const body = JSON.stringify(payload)
