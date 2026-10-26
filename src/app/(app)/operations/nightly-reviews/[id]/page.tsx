@@ -62,25 +62,17 @@ async function NightlyReviewDetail({ id }: { id: string }) {
       clientName={reviewContext.location.clientName}
       address={formatAddress(reviewContext.location.address)}
       scheduledTime={reviewContext.shift.startTime}
-      // Shift.date is a calendar date stored at UTC midnight; format it in UTC
-      // or it shows the day before anywhere west of Greenwich.
-      serviceDateLabel={reviewContext.shift.date.toLocaleDateString('en-US', {
-        timeZone: 'UTC',
-        weekday: 'long',
-        month: 'short',
-        day: 'numeric',
-      })}
+      // Formatted in the viewer's language by the form.
+      serviceDate={reviewContext.shift.date.toISOString()}
       associateName={
         associateReport?.associateName ||
         reviewContext.associate?.displayName ||
         reviewContext.manager?.displayName ||
-        'Unassigned'
+        null
       }
       associateReport={associateReport}
       timezone={reviewContext.shift.timezone}
-      checklistName={
-        reviewContext.location.checklistTemplate?.name || 'No checklist assigned'
-      }
+      checklistName={reviewContext.location.checklistTemplate?.name || null}
       checklistItems={checklistItems}
       initialRating={reviewContext.review?.overallRating ?? 0}
       initialNotes={reviewContext.review?.notes ?? ''}

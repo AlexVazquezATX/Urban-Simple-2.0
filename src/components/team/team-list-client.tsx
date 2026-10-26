@@ -19,6 +19,8 @@ import { PageHeader } from '@/components/layout/page-header'
 import { StatCard } from '@/components/ui/stat-card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { TeamMemberDetailPanel } from './team-member-detail-panel'
+import { LanguageToggle } from '@/components/layout/language-toggle'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
 
 interface TeamMember {
   id: string
@@ -51,14 +53,6 @@ interface TeamListClientProps {
   branches: Branch[]
 }
 
-const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
-  MANAGER: 'Manager',
-  ASSOCIATE: 'Associate',
-  CLIENT_USER: 'Client User',
-}
-
 // Chip mapping per the design system: Super Admin/Admin → gold,
 // Manager → teal, Associate (and everything else) → neutral.
 const roleBadgeVariants: Record<string, 'gold' | 'teal' | 'neutral'> = {
@@ -74,6 +68,8 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
   const [selectedMember, setSelectedMember] = useState<TeamMember | null>(null)
   const [isNewMember, setIsNewMember] = useState(false)
   const [canManage, setCanManage] = useState(false)
+  const { t } = useManagerLang()
+  const tm = t.team
 
   // Creating/editing/deactivating team members is admin-only at the API. Gate
   // the write actions on the real role so managers don't get buttons that 403.
@@ -131,53 +127,56 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
         setUsers((prev) =>
           prev.map((u) => (u.id === memberId ? { ...u, isActive: false } : u))
         )
-        toast.success('Team member deactivated')
+        toast.success(tm.toastDeactivated)
       } else {
         const error = await response.json().catch(() => ({}))
-        toast.error(error.error || 'Failed to deactivate member')
+        toast.error(error.error || tm.toastDeactivateFailed)
       }
     } catch (error) {
       console.error('Failed to deactivate member:', error)
-      toast.error('Failed to deactivate member')
+      toast.error(tm.toastDeactivateFailed)
     }
   }
 
   return (
     <div className="space-y-4">
       <PageHeader
-        kicker="OPERATIONS · PEOPLE"
-        title="Team"
-        subtitle="Manage your team members and their access"
+        kicker={tm.kicker}
+        title={tm.title}
+        subtitle={tm.subtitle}
         actions={
-          canManage ? (
-            <Button variant="gold" onClick={handleAddMember}>
-              <Plus className="size-4" />
-              Add Team Member
-            </Button>
-          ) : undefined
+          <>
+            <LanguageToggle />
+            {canManage && (
+              <Button variant="gold" onClick={handleAddMember}>
+                <Plus className="size-4" />
+                {tm.addMember}
+              </Button>
+            )}
+          </>
         }
       />
 
       {/* KPI row */}
       <div className="grid gap-4 md:grid-cols-4">
         <StatCard
-          label="Total Members"
+          label={tm.totalMembers}
           value={users.length}
-          sub={`${activeUsers.length} active`}
+          sub={tm.activeCount(activeUsers.length)}
           icon={Users}
         />
         <StatCard
-          label="Admins"
+          label={tm.admins}
           value={users.filter((u) => u.role === 'ADMIN' || u.role === 'SUPER_ADMIN').length}
           icon={Shield}
         />
         <StatCard
-          label="Managers"
+          label={tm.managers}
           value={users.filter((u) => u.role === 'MANAGER').length}
           icon={UserCheck}
         />
         <StatCard
-          label="Associates"
+          label={tm.associates}
           value={users.filter((u) => u.role === 'ASSOCIATE').length}
           icon={User}
         />
@@ -186,22 +185,20 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
       {/* Active Members */}
       <Card>
         <CardHeader>
-          <CardTitle>Active Members</CardTitle>
-          <CardDescription>
-            {activeUsers.length} active team member{activeUsers.length !== 1 ? 's' : ''}
-          </CardDescription>
+          <CardTitle>{tm.activeMembers}</CardTitle>
+          <CardDescription>{tm.activeDescription(activeUsers.length)}</CardDescription>
         </CardHeader>
         <CardContent>
           {activeUsers.length === 0 ? (
             <EmptyState
               icon={Users}
-              title="No team members yet — it starts with one"
-              description="Add your first team member to give them access to schedules, checklists, and assignments."
+              title={tm.emptyTitle}
+              description={tm.emptyBody}
               action={
                 canManage ? (
                   <Button variant="outline" onClick={handleAddMember}>
                     <Plus className="size-4" />
-                    Add Your First Team Member
+                    {tm.addFirst}
                   </Button>
                 ) : undefined
               }
@@ -210,12 +207,12 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead>Member</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Branch</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{tm.colMember}</TableHead>
+                  <TableHead>{tm.colEmail}</TableHead>
+                  <TableHead>{tm.colPhone}</TableHead>
+                  <TableHead>{tm.colRole}</TableHead>
+                  <TableHead>{tm.colBranch}</TableHead>
+                  <TableHead className="text-right">{tm.colActions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -262,12 +259,12 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                       </TableCell>
                       <TableCell>
                         <Badge variant={roleBadgeVariants[member.role] || 'neutral'}>
-                          {roleLabels[member.role] || member.role}
+                          {t.role[member.role] || member.role}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="neutral">
-                          {member.branch ? member.branch.name : 'All Branches'}
+                          {member.branch ? member.branch.name : tm.allBranches}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -279,7 +276,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                             handleSelectMember(member)
                           }}
                         >
-                          View
+                          {tm.view}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -295,19 +292,17 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
       {inactiveUsers.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Inactive Members</CardTitle>
-            <CardDescription>
-              {inactiveUsers.length} inactive team member{inactiveUsers.length !== 1 ? 's' : ''}
-            </CardDescription>
+            <CardTitle>{tm.inactiveMembers}</CardTitle>
+            <CardDescription>{tm.inactiveDescription(inactiveUsers.length)}</CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead>Member</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{tm.colMember}</TableHead>
+                  <TableHead>{tm.colEmail}</TableHead>
+                  <TableHead>{tm.colRole}</TableHead>
+                  <TableHead className="text-right">{tm.colActions}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -339,7 +334,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="neutral">{roleLabels[member.role] || member.role}</Badge>
+                        <Badge variant="neutral">{t.role[member.role] || member.role}</Badge>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -350,7 +345,7 @@ export function TeamListClient({ initialUsers, branches }: TeamListClientProps) 
                             handleSelectMember(member)
                           }}
                         >
-                          View
+                          {tm.view}
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -6,6 +6,8 @@ import { formatDistanceToNow } from 'date-fns'
 import { Bell, CheckCheck, Loader2 } from 'lucide-react'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import { dateFnsLocale } from '@/lib/i18n/manager'
 
 interface NotificationItem {
   id: string
@@ -42,6 +44,7 @@ export function NotificationBell({
   const [loaded, setLoaded] = useState(false)
   const [markingAll, setMarkingAll] = useState(false)
   const inFlight = useRef(false)
+  const { lang, t } = useManagerLang()
 
   const load = useCallback(async () => {
     if (inFlight.current) return
@@ -117,7 +120,7 @@ export function NotificationBell({
       <PopoverTrigger asChild>
         <button
           type="button"
-          aria-label={unread > 0 ? `Notifications, ${unread} unread` : 'Notifications'}
+          aria-label={t.bell.aria(unread)}
           className={cn(
             'relative grid size-10 shrink-0 place-items-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary/70 hover:text-foreground',
             className
@@ -136,7 +139,7 @@ export function NotificationBell({
         className="w-[min(360px,calc(100vw-24px))] overflow-hidden rounded-[14px] border-border p-0"
       >
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <p className="font-display text-[14px] font-semibold text-foreground">Notifications</p>
+          <p className="font-display text-[14px] font-semibold text-foreground">{t.bell.title}</p>
           <button
             type="button"
             onClick={handleMarkAll}
@@ -144,7 +147,7 @@ export function NotificationBell({
             className="flex items-center gap-1 text-xs font-medium text-primary disabled:text-muted-foreground disabled:opacity-60"
           >
             {markingAll ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCheck className="size-3.5" />}
-            Mark all read
+            {t.bell.markAll}
           </button>
         </div>
         <div className="max-h-[min(440px,70vh)] overflow-y-auto">
@@ -154,7 +157,7 @@ export function NotificationBell({
             </div>
           ) : items.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-              You&apos;re all caught up.
+              {t.bell.caughtUp}
             </p>
           ) : (
             items.map(n => (
@@ -188,7 +191,10 @@ export function NotificationBell({
                     </span>
                   )}
                   <span className="mt-1 block font-mono text-[10.5px] text-muted-foreground">
-                    {formatDistanceToNow(new Date(n.createdAt), { addSuffix: true })}
+                    {formatDistanceToNow(new Date(n.createdAt), {
+                      addSuffix: true,
+                      locale: dateFnsLocale(lang),
+                    })}
                   </span>
                 </span>
               </button>

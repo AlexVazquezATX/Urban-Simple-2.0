@@ -48,17 +48,23 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PageHeader } from '@/components/layout/page-header'
+import { LanguageToggle } from '@/components/layout/language-toggle'
 import {
   ISSUE_CATEGORIES,
   ISSUE_STATUSES,
   REQUEST_KINDS,
   SEVERITIES,
-  categoryLabel,
-  issueTypeLabel,
   reasonLabel,
-  statusLabel,
   type IncompleteItem,
 } from '@/lib/ops/constants'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import {
+  categoryLabelFor,
+  dateFnsLocale,
+  localeFor,
+  managerStrings,
+  type ManagerLang,
+} from '@/lib/i18n/manager'
 import {
   IssueSeverityBadge,
   IssueSourceBadge,
@@ -135,8 +141,8 @@ function personName(p: Person | null, fallback = 'Unknown') {
   return name || fallback
 }
 
-function formatDateTime(value: string) {
-  return new Date(value).toLocaleString('en-US', {
+function formatDateTime(value: string, lang: ManagerLang) {
+  return new Date(value).toLocaleString(localeFor(lang), {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -146,8 +152,8 @@ function formatDateTime(value: string) {
 }
 
 // Calendar dates (service date, preferred date) are stored at UTC midnight.
-function formatCalendarDate(value: string) {
-  return new Date(value).toLocaleDateString('en-US', {
+function formatCalendarDate(value: string, lang: ManagerLang) {
+  return new Date(value).toLocaleDateString(localeFor(lang), {
     weekday: 'short',
     month: 'short',
     day: 'numeric',
@@ -164,9 +170,12 @@ export function IssueDetail({
   canDelete,
 }: IssueDetailProps) {
   const router = useRouter()
+  const { lang, t } = useManagerLang()
+  const d = t.issue
   const isRequest = issue.type === 'request'
   const isUnfinished = issue.type === 'incomplete_work'
-  const noun = isRequest ? 'request' : 'issue'
+  const noun = d.noun(isRequest)
+  const unknown = t.common.unknown
 
   // Manage form
   const [status, setStatus] = useState(issue.status)
@@ -207,11 +216,11 @@ export function IssueDetail({
   const itemsBySection = useMemo(() => {
     const groups = new Map<string, IncompleteItem[]>()
     for (const item of issue.serviceLog?.incompleteItems ?? []) {
-      const key = item.section || 'General'
+      const key = item.section || t.common.general
       groups.set(key, [...(groups.get(key) ?? []), item])
     }
     return [...groups.entries()]
-  }, [issue.serviceLog])
+  }, [issue.serviceLog, t])
 
   const patch = async (body: Record<string, unknown>) => {
     const res = await fetch(`/api/issues/${issue.id}`, {
@@ -222,7 +231,7 @@ export function IssueDetail({
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      throw new Error(err.error || `Failed to update ${noun}`)
+      throw new Error(err.error || d.toastUpdateFailed(noun))
     }
   }
 
@@ -239,12 +248,10 @@ export function IssueDetail({
       if (category !== issue.category) body.category = category
       await patch(body)
       const closing = (status === 'resolved' || status === 'closed') && status !== issue.status
-      toast.success(
-        closing && visible ? `Saved. The client will get a resolved email.` : 'Saved'
-      )
+      toast.success(closing && visible ? d.toastSavedResolved : d.toastSaved)
       router.refresh()
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : `Failed to update ${noun}`)
+      toast.error(error instanceof Error ? error.message : d.toastUpdateFailed(noun))
     } finally {
       setIsSaving(false)
     }
@@ -255,11 +262,11 @@ export function IssueDetail({
     setVisible(next)
     try {
       await patch({ visibleToClient: next })
-      toast.success(next ? 'Visible in the client portal' : 'Hidden from the client portal')
+      toast.success(next ? d.toastVisible : d.toastHidden)
       router.refresh()
     } catch (error: unknown) {
       setVisible(!next)
-      toast.error(error instanceof Error ? error.message : 'Failed to update visibility')
+      toast.error(error instanceof Error ? error.message : d.toastVisibilityFailed)
     } finally {
       setTogglingVisible(false)
     }
@@ -275,15 +282,15 @@ export function IssueDetail({
         body: JSON.stringify({ message: clientMessage.trim() || undefined }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Failed to send to client')
+      if (!res.ok) throw new Error(data.error || d.toastSendFailed)
       const delivered = (data.emailed ?? 0) + (data.texted ?? 0)
-      if (delivered > 0) toast.success(data.message || 'Sent to client')
-      else toast.warning(data.message || 'Nobody was alerted')
+      if (delivered > 0) toast.success(data.message || d.toastSent)
+      else toast.warning(data.message || d.toastNobody)
       setVisible(true)
       setClientMessage('')
       router.refresh()
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to send to client')
+      toast.error(error instanceof Error ? error.message : d.toastSendFailed)
     } finally {
       setSending(false)
     }
@@ -301,15 +308,13 @@ export function IssueDetail({
       })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || 'Failed to post comment')
+        throw new Error(err.error || d.toastCommentFailed)
       }
-      toast.success(
-        !isInternal && visible ? 'Reply posted and emailed to the client' : 'Comment posted'
-      )
+      toast.success(!isInternal && visible ? d.toastReplyEmailed : d.toastCommentPosted)
       setComment('')
       router.refresh()
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to post comment')
+      toast.error(error instanceof Error ? error.message : d.toastCommentFailed)
     } finally {
       setPosting(false)
     }
@@ -321,12 +326,12 @@ export function IssueDetail({
       const res = await fetch(`/api/issues/${issue.id}`, { method: 'DELETE', credentials: 'include' })
       if (!res.ok) {
         const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || `Failed to delete ${noun}`)
+        throw new Error(err.error || d.toastDeleteFailed(noun))
       }
-      toast.success(`Deleted ${noun}`)
+      toast.success(d.toastDeleted(noun))
       router.push('/operations/issues')
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : `Failed to delete ${noun}`)
+      toast.error(error instanceof Error ? error.message : d.toastDeleteFailed(noun))
       setDeleting(false)
     }
   }
@@ -334,20 +339,21 @@ export function IssueDetail({
   return (
     <div className="space-y-6">
       <PageHeader
-        kicker={`OPERATIONS · ${issueTypeLabel(issue.type).toUpperCase()}`}
+        kicker={d.kicker(t.issueType[issue.type] ?? t.issueType.issue)}
         title={issue.title}
         backHref="/operations/issues"
+        actions={<LanguageToggle />}
       >
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <IssueTypeBadge type={issue.type} />
-          <IssueSourceBadge source={issue.source} />
-          <IssueStatusBadge status={issue.status} />
-          {!isRequest && <IssueSeverityBadge severity={issue.severity} />}
-          <Badge variant="neutral">{categoryLabel(issue.category, issue.type)}</Badge>
+          <IssueTypeBadge type={issue.type} lang={lang} />
+          <IssueSourceBadge source={issue.source} lang={lang} />
+          <IssueStatusBadge status={issue.status} lang={lang} />
+          {!isRequest && <IssueSeverityBadge severity={issue.severity} lang={lang} />}
+          <Badge variant="neutral">{categoryLabelFor(issue.category, issue.type, lang)}</Badge>
           {!issue.visibleToClient && (
             <Badge variant="neutral" className="gap-1">
               <EyeOff className="size-3" />
-              Internal
+              {t.common.internal}
             </Badge>
           )}
         </div>
@@ -358,39 +364,39 @@ export function IssueDetail({
           {/* Report */}
           <Card className="gap-0 py-0">
             <CardHeader className="px-5 pb-3 pt-5">
-              <CardTitle>{isRequest ? 'Request' : 'Report'}</CardTitle>
+              <CardTitle>{isRequest ? d.request : d.report}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 px-5 pb-5">
               {isRequest && (
                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                   <span className="flex items-center gap-1.5 text-muted-foreground">
                     <ListChecks className="size-3.5" />
-                    Request type:
+                    {d.requestTypeColon}
                     <span className="font-medium text-foreground">
-                      {categoryLabel(issue.category, issue.type)}
+                      {categoryLabelFor(issue.category, issue.type, lang)}
                     </span>
                   </span>
                   <span className="flex items-center gap-1.5 text-muted-foreground">
                     <Calendar className="size-3.5" />
-                    Preferred date:
+                    {d.preferredDate}
                     <span className="font-medium text-foreground">
-                      {issue.preferredDate ? formatCalendarDate(issue.preferredDate) : 'No preference'}
+                      {issue.preferredDate ? formatCalendarDate(issue.preferredDate, lang) : d.noPreference}
                     </span>
                   </span>
                 </div>
               )}
 
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                {issue.description?.trim() || 'No description was provided.'}
+                {issue.description?.trim() || d.noDescription}
               </p>
 
               {issue.photos.length > 0 && (
                 <div>
                   <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
                     <Camera className="size-3.5" />
-                    Photos
+                    {t.common.photos}
                   </div>
-                  <PhotoGrid photos={issue.photos} onOpen={setLightbox} />
+                  <PhotoGrid photos={issue.photos} onOpen={setLightbox} lang={lang} />
                 </div>
               )}
             </CardContent>
@@ -402,16 +408,16 @@ export function IssueDetail({
               <CardHeader className="px-5 pb-3 pt-5">
                 <CardTitle className="flex items-center gap-2">
                   <ListChecks className="size-4 text-muted-foreground" />
-                  Not finished ({issue.serviceLog.incompleteItems.length})
+                  {d.notFinished(issue.serviceLog.incompleteItems.length)}
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  {formatCalendarDate(issue.serviceLog.serviceDate)}
-                  {issue.serviceLog.associate && ` · ${personName(issue.serviceLog.associate)}`}
+                  {formatCalendarDate(issue.serviceLog.serviceDate, lang)}
+                  {issue.serviceLog.associate && ` · ${personName(issue.serviceLog.associate, unknown)}`}
                 </p>
               </CardHeader>
               <CardContent className="space-y-5 px-5 pb-5">
                 {itemsBySection.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No item details were saved with this visit.</p>
+                  <p className="text-sm text-muted-foreground">{d.noItemDetails}</p>
                 ) : (
                   itemsBySection.map(([section, items]) => (
                     <div key={section}>
@@ -424,7 +430,7 @@ export function IssueDetail({
                           >
                             <div className="flex flex-wrap items-start justify-between gap-2">
                               <p className="text-sm font-medium text-foreground">{item.text}</p>
-                              <Badge variant="gold">{reasonLabel(item.reason)}</Badge>
+                              <Badge variant="gold">{reasonLabel(item.reason, lang)}</Badge>
                             </div>
                             {item.note && (
                               <p className="mt-1.5 whitespace-pre-wrap text-[13px] leading-relaxed text-muted-foreground">
@@ -433,7 +439,7 @@ export function IssueDetail({
                             )}
                             {item.photos && item.photos.length > 0 && (
                               <div className="mt-2">
-                                <PhotoGrid photos={item.photos} onOpen={setLightbox} compact />
+                                <PhotoGrid photos={item.photos} onOpen={setLightbox} compact lang={lang} />
                               </div>
                             )}
                           </div>
@@ -451,12 +457,12 @@ export function IssueDetail({
             <CardHeader className="px-5 pb-3 pt-5">
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="size-4 text-muted-foreground" />
-                Discussion
+                {d.discussion}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 px-5 pb-5">
               {issue.comments.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No comments yet.</p>
+                <p className="text-sm text-muted-foreground">{d.noComments}</p>
               ) : (
                 issue.comments.map((c) => (
                   <div
@@ -468,13 +474,13 @@ export function IssueDetail({
                     }
                   >
                     <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">{personName(c.user)}</span>
-                      {c.user?.role === 'CLIENT_USER' && <Badge variant="teal">Client</Badge>}
-                      <span>{formatDateTime(c.createdAt)}</span>
+                      <span className="font-medium text-foreground">{personName(c.user, unknown)}</span>
+                      {c.user?.role === 'CLIENT_USER' && <Badge variant="teal">{d.client}</Badge>}
+                      <span>{formatDateTime(c.createdAt, lang)}</span>
                       {c.isInternal && (
                         <Badge variant="neutral" className="gap-1">
                           <Lock className="size-3" />
-                          Internal
+                          {t.common.internal}
                         </Badge>
                       )}
                     </div>
@@ -489,17 +495,17 @@ export function IssueDetail({
                 <Textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder={isInternal ? 'Add a note for the team' : 'Reply to the client'}
+                  placeholder={isInternal ? d.notePlaceholder : d.replyPlaceholder}
                   rows={3}
                 />
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   {canManage ? (
                     <label className="flex items-center gap-2 text-sm text-foreground">
                       <Switch checked={isInternal} onCheckedChange={setIsInternal} />
-                      Internal note (hidden from client)
+                      {d.internalToggle}
                     </label>
                   ) : (
-                    <span className="text-xs text-muted-foreground">Visible to managers only</span>
+                    <span className="text-xs text-muted-foreground">{d.managersOnly}</span>
                   )}
                   <Button
                     onClick={handlePostComment}
@@ -508,14 +514,12 @@ export function IssueDetail({
                     className="w-full sm:w-auto"
                   >
                     {posting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    {isInternal ? 'Add note' : 'Send reply'}
+                    {isInternal ? d.addNote : d.sendReply}
                   </Button>
                 </div>
                 {canManage && !isInternal && (
                   <p className="text-xs text-muted-foreground">
-                    {visible
-                      ? 'The client sees this in their portal and gets it by email.'
-                      : `This ${noun} is not shared with the client yet, so they will only see this reply once it is.`}
+                    {visible ? d.replyVisible : d.replyHidden(noun)}
                   </p>
                 )}
               </div>
@@ -528,11 +532,11 @@ export function IssueDetail({
           {canManage && (
             <Card className="gap-0 py-0">
               <CardHeader className="px-5 pb-3 pt-5">
-                <CardTitle>Manage</CardTitle>
+                <CardTitle>{d.manage}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-5 pb-5">
                 <div className="space-y-1.5">
-                  <Label htmlFor="issue-status">Status</Label>
+                  <Label htmlFor="issue-status">{d.status}</Label>
                   <Select value={status} onValueChange={setStatus}>
                     <SelectTrigger id="issue-status" className="w-full">
                       <SelectValue />
@@ -540,7 +544,7 @@ export function IssueDetail({
                     <SelectContent>
                       {ISSUE_STATUSES.map((s) => (
                         <SelectItem key={s} value={s}>
-                          {statusLabel(s)}
+                          {t.issueStatus[s]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -548,20 +552,22 @@ export function IssueDetail({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="issue-assignee">Assigned to</Label>
+                  <Label htmlFor="issue-assignee">{d.assignedTo}</Label>
                   <Select value={assignedToId} onValueChange={setAssignedToId}>
                     <SelectTrigger id="issue-assignee" className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
+                      <SelectItem value={UNASSIGNED}>{t.common.unassigned}</SelectItem>
                       {issue.assignedTo && !staff.some((s) => s.id === issue.assignedTo!.id) && (
-                        <SelectItem value={issue.assignedTo.id}>{personName(issue.assignedTo)}</SelectItem>
+                        <SelectItem value={issue.assignedTo.id}>
+                          {personName(issue.assignedTo, unknown)}
+                        </SelectItem>
                       )}
                       {staff.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {`${s.firstName} ${s.lastName}`.trim()}
-                          {s.role === 'ASSOCIATE' ? ' (associate)' : ''}
+                          {s.role === 'ASSOCIATE' ? d.associateSuffix : ''}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -571,7 +577,7 @@ export function IssueDetail({
                 <div className="grid grid-cols-2 gap-3">
                   {!isRequest && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="issue-severity">Severity</Label>
+                      <Label htmlFor="issue-severity">{d.severity}</Label>
                       <Select value={severity} onValueChange={setSeverity}>
                         <SelectTrigger id="issue-severity" className="w-full">
                           <SelectValue />
@@ -579,7 +585,7 @@ export function IssueDetail({
                         <SelectContent>
                           {SEVERITIES.map((s) => (
                             <SelectItem key={s} value={s} className="capitalize">
-                              {s.charAt(0).toUpperCase() + s.slice(1)}
+                              {t.severity[s]}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -587,7 +593,7 @@ export function IssueDetail({
                     </div>
                   )}
                   <div className={isRequest ? 'col-span-2 space-y-1.5' : 'space-y-1.5'}>
-                    <Label htmlFor="issue-category">{isRequest ? 'Request type' : 'Category'}</Label>
+                    <Label htmlFor="issue-category">{isRequest ? d.requestType : d.category}</Label>
                     <Select value={category} onValueChange={setCategory}>
                       <SelectTrigger id="issue-category" className="w-full">
                         <SelectValue />
@@ -595,12 +601,12 @@ export function IssueDetail({
                       <SelectContent>
                         {!categoryKnown && (
                           <SelectItem value={issue.category}>
-                            {categoryLabel(issue.category, issue.type)}
+                            {categoryLabelFor(issue.category, issue.type, lang)}
                           </SelectItem>
                         )}
                         {categoryOptions.map((c) => (
                           <SelectItem key={c.id} value={c.id}>
-                            {c.label}
+                            {categoryLabelFor(c.id, issue.type, lang)}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -609,20 +615,18 @@ export function IssueDetail({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label htmlFor="issue-resolution">Resolution (shared with client)</Label>
+                  <Label htmlFor="issue-resolution">{d.resolution}</Label>
                   <Textarea
                     id="issue-resolution"
                     value={resolution}
                     onChange={(event) => setResolution(event.target.value)}
                     placeholder={
-                      isRequest
-                        ? 'What was scheduled or done. The client sees this.'
-                        : 'What was done to fix it. The client sees this.'
+                      isRequest ? d.resolutionPlaceholderRequest : d.resolutionPlaceholderIssue
                     }
                     rows={4}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Included in the resolved email when the client can see this {noun}.
+                    {d.resolutionHint(noun)}
                   </p>
                 </div>
 
@@ -635,12 +639,12 @@ export function IssueDetail({
                   {isSaving ? (
                     <>
                       <Loader2 className="size-4 animate-spin" />
-                      Saving
+                      {d.saving}
                     </>
                   ) : (
                     <>
                       <CheckCircle2 className="size-4" />
-                      Save changes
+                      {d.saveChanges}
                     </>
                   )}
                 </Button>
@@ -651,48 +655,49 @@ export function IssueDetail({
           {canManage && (
             <Card className="gap-0 py-0">
               <CardHeader className="px-5 pb-3 pt-5">
-                <CardTitle>Client visibility</CardTitle>
+                <CardTitle>{d.clientVisibility}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 px-5 pb-5">
                 <label className="flex items-start justify-between gap-3">
                   <span>
                     <span className="flex items-center gap-1.5 text-sm font-medium text-foreground">
                       {visible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                      {visible ? 'Client can see this' : 'Hidden from client'}
+                      {visible ? d.clientCanSee : d.hiddenFromClient}
                     </span>
                     <span className="mt-0.5 block text-xs text-muted-foreground">
-                      {visible
-                        ? 'Shows in their portal. Public replies and status changes are emailed.'
-                        : 'Internal only. Turning this on does not send an alert.'}
+                      {visible ? d.visibleHint : d.hiddenHint}
                     </span>
                   </span>
                   <Switch
                     checked={visible}
                     onCheckedChange={handleToggleVisible}
                     disabled={togglingVisible}
-                    aria-label="Visible to client"
+                    aria-label={d.visibleAria}
                   />
                 </label>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Last notified</span>
+                  <span className="text-muted-foreground">{d.lastNotified}</span>
                   <span className="text-right font-medium text-foreground">
                     {issue.clientNotifiedAt
-                      ? formatDistanceToNow(new Date(issue.clientNotifiedAt), { addSuffix: true })
-                      : 'Never'}
+                      ? formatDistanceToNow(new Date(issue.clientNotifiedAt), {
+                          addSuffix: true,
+                          locale: dateFnsLocale(lang),
+                        })
+                      : d.never}
                   </span>
                 </div>
 
                 <div>
                   <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                    Alert recipients for {issue.location?.name ?? 'this location'}
+                    {d.recipientsFor(issue.location?.name ?? null)}
                   </p>
                   {recipients.length === 0 ? (
                     <p className="rounded-[10px] border border-dashed border-border p-3 text-xs text-muted-foreground">
-                      No client contacts get alerts here yet.{' '}
+                      {d.noRecipients}{' '}
                       {issue.client && (
                         <Link href={`/clients/${issue.client.id}`} className="font-medium text-primary hover:underline">
-                          Set up alerts
+                          {d.setUpAlerts}
                         </Link>
                       )}
                     </p>
@@ -708,13 +713,13 @@ export function IssueDetail({
                               </span>
                             )}
                             {r.phone && (
-                              <span title={textingEnabled ? r.phone : `${r.phone} (texting not set up yet)`}>
+                              <span title={textingEnabled ? r.phone : d.textingOff(r.phone)}>
                                 <MessageSquareText
                                   className={textingEnabled ? 'size-3.5' : 'size-3.5 opacity-40'}
                                 />
                               </span>
                             )}
-                            {r.smsOptedOut && <span className="text-[11px]">Texts stopped</span>}
+                            {r.smsOptedOut && <span className="text-[11px]">{d.textsStopped}</span>}
                           </span>
                         </div>
                       ))}
@@ -723,7 +728,7 @@ export function IssueDetail({
                           href={`/clients/${issue.client.id}`}
                           className="inline-block pt-1 text-xs font-medium text-primary hover:underline"
                         >
-                          Edit contacts
+                          {d.editContacts}
                         </Link>
                       )}
                     </div>
@@ -731,12 +736,12 @@ export function IssueDetail({
                 </div>
 
                 <div className="space-y-2 border-t border-border pt-4">
-                  <Label htmlFor="client-message">Message to client (optional)</Label>
+                  <Label htmlFor="client-message">{d.messageToClient}</Label>
                   <Textarea
                     id="client-message"
                     value={clientMessage}
                     onChange={(e) => setClientMessage(e.target.value)}
-                    placeholder="Short note to go with the alert. Leave blank to send the description."
+                    placeholder={d.messagePlaceholder}
                     rows={3}
                   />
                   <Button
@@ -746,11 +751,9 @@ export function IssueDetail({
                     disabled={sending}
                   >
                     {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    Send to client
+                    {d.sendToClient}
                   </Button>
-                  <p className="text-xs text-muted-foreground">
-                    Shares it in their portal and alerts the contacts above.
-                  </p>
+                  <p className="text-xs text-muted-foreground">{d.sendHint}</p>
                 </div>
               </CardContent>
             </Card>
@@ -758,37 +761,37 @@ export function IssueDetail({
 
           <Card className="gap-0 py-0">
             <CardHeader className="px-5 pb-3 pt-5">
-              <CardTitle>Details</CardTitle>
+              <CardTitle>{d.details}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 px-5 pb-5 text-sm">
               <DetailRow
                 icon={Building2}
-                label="Client"
-                value={issue.client?.name ?? 'Unknown'}
+                label={d.client}
+                value={issue.client?.name ?? unknown}
                 href={issue.client ? `/clients/${issue.client.id}` : undefined}
               />
               <DetailRow
                 icon={MapPin}
-                label="Location"
-                value={issue.location?.name ?? 'Unknown'}
+                label={d.location}
+                value={issue.location?.name ?? unknown}
                 href={issue.location ? `/locations/${issue.location.id}` : undefined}
               />
-              <DetailRow icon={User} label="Reported by" value={personName(issue.reportedBy)} />
+              <DetailRow icon={User} label={d.reportedBy} value={personName(issue.reportedBy, unknown)} />
               <DetailRow
                 icon={User}
-                label="Assigned to"
-                value={issue.assignedTo ? personName(issue.assignedTo) : 'Unassigned'}
+                label={d.assignedTo}
+                value={issue.assignedTo ? personName(issue.assignedTo, unknown) : t.common.unassigned}
               />
               <DetailRow
                 icon={Clock}
-                label="Reported"
-                value={`${formatDateTime(issue.createdAt)}`}
+                label={d.reported}
+                value={formatDateTime(issue.createdAt, lang)}
               />
               {issue.resolvedAt && (
                 <DetailRow
                   icon={CheckCircle2}
-                  label="Resolved"
-                  value={formatDateTime(issue.resolvedAt)}
+                  label={d.resolved}
+                  value={formatDateTime(issue.resolvedAt, lang)}
                 />
               )}
             </CardContent>
@@ -801,7 +804,7 @@ export function IssueDetail({
               onClick={() => setConfirmDelete(true)}
             >
               <Trash2 className="size-4" />
-              Delete {noun}
+              {d.deleteNoun(noun)}
             </Button>
           )}
         </div>
@@ -809,13 +812,13 @@ export function IssueDetail({
 
       <Dialog open={!!lightbox} onOpenChange={(open) => !open && setLightbox(null)}>
         <DialogContent className="max-w-[min(960px,calc(100vw-24px))] border-border bg-card p-2 sm:p-3">
-          <DialogTitle className="sr-only">Photo</DialogTitle>
+          <DialogTitle className="sr-only">{t.common.photo}</DialogTitle>
           {lightbox && (
             <a href={lightbox} target="_blank" rel="noopener noreferrer">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={lightbox}
-                alt="Full size photo"
+                alt={d.fullPhoto}
                 className="max-h-[80vh] w-full rounded-[10px] object-contain"
               />
             </a>
@@ -826,17 +829,14 @@ export function IssueDetail({
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete this {noun}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes it and its discussion. Resolve or close it instead if you
-              want to keep the history.
-            </AlertDialogDescription>
+            <AlertDialogTitle>{d.deleteTitle(noun)}</AlertDialogTitle>
+            <AlertDialogDescription>{d.deleteBody}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t.common.cancel}</AlertDialogCancel>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Delete
+              {d.delete}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -849,11 +849,14 @@ function PhotoGrid({
   photos,
   onOpen,
   compact,
+  lang,
 }: {
   photos: string[]
   onOpen: (url: string) => void
   compact?: boolean
+  lang: ManagerLang
 }) {
+  const d = managerStrings(lang).issue
   return (
     <div className={compact ? 'flex flex-wrap gap-2' : 'grid grid-cols-2 gap-3 sm:grid-cols-3'}>
       {photos.map((url, index) => (
@@ -862,12 +865,12 @@ function PhotoGrid({
           type="button"
           onClick={() => onOpen(url)}
           className={compact ? 'block size-16' : 'block h-[150px]'}
-          aria-label={`Open photo ${index + 1}`}
+          aria-label={d.openPhoto(index + 1)}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
-            alt={`Photo ${index + 1}`}
+            alt={d.photoN(index + 1)}
             className="h-full w-full rounded-[10px] border border-border object-cover transition-opacity hover:opacity-90"
           />
         </button>

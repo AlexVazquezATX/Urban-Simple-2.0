@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Moon, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import { localeFor, type ManagerLang } from '@/lib/i18n/manager'
 
 interface ShiftLocation {
   id: string
@@ -38,16 +40,16 @@ interface AssociateStop {
   issueId: string | null
 }
 
-const stopStatusConfig: Record<StopStatus, { label: string; tone: 'neutral' | 'teal' | 'green' | 'gold' }> = {
-  not_started: { label: 'Not started', tone: 'neutral' },
-  on_site: { label: 'On site', tone: 'teal' },
-  clocked_out: { label: 'Clocked out', tone: 'gold' },
-  submitted: { label: 'Submitted', tone: 'green' },
+const stopStatusTone: Record<StopStatus, 'neutral' | 'teal' | 'green' | 'gold'> = {
+  not_started: 'neutral',
+  on_site: 'teal',
+  clocked_out: 'gold',
+  submitted: 'green',
 }
 
-function formatClock(iso: string | null): string | null {
+function formatClock(iso: string | null, lang: ManagerLang): string | null {
   if (!iso) return null
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(localeFor(lang), { hour: 'numeric', minute: '2-digit' })
 }
 
 interface TonightShift {
@@ -65,12 +67,12 @@ interface TonightShift {
   stops?: AssociateStop[]
 }
 
-const statusConfig: Record<string, { label: string; tone: 'neutral' | 'gold' | 'teal' | 'coral' | 'green' }> = {
-  scheduled: { label: 'Scheduled', tone: 'neutral' },
-  in_progress: { label: 'In progress', tone: 'teal' },
-  completed: { label: 'Completed', tone: 'green' },
-  missed: { label: 'Missed', tone: 'coral' },
-  cancelled: { label: 'Cancelled', tone: 'neutral' },
+const statusTone: Record<string, 'neutral' | 'gold' | 'teal' | 'coral' | 'green'> = {
+  scheduled: 'neutral',
+  in_progress: 'teal',
+  completed: 'green',
+  missed: 'coral',
+  cancelled: 'neutral',
 }
 
 /** "21:30" → "9:30 PM" (falls back to the raw string). */
@@ -88,6 +90,7 @@ const avatarFills = ['bg-sky-deep', 'bg-peach-deep', 'bg-sage-deep', 'bg-ink-600
 export function TonightsOperations() {
   const [shifts, setShifts] = useState<TonightShift[]>([])
   const [loading, setLoading] = useState(true)
+  const { lang, t } = useManagerLang()
 
   const fetchShifts = useCallback(async () => {
     try {
@@ -118,12 +121,12 @@ export function TonightsOperations() {
       <CardHeader className="px-5 pb-3.5">
         <div className="flex items-center gap-2.5">
           <Moon className="size-4 shrink-0 text-teal-600 dark:text-teal-300" />
-          <CardTitle>Tonight&apos;s operations</CardTitle>
+          <CardTitle>{t.tonight.title}</CardTitle>
           <span className="flex-1" />
           {!loading && shifts.length > 0 && (
             <span className="text-[12.5px] text-muted-foreground">
-              {shifts.length} {shifts.length === 1 ? 'shift' : 'shifts'}
-              {crewCount > 0 && ` · ${crewCount} crew`}
+              {t.dash.shifts(shifts.length)}
+              {crewCount > 0 && t.tonight.crew(crewCount)}
             </span>
           )}
         </div>
@@ -132,26 +135,26 @@ export function TonightsOperations() {
         {loading ? (
           <div className="flex items-center justify-center py-6 text-muted-foreground">
             <Loader2 className="mr-2 size-5 animate-spin" />
-            Loading...
+            {t.common.loading}
           </div>
         ) : shifts.length === 0 ? (
           <EmptyState
             icon={Moon}
-            title="No shifts tonight — enjoy the quiet"
-            description="Shifts scheduled for tonight will show up here as the crew heads out."
+            title={t.tonight.emptyTitle}
+            description={t.tonight.emptyBody}
             className="py-8"
           />
         ) : (
           <div className="flex flex-col gap-2">
             {shifts.map(shift => {
-              const config = statusConfig[shift.status] || statusConfig.scheduled
+              const statusKey = statusTone[shift.status] ? shift.status : 'scheduled'
               const locations = shift.shiftLocations.length > 0
                 ? shift.shiftLocations.map(sl => sl.location)
                 : shift.location
                   ? [shift.location]
                   : []
               const clientName =
-                locations[0]?.client?.name || locations[0]?.name || 'Location TBD'
+                locations[0]?.client?.name || locations[0]?.name || t.tonight.locationTbd
               const place = locations.map(loc => loc.name).join(' · ')
               const crew = [shift.associate, shift.manager].filter(
                 (person): person is { id: string; firstName: string; lastName: string } =>
@@ -190,22 +193,22 @@ export function TonightsOperations() {
                       ))}
                       {shift.associate ? (
                         <span className="ml-1.5 hidden text-[11.5px] text-muted-foreground sm:inline">
-                          {shift.associate.firstName} leads
+                          {t.tonight.leads(shift.associate.firstName)}
                         </span>
                       ) : shift.status === 'scheduled' ? (
                         <span className="ml-1.5 text-[11.5px] font-semibold text-coral-600 dark:text-coral-300">
-                          Unassigned
+                          {t.common.unassigned}
                         </span>
                       ) : null}
                     </div>
-                    <Badge variant={config.tone}>{config.label}</Badge>
+                    <Badge variant={statusTone[statusKey]}>{t.shiftStatus[statusKey]}</Badge>
                   </div>
                   {stops.length > 0 && (
                     <div className="mt-2.5 flex flex-col gap-1.5 border-t border-border/60 pt-2.5">
                       {stops.map(stop => {
-                        const stopConfig = stopStatusConfig[stop.status] ?? stopStatusConfig.not_started
-                        const clockIn = formatClock(stop.clockIn)
-                        const clockOut = formatClock(stop.clockOut)
+                        const stopKey: StopStatus = stopStatusTone[stop.status] ? stop.status : 'not_started'
+                        const clockIn = formatClock(stop.clockIn, lang)
+                        const clockOut = formatClock(stop.clockOut, lang)
                         return (
                           <div
                             key={stop.locationId}
@@ -216,7 +219,7 @@ export function TonightsOperations() {
                             </span>
                             {clockIn && (
                               <span className="font-mono tabular-nums">
-                                {clockIn}–{clockOut ?? 'now'}
+                                {clockIn}–{clockOut ?? t.tonight.now}
                               </span>
                             )}
                             {stop.total > 0 && (
@@ -227,12 +230,12 @@ export function TonightsOperations() {
                             {stop.notDoneCount > 0 &&
                               (stop.issueId ? (
                                 <Link href={`/operations/issues/${stop.issueId}`}>
-                                  <Badge variant="coral">{stop.notDoneCount} not done</Badge>
+                                  <Badge variant="coral">{t.common.notDone(stop.notDoneCount)}</Badge>
                                 </Link>
                               ) : (
-                                <Badge variant="coral">{stop.notDoneCount} not done</Badge>
+                                <Badge variant="coral">{t.common.notDone(stop.notDoneCount)}</Badge>
                               ))}
-                            <Badge variant={stopConfig.tone}>{stopConfig.label}</Badge>
+                            <Badge variant={stopStatusTone[stopKey]}>{t.stopStatus[stopKey]}</Badge>
                           </div>
                         )
                       })}

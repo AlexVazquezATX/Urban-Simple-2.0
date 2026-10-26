@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ISSUE_CATEGORIES, SEVERITIES } from '@/lib/ops/constants'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
 import { cn } from '@/lib/utils'
 
 export interface LocationOption {
@@ -60,6 +61,8 @@ export function NewIssueDialog({
   const [visibleToClient, setVisibleToClient] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const { t } = useManagerLang()
+  const n = t.newIssue
 
   const selected = locations.find((l) => l.id === locationId)
   const filtered = useMemo(() => {
@@ -88,7 +91,7 @@ export function NewIssueDialog({
     const room = MAX_PHOTOS - photos.length
     const batch = Array.from(files).slice(0, room)
     if (batch.length === 0) {
-      toast.error(`Up to ${MAX_PHOTOS} photos`)
+      toast.error(n.maxPhotos(MAX_PHOTOS))
       return
     }
     setUploading(true)
@@ -100,12 +103,12 @@ export function NewIssueDialog({
         form.append('folder', 'issues')
         const res = await fetch('/api/upload', { method: 'POST', body: form })
         const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data.error || 'Upload failed')
+        if (!res.ok) throw new Error(data.error || n.uploadFailed)
         urls.push(data.url)
       }
       setPhotos((prev) => [...prev, ...urls])
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Upload failed')
+      toast.error(error instanceof Error ? error.message : n.uploadFailed)
     } finally {
       setUploading(false)
       if (fileRef.current) fileRef.current.value = ''
@@ -131,14 +134,14 @@ export function NewIssueDialog({
         }),
       })
       const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Failed to create issue')
-      toast.success('Issue created')
+      if (!res.ok) throw new Error(data.error || n.createFailed)
+      toast.success(n.created)
       setOpen(false)
       reset()
       onCreated?.()
       router.push(`/operations/issues/${data.id}`)
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to create issue')
+      toast.error(error instanceof Error ? error.message : n.createFailed)
     } finally {
       setSaving(false)
     }
@@ -155,15 +158,13 @@ export function NewIssueDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>New issue</DialogTitle>
-          <DialogDescription>
-            Log a problem at a location. It stays internal unless you share it with the client.
-          </DialogDescription>
+          <DialogTitle>{n.title}</DialogTitle>
+          <DialogDescription>{n.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Location *</Label>
+            <Label>{n.location}</Label>
             {selected ? (
               <div className="flex items-center justify-between gap-2 rounded-[9px] border border-border bg-secondary/40 px-3 py-2">
                 <div className="min-w-0">
@@ -171,7 +172,7 @@ export function NewIssueDialog({
                   <p className="truncate text-xs text-muted-foreground">{selected.client.name}</p>
                 </div>
                 <Button type="button" variant="ghost" size="sm" onClick={() => setLocationId('')}>
-                  Change
+                  {n.change}
                 </Button>
               </div>
             ) : (
@@ -181,13 +182,13 @@ export function NewIssueDialog({
                   <input
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search locations or clients"
+                    placeholder={n.searchPlaceholder}
                     className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                   />
                 </div>
                 <div className="max-h-48 overflow-y-auto py-1">
                   {filtered.length === 0 ? (
-                    <p className="px-3 py-3 text-xs text-muted-foreground">No matching locations</p>
+                    <p className="px-3 py-3 text-xs text-muted-foreground">{n.noMatches}</p>
                   ) : (
                     filtered.map((l) => (
                       <button
@@ -211,7 +212,7 @@ export function NewIssueDialog({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label htmlFor="new-issue-category">Category</Label>
+              <Label htmlFor="new-issue-category">{n.category}</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger id="new-issue-category" className="w-full">
                   <SelectValue />
@@ -219,14 +220,14 @@ export function NewIssueDialog({
                 <SelectContent>
                   {ISSUE_CATEGORIES.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.label}
+                      {t.category[c.id] ?? c.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="new-issue-severity">Severity</Label>
+              <Label htmlFor="new-issue-severity">{n.severity}</Label>
               <Select value={severity} onValueChange={setSeverity}>
                 <SelectTrigger id="new-issue-severity" className="w-full">
                   <SelectValue />
@@ -234,7 +235,7 @@ export function NewIssueDialog({
                 <SelectContent>
                   {SEVERITIES.map((s) => (
                     <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
+                      {t.severity[s]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -243,29 +244,29 @@ export function NewIssueDialog({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="new-issue-title">Title *</Label>
+            <Label htmlFor="new-issue-title">{n.issueTitle}</Label>
             <Input
               id="new-issue-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Lobby glass streaked again"
+              placeholder={n.titlePlaceholder}
               maxLength={200}
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="new-issue-description">Description</Label>
+            <Label htmlFor="new-issue-description">{n.details}</Label>
             <Textarea
               id="new-issue-description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="What happened, where, and anything the crew should know"
+              placeholder={n.detailsPlaceholder}
               rows={4}
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Photos</Label>
+            <Label>{n.photos}</Label>
             <div className="flex flex-wrap gap-2">
               {photos.map((url) => (
                 <div key={url} className="relative size-16">
@@ -275,7 +276,7 @@ export function NewIssueDialog({
                     type="button"
                     onClick={() => setPhotos((prev) => prev.filter((p) => p !== url))}
                     className="absolute -right-1.5 -top-1.5 grid size-5 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:text-foreground"
-                    aria-label="Remove photo"
+                    aria-label={n.removePhoto}
                   >
                     <X className="size-3" />
                   </button>
@@ -290,7 +291,7 @@ export function NewIssueDialog({
                     'grid size-16 place-items-center rounded-[10px] border border-dashed border-border text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground',
                     uploading && 'opacity-60'
                   )}
-                  aria-label="Add photos"
+                  aria-label={n.addPhotos}
                 >
                   {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />}
                 </button>
@@ -308,10 +309,8 @@ export function NewIssueDialog({
 
           <label className="flex items-start justify-between gap-3 rounded-[12px] border border-border bg-secondary/40 p-3">
             <span>
-              <span className="block text-sm font-medium text-foreground">Visible to client</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">
-                Shows in their portal. Use Send to client on the issue to alert them.
-              </span>
+              <span className="block text-sm font-medium text-foreground">{n.visible}</span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">{n.visibleHint}</span>
             </span>
             <Switch checked={visibleToClient} onCheckedChange={setVisibleToClient} />
           </label>
@@ -319,7 +318,7 @@ export function NewIssueDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={saving}>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button
             type="button"
@@ -328,7 +327,7 @@ export function NewIssueDialog({
             disabled={saving || uploading || !locationId || !title.trim()}
           >
             {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            Create issue
+            {n.create}
           </Button>
         </DialogFooter>
       </DialogContent>

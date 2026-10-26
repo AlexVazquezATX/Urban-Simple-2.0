@@ -23,7 +23,8 @@ import {
   User,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
+import { LanguageToggle } from '@/components/layout/language-toggle'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
 
 interface TonightLocation {
   id: string
@@ -47,19 +48,18 @@ interface TonightLocation {
   incompleteIssueId?: string | null
 }
 
-const associateStatusLabel: Record<NonNullable<TonightLocation['associateStatus']>, string> = {
-  not_started: 'Not started',
-  on_site: 'On site',
-  clocked_out: 'Clocked out',
-  submitted: 'Submitted',
-}
-
 export default function NightlyReviewsPage() {
   const router = useRouter()
   const [locations, setLocations] = useState<TonightLocation[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all')
   const [seeAll, setSeeAll] = useState(false)
+  const { t } = useManagerLang()
+  const rv = t.reviews
+  // The route API fills gaps with English placeholders; show them in the
+  // viewer's language.
+  const placeholder = (value: string | undefined, fallback: string) =>
+    !value || value === fallback ? null : value
 
   useEffect(() => {
     fetchTonightLocations()
@@ -90,9 +90,7 @@ export default function NightlyReviewsPage() {
       }
     } catch (error: unknown) {
       console.error('Fetch error:', error)
-      toast.error(
-        error instanceof Error ? error.message : "Failed to load tonight's route"
-      )
+      toast.error(error instanceof Error ? error.message : rv.loadFailed)
     } finally {
       setIsLoading(false)
     }
@@ -123,11 +121,11 @@ export default function NightlyReviewsPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge variant="green">Completed</Badge>
+        return <Badge variant="green">{t.shiftStatus.completed}</Badge>
       case 'in_progress':
-        return <Badge variant="teal">In Progress</Badge>
+        return <Badge variant="teal">{rv.inProgress}</Badge>
       default:
-        return <Badge variant="neutral">Pending</Badge>
+        return <Badge variant="neutral">{rv.pendingBadge}</Badge>
     }
   }
 
@@ -150,44 +148,31 @@ export default function NightlyReviewsPage() {
 
   const emptyCopy =
     filter === 'completed'
-      ? {
-          title: 'Nothing completed yet tonight',
-          description: 'Finished reviews will land here as the route gets worked.',
-        }
+      ? { title: rv.emptyCompletedTitle, description: rv.emptyCompletedBody }
       : filter === 'pending'
-        ? {
-            title: 'The route is clear',
-            description: 'Every stop on tonight’s route has been reviewed. Nice work.',
-          }
-        : {
-            title: 'No stops on tonight’s route',
-            description:
-              'Locations scheduled for service tonight will show up here, ready for review.',
-          }
+        ? { title: rv.emptyPendingTitle, description: rv.emptyPendingBody }
+        : { title: rv.emptyAllTitle, description: rv.emptyAllBody }
 
   return (
     <div className="space-y-6">
       <PageHeader
-        kicker="OPERATIONS · NIGHTLY REVIEWS"
-        title="Tonight's Route"
-        subtitle={
-          seeAll
-            ? "Every manager's route tonight, grouped by manager"
-            : "Review locations scheduled for tonight's service"
-        }
+        kicker={rv.kicker}
+        title={rv.title}
+        subtitle={seeAll ? rv.subtitleAll : rv.subtitleMine}
+        actions={<LanguageToggle />}
         className="mb-0"
       />
 
       {/* Progress KPI strip */}
       <div className="grid gap-4 sm:grid-cols-3">
         <StatCard
-          label="Tonight's Stops"
+          label={rv.stops}
           value={locations.length}
           icon={Building2}
-          sub="scheduled for service"
+          sub={rv.scheduledForService}
         />
         <StatCard
-          label="Completed"
+          label={rv.completed}
           value={completedCount}
           icon={CheckCircle2}
           tone={locations.length > 0 && completedCount === locations.length ? 'green' : 'neutral'}
@@ -204,11 +189,11 @@ export default function NightlyReviewsPage() {
           }
         />
         <StatCard
-          label="Pending"
+          label={rv.pending}
           value={pendingCount}
           icon={Clock}
           tone={pendingCount > 0 ? 'gold' : 'neutral'}
-          sub={pendingCount > 0 ? 'stops still need review' : 'all stops reviewed'}
+          sub={pendingCount > 0 ? rv.stillNeedReview : rv.allReviewed}
         />
       </div>
 
@@ -219,19 +204,19 @@ export default function NightlyReviewsPage() {
       >
         <TabsList>
           <TabsTrigger value="all">
-            All
+            {rv.all}
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {locations.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="pending">
-            Pending
+            {rv.pending}
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {pendingCount}
             </span>
           </TabsTrigger>
           <TabsTrigger value="completed">
-            Completed
+            {rv.completed}
             <span className="font-mono text-xs tabular-nums text-muted-foreground">
               {completedCount}
             </span>
@@ -258,7 +243,7 @@ export default function NightlyReviewsPage() {
                 (index === 0 ||
                   filteredLocations[index - 1].managerId !== location.managerId) && (
                   <p className="kicker pt-2 text-muted-foreground">
-                    {location.managerName || 'Manager'}
+                    {placeholder(location.managerName, 'Manager') ?? t.common.manager}
                   </p>
                 )}
               <Card
@@ -296,25 +281,28 @@ export default function NightlyReviewsPage() {
                         </div>
                         <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
                           <ClipboardCheck className="h-3.5 w-3.5 flex-shrink-0" />
-                          <span className="text-xs">{location.checklistName}</span>
+                          <span className="text-xs">
+                            {placeholder(location.checklistName, 'No checklist assigned') ??
+                              t.common.noChecklist}
+                          </span>
                         </div>
                         <div className="flex flex-wrap items-center gap-2 text-muted-foreground sm:col-span-2">
                           <User className="h-3.5 w-3.5 flex-shrink-0" />
                           <span className="text-xs text-foreground">
-                            {location.associateName || 'Unassigned'}
+                            {placeholder(location.associateName, 'Unassigned') ?? t.common.unassigned}
                           </span>
                           {location.associateStatus && (
                             <span className="text-xs">
-                              · {associateStatusLabel[location.associateStatus]}
+                              · {t.stopStatus[location.associateStatus]}
                             </span>
                           )}
                           {location.checklistTotal != null && location.checklistTotal > 0 && (
                             <span className="font-mono text-xs tabular-nums">
-                              · {location.checklistDone ?? 0}/{location.checklistTotal} done
+                              {rv.done(location.checklistDone ?? 0, location.checklistTotal)}
                             </span>
                           )}
                           {(location.notDoneCount ?? 0) > 0 && (
-                            <Badge variant="coral">{location.notDoneCount} not done</Badge>
+                            <Badge variant="coral">{t.common.notDone(location.notDoneCount ?? 0)}</Badge>
                           )}
                         </div>
                       </div>
@@ -328,7 +316,7 @@ export default function NightlyReviewsPage() {
                             className="flex-1 sm:flex-none"
                           >
                             <CheckCircle2 className="h-4 w-4 mr-2" />
-                            View Review
+                            {rv.viewReview}
                           </Button>
                         ) : (
                           <Button
@@ -337,7 +325,7 @@ export default function NightlyReviewsPage() {
                             className="flex-1 sm:flex-none"
                           >
                             <ClipboardCheck className="h-4 w-4 mr-2" />
-                            {location.status === 'in_progress' ? 'Continue Review' : 'Start Review'}
+                            {location.status === 'in_progress' ? rv.continueReview : rv.startReview}
                           </Button>
                         )}
                         <Button
@@ -346,7 +334,7 @@ export default function NightlyReviewsPage() {
                           className="flex-1 sm:flex-none"
                         >
                           <Navigation className="h-4 w-4 mr-2" />
-                          Directions
+                          {rv.directions}
                         </Button>
                       </div>
                     </div>

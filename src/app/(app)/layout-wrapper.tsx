@@ -11,6 +11,7 @@ import { RoleSwitcher } from '@/components/layout/role-switcher'
 import { Button } from '@/components/ui/button'
 import { NotificationBell } from '@/components/layout/notification-bell'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { primeManagerLang, useManagerLang } from '@/lib/i18n/use-manager-lang'
 import { Sparkles, Plus, LayoutDashboard, CheckSquare, Menu, AlertTriangle } from 'lucide-react'
 
 const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE']
@@ -96,6 +97,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
           setImpersonatedClientId(userData.impersonatedClientId || null)
           sessionStorage.setItem('user-role', userData.role)
           sessionStorage.setItem('user-real-role', userData.realRole || userData.role)
+          primeManagerLang(userData.preferredLanguage)
         }
 
         hasCheckedAuth.current = true
@@ -195,7 +197,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 }`}
               >
                 <LayoutDashboard className="h-5 w-5" />
-                <span className="text-xs font-medium">Home</span>
+                <NavText k="home" />
               </Link>
 
               {canUseTasks && (
@@ -233,7 +235,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                   }`}
                 >
                   <AlertTriangle className="h-5 w-5" />
-                  <span className="text-xs font-medium">Issues</span>
+                  <NavText k="issues" />
                 </Link>
               )}
 
@@ -249,7 +251,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
               <SidebarTrigger className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                 <Menu className="h-5 w-5" />
-                <span className="text-xs font-medium">More</span>
+                <NavText k="more" />
               </SidebarTrigger>
             </div>
           </nav>
@@ -280,3 +282,9 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
+// Mobile nav label in the viewer's language. Rendered only after the auth
+// check has primed the language, so it never triggers its own profile fetch.
+function NavText({ k }: { k: 'home' | 'issues' | 'more' }) {
+  const { t } = useManagerLang()
+  return <span className="text-xs font-medium">{t.nav[k]}</span>
+}

@@ -43,6 +43,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import { localeFor } from '@/lib/i18n/manager'
 
 interface TeamMember {
   id: string
@@ -82,14 +84,6 @@ interface TeamMemberDetailPanelProps {
   onDelete?: (memberId: string) => void
 }
 
-const roleLabels: Record<string, string> = {
-  SUPER_ADMIN: 'Super Admin',
-  ADMIN: 'Admin',
-  MANAGER: 'Manager',
-  ASSOCIATE: 'Associate',
-  CLIENT_USER: 'Client User',
-}
-
 const roleIcons: Record<string, typeof Shield> = {
   SUPER_ADMIN: Shield,
   ADMIN: Shield,
@@ -118,6 +112,8 @@ export function TeamMemberDetailPanel({
   onDelete,
 }: TeamMemberDetailPanelProps) {
   const router = useRouter()
+  const { lang, t } = useManagerLang()
+  const p = t.team.panel
   const [loading, setLoading] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false)
@@ -231,11 +227,11 @@ export function TeamMemberDetailPanel({
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Failed to update member')
+          throw new Error(error.error || p.toastUpdateFailed)
         }
 
         const savedMember = await response.json()
-        toast.success('Team member updated')
+        toast.success(p.toastUpdated)
         onSave(savedMember)
         router.refresh()
       } else {
@@ -243,7 +239,7 @@ export function TeamMemberDetailPanel({
         if (createAuthAccount && password) {
           payload.password = password
         } else if (createAuthAccount && !password) {
-          throw new Error('Password is required when creating an auth account')
+          throw new Error(p.toastPasswordRequired)
         }
 
         const response = await fetch('/api/users', {
@@ -254,18 +250,18 @@ export function TeamMemberDetailPanel({
 
         if (!response.ok) {
           const error = await response.json()
-          throw new Error(error.error || 'Failed to create member')
+          throw new Error(error.error || p.toastCreateFailed)
         }
 
         const savedMember = await response.json()
-        toast.success('Team member added')
+        toast.success(p.toastAdded)
         onSave(savedMember)
         router.refresh()
       }
 
       handleClose()
     } catch (error: any) {
-      toast.error(error.message || 'Something went wrong')
+      toast.error(error.message || p.toastGeneric)
     } finally {
       setLoading(false)
     }
@@ -316,7 +312,7 @@ export function TeamMemberDetailPanel({
             </Avatar>
             <div>
               <h2 className="font-display text-lg font-semibold tracking-[-0.2px] text-foreground">
-                {member && !isNew ? 'Team Member Details' : 'New Team Member'}
+                {member && !isNew ? p.detailsTitle : p.newTitle}
               </h2>
               {member && !isNew && (
                 <p className="text-sm text-muted-foreground">
@@ -328,7 +324,7 @@ export function TeamMemberDetailPanel({
           <button
             onClick={handleClose}
             className="p-2 rounded-[9px] text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-            aria-label="Close"
+            aria-label={t.common.close}
           >
             <X className="w-5 h-5" />
           </button>
@@ -340,11 +336,11 @@ export function TeamMemberDetailPanel({
           {member && !isNew && (
             <div className="flex items-center gap-2">
               <Badge variant={isActive ? 'green' : 'neutral'}>
-                {isActive ? 'Active' : 'Inactive'}
+                {isActive ? p.active : p.inactive}
               </Badge>
               <Badge variant={roleBadgeVariants[role] || 'neutral'}>
                 <RoleIcon className="w-3 h-3" />
-                {roleLabels[role] || role}
+                {t.role[role] || role}
               </Badge>
             </div>
           )}
@@ -352,7 +348,7 @@ export function TeamMemberDetailPanel({
           {/* Name Row */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+              <Label htmlFor="firstName">{p.firstName}</Label>
               <Input
                 id="firstName"
                 value={firstName}
@@ -361,7 +357,7 @@ export function TeamMemberDetailPanel({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+              <Label htmlFor="lastName">{p.lastName}</Label>
               <Input
                 id="lastName"
                 value={lastName}
@@ -373,21 +369,21 @@ export function TeamMemberDetailPanel({
 
           {/* Display Name */}
           <div className="space-y-2">
-            <Label htmlFor="displayName">Display Name</Label>
+            <Label htmlFor="displayName">{p.displayName}</Label>
             <Input
               id="displayName"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Optional nickname or preferred name"
+              placeholder={p.displayNamePlaceholder}
             />
-            <p className="text-xs text-muted-foreground">Optional. Defaults to first and last name.</p>
+            <p className="text-xs text-muted-foreground">{p.displayNameHint}</p>
           </div>
 
           {/* Email */}
           <div className="space-y-2">
             <Label htmlFor="email" className="flex items-center gap-2">
               <Mail className="w-4 h-4" />
-              Email *
+              {p.email}
             </Label>
             <Input
               id="email"
@@ -402,7 +398,7 @@ export function TeamMemberDetailPanel({
           <div className="space-y-2">
             <Label htmlFor="phone" className="flex items-center gap-2">
               <Phone className="w-4 h-4" />
-              Phone
+              {p.phone}
             </Label>
             <Input
               id="phone"
@@ -418,17 +414,17 @@ export function TeamMemberDetailPanel({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
-                Role *
+                {p.role}
               </Label>
               <Select value={role} onValueChange={setRole}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ADMIN">Admin</SelectItem>
-                  <SelectItem value="MANAGER">Manager</SelectItem>
-                  <SelectItem value="ASSOCIATE">Associate</SelectItem>
-                  <SelectItem value="CLIENT_USER">Client User</SelectItem>
+                  <SelectItem value="ADMIN">{t.role.ADMIN}</SelectItem>
+                  <SelectItem value="MANAGER">{t.role.MANAGER}</SelectItem>
+                  <SelectItem value="ASSOCIATE">{t.role.ASSOCIATE}</SelectItem>
+                  <SelectItem value="CLIENT_USER">{t.role.CLIENT_USER}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -436,17 +432,17 @@ export function TeamMemberDetailPanel({
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Building2 className="w-4 h-4" />
-                Branch
+                {p.branch}
               </Label>
               <Select
                 value={branchId || '__none__'}
                 onValueChange={(v) => setBranchId(v === '__none__' ? '' : v)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select branch" />
+                  <SelectValue placeholder={p.selectBranch} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="__none__">All Branches</SelectItem>
+                  <SelectItem value="__none__">{t.team.allBranches}</SelectItem>
                   {branches.map((branch) => (
                     <SelectItem key={branch.id} value={branch.id}>
                       {branch.name} ({branch.code})
@@ -463,11 +459,9 @@ export function TeamMemberDetailPanel({
               <div className="space-y-0.5">
                 <Label htmlFor="smsAlerts" className="flex items-center gap-2 font-medium text-foreground">
                   <MessageSquareText className="w-4 h-4" />
-                  Text me alerts
+                  {p.textAlerts}
                 </Label>
-                <p className="text-xs text-muted-foreground">
-                  Urgent ops alerts by text to the phone above. In-app and email alerts are always on.
-                </p>
+                <p className="text-xs text-muted-foreground">{p.textAlertsHint}</p>
               </div>
               <Switch
                 id="smsAlerts"
@@ -477,13 +471,13 @@ export function TeamMemberDetailPanel({
               />
             </div>
             {smsAlerts && !phone.trim() && (
-              <p className="text-xs text-coral-600 dark:text-coral-300">Add a mobile number to get texts.</p>
+              <p className="text-xs text-coral-600 dark:text-coral-300">{p.needPhone}</p>
             )}
 
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Languages className="w-4 h-4" />
-                Field language
+                {p.fieldLanguage}
               </Label>
               <Select value={preferredLanguage} onValueChange={setPreferredLanguage} disabled={!canManage}>
                 <SelectTrigger>
@@ -494,9 +488,7 @@ export function TeamMemberDetailPanel({
                   <SelectItem value="es">Español</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Language for the field screens associates use on shift.
-              </p>
+              <p className="text-xs text-muted-foreground">{p.fieldLanguageHint}</p>
             </div>
           </div>
 
@@ -510,11 +502,9 @@ export function TeamMemberDetailPanel({
               />
               <div className="space-y-0.5">
                 <Label htmlFor="isActive" className="font-medium text-foreground">
-                  Active Member
+                  {p.activeMember}
                 </Label>
-                <p className="text-xs text-muted-foreground">
-                  Inactive members cannot log in or access the platform
-                </p>
+                <p className="text-xs text-muted-foreground">{p.activeMemberHint}</p>
               </div>
             </div>
           )}
@@ -534,16 +524,16 @@ export function TeamMemberDetailPanel({
                   <Label htmlFor="createAuthAccount" className="font-medium text-foreground">
                     {member && !isNew
                       ? hasLogin
-                        ? 'Set a New Password'
-                        : 'Add Login Account'
-                      : 'Create Login Account'}
+                        ? p.setNewPassword
+                        : p.addLogin
+                      : p.createLogin}
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     {member && !isNew
                       ? hasLogin
-                        ? 'Replaces their current password. Tell them the new one in person.'
-                        : 'This member has no login yet. Set a password to let them log in.'
-                      : 'Allow this user to log in to the platform'}
+                        ? p.setNewPasswordHint
+                        : p.addLoginHint
+                      : p.createLoginHint}
                   </p>
                 </div>
               </div>
@@ -552,14 +542,14 @@ export function TeamMemberDetailPanel({
                 <div className="space-y-2">
                   <Label htmlFor="password" className="flex items-center gap-2">
                     <Key className="w-4 h-4" />
-                    Password *
+                    {p.password}
                   </Label>
                   <Input
                     id="password"
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password"
+                    placeholder={p.passwordPlaceholder}
                   />
                 </div>
               )}
@@ -570,7 +560,7 @@ export function TeamMemberDetailPanel({
           {member && !isNew && member.createdAt && (
             <div className="pt-4 border-t border-border">
               <p className="font-mono text-xs text-muted-foreground">
-                Member since {new Date(member.createdAt).toLocaleDateString()}
+                {p.memberSince(new Date(member.createdAt).toLocaleDateString(localeFor(lang)))}
               </p>
             </div>
           )}
@@ -585,32 +575,32 @@ export function TeamMemberDetailPanel({
               onClick={() => setConfirmDeactivateOpen(true)}
             >
               <UserX className="size-4" />
-              Deactivate
+              {p.deactivate}
             </Button>
           ) : (
             <div />
           )}
           <div className="flex items-center gap-3">
             <Button type="button" variant="outline" onClick={handleClose}>
-              {canManage ? 'Cancel' : 'Close'}
+              {canManage ? t.common.cancel : t.common.close}
             </Button>
             <Button
               onClick={handleSubmit}
               disabled={
                 !canManage || loading || !firstName.trim() || !lastName.trim() || !email.trim()
               }
-              title={canManage ? undefined : 'Only admins can edit team members'}
+              title={canManage ? undefined : p.adminsOnly}
               variant="gold"
             >
               {loading ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Saving...
+                  {t.common.saving}
                 </>
               ) : member && !isNew ? (
-                'Save Changes'
+                p.saveChanges
               ) : (
-                'Add Member'
+                p.addMember
               )}
             </Button>
           </div>
@@ -621,17 +611,16 @@ export function TeamMemberDetailPanel({
       <AlertDialog open={confirmDeactivateOpen} onOpenChange={setConfirmDeactivateOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Deactivate team member?</AlertDialogTitle>
+            <AlertDialogTitle>{p.deactivateTitle}</AlertDialogTitle>
             <AlertDialogDescription>
               <span className="font-medium text-foreground">
                 {displayName || `${firstName} ${lastName}`}
               </span>{' '}
-              will no longer be able to log in or access the platform. Their history is
-              preserved, and you can reactivate them anytime.
+              {p.deactivateBody}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t.common.cancel}</AlertDialogCancel>
             <Button
               type="button"
               variant="destructive"
@@ -641,7 +630,7 @@ export function TeamMemberDetailPanel({
               }}
             >
               <UserX className="size-4" />
-              Deactivate
+              {p.deactivate}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

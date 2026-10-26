@@ -22,6 +22,9 @@ import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/layout/page-header'
 import { TonightsOperations } from '@/components/dashboard/tonights-operations'
+import { LanguageToggle } from '@/components/layout/language-toggle'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import { localeFor, type ManagerStrings } from '@/lib/i18n/manager'
 import { cn } from '@/lib/utils'
 
 interface LastNightPhoto {
@@ -75,17 +78,17 @@ interface WorkforceAssoc {
 
 const attentionConfig: Record<
   AttentionType,
-  { icon: typeof Flag; tone: 'coral' | 'gold' | 'teal'; cta: string }
+  { icon: typeof Flag; tone: 'coral' | 'gold' | 'teal'; cta: keyof ManagerStrings['dash']['cta'] }
 > = {
-  quality_issue: { icon: Flag, tone: 'coral', cta: 'Review' },
-  open_issue: { icon: Flag, tone: 'coral', cta: 'Open' },
-  unassigned_shift: { icon: CalendarDays, tone: 'gold', cta: 'Assign' },
-  crew_hours: { icon: ShieldAlert, tone: 'gold', cta: 'Check hours' },
-  unfinished_work: { icon: ClipboardList, tone: 'coral', cta: 'Open' },
-  client_report: { icon: MessageSquare, tone: 'coral', cta: 'Open' },
-  client_request: { icon: MessageSquare, tone: 'teal', cta: 'Open' },
-  low_rating: { icon: Star, tone: 'gold', cta: 'View' },
-  long_shift: { icon: Clock, tone: 'coral', cta: 'Check' },
+  quality_issue: { icon: Flag, tone: 'coral', cta: 'review' },
+  open_issue: { icon: Flag, tone: 'coral', cta: 'open' },
+  unassigned_shift: { icon: CalendarDays, tone: 'gold', cta: 'assign' },
+  crew_hours: { icon: ShieldAlert, tone: 'gold', cta: 'checkHours' },
+  unfinished_work: { icon: ClipboardList, tone: 'coral', cta: 'open' },
+  client_report: { icon: MessageSquare, tone: 'coral', cta: 'open' },
+  client_request: { icon: MessageSquare, tone: 'teal', cta: 'open' },
+  low_rating: { icon: Star, tone: 'gold', cta: 'view' },
+  long_shift: { icon: Clock, tone: 'coral', cta: 'check' },
 }
 
 const toneClasses: Record<'coral' | 'gold' | 'teal', { tile: string; icon: string; cta: string }> = {
@@ -118,6 +121,8 @@ export function ManagerDashboard({
   const [overview, setOverview] = useState<Overview | null>(null)
   const [crewNearOver, setCrewNearOver] = useState(0)
   const [loading, setLoading] = useState(true)
+  const { lang, t } = useManagerLang()
+  const d = t.dash
 
   useEffect(() => {
     let active = true
@@ -153,8 +158,8 @@ export function ManagerDashboard({
           {
             id: 'crew-hours',
             type: 'crew_hours' as const,
-            title: `${crewNearOver} ${crewNearOver === 1 ? 'associate is' : 'associates are'} near or over 40h`,
-            subtitle: 'Check the workforce board before assigning more',
+            title: d.crewHoursTitle(crewNearOver),
+            subtitle: d.crewHoursSub,
             urgency: 'high' as const,
             actionUrl: '/operations/workforce',
           },
@@ -166,13 +171,24 @@ export function ManagerDashboard({
   const tonight = overview?.tonight
   const photos = overview?.lastNightPhotos ?? []
 
+  // The kicker arrives preformatted in English; rebuild it for Spanish.
+  const kicker =
+    lang === 'en'
+      ? dateKicker
+      : (() => {
+          const now = new Date()
+          const locale = localeFor(lang)
+          return `${now.toLocaleDateString(locale, { weekday: 'long' })} · ${now.toLocaleDateString(locale, { month: 'long', day: 'numeric' })}`
+        })()
+
   return (
     <div className="space-y-4">
       <PageHeader
         className="mb-0"
-        kicker={dateKicker}
-        title={`${greeting}, ${userName}`}
-        subtitle="Here's the floor tonight — what's running, what got done, and what needs you."
+        kicker={kicker}
+        title={`${d.greeting(greeting)}, ${userName}`}
+        subtitle={d.subtitle}
+        actions={<LanguageToggle />}
       />
 
       {/* Warm status tiles — pastel in light, dim-tinted in dark */}
@@ -180,23 +196,23 @@ export function ManagerDashboard({
         <Tile
           tone="sage"
           icon={Moon}
-          kicker="Tonight"
-          value={loading ? '·' : `${tonight?.shifts ?? 0} ${tonight?.shifts === 1 ? 'shift' : 'shifts'}`}
-          sub={loading ? 'Loading…' : `${tonight?.crew ?? 0} on the crew`}
+          kicker={d.tonight}
+          value={loading ? '·' : d.shifts(tonight?.shifts ?? 0)}
+          sub={loading ? t.common.loading : d.onCrew(tonight?.crew ?? 0)}
         />
         <Tile
           tone="sky"
           icon={Camera}
-          kicker="Last night"
-          value={loading ? '·' : `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}`}
-          sub="Proof from the floor"
+          kicker={d.lastNight}
+          value={loading ? '·' : d.photos(photos.length)}
+          sub={d.proof}
         />
         <Tile
           tone={attention.length > 0 ? 'peach' : 'sage'}
           icon={Flag}
-          kicker="Needs you"
-          value={loading ? '·' : attention.length === 0 ? 'All clear' : `${attention.length} ${attention.length === 1 ? 'item' : 'items'}`}
-          sub={attention.length === 0 ? 'Nothing waiting' : 'Tap to review below'}
+          kicker={d.needsYou}
+          value={loading ? '·' : attention.length === 0 ? d.allClear : d.items(attention.length)}
+          sub={attention.length === 0 ? d.nothingWaiting : d.tapToReview}
         />
       </div>
 
@@ -209,13 +225,13 @@ export function ManagerDashboard({
             <CardHeader className="px-5 pb-3">
               <div className="flex items-center gap-2.5">
                 <Camera className="size-4 shrink-0 text-gold-600 dark:text-gold-400" />
-                <CardTitle>Last night, in proof</CardTitle>
+                <CardTitle>{d.lastNightTitle}</CardTitle>
                 <span className="flex-1" />
                 <Link
                   href="/operations/nightly-reviews"
                   className="text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  See the log →
+                  {d.seeLog}
                 </Link>
               </div>
             </CardHeader>
@@ -227,8 +243,8 @@ export function ManagerDashboard({
               ) : photos.length === 0 ? (
                 <EmptyState
                   icon={Camera}
-                  title="Nothing logged yet — quiet so far"
-                  description="Review photos from tonight's crews land here as they finish."
+                  title={d.noPhotosTitle}
+                  description={d.noPhotosBody}
                   className="py-6"
                 />
               ) : (
@@ -267,7 +283,7 @@ export function ManagerDashboard({
             <CardHeader className="px-5 pb-2">
               <div className="flex items-center gap-2.5">
                 <Flag className="size-4 shrink-0 text-coral-600 dark:text-coral-300" />
-                <CardTitle>Needs you</CardTitle>
+                <CardTitle>{d.needsYou}</CardTitle>
                 <span className="flex-1" />
                 {!loading && attention.length > 0 && (
                   <Badge variant="coral">{attention.length}</Badge>
@@ -282,8 +298,8 @@ export function ManagerDashboard({
               ) : attention.length === 0 ? (
                 <EmptyState
                   icon={Flag}
-                  title="All clear — nice and tidy"
-                  description="Nothing needs your attention right now."
+                  title={d.allClearTitle}
+                  description={d.allClearBody}
                   className="py-6"
                 />
               ) : (
@@ -305,7 +321,7 @@ export function ManagerDashboard({
                           <p className="truncate text-[13px] font-semibold text-foreground">{item.title}</p>
                           <p className="truncate text-[11.5px] text-muted-foreground">{item.subtitle}</p>
                         </div>
-                        <span className={cn('shrink-0 text-[12px] font-semibold', tc.cta)}>{cfg.cta}</span>
+                        <span className={cn('shrink-0 text-[12px] font-semibold', tc.cta)}>{d.cta[cfg.cta]}</span>
                       </Link>
                     )
                   })}
@@ -314,7 +330,7 @@ export function ManagerDashboard({
                       href="/operations/issues"
                       className="pt-2.5 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground"
                     >
-                      +{attention.length - 8} more · All issues →
+                      {d.more(attention.length - 8)}
                     </Link>
                   )}
                 </div>
@@ -325,14 +341,14 @@ export function ManagerDashboard({
           {/* Quick actions */}
           <Card className="gap-0 py-5">
             <CardHeader className="px-5 pb-3">
-              <CardTitle>Quick actions</CardTitle>
+              <CardTitle>{d.quickActions}</CardTitle>
             </CardHeader>
             <CardContent className="px-5">
               <div className="grid grid-cols-2 gap-2.5">
-                <QuickAction icon={Route} label="Dispatch" href="/operations/schedule" />
-                <QuickAction icon={CalendarDays} label="Schedule" href="/operations/schedule" />
-                <QuickAction icon={Moon} label="Review queue" href="/operations/nightly-reviews" />
-                <QuickAction icon={ClipboardList} label="Checklists" href="/operations/checklists" />
+                <QuickAction icon={Route} label={d.dispatch} href="/operations/schedule" />
+                <QuickAction icon={CalendarDays} label={d.schedule} href="/operations/schedule" />
+                <QuickAction icon={Moon} label={d.reviewQueue} href="/operations/nightly-reviews" />
+                <QuickAction icon={ClipboardList} label={d.checklists} href="/operations/checklists" />
               </div>
             </CardContent>
           </Card>

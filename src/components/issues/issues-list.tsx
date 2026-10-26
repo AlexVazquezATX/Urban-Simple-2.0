@@ -33,7 +33,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { categoryLabel } from '@/lib/ops/constants'
+import { LanguageToggle } from '@/components/layout/language-toggle'
+import { currentManagerStrings, useManagerLang } from '@/lib/i18n/use-manager-lang'
+import { categoryLabelFor, dateFnsLocale, localeFor } from '@/lib/i18n/manager'
 import {
   IssueSeverityBadge,
   IssueSourceBadge,
@@ -68,15 +70,6 @@ type View = (typeof VIEWS)[number]
 
 const STATUS_FILTERS = ['active', 'open', 'in_progress', 'resolved', 'closed', 'all'] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
-
-const STATUS_FILTER_LABELS: Record<StatusFilter, string> = {
-  active: 'Open + in progress',
-  open: 'Open',
-  in_progress: 'In progress',
-  resolved: 'Resolved',
-  closed: 'Closed',
-  all: 'Any status',
-}
 
 function matchesView(issue: IssueListItem, view: View) {
   switch (view) {
@@ -131,15 +124,17 @@ export function IssuesList({
   const [status, setStatus] = useState<StatusFilter>(pick(initialStatus, STATUS_FILTERS, 'active'))
   const [locationId, setLocationId] = useState(initialLocationId || 'all')
   const [clientId, setClientId] = useState(initialClientId || 'all')
+  const { lang, t } = useManagerLang()
+  const it = t.issues
 
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/issues', { credentials: 'include', cache: 'no-store' })
-      if (!res.ok) throw new Error('Failed to load issues')
+      if (!res.ok) throw new Error(currentManagerStrings().issues.loadFailed)
       setIssues((await res.json()) as IssueListItem[])
     } catch (error: unknown) {
       console.error('Fetch error:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to load issues')
+      toast.error(error instanceof Error ? error.message : currentManagerStrings().issues.loadFailed)
     } finally {
       setIsLoading(false)
     }
@@ -194,20 +189,23 @@ export function IssuesList({
 
   const header = (
     <PageHeader
-      kicker="OPERATIONS · ISSUES"
-      title="Issues"
-      subtitle="Client reports, requests and unfinished work across your accounts. Triage, assign, and close the loop."
+      kicker={it.kicker}
+      title={it.title}
+      subtitle={it.subtitle}
       actions={
-        <NewIssueDialog
-          locations={locations}
-          defaultLocationId={locationId !== 'all' ? locationId : undefined}
-          onCreated={load}
-        >
-          <Button variant="gold">
-            <Plus className="size-4" />
-            New issue
-          </Button>
-        </NewIssueDialog>
+        <>
+          <LanguageToggle />
+          <NewIssueDialog
+            locations={locations}
+            defaultLocationId={locationId !== 'all' ? locationId : undefined}
+            onCreated={load}
+          >
+            <Button variant="gold">
+              <Plus className="size-4" />
+              {it.newIssue}
+            </Button>
+          </NewIssueDialog>
+        </>
       }
     />
   )
@@ -229,25 +227,25 @@ export function IssuesList({
 
       <div className="grid grid-cols-3 gap-3 sm:gap-4">
         <StatCard
-          label="Open"
+          label={it.open}
           value={counts.open}
           icon={AlertTriangle}
           tone={counts.open > 0 ? 'coral' : 'neutral'}
-          sub="not started"
+          sub={it.notStarted}
         />
         <StatCard
-          label="In progress"
+          label={it.inProgress}
           value={counts.in_progress}
           icon={Clock}
           tone={counts.in_progress > 0 ? 'gold' : 'neutral'}
-          sub="being worked"
+          sub={it.beingWorked}
         />
         <StatCard
-          label="Unassigned"
+          label={it.unassigned}
           value={counts.unassigned}
           icon={UserX}
           tone={counts.unassigned > 0 ? 'gold' : 'neutral'}
-          sub="open, no owner"
+          sub={it.noOwner}
         />
       </div>
 
@@ -255,11 +253,11 @@ export function IssuesList({
         <div className="-mx-1 overflow-x-auto px-1">
           <Tabs value={view} onValueChange={(value) => setView(value as View)}>
             <TabsList>
-              <ViewTab value="all" label="All" count={counts.views.all} />
-              <ViewTab value="unfinished" label="Unfinished work" count={counts.views.unfinished} />
-              <ViewTab value="client" label="Client reports" count={counts.views.client} />
-              <ViewTab value="requests" label="Requests" count={counts.views.requests} />
-              <ViewTab value="internal" label="Internal" count={counts.views.internal} />
+              <ViewTab value="all" label={it.viewAll} count={counts.views.all} />
+              <ViewTab value="unfinished" label={it.viewUnfinished} count={counts.views.unfinished} />
+              <ViewTab value="client" label={it.viewClient} count={counts.views.client} />
+              <ViewTab value="requests" label={it.viewRequests} count={counts.views.requests} />
+              <ViewTab value="internal" label={it.viewInternal} count={counts.views.internal} />
             </TabsList>
           </Tabs>
         </div>
@@ -272,7 +270,7 @@ export function IssuesList({
             <SelectContent>
               {STATUS_FILTERS.map((s) => (
                 <SelectItem key={s} value={s}>
-                  {STATUS_FILTER_LABELS[s]}
+                  {it.statusFilter[s]}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -280,10 +278,10 @@ export function IssuesList({
 
           <Select value={clientId} onValueChange={setClientId}>
             <SelectTrigger className="w-full sm:w-[190px]">
-              <SelectValue placeholder="All clients" />
+              <SelectValue placeholder={it.allClients} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All clients</SelectItem>
+              <SelectItem value="all">{it.allClients}</SelectItem>
               {clientOptions.map(([id, name]) => (
                 <SelectItem key={id} value={id}>
                   {name}
@@ -294,10 +292,10 @@ export function IssuesList({
 
           <Select value={locationId} onValueChange={setLocationId}>
             <SelectTrigger className="w-full sm:w-[190px]">
-              <SelectValue placeholder="All locations" />
+              <SelectValue placeholder={it.allLocations} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All locations</SelectItem>
+              <SelectItem value="all">{it.allLocations}</SelectItem>
               {locationOptions.map(([id, name]) => (
                 <SelectItem key={id} value={id}>
                   {name}
@@ -314,8 +312,8 @@ export function IssuesList({
             <CardContent className="px-4">
               <EmptyState
                 icon={CheckCircle2}
-                title="Nothing in this queue"
-                description="No issues match the current filters. Client reports, requests and unfinished work land here the moment they come in."
+                title={it.emptyTitle}
+                description={it.emptyBody}
               />
             </CardContent>
           </Card>
@@ -332,15 +330,15 @@ export function IssuesList({
                         </h3>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <IssueStatusBadge status={issue.status} />
-                        {issue.type !== 'issue' && <IssueTypeBadge type={issue.type} />}
-                        {issue.source === 'client' && <IssueSourceBadge source={issue.source} />}
-                        {issue.type !== 'request' && <IssueSeverityBadge severity={issue.severity} />}
-                        <Badge variant="neutral">{categoryLabel(issue.category, issue.type)}</Badge>
+                        <IssueStatusBadge status={issue.status} lang={lang} />
+                        {issue.type !== 'issue' && <IssueTypeBadge type={issue.type} lang={lang} />}
+                        {issue.source === 'client' && <IssueSourceBadge source={issue.source} lang={lang} />}
+                        {issue.type !== 'request' && <IssueSeverityBadge severity={issue.severity} lang={lang} />}
+                        <Badge variant="neutral">{categoryLabelFor(issue.category, issue.type, lang)}</Badge>
                         {!issue.visibleToClient && (
                           <Badge variant="neutral" className="gap-1">
                             <EyeOff className="size-3" />
-                            Internal
+                            {t.common.internal}
                           </Badge>
                         )}
                       </div>
@@ -354,25 +352,28 @@ export function IssuesList({
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <MapPin className="size-3.5" />
-                          {issue.location?.name ?? 'Unknown location'}
+                          {issue.location?.name ?? it.unknownLocation}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Building2 className="size-3.5" />
-                          {issue.client?.name ?? 'Unknown client'}
+                          {issue.client?.name ?? it.unknownClient}
                         </span>
-                        <span className="flex items-center gap-1.5" title={new Date(issue.createdAt).toLocaleString()}>
+                        <span className="flex items-center gap-1.5" title={new Date(issue.createdAt).toLocaleString(localeFor(lang))}>
                           <Clock className="size-3.5" />
-                          {formatDistanceToNow(new Date(issue.createdAt), { addSuffix: true })}
+                          {formatDistanceToNow(new Date(issue.createdAt), {
+                            addSuffix: true,
+                            locale: dateFnsLocale(lang),
+                          })}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <User className="size-3.5" />
-                          {personName(issue.reportedBy)}
+                          {personName(issue.reportedBy, t.common.unknown)}
                         </span>
                         {issue.type === 'request' && issue.preferredDate && (
                           <span className="flex items-center gap-1.5">
                             <Calendar className="size-3.5" />
-                            Wants{' '}
-                            {new Date(issue.preferredDate).toLocaleDateString('en-US', {
+                            {it.wants}{' '}
+                            {new Date(issue.preferredDate).toLocaleDateString(localeFor(lang), {
                               month: 'short',
                               day: 'numeric',
                               timeZone: 'UTC',
@@ -397,11 +398,13 @@ export function IssuesList({
                     <div className="shrink-0 text-xs text-muted-foreground">
                       {issue.assignedTo ? (
                         <>
-                          Assigned to{' '}
-                          <span className="font-medium text-foreground">{personName(issue.assignedTo)}</span>
+                          {it.assignedTo}{' '}
+                          <span className="font-medium text-foreground">
+                            {personName(issue.assignedTo, t.common.unknown)}
+                          </span>
                         </>
                       ) : (
-                        'Unassigned'
+                        t.common.unassigned
                       )}
                     </div>
                   </div>

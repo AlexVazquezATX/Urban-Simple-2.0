@@ -50,6 +50,8 @@ import { DarkModeToggle } from '@/components/ui/dark-mode-toggle'
 import { CommandPalette } from '@/components/layout/command-palette'
 import { NotificationBell } from '@/components/layout/notification-bell'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import { navLabel } from '@/lib/i18n/manager'
 
 const BELL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE']
 
@@ -138,6 +140,7 @@ export function AppSidebar() {
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
   const isMobile = useIsMobile()
+  const { lang, t } = useManagerLang()
 
   // User role state - cached to avoid refetching
   const [userRole, setUserRole] = useState<string | null>(() => {
@@ -212,9 +215,11 @@ export function AppSidebar() {
   }
 
   const roleLabel = userRole
-    ? userRole.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
+    ? lang === 'es' && t.role[userRole]
+      ? t.role[userRole]
+      : userRole.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
     : ''
-  const displayName = userName || 'Account'
+  const displayName = userName || t.nav.account
 
   return (
     <Sidebar className="border-r border-sidebar-border bg-sidebar">
@@ -243,7 +248,7 @@ export function AppSidebar() {
           className="flex w-full items-center gap-2 rounded-[9px] border border-border bg-background px-2.5 py-2 text-left text-[12.5px] text-muted-foreground transition-colors hover:border-ring/40"
         >
           <Search className="size-3.5 shrink-0" />
-          <span className="flex-1">Jump to…</span>
+          <span className="flex-1">{t.nav.jumpTo}</span>
           <kbd className="rounded-[5px] border border-border bg-secondary px-1.5 py-px font-mono text-[10px]">⌘K</kbd>
         </button>
       </SidebarHeader>
@@ -255,7 +260,7 @@ export function AppSidebar() {
           return (
             <SidebarGroup key={group.label} className="mb-1">
               <SidebarGroupLabel className="kicker mb-1.5 px-2 text-muted-foreground">
-                {group.label}
+                {navLabel(group.label, lang)}
               </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu className="space-y-px">
@@ -283,7 +288,7 @@ export function AppSidebar() {
                                   : 'text-muted-foreground group-hover:text-foreground'
                               )}
                             />
-                            <span className="text-[13.5px]">{item.label}</span>
+                            <span className="text-[13.5px]">{navLabel(item.label, lang)}</span>
                           </Link>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
@@ -309,7 +314,7 @@ export function AppSidebar() {
           <button
             type="button"
             onClick={handleLogout}
-            title="Sign out"
+            title={t.nav.signOut}
             className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
           >
             <LogOut className="size-3.5" />
@@ -321,7 +326,13 @@ export function AppSidebar() {
         open={paletteOpen}
         onOpenChange={setPaletteOpen}
         groups={navGroups
-          .map((g) => ({ ...g, items: g.items.filter((i) => hasAccess(i.roles)) }))
+          .map((g) => ({
+            ...g,
+            label: navLabel(g.label, lang),
+            items: g.items
+              .filter((i) => hasAccess(i.roles))
+              .map((i) => ({ ...i, label: navLabel(i.label, lang) })),
+          }))
           .filter((g) => g.items.length > 0)}
       />
     </Sidebar>

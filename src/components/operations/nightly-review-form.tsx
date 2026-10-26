@@ -28,7 +28,15 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
-import { ISSUE_CATEGORIES, categoryLabel, reasonLabel } from '@/lib/ops/constants'
+import { ISSUE_CATEGORIES, reasonLabel } from '@/lib/ops/constants'
+import { LanguageToggle } from '@/components/layout/language-toggle'
+import { useManagerLang } from '@/lib/i18n/use-manager-lang'
+import {
+  categoryLabelFor,
+  localeFor,
+  type ManagerLang,
+  type ManagerStrings,
+} from '@/lib/i18n/manager'
 import { toIssueCategory } from '@/lib/operations/review-categories'
 import type {
   NightlyReviewAssociateReport,
@@ -45,9 +53,10 @@ interface NightlyReviewFormProps {
   clientName: string
   address: string
   scheduledTime: string
-  serviceDateLabel: string
-  associateName: string
-  checklistName: string
+  /** Shift.date as ISO (a calendar date stored at UTC midnight). */
+  serviceDate: string
+  associateName: string | null
+  checklistName: string | null
   checklistItems: NightlyReviewChecklistItemState[]
   initialRating: number
   initialNotes: string
@@ -67,7 +76,7 @@ export function NightlyReviewForm({
   clientName,
   address,
   scheduledTime,
-  serviceDateLabel,
+  serviceDate,
   associateName,
   checklistName,
   checklistItems: initialChecklistItems,
@@ -81,6 +90,8 @@ export function NightlyReviewForm({
   timezone = 'America/Chicago',
 }: NightlyReviewFormProps) {
   const router = useRouter()
+  const { lang, t } = useManagerLang()
+  const f = t.form
   const [isSaving, setIsSaving] = useState(false)
   const [overallRating, setOverallRating] = useState(initialRating)
   const [checklistItems, setChecklistItems] = useState(initialChecklistItems)
@@ -105,7 +116,7 @@ export function NightlyReviewForm({
       const key = item.sectionId || item.sectionName || `general-${index}`
       const section = sections.get(key) ?? {
         id: key,
-        name: item.sectionName || 'General',
+        name: item.sectionName || t.common.general,
         items: [],
       }
       section.items.push(item)
@@ -113,7 +124,7 @@ export function NightlyReviewForm({
     })
 
     return Array.from(sections.values())
-  }, [checklistItems])
+  }, [checklistItems, t])
 
   const handleChecklistStatus = (
     itemId: string,
@@ -190,7 +201,7 @@ export function NightlyReviewForm({
 
           const payload = await response.json().catch(() => ({}))
           if (!response.ok) {
-            throw new Error(payload.error || 'Failed to upload photo')
+            throw new Error(payload.error || f.toastReviewPhotoFailed)
           }
 
           return payload.url as string
@@ -209,9 +220,9 @@ export function NightlyReviewForm({
     try {
       const uploaded = await uploadFiles(files, 'review-photos')
       setReviewPhotos((current) => Array.from(new Set([...current, ...uploaded])))
-      toast.success('Review photo uploaded')
+      toast.success(f.toastReviewPhoto)
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to upload review photo')
+      toast.error(error instanceof Error ? error.message : f.toastReviewPhotoFailed)
     }
   }
 
@@ -225,9 +236,9 @@ export function NightlyReviewForm({
         itemId,
         Array.from(new Set([...(item?.photos || []), ...uploaded]))
       )
-      toast.success('Checklist photo uploaded')
+      toast.success(f.toastChecklistPhoto)
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to upload checklist photo')
+      toast.error(error instanceof Error ? error.message : f.toastChecklistPhotoFailed)
     }
   }
 
@@ -240,9 +251,9 @@ export function NightlyReviewForm({
       handlePainPointChange(index, {
         photos: Array.from(new Set([...(painPoint?.photos || []), ...uploaded])),
       })
-      toast.success('Issue photo uploaded')
+      toast.success(f.toastIssuePhoto)
     } catch (error: unknown) {
-      toast.error(error instanceof Error ? error.message : 'Failed to upload issue photo')
+      toast.error(error instanceof Error ? error.message : f.toastIssuePhotoFailed)
     }
   }
 
@@ -256,19 +267,19 @@ export function NightlyReviewForm({
     if (readOnly) return
 
     if (overallRating === 0) {
-      toast.error('Please provide an overall rating')
+      toast.error(f.toastNeedRating)
       return
     }
 
     const pendingItems = checklistItems.filter((item) => item.status === 'pending')
     if (pendingItems.length > 0) {
-      toast.error('Please review every checklist item before submitting')
+      toast.error(f.toastNeedAllItems)
       return
     }
 
     const incompletePainPoints = painPoints.filter((point) => !point.description.trim())
     if (incompletePainPoints.length > 0) {
-      toast.error('Please add a description for each reported issue')
+      toast.error(f.toastNeedDescriptions)
       return
     }
 
@@ -296,23 +307,29 @@ export function NightlyReviewForm({
       const payload = await response.json().catch(() => ({}))
 
       if (!response.ok) {
-        throw new Error(payload.error || 'Failed to submit review')
+        throw new Error(payload.error || f.toastSubmitFailed)
       }
 
-      toast.success('Nightly review submitted')
+      toast.success(f.toastSubmitted)
       router.push('/operations/nightly-reviews')
       router.refresh()
     } catch (error: unknown) {
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to submit review'
-      )
+      toast.error(error instanceof Error ? error.message : f.toastSubmitFailed)
     } finally {
       setIsSaving(false)
     }
   }
 
+  // Calendar date at UTC midnight: format in UTC or it shows the day before.
+  const serviceDateLabel = new Date(serviceDate).toLocaleDateString(localeFor(lang), {
+    timeZone: 'UTC',
+    weekday: 'long',
+    month: 'short',
+    day: 'numeric',
+  })
+
   const submittedLabel = submittedAt
-    ? new Date(submittedAt).toLocaleString('en-US', {
+    ? new Date(submittedAt).toLocaleString(localeFor(lang), {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -334,24 +351,25 @@ export function NightlyReviewForm({
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <div className="flex-1 min-w-0">
-          <div className="kicker mb-1 text-primary">OPERATIONS · NIGHTLY REVIEW</div>
+          <div className="kicker mb-1 text-primary">{f.kicker}</div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="font-display text-xl font-bold tracking-[-0.4px] text-foreground">
               {locationName}
             </h1>
-            {readOnly && <Badge variant="green">Submitted</Badge>}
+            {readOnly && <Badge variant="green">{f.submitted}</Badge>}
           </div>
           <p className="text-sm text-muted-foreground">{clientName}</p>
           {submittedLabel && (
             <p className="text-xs text-muted-foreground mt-1">
-              Submitted {submittedLabel}
+              {f.submittedAt(submittedLabel)}
             </p>
           )}
         </div>
+        <LanguageToggle className="mt-1" />
       </div>
 
       {associateReport && (
-        <AssociateReportPanel report={associateReport} timezone={timezone} />
+        <AssociateReportPanel report={associateReport} timezone={timezone} lang={lang} t={t} />
       )}
 
       <Card className="py-0">
@@ -363,20 +381,20 @@ export function NightlyReviewForm({
           <div className="flex items-start gap-2 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <span className="text-foreground">
-              {serviceDateLabel} at{' '}
+              {serviceDateLabel} {f.at}{' '}
               <span className="font-mono tabular-nums">{scheduledTime}</span>
             </span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <span className="text-foreground">
-              Associate: {associateName}
+              {f.associate}: {associateName || t.common.unassigned}
             </span>
           </div>
           <div className="flex items-start gap-2 text-sm">
             <CheckCircle className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
             <span className="text-foreground">
-              Checklist: {checklistName}
+              {f.checklist}: {checklistName || t.common.noChecklist}
             </span>
           </div>
         </CardContent>
@@ -384,9 +402,7 @@ export function NightlyReviewForm({
 
       <Card className="gap-0 py-0">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base">
-            Overall Quality Rating
-          </CardTitle>
+          <CardTitle className="text-base">{f.ratingTitle}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <div className="flex gap-2 justify-center py-4">
@@ -411,11 +427,7 @@ export function NightlyReviewForm({
           </div>
           {overallRating > 0 && (
             <p className="text-center text-xs text-muted-foreground">
-              {overallRating === 5 && 'Excellent work'}
-              {overallRating === 4 && 'Solid service'}
-              {overallRating === 3 && 'Acceptable'}
-              {overallRating === 2 && 'Needs improvement'}
-              {overallRating === 1 && 'Unsatisfactory'}
+              {f.rating[overallRating]}
             </p>
           )}
         </CardContent>
@@ -423,15 +435,12 @@ export function NightlyReviewForm({
 
       <Card className="gap-0 py-0">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base">
-            Checklist Verification
-          </CardTitle>
+          <CardTitle className="text-base">{f.checklistTitle}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-5">
           {groupedChecklist.length === 0 ? (
             <div className="rounded-[10px] border border-dashed border-border p-4 text-sm text-muted-foreground">
-              No checklist is assigned to this location yet. You can still rate the visit and
-              report issues.
+              {f.noChecklist}
             </div>
           ) : (
             groupedChecklist.map((section) => (
@@ -455,12 +464,12 @@ export function NightlyReviewForm({
                         <div className="flex gap-2">
                           {item.requiresPhoto && (
                             <Badge variant="neutral" className="text-[10px]">
-                              Photo Required
+                              {f.photoRequired}
                             </Badge>
                           )}
                           {item.priority === 'high' && (
                             <Badge variant="coral" className="text-[10px]">
-                              High Priority
+                              {f.highPriority}
                             </Badge>
                           )}
                         </div>
@@ -480,7 +489,7 @@ export function NightlyReviewForm({
                           )}
                         >
                           <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                          Good
+                          {f.good}
                         </Button>
                         <Button
                           type="button"
@@ -495,7 +504,7 @@ export function NightlyReviewForm({
                           )}
                         >
                           <AlertCircle className="h-3.5 w-3.5 mr-1" />
-                          Needs Work
+                          {f.needsWork}
                         </Button>
                         <Button
                           type="button"
@@ -510,7 +519,7 @@ export function NightlyReviewForm({
                           )}
                         >
                           <XCircle className="h-3.5 w-3.5 mr-1" />
-                          Not Done
+                          {f.notDone}
                         </Button>
                       </div>
 
@@ -520,23 +529,23 @@ export function NightlyReviewForm({
                         item.photos.length > 0 ||
                         item.notes) && (
                         <div className="space-y-2">
-                          <Label>Notes</Label>
+                          <Label>{f.notes}</Label>
                           <Textarea
                             value={item.notes}
                             disabled={readOnly}
                             onChange={(event) =>
                               handleChecklistNotes(item.id, event.target.value)
                             }
-                            placeholder="Add context for anything that needs follow-up..."
+                            placeholder={f.notesPlaceholder}
                             className="min-h-[80px]"
                           />
                           <div className="space-y-2">
-                            <Label>Photos</Label>
+                            <Label>{t.common.photos}</Label>
                             {!readOnly && (
                               <div className="flex items-center gap-2">
                                 <Label className="inline-flex cursor-pointer items-center rounded-[9px] border border-input px-3 py-2 font-sans text-xs normal-case tracking-normal text-foreground transition-colors hover:bg-secondary/60">
                                   <ImagePlus className="mr-2 h-3.5 w-3.5" />
-                                  {uploadingTarget === `checklist-${item.id}` ? 'Uploading...' : 'Add Photos'}
+                                  {uploadingTarget === `checklist-${item.id}` ? t.common.uploading : f.addPhotos}
                                   <input
                                     type="file"
                                     accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -556,7 +565,7 @@ export function NightlyReviewForm({
                                   <Image
                                     key={`${item.id}-photo-${photoIndex}`}
                                     src={photo}
-                                    alt={`${item.label} photo ${photoIndex + 1}`}
+                                    alt={f.photoAlt(item.label, photoIndex + 1)}
                                     width={160}
                                     height={80}
                                     unoptimized
@@ -581,13 +590,13 @@ export function NightlyReviewForm({
         <CardHeader className="p-4 pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <AlertTriangle className="h-4 w-4 text-coral-600 dark:text-coral-300" />
-            Pain Points & Issues
+            {f.painPoints}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0 space-y-3">
           {painPoints.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground py-3">
-              No issues reported for this visit.
+              {f.noPainPoints}
             </p>
           ) : (
             painPoints.map((point, index) => (
@@ -597,7 +606,7 @@ export function NightlyReviewForm({
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="font-medium text-sm text-foreground">
-                    {formatPainPointCategory(point.category)}
+                    {categoryLabelFor(toIssueCategory(point.category), undefined, lang)}
                   </p>
                   {!readOnly && (
                     <Button
@@ -613,7 +622,7 @@ export function NightlyReviewForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Severity</Label>
+                  <Label>{f.severity}</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {(['low', 'medium', 'high', 'critical'] as NightlyReviewPainPointSeverity[]).map(
                       (severity) => (
@@ -640,7 +649,7 @@ export function NightlyReviewForm({
                               'border-coral-600 bg-coral-600 text-white hover:bg-coral-600/90 hover:text-white dark:border-coral-300 dark:bg-coral-300 dark:text-ink-950 dark:hover:bg-coral-300/90 dark:hover:text-ink-950'
                           )}
                         >
-                          {capitalize(severity)}
+                          {t.severity[severity]}
                         </Button>
                       )
                     )}
@@ -648,24 +657,24 @@ export function NightlyReviewForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Description</Label>
+                  <Label>{f.description}</Label>
                   <Textarea
                     value={point.description}
                     disabled={readOnly}
                     onChange={(event) =>
                       handlePainPointChange(index, { description: event.target.value })
                     }
-                    placeholder="Describe the issue and any follow-up needed..."
+                    placeholder={f.descriptionPlaceholder}
                     className="min-h-[96px]"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Photos</Label>
+                  <Label>{t.common.photos}</Label>
                   {!readOnly && (
                     <Label className="inline-flex cursor-pointer items-center rounded-[9px] border border-input bg-background px-3 py-2 font-sans text-xs normal-case tracking-normal text-foreground transition-colors hover:bg-secondary/60">
                       <Camera className="mr-2 h-3.5 w-3.5" />
-                      {uploadingTarget === `pain-point-${index}` ? 'Uploading...' : 'Add Issue Photos'}
+                      {uploadingTarget === `pain-point-${index}` ? t.common.uploading : f.addIssuePhotos}
                       <input
                         type="file"
                         accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -684,7 +693,7 @@ export function NightlyReviewForm({
                         <Image
                           key={`${point.category}-${index}-${photoIndex}`}
                           src={photo}
-                          alt={`${point.category} photo ${photoIndex + 1}`}
+                          alt={f.photoAlt(point.category, photoIndex + 1)}
                           width={160}
                           height={80}
                           unoptimized
@@ -701,7 +710,7 @@ export function NightlyReviewForm({
           {!readOnly && (
             <>
               <Separator className="my-4" />
-              <p className="kicker text-muted-foreground">Add Issue</p>
+              <p className="kicker text-muted-foreground">{f.addIssue}</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {ISSUE_CATEGORIES.map((category) => (
                   <Button
@@ -712,7 +721,7 @@ export function NightlyReviewForm({
                     onClick={() => handleAddPainPoint(category.id)}
                     className="text-xs"
                   >
-                    {category.label}
+                    {t.category[category.id] ?? category.label}
                   </Button>
                 ))}
               </div>
@@ -723,15 +732,13 @@ export function NightlyReviewForm({
 
       <Card className="gap-0 py-0">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base">
-            Review Photos
-          </CardTitle>
+          <CardTitle className="text-base">{f.reviewPhotos}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 p-4 pt-0">
           {!readOnly && (
             <Label className="inline-flex cursor-pointer items-center rounded-[9px] border border-input px-3 py-2 font-sans text-xs normal-case tracking-normal text-foreground transition-colors hover:bg-secondary/60">
               <Camera className="mr-2 h-3.5 w-3.5" />
-              {uploadingTarget === 'review-photos' ? 'Uploading...' : 'Add Review Photos'}
+              {uploadingTarget === 'review-photos' ? t.common.uploading : f.addReviewPhotos}
               <input
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -749,7 +756,7 @@ export function NightlyReviewForm({
                 <Image
                   key={`review-photo-${index}`}
                   src={photo}
-                  alt={`Review photo ${index + 1}`}
+                  alt={f.reviewPhotoAlt(index + 1)}
                   width={192}
                   height={96}
                   unoptimized
@@ -758,25 +765,21 @@ export function NightlyReviewForm({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              No review photos attached.
-            </p>
+            <p className="text-sm text-muted-foreground">{f.noReviewPhotos}</p>
           )}
         </CardContent>
       </Card>
 
       <Card className="gap-0 py-0">
         <CardHeader className="p-4 pb-2">
-          <CardTitle className="text-base">
-            Additional Notes
-          </CardTitle>
+          <CardTitle className="text-base">{f.additionalNotes}</CardTitle>
         </CardHeader>
         <CardContent className="p-4 pt-0">
           <Textarea
             value={notes}
             disabled={readOnly}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Add any final observations, context, or client-facing notes..."
+            placeholder={f.additionalNotesPlaceholder}
             className="min-h-[120px]"
           />
         </CardContent>
@@ -793,12 +796,12 @@ export function NightlyReviewForm({
             {isSaving ? (
               <>
                 <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                Submitting...
+                {f.submitting}
               </>
             ) : (
               <>
                 <CheckCircle className="h-5 w-5 mr-2" />
-                Submit Review
+                {f.submit}
               </>
             )}
           </Button>
@@ -808,17 +811,9 @@ export function NightlyReviewForm({
   )
 }
 
-function capitalize(value: string) {
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-function formatPainPointCategory(category: string) {
-  return categoryLabel(toIssueCategory(category))
-}
-
-function formatClock(iso: string | null, timezone: string) {
+function formatClock(iso: string | null, timezone: string, lang: ManagerLang) {
   if (!iso) return null
-  return new Date(iso).toLocaleTimeString('en-US', {
+  return new Date(iso).toLocaleTimeString(localeFor(lang), {
     hour: 'numeric',
     minute: '2-digit',
     timeZone: timezone,
@@ -860,22 +855,27 @@ function PhotoStrip({ photos, alt }: { photos: string[]; alt: string }) {
 function AssociateReportPanel({
   report,
   timezone,
+  lang,
+  t,
 }: {
   report: NightlyReviewAssociateReport
   timezone: string
+  lang: ManagerLang
+  t: ManagerStrings
 }) {
-  const clockIn = formatClock(report.clockIn, timezone)
-  const clockOut = formatClock(report.clockOut, timezone)
+  const rp = t.form.report
+  const clockIn = formatClock(report.clockIn, timezone, lang)
+  const clockOut = formatClock(report.clockOut, timezone, lang)
   const stillOnSite = Boolean(report.clockIn && !report.clockOut)
   const percent =
     report.checklistTotal > 0 ? Math.round((report.checklistDone / report.checklistTotal) * 100) : 0
 
   const statusBadge = report.submittedAt ? (
-    <Badge variant="green">Submitted</Badge>
+    <Badge variant="green">{t.stopStatus.submitted}</Badge>
   ) : stillOnSite ? (
-    <Badge variant="teal">On site</Badge>
+    <Badge variant="teal">{rp.onSite}</Badge>
   ) : (
-    <Badge variant="neutral">Not submitted</Badge>
+    <Badge variant="neutral">{rp.notSubmitted}</Badge>
   )
 
   return (
@@ -883,7 +883,7 @@ function AssociateReportPanel({
       <CardHeader className="p-4 pb-2">
         <div className="flex items-center gap-2">
           <ClipboardList className="h-4 w-4 shrink-0 text-gold-600 dark:text-gold-400" />
-          <CardTitle className="text-base">Associate report</CardTitle>
+          <CardTitle className="text-base">{rp.title}</CardTitle>
           <span className="flex-1" />
           {statusBadge}
         </div>
@@ -900,7 +900,7 @@ function AssociateReportPanel({
               {clockIn ? (
                 <>
                   <span className="font-mono tabular-nums">
-                    {clockIn} – {clockOut ?? 'still on site'}
+                    {clockIn} – {clockOut ?? rp.stillOnSite}
                   </span>
                   {report.clockIn && report.clockOut && (
                     <span className="text-muted-foreground">
@@ -910,7 +910,7 @@ function AssociateReportPanel({
                   )}
                 </>
               ) : (
-                <span className="text-muted-foreground">No clock-in recorded</span>
+                <span className="text-muted-foreground">{rp.noClockIn}</span>
               )}
             </span>
           </div>
@@ -920,12 +920,12 @@ function AssociateReportPanel({
           <div className="flex items-center justify-between text-sm">
             <span className="text-foreground">
               <span className="font-mono tabular-nums font-semibold">
-                {report.checklistDone} of {report.checklistTotal}
+                {report.checklistDone} {rp.of} {report.checklistTotal}
               </span>{' '}
-              done
+              {rp.done}
             </span>
             {report.incompleteItems.length > 0 && (
-              <Badge variant="coral">{report.incompleteItems.length} not done</Badge>
+              <Badge variant="coral">{t.common.notDone(report.incompleteItems.length)}</Badge>
             )}
           </div>
           <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
@@ -938,7 +938,7 @@ function AssociateReportPanel({
 
         {report.incompleteItems.length > 0 && (
           <div className="space-y-2">
-            <p className="kicker text-muted-foreground">Marked not done</p>
+            <p className="kicker text-muted-foreground">{rp.markedNotDone}</p>
             {report.incompleteItems.map((item) => (
               <div
                 key={item.itemId}
@@ -951,10 +951,10 @@ function AssociateReportPanel({
                   )}
                 </div>
                 <p className="text-xs font-semibold text-coral-600 dark:text-coral-300">
-                  {reasonLabel(item.reason, 'en')}
+                  {reasonLabel(item.reason, lang)}
                 </p>
                 {item.note && <p className="text-sm text-foreground">{item.note}</p>}
-                <PhotoStrip photos={item.photos ?? []} alt={`${item.text} photo`} />
+                <PhotoStrip photos={item.photos ?? []} alt={`${item.text} · ${t.common.photo}`} />
               </div>
             ))}
           </div>
@@ -963,7 +963,7 @@ function AssociateReportPanel({
         {report.incompleteIssueId && (
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
             <Link href={`/operations/issues/${report.incompleteIssueId}`}>
-              Open unfinished-work issue
+              {rp.openIssue}
               <ChevronRight className="h-3.5 w-3.5 ml-1" />
             </Link>
           </Button>
@@ -971,15 +971,15 @@ function AssociateReportPanel({
 
         {report.overallNotes && (
           <div className="space-y-1">
-            <p className="kicker text-muted-foreground">Their notes</p>
+            <p className="kicker text-muted-foreground">{rp.theirNotes}</p>
             <p className="whitespace-pre-wrap text-sm text-foreground">{report.overallNotes}</p>
           </div>
         )}
 
         {report.photos.length > 0 && (
           <div className="space-y-2">
-            <p className="kicker text-muted-foreground">Their photos</p>
-            <PhotoStrip photos={report.photos} alt="Associate photo" />
+            <p className="kicker text-muted-foreground">{rp.theirPhotos}</p>
+            <PhotoStrip photos={report.photos} alt={rp.associatePhoto} />
           </div>
         )}
       </CardContent>
