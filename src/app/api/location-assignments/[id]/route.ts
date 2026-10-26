@@ -36,6 +36,10 @@ export async function PUT(
     }
 
     const body = await request.json()
+    // Pay is admin-only; managers may adjust schedule fields (workforce view).
+    if (body.monthlyPay !== undefined && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json({ error: 'Only admins can change pay' }, { status: 403 })
+    }
     const {
       monthlyPay, startDate, endDate, isActive,
       estimatedHoursPerVisit, cleaningWindowStart, cleaningWindowEnd,
@@ -103,6 +107,9 @@ export async function DELETE(
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json({ error: 'Only admins can remove assignments' }, { status: 403 })
     }
 
     // Verify assignment belongs to user's company

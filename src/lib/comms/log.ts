@@ -23,6 +23,8 @@ export function threadKeyFor(counterpartEmail: string | null | undefined, subjec
 export interface LogCommInput {
   companyId: string
   direction: 'outbound' | 'inbound'
+  /** 'email' (default) or 'sms'. For SMS, from/to hold phone numbers. */
+  channel?: 'email' | 'sms'
   category: CommCategory
   fromEmail?: string | null
   toEmail?: string | null
@@ -52,7 +54,7 @@ export async function logComm(input: LogCommInput): Promise<string | null> {
       data: {
         companyId: input.companyId,
         direction: input.direction,
-        channel: 'email',
+        channel: input.channel ?? 'email',
         category: input.category,
         fromEmail: input.fromEmail?.toLowerCase() ?? null,
         toEmail: input.toEmail?.toLowerCase() ?? null,

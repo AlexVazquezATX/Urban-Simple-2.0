@@ -76,6 +76,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Assignments carry pay, so creating one is admin-only.
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json({ error: 'Only admins can create assignments' }, { status: 403 })
+    }
+
     const body = await request.json()
     const { locationId, userId, monthlyPay, startDate, endDate, isActive = true } = body
 

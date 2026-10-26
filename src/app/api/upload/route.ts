@@ -18,9 +18,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    if (!folder || !['clients', 'locations', 'blog', 'signatures', 'reviews'].includes(folder)) {
+    if (!folder || !['clients', 'locations', 'blog', 'signatures', 'reviews', 'field', 'issues'].includes(folder)) {
       return NextResponse.json(
-        { error: 'Invalid folder. Must be "clients", "locations", "blog", "reviews", or "signatures"' },
+        { error: 'Invalid folder. Must be "clients", "locations", "blog", "reviews", "field", "issues", or "signatures"' },
         { status: 400 }
       )
     }

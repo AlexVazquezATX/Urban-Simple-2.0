@@ -147,6 +147,10 @@ model User {
   isActive       Boolean   @default(true) @map("is_active")
   lastLogin         DateTime? @map("last_login")
   emailSignature    String?   @db.Text @map("email_signature")
+  // Ops alerts: in-app + email always; SMS only when the user opts in and has a phone.
+  smsAlerts         Boolean   @default(false) @map("sms_alerts")
+  // UI language for field screens (associates): 'en' | 'es'.
+  preferredLanguage String    @default("en") @map("preferred_language")
   signatureLogoUrl  String?   @map("signature_logo_url")
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
@@ -214,6 +218,9 @@ model User {
 
   // Portal walkthroughs the user has completed (CLIENT_USER side).
   portalWalkthroughsCompleted PortalWalkthrough[] @relation("PortalWalkthroughCompletedBy")
+
+  // Client-side visit ratings this (CLIENT_USER) user has left.
+  visitRatings ClientVisitRating[] @relation("ClientVisitRatingAuthor")
 
   @@map("users")
 }
@@ -476,6 +483,7 @@ model Client {
   serviceLineItems      ServiceLineItem[]
   portalDocuments       PortalDocument[]
   portalWalkthroughs    PortalWalkthrough[]
+  visitRatings          ClientVisitRating[]
 
   @@index([parentClientId])
   @@index([companyId, branchId, deletedAt])
@@ -493,6 +501,15 @@ model ClientContact {
   role                String    @default("primary") // primary, billing, operations, other
   isPortalUser        Boolean   @default(false) @map("is_portal_user")
   portalAccessGranted DateTime? @map("portal_access_granted_at")
+
+  // Ops alert routing. A contact is alerted about unfinished work, issues and
+  // updates at the locations listed here (empty = every location of the client).
+  // Both channels are opt-in so billing-only contacts never get ops mail.
+  locationIds   String[]  @default([]) @map("location_ids")
+  alertEmail    Boolean   @default(false) @map("alert_email")
+  alertSms      Boolean   @default(false) @map("alert_sms")
+  smsConsentAt  DateTime? @map("sms_consent_at")
+  smsOptedOutAt DateTime? @map("sms_opted_out_at") // set by an inbound STOP
   createdAt           DateTime  @default(now()) @map("created_at")
   updatedAt           DateTime  @updatedAt @map("updated_at")
 
@@ -538,6 +555,7 @@ model Location {
   facilityProfile   FacilityProfile?
   timeEntries       TimeEntry[]
   portalWalkthroughs PortalWalkthrough[]
+  visitRatings       ClientVisitRating[]
 
   @@index([clientId, isActive, deletedAt])
   @@index([branchId, isActive, deletedAt])
@@ -720,6 +738,11 @@ model ServiceLog {
   priorityItemsCompleted Json?     @default("[]") @map("priority_items_completed")
   overallNotes           String?   @map("overall_notes")
   photos                 String[]  @default([])
+  // Items the associate marked "not done", each with a reason:
+  //   [{ itemId, text, section, reason, note, photos[] }]
+  incompleteItems        Json?     @default("[]") @map("incomplete_items")
+  // When the associate finished the visit (drives the unfinished-work alert).
+  submittedAt            DateTime? @map("submitted_at")
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
@@ -728,8 +751,9 @@ model ServiceLog {
   associate         User               @relation(fields: [associateId], references: [id])
   checklistTemplate ChecklistTemplate? @relation(fields: [checklistTemplateId], references: [id])
 
-  reviews ServiceReview[]
-  issues  Issue[]
+  reviews      ServiceReview[]
+  issues       Issue[]
+  visitRatings ClientVisitRating[]
 
   @@map("service_logs")
 }
@@ -773,6 +797,15 @@ model Issue {
   resolution             String?
   implicatedAssociateIds String[]  @default([]) @map("implicated_associate_ids")
   resolvedAt             DateTime? @map("resolved_at")
+  // issue | incomplete_work (associate flag) | request (client service request)
+  type                   String    @default("issue")
+  // who raised it: associate | manager_review | client | staff
+  source                 String    @default("staff")
+  // Internal QA findings stay off the client portal until a manager shares them.
+  visibleToClient        Boolean   @default(true) @map("visible_to_client")
+  clientNotifiedAt       DateTime? @map("client_notified_at")
+  // Service requests: when the client would like it done.
+  preferredDate          DateTime? @map("preferred_date")
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
 
@@ -784,6 +817,8 @@ model Issue {
 
   comments IssueComment[]
 
+  @@index([clientId, status])
+  @@index([locationId, createdAt])
   @@map("issues")
 }
 
@@ -1311,7 +1346,33 @@ model Notification {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId, isRead, createdAt])
   @@map("notifications")
+}
+
+// A client's own rating of a visit (distinct from ServiceReview, which is our
+// manager's internal QA review). One rating per user per visit.
+model ClientVisitRating {
+  id           String   @id @default(cuid())
+  clientId     String   @map("client_id")
+  locationId   String   @map("location_id")
+  serviceLogId String?  @map("service_log_id")
+  shiftId      String?  @map("shift_id")
+  serviceDate  DateTime @map("service_date") @db.Date
+  rating       Int // 1-5
+  comment      String?
+  createdById  String   @map("created_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  client     Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  location   Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  serviceLog ServiceLog? @relation(fields: [serviceLogId], references: [id], onDelete: SetNull)
+  createdBy  User        @relation("ClientVisitRatingAuthor", fields: [createdById], references: [id])
+
+  @@unique([createdById, locationId, serviceDate])
+  @@index([clientId, serviceDate])
+  @@map("client_visit_ratings")
 }
 
 // ============================================

@@ -83,8 +83,8 @@ export const navGroups: NavGroup[] = [
       { href: '/chat', icon: MessageSquare, label: 'Team Chat', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'] },
       { href: '/team', icon: UserCog, label: 'Team', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
       { href: '/operations/schedule', icon: Calendar, label: 'Schedule', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
-      { href: '/operations/assignments', icon: UserCheck, label: 'Assignments', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'] },
-      { href: '/operations/checklists', icon: ClipboardList, label: 'Checklists', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'] },
+      { href: '/operations/assignments', icon: UserCheck, label: 'Assignments', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+      { href: '/operations/checklists', icon: ClipboardList, label: 'Checklists', roles: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     ],
   },
   {

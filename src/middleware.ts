@@ -77,6 +77,52 @@ function applyImpersonation(realRole: string | null, request: NextRequest): stri
 }
 
 // ============================================
+// STAFF API ROLE MATRIX
+// ============================================
+// Route handlers historically checked only "signed in + same company", so an
+// ASSOCIATE could edit pay, shifts, checklists or invoices by calling the API
+// directly. This matrix is the enforcement layer for browser sessions (agent
+// bearer keys have their own scopes). First matching rule wins; anything
+// unmatched is open to any signed-in staff user.
+
+const ADMINS = ['SUPER_ADMIN', 'ADMIN']
+const MANAGERS = ['SUPER_ADMIN', 'ADMIN', 'MANAGER']
+const WRITES = ['POST', 'PUT', 'PATCH', 'DELETE']
+
+interface ApiRule {
+  match: RegExp
+  allow: string[]
+  methods?: string[] // default: all methods
+}
+
+const API_RULES: ApiRule[] = [
+  // Open to every staff role (associates included)
+  { match: /^\/api\/users\/me(\/|$)/, allow: [...MANAGERS, 'ASSOCIATE'] },
+  { match: /^\/api\/checklists\/[^/]+\/complete$/, allow: [...MANAGERS, 'ASSOCIATE'] },
+  { match: /^\/api\/operations\/clock$/, allow: [...MANAGERS, 'ASSOCIATE'] },
+
+  // Money and growth: admins only
+  { match: /^\/api\/clients\/[^/]+\/(billing-preview|service-items|facilities|changelog)(\/|$)/, allow: ADMINS },
+  { match: /^\/api\/(invoices|payments|billing|service-agreements|qbo|financials|growth|communications|command|money)(\/|$)/, allow: ADMINS },
+
+  // Ops management: managers and up
+  { match: /^\/api\/(clients|locations|shifts|location-assignments|operations)(\/|$)/, allow: MANAGERS },
+  { match: /^\/api\/(checklists|checklist-library)(\/|$)/, allow: MANAGERS, methods: WRITES },
+  { match: /^\/api\/users(\/|$)/, allow: MANAGERS, methods: WRITES },
+  { match: /^\/api\/issues\/[^/]+$/, allow: MANAGERS, methods: ['PUT', 'PATCH', 'DELETE'] },
+  { match: /^\/api\/issues\/[^/]+\/notify-client$/, allow: MANAGERS },
+]
+
+function apiAllowed(pathname: string, method: string, role: string): boolean {
+  for (const rule of API_RULES) {
+    if (!rule.match.test(pathname)) continue
+    if (rule.methods && !rule.methods.includes(method.toUpperCase())) continue
+    return rule.allow.includes(role)
+  }
+  return true
+}
+
+// ============================================
 // AGENT (API-KEY) HANDLING
 // ============================================
 // Programmatic agents authenticate with a bearer credential: an API key
@@ -209,7 +255,7 @@ export async function middleware(request: NextRequest) {
     '/dashboard', '/app', '/clients', '/locations', '/operations', '/chat',
     '/team', '/invoices', '/billing', '/financials', '/growth', '/creative-hub',
     '/creative-studio', '/pulse', '/chat-analytics', '/tasks', '/admin', '/command',
-    '/money', '/pipeline', '/settings',
+    '/money', '/pipeline', '/settings', '/field', '/communications',
   ]
 
   // Per-section role matrix — mirrors the sidebar's `roles` so what's hidden
@@ -232,7 +278,16 @@ export async function middleware(request: NextRequest) {
     { prefix: '/command', allow: ['SUPER_ADMIN', 'ADMIN'] },
     { prefix: '/money', allow: ['SUPER_ADMIN', 'ADMIN'] },
     { prefix: '/pipeline', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/communications', allow: ['SUPER_ADMIN', 'ADMIN'] },
+    { prefix: '/operations', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+    { prefix: '/clients', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+    { prefix: '/locations', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+    { prefix: '/team', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   ]
+
+  // Field pages an associate may open even though they sit under a
+  // manager-only prefix (legacy checklist run links redirect into /field).
+  const ASSOCIATE_PAGE_EXCEPTIONS = [/^\/operations\/checklists\/[^/]+\/run\/?$/]
 
   // ---- Staff API boundary ----
   // The page role-matrix below only matches page prefixes, so /api/* was left
@@ -259,6 +314,11 @@ export async function middleware(request: NextRequest) {
       if (user) {
         const realRole = await getUserRole(user.id)
         if (realRole === 'CLIENT_USER') {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        }
+        // Staff role matrix (effective role, so impersonation is faithful).
+        const role = applyImpersonation(realRole, request) ?? ''
+        if (!apiAllowed(pathname, request.method, role)) {
           return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
       }
@@ -292,8 +352,10 @@ export async function middleware(request: NextRequest) {
       }
 
       // Enforce the section role matrix.
+      const pageException =
+        role === 'ASSOCIATE' && ASSOCIATE_PAGE_EXCEPTIONS.some(re => re.test(pathname))
       for (const { prefix, allow } of ROUTE_ROLES) {
-        if (pathname.startsWith(prefix) && !allow.includes(role)) {
+        if (!pageException && pathname.startsWith(prefix) && !allow.includes(role)) {
           return NextResponse.redirect(new URL('/dashboard', request.url))
         }
       }
@@ -374,22 +436,33 @@ export async function middleware(request: NextRequest) {
   // Protect /portal routes - require login (except public auth pages).
   // /portal/signup is public so non-Austin restaurants can self-onboard.
   if (pathname.startsWith('/portal')) {
-    const isPortalPublic =
+    // Sign-in pages: signed-in users get bounced into the portal.
+    const isPortalAuthPage =
       pathname.startsWith('/portal/login') ||
-      pathname.startsWith('/portal/signup')
+      pathname.startsWith('/portal/signup') ||
+      pathname.startsWith('/portal/forgot-password')
+    // Open either way: set-password is reached from an invite/recovery email
+    // (the session is established on the page itself from the link tokens),
+    // and no-access is where a signed-in user without a portal link lands
+    // (bouncing them to login would loop straight back to /portal).
+    const isPortalOpenPage =
+      pathname.startsWith('/portal/set-password') ||
+      pathname.startsWith('/portal/no-access')
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
+    if (!isPortalOpenPage) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-    // Signed-in users have no business on the portal auth pages — send them
-    // into the portal (mirrors the studio behavior above).
-    if (user && isPortalPublic) {
-      return NextResponse.redirect(new URL('/portal', request.url))
-    }
+      if (user && isPortalAuthPage) {
+        return NextResponse.redirect(new URL('/portal', request.url))
+      }
 
-    if (!user && !isPortalPublic) {
-      return NextResponse.redirect(new URL('/portal/login', request.url))
+      if (!user && !isPortalAuthPage) {
+        const loginUrl = new URL('/portal/login', request.url)
+        if (pathname !== '/portal') loginUrl.searchParams.set('next', pathname)
+        return NextResponse.redirect(loginUrl)
+      }
     }
   }
 

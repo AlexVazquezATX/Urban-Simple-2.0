@@ -26,6 +26,9 @@ async function AssignmentsList() {
     return <div>Please log in</div>
   }
 
+  // Pay rates are admin-only; managers get a read-only coverage view.
+  const isAdmin = user.role === 'SUPER_ADMIN' || user.role === 'ADMIN'
+
   const assignments = await prisma.locationAssignment.findMany({
     where: {
       location: {
@@ -72,9 +75,9 @@ async function AssignmentsList() {
       <PageHeader
         kicker="OPERATIONS · ASSIGNMENTS"
         title="Location Assignments"
-        subtitle="Manage associate assignments to locations with pay rates"
+        subtitle={isAdmin ? 'Manage associate assignments to locations with pay rates' : 'Which associates cover which locations'}
         actions={
-          <AssignmentForm>
+          isAdmin && <AssignmentForm>
             <Button variant="gold">
               <Plus className="mr-2 h-4 w-4" />
               New Assignment
@@ -92,7 +95,7 @@ async function AssignmentsList() {
               title="No assignments yet"
               description="Assign an associate to a location to set their monthly pay and start tracking coverage."
               action={
-                <AssignmentForm>
+                isAdmin && <AssignmentForm>
                   <Button variant="outline">
                     <Plus className="mr-2 h-4 w-4" />
                     Create First Assignment
@@ -117,7 +120,7 @@ async function AssignmentsList() {
                 <TableRow>
                   <TableHead>Location</TableHead>
                   <TableHead>Associate</TableHead>
-                  <TableHead className="text-right">Monthly Pay</TableHead>
+                  {isAdmin && <TableHead className="text-right">Monthly Pay</TableHead>}
                   <TableHead>Start Date</TableHead>
                   <TableHead>End Date</TableHead>
                   <TableHead>Status</TableHead>
@@ -142,9 +145,11 @@ async function AssignmentsList() {
                       <TableCell className="text-sm text-foreground">
                         {assignment.user.firstName} {assignment.user.lastName}
                       </TableCell>
-                      <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
-                        {formatMoneyExact(parseFloat(assignment.monthlyPay.toString()))}
-                      </TableCell>
+                      {isAdmin && (
+                        <TableCell className="text-right font-mono text-sm tabular-nums text-foreground">
+                          {formatMoneyExact(parseFloat(assignment.monthlyPay.toString()))}
+                        </TableCell>
+                      )}
                       <TableCell className="font-mono text-sm tabular-nums text-muted-foreground">
                         {startDate}
                       </TableCell>
@@ -156,6 +161,7 @@ async function AssignmentsList() {
                           {isActive ? 'Active' : 'Inactive'}
                         </Badge>
                       </TableCell>
+                      {isAdmin ? (
                       <TableCell className="text-right">
                         <AssignmentForm assignment={assignment}>
                           <Button variant="ghost" size="sm" className="h-7 px-2 text-xs">
@@ -164,6 +170,9 @@ async function AssignmentsList() {
                           </Button>
                         </AssignmentForm>
                       </TableCell>
+                      ) : (
+                        <TableCell />
+                      )}
                     </TableRow>
                   )
                 })}
