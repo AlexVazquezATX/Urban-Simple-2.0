@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -6,6 +6,8 @@ import {
   buildNightlyReviewId,
   getManagerNightlyReviewContext,
 } from '@/lib/operations/nightly-reviews'
+import { toIssueCategory } from '@/lib/operations/review-categories'
+import { onIssueCreated } from '@/lib/ops/issue-events'
 
 const checklistItemSchema = z.object({
   id: z.string().min(1),
@@ -82,6 +84,7 @@ export async function POST(request: NextRequest) {
       companyId: user.companyId,
       managerId: user.id,
       reviewId,
+      allowAnyManager: user.role === 'ADMIN' || user.role === 'SUPER_ADMIN',
     })
 
     if (!reviewContext) {
@@ -95,8 +98,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // When the associate logged this stop on their own shift, the review
+    // attaches to that log so it is credited to the person who did the work.
+    const associateLog =
+      reviewContext.associateReport &&
+      reviewContext.associateReport.serviceLogId !== reviewContext.serviceLog?.id
+        ? reviewContext.associateReport
+        : null
+
     const associateId =
-      reviewContext.shift.associateId || reviewContext.shift.managerId || null
+      associateLog?.associateId ||
+      reviewContext.shift.associateId ||
+      reviewContext.shift.managerId ||
+      null
 
     if (!associateId) {
       return NextResponse.json(
@@ -107,8 +121,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Shift dates are already UTC midnight of the service day.
     const reviewDate = new Date(reviewContext.shift.date)
-    reviewDate.setHours(0, 0, 0, 0)
 
     const hasIncompleteWork = body.checklistItems.some(
       (item) => item.status === 'needs_work' || item.status === 'not_done'
@@ -118,8 +132,16 @@ export async function POST(request: NextRequest) {
     )
     const nextServiceLogStatus = hasIncompleteWork || hasSeriousIssue ? 'partial' : 'completed'
 
+    const implicatedAssociateIds = associateLog
+      ? [associateLog.associateId]
+      : reviewContext.shift.associateId
+        ? [reviewContext.shift.associateId]
+        : []
+
     const result = await prisma.$transaction(async (tx) => {
-      const serviceLog = reviewContext.serviceLog
+      const serviceLog = associateLog
+        ? { id: associateLog.serviceLogId }
+        : reviewContext.serviceLog
         ? await tx.serviceLog.update({
             where: {
               id: reviewContext.serviceLog.id,
@@ -176,14 +198,20 @@ export async function POST(request: NextRequest) {
         },
       })
 
-      if (body.painPoints.length > 0) {
-        await tx.issue.createMany({
-          data: body.painPoints.map((point) => ({
+      // Review findings are internal QA: hidden from the client portal until a
+      // manager chooses to share them.
+      const issueIds: string[] = []
+      for (const point of body.painPoints) {
+        const issue = await tx.issue.create({
+          data: {
             locationId: reviewContext.location.id,
             clientId: reviewContext.location.clientId,
             reportedById: user.id,
             serviceLogId: serviceLog.id,
-            category: point.category.toLowerCase(),
+            type: 'issue',
+            source: 'manager_review',
+            visibleToClient: false,
+            category: toIssueCategory(point.category),
             severity: point.severity,
             title:
               point.description.trim().slice(0, 100) ||
@@ -191,33 +219,41 @@ export async function POST(request: NextRequest) {
             description: point.description.trim(),
             photos: point.photos || [],
             status: 'open',
-            implicatedAssociateIds: reviewContext.shift.associateId
-              ? [reviewContext.shift.associateId]
-              : [],
-          })),
+            implicatedAssociateIds,
+          },
+          select: { id: true },
         })
+        issueIds.push(issue.id)
       }
 
-      const reviewedLocations = await tx.serviceLog.findMany({
+      // A stop counts as reviewed once any review exists for that location on
+      // this service date, whether it hangs off the route's own log or the
+      // associate's.
+      const routeStops = await tx.shiftLocation.findMany({
         where: {
           shiftId: reviewContext.shift.id,
         },
         select: {
           locationId: true,
-          reviews: {
-            select: {
-              id: true,
-            },
-            take: 1,
-          },
         },
       })
+      const routeLocationIds =
+        routeStops.length > 0
+          ? routeStops.map((stop) => stop.locationId)
+          : [reviewContext.shift.fallbackLocationId ?? reviewContext.location.id]
 
-      const completedLocationIds = new Set(
-        reviewedLocations
-          .filter((log) => log.reviews.length > 0)
-          .map((log) => log.locationId)
-      )
+      const reviewedLocations = await tx.serviceReview.findMany({
+        where: {
+          reviewDate,
+          locationId: { in: routeLocationIds },
+        },
+        select: {
+          locationId: true,
+        },
+        distinct: ['locationId'],
+      })
+
+      const completedLocationIds = new Set(reviewedLocations.map((r) => r.locationId))
 
       const totalRouteStops = Math.max(reviewContext.shift.routeStopCount, 1)
       const nextShiftStatus =
@@ -236,8 +272,13 @@ export async function POST(request: NextRequest) {
         serviceLogId: serviceLog.id,
         serviceReviewId: serviceReview.id,
         shiftStatus: nextShiftStatus,
+        issueIds,
       }
     })
+
+    for (const issueId of result.issueIds) {
+      after(() => onIssueCreated(issueId))
+    }
 
     return NextResponse.json({
       success: true,

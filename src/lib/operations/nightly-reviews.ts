@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import type { IncompleteItem } from '@/lib/ops/constants'
 
 export type NightlyReviewItemStatus = 'good' | 'needs_work' | 'not_done' | 'pending'
 export type NightlyReviewPainPointSeverity = 'low' | 'medium' | 'high' | 'critical'
@@ -139,10 +140,120 @@ export function issuesToPainPoints(
   }))
 }
 
+export interface NightlyReviewAssociateReport {
+  serviceLogId: string
+  shiftId: string | null
+  associateId: string
+  associateName: string
+  serviceDate: string
+  status: string
+  clockIn: string | null
+  clockOut: string | null
+  submittedAt: string | null
+  checklistDone: number
+  checklistTotal: number
+  incompleteItems: IncompleteItem[]
+  overallNotes: string | null
+  photos: string[]
+  incompleteIssueId: string | null
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+function dateKey(date: Date) {
+  return date.toISOString().slice(0, 10)
+}
+
+/**
+ * Associates log their work on their own shift, not on the manager's review
+ * route. Match by location + service date instead. Shift dates are @db.Date at
+ * UTC midnight; overnight work can land on the prior date, so we look at the
+ * review date and the day before.
+ */
+export function associateLogsWhere(locationIds: string[], reviewDate: Date) {
+  return {
+    locationId: { in: locationIds },
+    serviceDate: { in: [new Date(reviewDate.getTime() - DAY_MS), reviewDate] },
+    shift: { is: { associateId: { not: null } } },
+  }
+}
+
+/**
+ * Pick the associate log a review should look at: one already reviewed on this
+ * date wins, then the most recent log from the same date, then an unreviewed
+ * log from the night before.
+ */
+export function pickAssociateLog<
+  T extends {
+    serviceDate: Date
+    updatedAt: Date
+    submittedAt: Date | null
+    reviews: Array<{ reviewDate: Date }>
+  },
+>(logs: T[], reviewDate: Date): T | null {
+  const day = dateKey(reviewDate)
+  const priorDay = dateKey(new Date(reviewDate.getTime() - DAY_MS))
+  const linked = logs.find((log) => log.reviews.some((r) => dateKey(r.reviewDate) === day))
+  if (linked) return linked
+
+  const recency = (log: T) => (log.submittedAt ?? log.updatedAt).getTime()
+  const byRecent = (a: T, b: T) => recency(b) - recency(a)
+  const sameDay = logs.filter((log) => dateKey(log.serviceDate) === day).sort(byRecent)
+  if (sameDay[0]) return sameDay[0]
+
+  const priorNight = logs
+    .filter((log) => dateKey(log.serviceDate) === priorDay && log.reviews.length === 0)
+    .sort(byRecent)
+  return priorNight[0] ?? null
+}
+
+/** Done/total for an associate's checklistData (Record<itemId, boolean>). */
+export function checklistProgress(sections: unknown, checklistData: unknown) {
+  const data = isRecord(checklistData) ? checklistData : {}
+  const templateIds = flattenChecklistSections(sections).map((item) => item.id)
+  if (templateIds.length > 0) {
+    return {
+      done: templateIds.filter((id) => data[id] === true).length,
+      total: templateIds.length,
+    }
+  }
+  const values = Object.values(data)
+  return { done: values.filter((v) => v === true).length, total: values.length }
+}
+
+export function parseIncompleteItems(value: unknown): IncompleteItem[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((entry) => {
+    if (!isRecord(entry)) return []
+    const itemId = asString(entry.itemId)
+    if (!itemId) return []
+    return [
+      {
+        itemId,
+        text: asString(entry.text) ?? itemId,
+        section: asString(entry.section),
+        reason: asString(entry.reason) ?? 'other',
+        note: asString(entry.note),
+        photos: asStringArray(entry.photos),
+      },
+    ]
+  })
+}
+
+function personName(person: {
+  firstName: string | null
+  lastName: string | null
+  displayName: string | null
+}) {
+  return person.displayName || `${person.firstName || ''} ${person.lastName || ''}`.trim()
+}
+
 export async function getManagerNightlyReviewContext(params: {
   companyId: string
   managerId: string
   reviewId: string
+  // ADMIN / SUPER_ADMIN can open any manager's review.
+  allowAnyManager?: boolean
 }) {
   const parsed = parseNightlyReviewId(params.reviewId)
   if (!parsed) {
@@ -152,7 +263,7 @@ export async function getManagerNightlyReviewContext(params: {
   const shift = await prisma.shift.findFirst({
     where: {
       id: parsed.shiftId,
-      managerId: params.managerId,
+      ...(params.allowAnyManager ? {} : { managerId: params.managerId }),
       branch: {
         companyId: params.companyId,
       },
@@ -234,31 +345,16 @@ export async function getManagerNightlyReviewContext(params: {
         take: 1,
         include: {
           reviews: {
-            where: {
-              reviewerId: params.managerId,
-            },
             orderBy: {
               createdAt: 'desc',
             },
             take: 1,
           },
-          issues: {
-            where: {
-              reportedById: params.managerId,
-            },
-            orderBy: {
-              createdAt: 'asc',
-            },
-            select: {
-              id: true,
-              category: true,
-              severity: true,
-              title: true,
-              description: true,
-              photos: true,
-              createdAt: true,
-            },
-          },
+        },
+      },
+      branch: {
+        select: {
+          timezone: true,
         },
       },
       _count: {
@@ -281,8 +377,80 @@ export async function getManagerNightlyReviewContext(params: {
     return null
   }
 
+  const associateLogs = await prisma.serviceLog.findMany({
+    where: associateLogsWhere([targetLocation.id], shift.date),
+    orderBy: [{ serviceDate: 'desc' }, { updatedAt: 'desc' }],
+    include: {
+      associate: {
+        select: { id: true, firstName: true, lastName: true, displayName: true },
+      },
+      reviews: {
+        orderBy: { createdAt: 'desc' },
+      },
+      issues: {
+        where: { type: 'incomplete_work' },
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { id: true },
+      },
+    },
+  })
+  const associateLog = pickAssociateLog(associateLogs, shift.date)
+
   const serviceLog = shift.serviceLogs[0] ?? null
-  const review = serviceLog?.reviews[0] ?? null
+  const shiftDay = dateKey(shift.date)
+  const review =
+    serviceLog?.reviews[0] ??
+    associateLog?.reviews.find((r) => dateKey(r.reviewDate) === shiftDay) ??
+    null
+
+  // Pain points the reviewer filed with this review (read-only view).
+  const issues =
+    review?.serviceLogId
+      ? await prisma.issue.findMany({
+          where: {
+            serviceLogId: review.serviceLogId,
+            reportedById: review.reviewerId,
+            type: 'issue',
+          },
+          orderBy: {
+            createdAt: 'asc',
+          },
+          select: {
+            id: true,
+            category: true,
+            severity: true,
+            title: true,
+            description: true,
+            photos: true,
+            createdAt: true,
+          },
+        })
+      : []
+
+  const sections = targetLocation.checklistTemplate?.sections ?? []
+  const associateReport: NightlyReviewAssociateReport | null = associateLog
+    ? (() => {
+        const progress = checklistProgress(sections, associateLog.checklistData)
+        return {
+          serviceLogId: associateLog.id,
+          shiftId: associateLog.shiftId,
+          associateId: associateLog.associateId,
+          associateName: personName(associateLog.associate) || 'Associate',
+          serviceDate: associateLog.serviceDate.toISOString(),
+          status: associateLog.status,
+          clockIn: associateLog.clockIn?.toISOString() ?? null,
+          clockOut: associateLog.clockOut?.toISOString() ?? null,
+          submittedAt: associateLog.submittedAt?.toISOString() ?? null,
+          checklistDone: progress.done,
+          checklistTotal: progress.total,
+          incompleteItems: parseIncompleteItems(associateLog.incompleteItems),
+          overallNotes: associateLog.overallNotes,
+          photos: associateLog.photos,
+          incompleteIssueId: associateLog.issues[0]?.id ?? null,
+        }
+      })()
+    : null
 
   return {
     reviewId: params.reviewId,
@@ -298,6 +466,7 @@ export async function getManagerNightlyReviewContext(params: {
       fallbackLocationId: shift.locationId,
       routeStopCount:
         shift._count.shiftLocations > 0 ? shift._count.shiftLocations : shift.locationId ? 1 : 0,
+      timezone: shift.branch.timezone || 'America/Chicago',
     },
     location: {
       id: targetLocation.id,
@@ -316,17 +485,13 @@ export async function getManagerNightlyReviewContext(params: {
     associate: shift.associate
       ? {
           id: shift.associate.id,
-          displayName:
-            shift.associate.displayName ||
-            `${shift.associate.firstName || ''} ${shift.associate.lastName || ''}`.trim(),
+          displayName: personName(shift.associate),
         }
       : null,
     manager: shift.manager
       ? {
           id: shift.manager.id,
-          displayName:
-            shift.manager.displayName ||
-            `${shift.manager.firstName || ''} ${shift.manager.lastName || ''}`.trim(),
+          displayName: personName(shift.manager),
         }
       : null,
     serviceLog: serviceLog
@@ -342,9 +507,12 @@ export async function getManagerNightlyReviewContext(params: {
           photos: serviceLog.photos,
         }
       : null,
+    associateReport,
     review: review
       ? {
           id: review.id,
+          serviceLogId: review.serviceLogId,
+          reviewerId: review.reviewerId,
           reviewDate: review.reviewDate,
           overallRating: Number(review.overallRating),
           ratingItems: review.ratingItems,
@@ -354,7 +522,7 @@ export async function getManagerNightlyReviewContext(params: {
           createdAt: review.createdAt,
         }
       : null,
-    issues: serviceLog?.issues ?? [],
+    issues,
   }
 }
 

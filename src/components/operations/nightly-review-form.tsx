@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -9,6 +10,8 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle,
+  ChevronRight,
+  ClipboardList,
   Clock,
   ImagePlus,
   Loader2,
@@ -25,7 +28,10 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { ISSUE_CATEGORIES, categoryLabel, reasonLabel } from '@/lib/ops/constants'
+import { toIssueCategory } from '@/lib/operations/review-categories'
 import type {
+  NightlyReviewAssociateReport,
   NightlyReviewChecklistItemState,
   NightlyReviewPainPoint,
   NightlyReviewPainPointSeverity,
@@ -49,6 +55,8 @@ interface NightlyReviewFormProps {
   initialPhotos: string[]
   readOnly?: boolean
   submittedAt?: string | null
+  associateReport?: NightlyReviewAssociateReport | null
+  timezone?: string
 }
 
 export function NightlyReviewForm({
@@ -69,12 +77,16 @@ export function NightlyReviewForm({
   initialPhotos,
   readOnly = false,
   submittedAt,
+  associateReport = null,
+  timezone = 'America/Chicago',
 }: NightlyReviewFormProps) {
   const router = useRouter()
   const [isSaving, setIsSaving] = useState(false)
   const [overallRating, setOverallRating] = useState(initialRating)
   const [checklistItems, setChecklistItems] = useState(initialChecklistItems)
-  const [painPoints, setPainPoints] = useState(initialPainPoints)
+  const [painPoints, setPainPoints] = useState(() =>
+    initialPainPoints.map((point) => ({ ...point, category: toIssueCategory(point.category) }))
+  )
   const [notes, setNotes] = useState(initialNotes)
   const [reviewPhotos, setReviewPhotos] = useState(initialPhotos)
   const [uploadingTarget, setUploadingTarget] = useState<string | null>(null)
@@ -306,6 +318,7 @@ export function NightlyReviewForm({
         year: 'numeric',
         hour: 'numeric',
         minute: '2-digit',
+        timeZone: timezone,
       })
     : null
 
@@ -336,6 +349,10 @@ export function NightlyReviewForm({
           )}
         </div>
       </div>
+
+      {associateReport && (
+        <AssociateReportPanel report={associateReport} timezone={timezone} />
+      )}
 
       <Card className="py-0">
         <CardContent className="p-4 grid gap-3 sm:grid-cols-2">
@@ -542,6 +559,7 @@ export function NightlyReviewForm({
                                     alt={`${item.label} photo ${photoIndex + 1}`}
                                     width={160}
                                     height={80}
+                                    unoptimized
                                     className="h-20 w-full rounded-[9px] border border-border object-cover"
                                   />
                                 ))}
@@ -669,6 +687,7 @@ export function NightlyReviewForm({
                           alt={`${point.category} photo ${photoIndex + 1}`}
                           width={160}
                           height={80}
+                          unoptimized
                           className="h-20 w-full rounded-[9px] border border-border object-cover"
                         />
                       ))}
@@ -684,23 +703,16 @@ export function NightlyReviewForm({
               <Separator className="my-4" />
               <p className="kicker text-muted-foreground">Add Issue</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {[
-                  'supply_shortage',
-                  'equipment',
-                  'staffing',
-                  'quality',
-                  'safety',
-                  'client_feedback',
-                ].map((category) => (
+                {ISSUE_CATEGORIES.map((category) => (
                   <Button
-                    key={category}
+                    key={category.id}
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => handleAddPainPoint(category)}
+                    onClick={() => handleAddPainPoint(category.id)}
                     className="text-xs"
                   >
-                    {formatPainPointCategory(category)}
+                    {category.label}
                   </Button>
                 ))}
               </div>
@@ -740,6 +752,7 @@ export function NightlyReviewForm({
                   alt={`Review photo ${index + 1}`}
                   width={192}
                   height={96}
+                  unoptimized
                   className="h-24 w-full rounded-[9px] border border-border object-cover"
                 />
               ))}
@@ -800,8 +813,176 @@ function capitalize(value: string) {
 }
 
 function formatPainPointCategory(category: string) {
-  return category
-    .split('_')
-    .map((part) => capitalize(part))
-    .join(' ')
+  return categoryLabel(toIssueCategory(category))
+}
+
+function formatClock(iso: string | null, timezone: string) {
+  if (!iso) return null
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZone: timezone,
+  })
+}
+
+function formatDuration(fromIso: string, toIso: string) {
+  const minutes = Math.max(0, Math.round((new Date(toIso).getTime() - new Date(fromIso).getTime()) / 60000))
+  const hours = Math.floor(minutes / 60)
+  return hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`
+}
+
+function PhotoStrip({ photos, alt }: { photos: string[]; alt: string }) {
+  if (photos.length === 0) return null
+  return (
+    <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+      {photos.map((photo, index) => (
+        <a
+          key={`${photo}-${index}`}
+          href={photo}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block"
+        >
+          <Image
+            src={photo}
+            alt={`${alt} ${index + 1}`}
+            width={120}
+            height={64}
+            unoptimized
+            className="h-16 w-full rounded-[9px] border border-border object-cover"
+          />
+        </a>
+      ))}
+    </div>
+  )
+}
+
+function AssociateReportPanel({
+  report,
+  timezone,
+}: {
+  report: NightlyReviewAssociateReport
+  timezone: string
+}) {
+  const clockIn = formatClock(report.clockIn, timezone)
+  const clockOut = formatClock(report.clockOut, timezone)
+  const stillOnSite = Boolean(report.clockIn && !report.clockOut)
+  const percent =
+    report.checklistTotal > 0 ? Math.round((report.checklistDone / report.checklistTotal) * 100) : 0
+
+  const statusBadge = report.submittedAt ? (
+    <Badge variant="green">Submitted</Badge>
+  ) : stillOnSite ? (
+    <Badge variant="teal">On site</Badge>
+  ) : (
+    <Badge variant="neutral">Not submitted</Badge>
+  )
+
+  return (
+    <Card className="gap-0 py-0">
+      <CardHeader className="p-4 pb-2">
+        <div className="flex items-center gap-2">
+          <ClipboardList className="h-4 w-4 shrink-0 text-gold-600 dark:text-gold-400" />
+          <CardTitle className="text-base">Associate report</CardTitle>
+          <span className="flex-1" />
+          {statusBadge}
+        </div>
+      </CardHeader>
+      <CardContent className="p-4 pt-0 space-y-4">
+        <div className="grid gap-2 text-sm sm:grid-cols-2">
+          <div className="flex items-start gap-2">
+            <User className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <span className="text-foreground">{report.associateName}</span>
+          </div>
+          <div className="flex items-start gap-2">
+            <Clock className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
+            <span className="text-foreground">
+              {clockIn ? (
+                <>
+                  <span className="font-mono tabular-nums">
+                    {clockIn} – {clockOut ?? 'still on site'}
+                  </span>
+                  {report.clockIn && report.clockOut && (
+                    <span className="text-muted-foreground">
+                      {' '}
+                      · {formatDuration(report.clockIn, report.clockOut)}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground">No clock-in recorded</span>
+              )}
+            </span>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-foreground">
+              <span className="font-mono tabular-nums font-semibold">
+                {report.checklistDone} of {report.checklistTotal}
+              </span>{' '}
+              done
+            </span>
+            {report.incompleteItems.length > 0 && (
+              <Badge variant="coral">{report.incompleteItems.length} not done</Badge>
+            )}
+          </div>
+          <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+            <div
+              className="h-full rounded-full bg-gold-600 transition-all duration-300 dark:bg-gold-400"
+              style={{ width: `${percent}%` }}
+            />
+          </div>
+        </div>
+
+        {report.incompleteItems.length > 0 && (
+          <div className="space-y-2">
+            <p className="kicker text-muted-foreground">Marked not done</p>
+            {report.incompleteItems.map((item) => (
+              <div
+                key={item.itemId}
+                className="rounded-[10px] border border-coral-600/30 bg-coral-600/10 p-3 space-y-2 dark:border-coral-300/25 dark:bg-coral-300/12"
+              >
+                <div>
+                  <p className="text-sm font-medium text-foreground">{item.text}</p>
+                  {item.section && (
+                    <p className="text-xs text-muted-foreground">{item.section}</p>
+                  )}
+                </div>
+                <p className="text-xs font-semibold text-coral-600 dark:text-coral-300">
+                  {reasonLabel(item.reason, 'en')}
+                </p>
+                {item.note && <p className="text-sm text-foreground">{item.note}</p>}
+                <PhotoStrip photos={item.photos ?? []} alt={`${item.text} photo`} />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {report.incompleteIssueId && (
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto">
+            <Link href={`/operations/issues/${report.incompleteIssueId}`}>
+              Open unfinished-work issue
+              <ChevronRight className="h-3.5 w-3.5 ml-1" />
+            </Link>
+          </Button>
+        )}
+
+        {report.overallNotes && (
+          <div className="space-y-1">
+            <p className="kicker text-muted-foreground">Their notes</p>
+            <p className="whitespace-pre-wrap text-sm text-foreground">{report.overallNotes}</p>
+          </div>
+        )}
+
+        {report.photos.length > 0 && (
+          <div className="space-y-2">
+            <p className="kicker text-muted-foreground">Their photos</p>
+            <PhotoStrip photos={report.photos} alt="Associate photo" />
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
 }

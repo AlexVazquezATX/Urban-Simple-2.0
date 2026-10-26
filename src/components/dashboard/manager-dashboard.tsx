@@ -12,7 +12,9 @@ import {
   ClipboardList,
   Route,
   ChevronRight,
+  Clock,
   Loader2,
+  MessageSquare,
   Star,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,7 +34,16 @@ interface LastNightPhoto {
   reviewDate: string
 }
 
-type AttentionType = 'quality_issue' | 'open_issue' | 'unassigned_shift' | 'crew_hours'
+type AttentionType =
+  | 'quality_issue'
+  | 'open_issue'
+  | 'unassigned_shift'
+  | 'crew_hours'
+  | 'unfinished_work'
+  | 'client_report'
+  | 'client_request'
+  | 'low_rating'
+  | 'long_shift'
 
 interface AttentionItem {
   id: string
@@ -47,7 +58,15 @@ interface Overview {
   tonight: { shifts: number; crew: number }
   lastNightPhotos: LastNightPhoto[]
   attention: AttentionItem[]
-  counts: { qualityIssues: number; openIssues: number; unassignedShifts: number }
+  counts: {
+    qualityIssues: number
+    openIssues: number
+    unfinishedWork?: number
+    clientItems?: number
+    lowRatings?: number
+    longShifts?: number
+    unassignedShifts: number
+  }
 }
 
 interface WorkforceAssoc {
@@ -62,6 +81,11 @@ const attentionConfig: Record<
   open_issue: { icon: Flag, tone: 'coral', cta: 'Open' },
   unassigned_shift: { icon: CalendarDays, tone: 'gold', cta: 'Assign' },
   crew_hours: { icon: ShieldAlert, tone: 'gold', cta: 'Check hours' },
+  unfinished_work: { icon: ClipboardList, tone: 'coral', cta: 'Open' },
+  client_report: { icon: MessageSquare, tone: 'coral', cta: 'Open' },
+  client_request: { icon: MessageSquare, tone: 'teal', cta: 'Open' },
+  low_rating: { icon: Star, tone: 'gold', cta: 'View' },
+  long_shift: { icon: Clock, tone: 'coral', cta: 'Check' },
 }
 
 const toneClasses: Record<'coral' | 'gold' | 'teal', { tile: string; icon: string; cta: string }> = {
@@ -264,8 +288,8 @@ export function ManagerDashboard({
                 />
               ) : (
                 <div className="flex flex-col">
-                  {attention.slice(0, 7).map((item) => {
-                    const cfg = attentionConfig[item.type]
+                  {attention.slice(0, 8).map((item) => {
+                    const cfg = attentionConfig[item.type] ?? attentionConfig.open_issue
                     const tc = toneClasses[cfg.tone]
                     const Icon = cfg.icon
                     return (
@@ -285,6 +309,14 @@ export function ManagerDashboard({
                       </Link>
                     )
                   })}
+                  {attention.length > 8 && (
+                    <Link
+                      href="/operations/issues"
+                      className="pt-2.5 text-[12px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      +{attention.length - 8} more · All issues →
+                    </Link>
+                  )}
                 </div>
               )}
             </CardContent>

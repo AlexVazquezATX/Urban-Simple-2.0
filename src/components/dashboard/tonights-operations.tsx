@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -23,6 +24,32 @@ interface ServiceLog {
   clockOut: string | null
 }
 
+type StopStatus = 'not_started' | 'on_site' | 'clocked_out' | 'submitted'
+
+interface AssociateStop {
+  locationId: string
+  locationName: string
+  status: StopStatus
+  clockIn: string | null
+  clockOut: string | null
+  done: number
+  total: number
+  notDoneCount: number
+  issueId: string | null
+}
+
+const stopStatusConfig: Record<StopStatus, { label: string; tone: 'neutral' | 'teal' | 'green' | 'gold' }> = {
+  not_started: { label: 'Not started', tone: 'neutral' },
+  on_site: { label: 'On site', tone: 'teal' },
+  clocked_out: { label: 'Clocked out', tone: 'gold' },
+  submitted: { label: 'Submitted', tone: 'green' },
+}
+
+function formatClock(iso: string | null): string | null {
+  if (!iso) return null
+  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+}
+
 interface TonightShift {
   id: string
   date: string
@@ -35,6 +62,7 @@ interface TonightShift {
   associate: { id: string; firstName: string; lastName: string } | null
   manager: { id: string; firstName: string; lastName: string } | null
   serviceLogs: ServiceLog[]
+  stops?: AssociateStop[]
 }
 
 const statusConfig: Record<string, { label: string; tone: 'neutral' | 'gold' | 'teal' | 'coral' | 'green' }> = {
@@ -130,44 +158,86 @@ export function TonightsOperations() {
                   Boolean(person)
               )
 
+              const stops = shift.stops ?? []
+
               return (
                 <div
                   key={shift.id}
-                  className="flex items-center gap-3.5 rounded-[11px] border border-border/60 bg-secondary/40 px-4 py-3"
+                  className="rounded-[11px] border border-border/60 bg-secondary/40 px-4 py-3"
                 >
-                  <div className="w-16 shrink-0 font-mono text-[13px] tabular-nums text-gold-600 dark:text-gold-400">
-                    {formatShiftTime(shift.startTime)}
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-16 shrink-0 font-mono text-[13px] tabular-nums text-gold-600 dark:text-gold-400">
+                      {formatShiftTime(shift.startTime)}
+                    </div>
+                    <div className="w-px self-stretch bg-border" />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-semibold text-foreground">{clientName}</div>
+                      <div className="mt-px truncate text-[11.5px] text-muted-foreground">{place || '—'}</div>
+                    </div>
+                    <div className="flex shrink-0 items-center">
+                      {crew.map((person, i) => (
+                        <div
+                          key={person.id}
+                          className={cn(
+                            'grid size-6 place-items-center rounded-full border-2 border-card text-[9.5px] font-bold text-cream-50',
+                            avatarFills[i % avatarFills.length],
+                            i > 0 && '-ml-2.5'
+                          )}
+                          title={`${person.firstName} ${person.lastName}`}
+                        >
+                          {person.firstName.charAt(0)}
+                        </div>
+                      ))}
+                      {shift.associate ? (
+                        <span className="ml-1.5 hidden text-[11.5px] text-muted-foreground sm:inline">
+                          {shift.associate.firstName} leads
+                        </span>
+                      ) : shift.status === 'scheduled' ? (
+                        <span className="ml-1.5 text-[11.5px] font-semibold text-coral-600 dark:text-coral-300">
+                          Unassigned
+                        </span>
+                      ) : null}
+                    </div>
+                    <Badge variant={config.tone}>{config.label}</Badge>
                   </div>
-                  <div className="w-px self-stretch bg-border" />
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-semibold text-foreground">{clientName}</div>
-                    <div className="mt-px truncate text-[11.5px] text-muted-foreground">{place || '—'}</div>
-                  </div>
-                  <div className="flex shrink-0 items-center">
-                    {crew.map((person, i) => (
-                      <div
-                        key={person.id}
-                        className={cn(
-                          'grid size-6 place-items-center rounded-full border-2 border-card text-[9.5px] font-bold text-cream-50',
-                          avatarFills[i % avatarFills.length],
-                          i > 0 && '-ml-2.5'
-                        )}
-                        title={`${person.firstName} ${person.lastName}`}
-                      >
-                        {person.firstName.charAt(0)}
-                      </div>
-                    ))}
-                    {shift.associate ? (
-                      <span className="ml-1.5 hidden text-[11.5px] text-muted-foreground sm:inline">
-                        {shift.associate.firstName} leads
-                      </span>
-                    ) : shift.status === 'scheduled' ? (
-                      <span className="ml-1.5 text-[11.5px] font-semibold text-coral-600 dark:text-coral-300">
-                        Unassigned
-                      </span>
-                    ) : null}
-                  </div>
-                  <Badge variant={config.tone}>{config.label}</Badge>
+                  {stops.length > 0 && (
+                    <div className="mt-2.5 flex flex-col gap-1.5 border-t border-border/60 pt-2.5">
+                      {stops.map(stop => {
+                        const stopConfig = stopStatusConfig[stop.status] ?? stopStatusConfig.not_started
+                        const clockIn = formatClock(stop.clockIn)
+                        const clockOut = formatClock(stop.clockOut)
+                        return (
+                          <div
+                            key={stop.locationId}
+                            className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-muted-foreground"
+                          >
+                            <span className="min-w-0 flex-1 truncate font-medium text-foreground">
+                              {stop.locationName}
+                            </span>
+                            {clockIn && (
+                              <span className="font-mono tabular-nums">
+                                {clockIn}–{clockOut ?? 'now'}
+                              </span>
+                            )}
+                            {stop.total > 0 && (
+                              <span className="font-mono tabular-nums">
+                                {stop.done}/{stop.total}
+                              </span>
+                            )}
+                            {stop.notDoneCount > 0 &&
+                              (stop.issueId ? (
+                                <Link href={`/operations/issues/${stop.issueId}`}>
+                                  <Badge variant="coral">{stop.notDoneCount} not done</Badge>
+                                </Link>
+                              ) : (
+                                <Badge variant="coral">{stop.notDoneCount} not done</Badge>
+                              ))}
+                            <Badge variant={stopConfig.tone}>{stopConfig.label}</Badge>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               )
             })}

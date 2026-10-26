@@ -45,9 +45,24 @@ export async function GET() {
     const twoDaysAgo = new Date(today.getTime() - 2 * DAY_MS)
 
     const branchScope = user.branchId ? { branchId: user.branchId } : {}
+    const locationScope = { client: { companyId: user.companyId }, ...branchScope }
+    const now = new Date()
+    const LONG_SHIFT_MS = 10 * 60 * 60 * 1000
+    // Items the crew or a client raised that someone has to act on.
+    const raisedIssueFilter = {
+      OR: [{ type: 'incomplete_work' }, { source: 'client' }],
+    }
 
-    const [tonightShifts, lastNightReviews, qualityReviews, openIssues, unassignedShifts] =
-      await Promise.all([
+    const [
+      tonightShifts,
+      lastNightReviews,
+      qualityReviews,
+      raisedIssues,
+      openIssues,
+      unassignedShifts,
+      lowRatings,
+      longClockIns,
+    ] = await Promise.all([
         // Tonight's shifts (for the summary tiles)
         prisma.shift.findMany({
           where: {
@@ -87,11 +102,27 @@ export async function GET() {
           take: 8,
         }),
 
-        // Open issues reported at locations (incl. client portal "Report something")
+        // Unfinished work from associates + client reports and requests
         prisma.issue.findMany({
           where: {
-            location: { client: { companyId: user.companyId }, ...branchScope },
+            location: locationScope,
             status: { in: ['open', 'in_progress'] },
+            ...raisedIssueFilter,
+          },
+          include: {
+            location: { select: { id: true, name: true } },
+            client: { select: { name: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 12,
+        }),
+
+        // Everything else still open (review findings, staff-logged issues)
+        prisma.issue.findMany({
+          where: {
+            location: locationScope,
+            status: { in: ['open', 'in_progress'] },
+            NOT: raisedIssueFilter,
           },
           include: {
             location: { select: { id: true, name: true } },
@@ -119,6 +150,39 @@ export async function GET() {
           },
           take: 8,
         }),
+
+        // Low client visit ratings, last 7 days
+        prisma.clientVisitRating.findMany({
+          where: {
+            location: locationScope,
+            rating: { lte: 3 },
+            serviceDate: { gte: new Date(today.getTime() - 7 * DAY_MS) },
+          },
+          include: {
+            location: { select: { id: true, name: true } },
+            client: { select: { name: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 8,
+        }),
+
+        // Associates still clocked in after 10+ hours (likely a missed clock-out)
+        prisma.serviceLog.findMany({
+          where: {
+            location: locationScope,
+            clockOut: null,
+            clockIn: {
+              lte: new Date(now.getTime() - LONG_SHIFT_MS),
+              gte: new Date(now.getTime() - 7 * DAY_MS),
+            },
+          },
+          include: {
+            location: { select: { name: true } },
+            associate: { select: { firstName: true, lastName: true, displayName: true } },
+          },
+          orderBy: { clockIn: 'asc' },
+          take: 8,
+        }),
       ])
 
     const crew = new Set(
@@ -142,7 +206,15 @@ export async function GET() {
 
     type AttentionItem = {
       id: string
-      type: 'quality_issue' | 'open_issue' | 'unassigned_shift'
+      type:
+        | 'quality_issue'
+        | 'open_issue'
+        | 'unassigned_shift'
+        | 'unfinished_work'
+        | 'client_report'
+        | 'client_request'
+        | 'low_rating'
+        | 'long_shift'
       title: string
       subtitle: string
       urgency: 'high' | 'medium' | 'low'
@@ -162,6 +234,23 @@ export async function GET() {
         createdAt: r.reviewDate.toISOString(),
       })
     }
+    for (const issue of raisedIssues) {
+      const unfinished = issue.type === 'incomplete_work'
+      const isRequest = !unfinished && issue.type === 'request'
+      attention.push({
+        id: `issue-${issue.id}`,
+        type: unfinished ? 'unfinished_work' : isRequest ? 'client_request' : 'client_report',
+        title: unfinished
+          ? `Unfinished work at ${issue.location.name}`
+          : `${issue.client.name}: ${issue.title}`,
+        subtitle: unfinished
+          ? issue.title
+          : `${issue.location.name} · ${isRequest ? 'Client request' : 'Client report'}`,
+        urgency: !isRequest && issue.status === 'open' ? 'high' : 'medium',
+        actionUrl: `/operations/issues/${issue.id}`,
+        createdAt: issue.createdAt.toISOString(),
+      })
+    }
     for (const issue of openIssues) {
       attention.push({
         id: `issue-${issue.id}`,
@@ -169,8 +258,31 @@ export async function GET() {
         title: issue.title,
         subtitle: `${issue.location.name} · ${issue.category}`,
         urgency: issue.status === 'open' ? 'high' : 'medium',
-        actionUrl: `/locations/${issue.location.id}`,
+        actionUrl: `/operations/issues/${issue.id}`,
         createdAt: issue.createdAt.toISOString(),
+      })
+    }
+    for (const r of lowRatings) {
+      attention.push({
+        id: `rating-${r.id}`,
+        type: 'low_rating',
+        title: `${r.rating}/5 from ${r.client.name}`,
+        subtitle: `${r.location.name}${r.comment ? ` · ${r.comment}` : ''}`,
+        urgency: r.rating <= 2 ? 'high' : 'medium',
+        actionUrl: `/locations/${r.location.id}`,
+        createdAt: r.createdAt.toISOString(),
+      })
+    }
+    for (const log of longClockIns) {
+      const hours = Math.floor((now.getTime() - (log.clockIn as Date).getTime()) / (60 * 60 * 1000))
+      attention.push({
+        id: `clock-${log.id}`,
+        type: 'long_shift',
+        title: `${personName(log.associate)} clocked in ${hours}h`,
+        subtitle: `${log.location.name} · no clock-out yet`,
+        urgency: 'high',
+        actionUrl: '/operations/workforce',
+        createdAt: (log.clockIn as Date).toISOString(),
       })
     }
     for (const shift of unassignedShifts) {
@@ -199,7 +311,11 @@ export async function GET() {
       attention,
       counts: {
         qualityIssues: qualityReviews.length,
-        openIssues: openIssues.length,
+        openIssues: openIssues.length + raisedIssues.length,
+        unfinishedWork: raisedIssues.filter((i) => i.type === 'incomplete_work').length,
+        clientItems: raisedIssues.filter((i) => i.type !== 'incomplete_work').length,
+        lowRatings: lowRatings.length,
+        longShifts: longClockIns.length,
         unassignedShifts: unassignedShifts.length,
       },
     })

@@ -187,12 +187,12 @@ function LoginPageInner() {
                 <Label htmlFor="password" className="text-sm font-medium text-charcoal-700">
                   Password
                 </Label>
-                <button
-                  type="button"
+                <Link
+                  href="/login/forgot"
                   className="text-xs text-bronze-600 hover:text-bronze-700 font-medium"
                 >
                   Forgot password?
-                </button>
+                </Link>
               </div>
               <Input
                 id="password"

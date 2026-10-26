@@ -24,16 +24,29 @@ async function NightlyReviewDetail({ id }: { id: string }) {
     companyId: user.companyId,
     managerId: user.id,
     reviewId: id,
+    allowAnyManager: user.role === 'ADMIN' || user.role === 'SUPER_ADMIN',
   })
 
   if (!reviewContext) {
     notFound()
   }
 
-  const checklistItems = mergeChecklistReviewItems(
+  const associateReport = reviewContext.associateReport
+  const mergedItems = mergeChecklistReviewItems(
     reviewContext.location.checklistTemplate?.sections ?? [],
     reviewContext.review?.ratingItems ?? []
   )
+
+  // Start the manager from what the associate flagged; they can change it.
+  const flaggedIds = new Set(associateReport?.incompleteItems.map((item) => item.itemId) ?? [])
+  const checklistItems =
+    reviewContext.review || flaggedIds.size === 0
+      ? mergedItems
+      : mergedItems.map((item) =>
+          flaggedIds.has(item.id) && item.status === 'pending'
+            ? { ...item, status: 'not_done' as const }
+            : item
+        )
 
   const reviewTargetId = buildNightlyReviewId(
     reviewContext.parsed.shiftId,
@@ -55,10 +68,13 @@ async function NightlyReviewDetail({ id }: { id: string }) {
         day: 'numeric',
       })}
       associateName={
+        associateReport?.associateName ||
         reviewContext.associate?.displayName ||
         reviewContext.manager?.displayName ||
         'Unassigned'
       }
+      associateReport={associateReport}
+      timezone={reviewContext.shift.timezone}
       checklistName={
         reviewContext.location.checklistTemplate?.name || 'No checklist assigned'
       }

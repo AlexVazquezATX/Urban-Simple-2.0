@@ -24,6 +24,7 @@ export const ISSUE_CATEGORIES = [
   { id: 'supplies', label: 'Supplies' },
   { id: 'access', label: 'Access / keys' },
   { id: 'safety', label: 'Safety' },
+  { id: 'staffing', label: 'Staffing' },
   { id: 'communication', label: 'Communication' },
   { id: 'other', label: 'Other' },
 ] as const

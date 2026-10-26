@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ import {
   Circle,
   AlertCircle,
   Moon,
+  User,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -37,6 +38,20 @@ interface TonightLocation {
   reviewId?: string
   serviceLogId?: string | null
   associateName?: string
+  managerId?: string | null
+  managerName?: string
+  associateStatus?: 'not_started' | 'on_site' | 'clocked_out' | 'submitted'
+  checklistDone?: number | null
+  checklistTotal?: number | null
+  notDoneCount?: number
+  incompleteIssueId?: string | null
+}
+
+const associateStatusLabel: Record<NonNullable<TonightLocation['associateStatus']>, string> = {
+  not_started: 'Not started',
+  on_site: 'On site',
+  clocked_out: 'Clocked out',
+  submitted: 'Submitted',
 }
 
 export default function NightlyReviewsPage() {
@@ -44,6 +59,7 @@ export default function NightlyReviewsPage() {
   const [locations, setLocations] = useState<TonightLocation[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all')
+  const [seeAll, setSeeAll] = useState(false)
 
   useEffect(() => {
     fetchTonightLocations()
@@ -58,7 +74,17 @@ export default function NightlyReviewsPage() {
 
       if (response.ok) {
         const data = await response.json()
-        setLocations(data.locations)
+        const rows: TonightLocation[] = data.locations ?? []
+        const all = data.scope === 'all'
+        setSeeAll(all)
+        // Admins get every route; keep each manager's stops together.
+        setLocations(
+          all
+            ? [...rows].sort((a, b) =>
+                (a.managerName || '').localeCompare(b.managerName || '')
+              )
+            : rows
+        )
       } else {
         throw new Error("Failed to fetch tonight's locations")
       }
@@ -144,7 +170,11 @@ export default function NightlyReviewsPage() {
       <PageHeader
         kicker="OPERATIONS · NIGHTLY REVIEWS"
         title="Tonight's Route"
-        subtitle="Review locations scheduled for tonight's service"
+        subtitle={
+          seeAll
+            ? "Every manager's route tonight, grouped by manager"
+            : "Review locations scheduled for tonight's service"
+        }
         className="mb-0"
       />
 
@@ -222,81 +252,108 @@ export default function NightlyReviewsPage() {
             </CardContent>
           </Card>
         ) : (
-          filteredLocations.map((location) => (
-            <Card
-              key={location.id}
-              className="gap-0 py-0 transition-colors hover:border-gold-600/30 dark:hover:border-gold-400/25"
-            >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-4">
-                  {/* Status Icon */}
-                  <div className="flex-shrink-0 mt-1">
-                    {getStatusIcon(location.status)}
-                  </div>
-
-                  {/* Location Info */}
-                  <div className="flex-1 min-w-0 space-y-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <h3 className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
-                          {location.locationName}
-                        </h3>
-                        <p className="text-xs text-muted-foreground">{location.clientName}</p>
-                      </div>
-                      {getStatusBadge(location.status)}
+          filteredLocations.map((location, index) => (
+            <Fragment key={location.id}>
+              {seeAll &&
+                (index === 0 ||
+                  filteredLocations[index - 1].managerId !== location.managerId) && (
+                  <p className="kicker pt-2 text-muted-foreground">
+                    {location.managerName || 'Manager'}
+                  </p>
+                )}
+              <Card
+                className="gap-0 py-0 transition-colors hover:border-gold-600/30 dark:hover:border-gold-400/25"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-4">
+                    {/* Status Icon */}
+                    <div className="flex-shrink-0 mt-1">
+                      {getStatusIcon(location.status)}
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="truncate text-xs">{location.address}</span>
+                    {/* Location Info */}
+                    <div className="flex-1 min-w-0 space-y-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <h3 className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
+                            {location.locationName}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">{location.clientName}</p>
+                        </div>
+                        {getStatusBadge(location.status)}
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="font-mono text-xs tabular-nums">
-                          {location.scheduledTime}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
-                        <ClipboardCheck className="h-3.5 w-3.5 flex-shrink-0" />
-                        <span className="text-xs">{location.checklistName}</span>
-                      </div>
-                    </div>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      {location.status === 'completed' ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="truncate text-xs">{location.address}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="font-mono text-xs tabular-nums">
+                            {location.scheduledTime}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground sm:col-span-2">
+                          <ClipboardCheck className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="text-xs">{location.checklistName}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 text-muted-foreground sm:col-span-2">
+                          <User className="h-3.5 w-3.5 flex-shrink-0" />
+                          <span className="text-xs text-foreground">
+                            {location.associateName || 'Unassigned'}
+                          </span>
+                          {location.associateStatus && (
+                            <span className="text-xs">
+                              · {associateStatusLabel[location.associateStatus]}
+                            </span>
+                          )}
+                          {location.checklistTotal != null && location.checklistTotal > 0 && (
+                            <span className="font-mono text-xs tabular-nums">
+                              · {location.checklistDone ?? 0}/{location.checklistTotal} done
+                            </span>
+                          )}
+                          {(location.notDoneCount ?? 0) > 0 && (
+                            <Badge variant="coral">{location.notDoneCount} not done</Badge>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        {location.status === 'completed' ? (
+                          <Button
+                            onClick={() => handleStartReview(location)}
+                            variant="ghost"
+                            className="flex-1 sm:flex-none"
+                          >
+                            <CheckCircle2 className="h-4 w-4 mr-2" />
+                            View Review
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => handleStartReview(location)}
+                            variant="gold"
+                            className="flex-1 sm:flex-none"
+                          >
+                            <ClipboardCheck className="h-4 w-4 mr-2" />
+                            {location.status === 'in_progress' ? 'Continue Review' : 'Start Review'}
+                          </Button>
+                        )}
                         <Button
-                          onClick={() => handleStartReview(location)}
-                          variant="ghost"
+                          variant="outline"
+                          onClick={() => handleGetDirections(location.address)}
                           className="flex-1 sm:flex-none"
                         >
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          View Review
+                          <Navigation className="h-4 w-4 mr-2" />
+                          Directions
                         </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleStartReview(location)}
-                          variant="gold"
-                          className="flex-1 sm:flex-none"
-                        >
-                          <ClipboardCheck className="h-4 w-4 mr-2" />
-                          {location.status === 'in_progress' ? 'Continue Review' : 'Start Review'}
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        onClick={() => handleGetDirections(location.address)}
-                        className="flex-1 sm:flex-none"
-                      >
-                        <Navigation className="h-4 w-4 mr-2" />
-                        Directions
-                      </Button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Fragment>
           ))
         )}
       </div>
