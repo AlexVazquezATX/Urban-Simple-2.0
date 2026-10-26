@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import {
   X,
@@ -283,7 +284,11 @@ export function TeamMemberDetailPanel({
 
   const RoleIcon = roleIcons[role] || User
 
-  return (
+  // Portal to <body>: inside the app shell a transformed/overflowing ancestor
+  // turned `fixed` into "relative to that ancestor", parking the panel off the
+  // right edge of the screen.
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <div className="fixed inset-0 z-50 flex justify-end">
       {/* Backdrop */}
       <div
@@ -516,7 +521,8 @@ export function TeamMemberDetailPanel({
 
           {/* Auth Account Section — for new members, and for existing members
               who don't yet have a login (A10). Admin-only. */}
-          {canManage && ((!member || isNew) || hasLogin === false) && (
+          {canManage && (
+
             <div className="space-y-4 p-4 border border-border rounded-[12px] bg-secondary/40">
               <div className="flex items-center space-x-3">
                 <Checkbox
@@ -526,11 +532,17 @@ export function TeamMemberDetailPanel({
                 />
                 <div className="space-y-0.5">
                   <Label htmlFor="createAuthAccount" className="font-medium text-foreground">
-                    {member && !isNew ? 'Add Login Account' : 'Create Login Account'}
+                    {member && !isNew
+                      ? hasLogin
+                        ? 'Set a New Password'
+                        : 'Add Login Account'
+                      : 'Create Login Account'}
                   </Label>
                   <p className="text-xs text-muted-foreground">
                     {member && !isNew
-                      ? 'This member has no login yet. Set a password to let them log in.'
+                      ? hasLogin
+                        ? 'Replaces their current password. Tell them the new one in person.'
+                        : 'This member has no login yet. Set a password to let them log in.'
                       : 'Allow this user to log in to the platform'}
                   </p>
                 </div>
@@ -634,6 +646,7 @@ export function TeamMemberDetailPanel({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </div>,
+    document.body
   )
 }

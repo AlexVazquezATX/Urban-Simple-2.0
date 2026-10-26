@@ -167,12 +167,36 @@ export async function PATCH(
           { status: 403 }
         )
       }
-      if (existing.authId) {
-        return NextResponse.json(
-          { error: 'This member already has a login' },
-          { status: 409 }
-        )
+      if (String(password).length < 8) {
+        return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
       }
+      // Existing login: an admin sets a new password (crew often can't get
+      // reset emails). Only a super admin may reset another super admin.
+      if (existing.authId) {
+        if (existing.role === 'SUPER_ADMIN' && user.role !== 'SUPER_ADMIN') {
+          return NextResponse.json({ error: 'Only a super admin can reset this password' }, { status: 403 })
+        }
+        try {
+          const { createClient } = await import('@supabase/supabase-js')
+          const supabaseAdmin = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+          )
+          const { error: resetError } = await supabaseAdmin.auth.admin.updateUserById(existing.authId, {
+            password,
+          })
+          if (resetError) {
+            return NextResponse.json(
+              { error: 'Failed to set the new password', details: resetError.message },
+              { status: 500 }
+            )
+          }
+        } catch (error: any) {
+          return NextResponse.json({ error: 'Failed to set the new password', details: error.message }, { status: 500 })
+        }
+      }
+    }
+    if (password && !existing.authId) {
       try {
         const { createClient } = await import('@supabase/supabase-js')
         const supabaseAdmin = createClient(
