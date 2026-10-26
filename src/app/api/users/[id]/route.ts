@@ -167,8 +167,10 @@ export async function PATCH(
           { status: 403 }
         )
       }
-      if (String(password).length < 8) {
-        return NextResponse.json({ error: 'Password must be at least 8 characters' }, { status: 400 })
+      // 6 is Supabase's floor; crew get a short PIN-style password from their
+      // manager and stay signed in on their phone afterwards.
+      if (String(password).length < 6) {
+        return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
       }
       // Existing login: an admin sets a new password (crew often can't get
       // reset emails). Only a super admin may reset another super admin.

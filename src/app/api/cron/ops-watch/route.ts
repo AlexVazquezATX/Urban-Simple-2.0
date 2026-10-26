@@ -52,13 +52,16 @@ async function handle(request: NextRequest) {
         endTime: true,
         locationId: true,
         shiftLocations: { select: { locationId: true }, orderBy: { sortOrder: 'asc' }, take: 1 },
+        associateId: true,
         associate: { select: { firstName: true, lastName: true } },
         serviceLogs: { select: { clockIn: true }, where: { clockIn: { not: null } }, take: 1 },
       },
     })
 
+    const alertedAssociates = new Set<string>() // one no-show alert per person per run
     for (const s of shifts) {
       if (s.serviceLogs.length > 0) continue
+      if (s.associateId && alertedAssociates.has(s.associateId)) continue
       const start = minutes(s.startTime)
       if (start === null) continue
       const isToday = s.date.getTime() >= today.getTime()
@@ -70,6 +73,14 @@ async function handle(request: NextRequest) {
 
       const locationId = s.shiftLocations[0]?.locationId ?? s.locationId
       if (!locationId) continue
+      // Route crews (one associate, several stops a night) reach later stops
+      // hours after their scheduled start; only alert when the associate
+      // hasn't clocked in anywhere tonight.
+      const workingTonight = await prisma.serviceLog.count({
+        where: { associateId: s.associateId!, clockIn: { gte: new Date(Date.now() - 14 * 60 * 60 * 1000) } },
+      })
+      if (workingTonight > 0) continue
+      alertedAssociates.add(s.associateId!)
       const link = `/operations/schedule?shift=${s.id}`
       if (await alreadySent(link, since)) continue
 
