@@ -8,7 +8,10 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/layout/page-header'
 import { ReportProblemButton } from '@/components/field/report-problem-dialog'
 import { FIELD_STRINGS, readStoredLang, storeLang, type FieldLang } from '@/lib/ops/field-i18n'
-import { Clock, CheckCircle, Loader2, ClipboardList, ChevronRight, Moon, Sparkles, Languages, AlertTriangle } from 'lucide-react'
+import { Clock, CheckCircle, Loader2, ClipboardList, ChevronRight, Moon, Languages, AlertTriangle, MapPin } from 'lucide-react'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
+import { InstallAppTip } from '@/components/field/install-app-tip'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -49,6 +52,8 @@ export function MyNightView({
   const [loading, setLoading] = useState(true)
   const [shiftCount, setShiftCount] = useState(0)
   const [lang, setLang] = useState<FieldLang>('en')
+  const [arriving, setArriving] = useState<string | null>(null)
+  const router = useRouter()
   const langResolved = useRef(false)
   const t = FIELD_STRINGS[lang]
 
@@ -78,6 +83,25 @@ export function MyNightView({
     return () => clearInterval(interval)
   }, [fetchData])
 
+  // One tap on arrival: clock in, then open the stop.
+  async function arrive(loc: NightLocation) {
+    const key = `${loc.shiftId}-${loc.locationId}`
+    setArriving(key)
+    try {
+      const res = await fetch('/api/operations/clock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shiftId: loc.shiftId, locationId: loc.locationId, action: 'in' }),
+      })
+      // 409 = already clocked in here; just go in.
+      if (!res.ok && res.status !== 409) throw new Error((await res.json().catch(() => ({}))).error || t.error)
+      router.push(`/field/visit/${loc.shiftId}/${loc.locationId}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t.error)
+      setArriving(null)
+    }
+  }
+
   function toggleLang() {
     const next = lang === 'en' ? 'es' : 'en'
     setLang(next)
@@ -103,7 +127,7 @@ export function MyNightView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
       <div className="space-y-4">
         <PageHeader
@@ -125,32 +149,18 @@ export function MyNightView({
           className="mb-0"
         />
 
+        {/* One slim progress line: the stops themselves come first on a phone. */}
         {totalCount > 0 && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[14px] border border-sage-line bg-sage-bg p-4 text-sage-deep dark:border-green-300/20 dark:bg-green-300/10 dark:text-green-300">
-              <div className="flex items-center justify-between">
-                <span className="kicker opacity-75">{t.tonight}</span>
-                <Moon className="size-4 opacity-70" />
-              </div>
-              <p className="mt-2 font-display text-2xl font-bold leading-none tracking-[-0.5px]">
-                {t.stops(totalCount)}
-              </p>
-              <p className="mt-1.5 text-xs opacity-85">{t.onYourRoute}</p>
-            </div>
-            <div className="rounded-[14px] border border-sky-line bg-sky-bg p-4 text-sky-deep dark:border-teal-300/20 dark:bg-teal-300/10 dark:text-teal-300">
-              <div className="flex items-center justify-between">
-                <span className="kicker opacity-75">{t.progress}</span>
-                <Sparkles className="size-4 opacity-70" />
-              </div>
-              <p className="mt-2 font-display text-2xl font-bold leading-none tracking-[-0.5px]">
-                {doneCount} {t.of} {totalCount}
-              </p>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-                <div
-                  className="h-full rounded-full bg-current transition-all duration-500"
-                  style={{ width: `${(doneCount / totalCount) * 100}%` }}
-                />
-              </div>
+          <div className="flex items-center gap-3 rounded-[12px] border border-border bg-card px-4 py-2.5">
+            <Moon className="size-4 shrink-0 text-muted-foreground" />
+            <span className="shrink-0 font-mono text-sm tabular-nums text-foreground">
+              {doneCount} {t.of} {totalCount}
+            </span>
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+              <div
+                className="h-full rounded-full bg-teal-600 transition-all duration-500 dark:bg-teal-300"
+                style={{ width: `${(doneCount / totalCount) * 100}%` }}
+              />
             </div>
           </div>
         )}
@@ -224,20 +234,40 @@ export function MyNightView({
                     </Badge>
                   </div>
 
-                  <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3 sm:flex-row">
-                    <Button variant={isDone ? 'outline' : 'gold'} className="h-11 flex-1 gap-1.5" asChild>
-                      <Link href={href}>
-                        {isDone ? t.view : isActive ? t.continue : t.start}
-                        <ChevronRight className="size-4" />
-                      </Link>
-                    </Button>
+                  <div className="mt-3 flex flex-col gap-2 border-t border-border pt-3">
+                    {!isDone && !loc.clockIn ? (
+                      <Button
+                        variant="gold"
+                        className="h-14 w-full gap-2 text-base"
+                        onClick={() => arrive(loc)}
+                        disabled={arriving !== null}
+                      >
+                        {arriving === `${loc.shiftId}-${loc.locationId}` ? (
+                          <Loader2 className="size-5 animate-spin" />
+                        ) : (
+                          <MapPin className="size-5" />
+                        )}
+                        {t.imHere}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={isDone ? 'outline' : 'gold'}
+                        className={cn('w-full gap-1.5', isDone ? 'h-11' : 'h-14 text-base')}
+                        asChild
+                      >
+                        <Link href={href}>
+                          {isDone ? t.view : t.continue}
+                          <ChevronRight className="size-4" />
+                        </Link>
+                      </Button>
+                    )}
                     {!isDone && (
                       <ReportProblemButton
                         shiftId={loc.shiftId}
                         locationId={loc.locationId}
                         locationName={loc.locationName}
                         lang={lang}
-                        className="h-11"
+                        className="h-11 w-full border-transparent text-muted-foreground"
                       />
                     )}
                   </div>
@@ -247,6 +277,7 @@ export function MyNightView({
           })}
         </div>
       )}
+      <InstallAppTip lang={lang} />
     </div>
   )
 }

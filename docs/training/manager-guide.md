@@ -10,7 +10,7 @@ informed. Plan on about an hour the first time, with the app open next to you.
 Associate (My Night)                 Manager (you)                      Client
 ──────────────────                  ──────────────                     ──────
 Clock in at the stop
-Each item: Done / Not done + why ─► Alert: "Unfinished work"  ──────► Heads-up email/text
+Tap only what wasn't done + why ─► Alert: "Unfinished work"  ─► Heads-up email/text
 Report a problem ────────────────► Alert: issue (internal)            (only contacts who opted in)
 Finish & clock out
                                     Nightly review of the location
@@ -96,10 +96,12 @@ Open **Operations → Launch Setup**. A location is ready when every column is g
 Hand them `docs/training/associate-guide.md` (English and Spanish, one page).
 Walk the first night with each new associate:
 
-1. Sign in on their phone and add it to the home screen.
-2. Clock in at the first stop.
-3. Show **Done / Not done + why** and **Report a problem**.
-4. Finish and clock out. Show them that finishing is what clocks them out.
+1. Sign in on their phone and add it to the home screen (the app shows how).
+2. Tap **I'm here** at the first stop. That clocks them in.
+3. Explain that everything starts as done: they only tap **Not done** + a
+   reason for what they couldn't finish, and **Report a problem** for anything
+   off the list. It saves by itself.
+4. **All done · Clock out**, tap again. Three taps on a normal stop.
 5. Tell them why "not done" matters: it isn't a strike against them, it's how
    the client hears about it before opening.
 

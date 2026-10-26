@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Instrument_Sans, Spline_Sans_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
@@ -30,6 +30,12 @@ export const metadata: Metadata = {
   description:
     "Premier commercial kitchen cleaning and hospitality cleaning services in Austin, TX. Hotels, restaurants, and event venues. Trusted by 500+ hospitality brands.",
   metadataBase: new URL("https://urbansimple.net"),
+  // Home-screen app (iPhone): full screen, its own name under the icon.
+  appleWebApp: {
+    capable: true,
+    title: "Urban Simple",
+    statusBarStyle: "default",
+  },
   openGraph: {
     type: "website",
     siteName: "Urban Simple",
@@ -44,6 +50,12 @@ export const metadata: Metadata = {
     description:
       "Premier commercial kitchen cleaning and hospitality cleaning services in Austin, TX. Hotels, restaurants, and event venues. Trusted by 500+ hospitality brands.",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#1f1c19",
 };
 
 export default function RootLayout({

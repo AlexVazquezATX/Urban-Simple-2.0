@@ -1,14 +1,14 @@
 'use client'
 
-// Associate visit screen: one stop on tonight's route.
+// Associate visit screen: one stop on tonight's route, built to take seconds.
 //
-// Clock in → answer every checklist item (Done, or Not done + why) → finish.
-// Finishing clocks the associate out and, when anything was not done, raises
-// an "Unfinished work" issue that alerts the manager and the client's on-site
-// contacts who opted in. Bilingual (EN/ES) because most of the crew reads
-// Spanish first.
+// Exceptions only: once clocked in, every checklist item counts as done. The
+// associate taps just what they couldn't finish and picks why. Everything
+// autosaves; one big button finishes the visit and clocks them out. Items
+// marked not done become an "Unfinished work" issue that alerts the manager
+// and the client's on-site contacts who opted in. Bilingual (EN/ES).
 
-import { use, useCallback, useEffect, useMemo, useState } from 'react'
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -16,10 +16,12 @@ import {
   CheckCircle,
   ChevronDown,
   Clock,
+  CloudOff,
   Info,
   Languages,
   Loader2,
-  LogIn,
+  MapPin,
+  MessageSquarePlus,
   SearchX,
   X,
 } from 'lucide-react'
@@ -72,9 +74,13 @@ interface VisitData {
   } | null
 }
 
-type Answer =
-  | { state: 'done' }
-  | { state: 'not_done'; reason: string; note: string; photos: string[] }
+interface NotDone {
+  reason: string
+  note: string
+  photos: string[]
+}
+
+type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 function formatTime(iso: string | null) {
   return iso ? new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : ''
@@ -91,20 +97,17 @@ export default function FieldVisitPage({
   const [data, setData] = useState<VisitData | null>(null)
   const [loading, setLoading] = useState(true)
   const [lang, setLang] = useState<FieldLang>('en')
-  const [answers, setAnswers] = useState<Record<string, Answer>>({})
+  // Only exceptions are stored; any item not in here counts as done.
+  const [notDone, setNotDone] = useState<Record<string, NotDone>>({})
   const [notes, setNotes] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
-  const [busy, setBusy] = useState<null | 'clock' | 'save' | 'finish'>(null)
-  // Finishing locks the visit, so it takes a second tap (no native dialogs:
-  // some in-app browsers block confirm()).
-  const [confirmArmed, setConfirmArmed] = useState(false)
-  useEffect(() => {
-    if (!confirmArmed) return
-    const timer = setTimeout(() => setConfirmArmed(false), 5000)
-    return () => clearTimeout(timer)
-  }, [confirmArmed])
+  const [showNotes, setShowNotes] = useState(false)
   const [showAccess, setShowAccess] = useState(false)
+  const [busy, setBusy] = useState<null | 'clock' | 'finish'>(null)
+  const [confirmArmed, setConfirmArmed] = useState(false)
   const [missing, setMissing] = useState<Set<string>>(new Set())
+  const [saveState, setSaveState] = useState<SaveState>('idle')
+  const dirty = useRef(false)
 
   const t = FIELD_STRINGS[lang]
 
@@ -115,16 +118,14 @@ export default function FieldVisitPage({
       if (!res.ok) throw new Error(json.error || 'Failed to load')
       setData(json)
       setLang(readStoredLang(json.language))
-      const restored: Record<string, Answer> = {}
-      for (const [id, v] of Object.entries(json.log?.checklistData ?? {})) {
-        if (v) restored[id] = { state: 'done' }
-      }
+      const restored: Record<string, NotDone> = {}
       for (const i of (json.log?.incompleteItems ?? []) as IncompleteItem[]) {
-        restored[i.itemId] = { state: 'not_done', reason: i.reason, note: i.note ?? '', photos: i.photos ?? [] }
+        restored[i.itemId] = { reason: i.reason, note: i.note ?? '', photos: i.photos ?? [] }
       }
-      setAnswers(restored)
+      setNotDone(restored)
       setNotes(json.log?.overallNotes ?? '')
       setPhotos(json.log?.photos ?? [])
+      if (json.log?.overallNotes || json.log?.photos?.length) setShowNotes(true)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to load')
     } finally {
@@ -138,19 +139,138 @@ export default function FieldVisitPage({
 
   const sections = useMemo(() => data?.template?.sections ?? [], [data])
   const allItems = useMemo(() => sections.flatMap(s => s.items), [sections])
-  const answeredCount = allItems.filter(i => {
-    const a = answers[i.id]
-    return a && (a.state === 'done' || a.reason)
-  }).length
-  const notDoneCount = allItems.filter(i => answers[i.id]?.state === 'not_done').length
+  const notDoneCount = Object.keys(notDone).length
+  const needsReason = allItems.filter(i => {
+    const n = notDone[i.id]
+    return n && (!n.reason || (n.reason === 'other' && !n.note.trim()))
+  })
 
   const clockIn = data?.log?.clockIn ?? null
   const clockOut = data?.log?.clockOut ?? null
   const finished = Boolean(data?.log?.submittedAt)
-  const onTheClock = Boolean(clockIn) && !clockOut && !finished
-  // A visit clocked out some other way (old link, manager fix) can still be
-  // finished, so it never gets stuck half-done.
+  // Clocked out some other way but never finished: still finishable.
   const editable = Boolean(clockIn) && !finished && !data?.readOnly
+
+  // ---- autosave -----------------------------------------------------------
+  const payload = useCallback(
+    (action: 'save' | 'finish') => ({
+      shiftId,
+      locationId,
+      action,
+      done: allItems.filter(i => !notDone[i.id]).map(i => i.id),
+      notDone: Object.entries(notDone).map(([itemId, n]) => ({ itemId, ...n })),
+      notes,
+      photos,
+    }),
+    [shiftId, locationId, allItems, notDone, notes, photos]
+  )
+
+  const save = useCallback(async () => {
+    if (!dirty.current) return
+    dirty.current = false
+    setSaveState('saving')
+    try {
+      const res = await fetch('/api/field/visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload('save')),
+      })
+      if (!res.ok) throw new Error()
+      setSaveState('saved')
+    } catch {
+      dirty.current = true
+      setSaveState('error')
+    }
+  }, [payload])
+
+  // Save shortly after any change; retry while a save is failing.
+  useEffect(() => {
+    if (!editable || !dirty.current) return
+    const timer = setTimeout(save, saveState === 'error' ? 5000 : 800)
+    return () => clearTimeout(timer)
+  }, [editable, notDone, notes, photos, saveState, save])
+
+  // Phone locked or screen left mid-visit: flush right away (keepalive lets
+  // the request finish after the page goes away).
+  const payloadRef = useRef(payload)
+  useEffect(() => {
+    payloadRef.current = payload
+  }, [payload])
+  useEffect(() => {
+    const flush = () => {
+      if (!dirty.current) return
+      dirty.current = false
+      fetch('/api/field/visit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadRef.current('save')),
+        keepalive: true,
+      }).catch(() => {
+        dirty.current = true
+      })
+    }
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') flush()
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      flush()
+    }
+  }, [])
+
+  // First load of a fresh visit: persist the "everything done" baseline so
+  // leaving the screen still leaves a complete record.
+  const baselineSaved = useRef(false)
+  useEffect(() => {
+    if (!editable || baselineSaved.current || allItems.length === 0) return
+    baselineSaved.current = true
+    const savedAny =
+      Object.keys(data?.log?.checklistData ?? {}).length > 0 || (data?.log?.incompleteItems.length ?? 0) > 0
+    if (!savedAny) {
+      dirty.current = true
+      setSaveState('idle')
+      setTimeout(save, 0)
+    }
+  }, [editable, allItems.length, data, save])
+
+  function markDirty() {
+    dirty.current = true
+    setConfirmArmed(false)
+  }
+
+  // ---- item actions -------------------------------------------------------
+  function markNotDone(id: string) {
+    setNotDone(prev => ({ ...prev, [id]: prev[id] ?? { reason: '', note: '', photos: [] } }))
+    markDirty()
+  }
+
+  function markDone(id: string) {
+    setNotDone(prev => {
+      const copy = { ...prev }
+      delete copy[id]
+      return copy
+    })
+    setMissing(prev => {
+      const copy = new Set(prev)
+      copy.delete(id)
+      return copy
+    })
+    markDirty()
+  }
+
+  // Merge into the latest value (uploads can finish after the user has picked
+  // a reason or typed a note).
+  function patchNotDone(id: string, patch: Partial<NotDone>) {
+    setNotDone(prev => (prev[id] ? { ...prev, [id]: { ...prev[id], ...patch } } : prev))
+    setMissing(prev => {
+      if (!prev.has(id)) return prev
+      const copy = new Set(prev)
+      copy.delete(id)
+      return copy
+    })
+    markDirty()
+  }
 
   function toggleLang() {
     const next = lang === 'en' ? 'es' : 'en'
@@ -158,38 +278,8 @@ export default function FieldVisitPage({
     storeLang(next)
   }
 
-  // Merge into the latest answer (uploads finish after the user may have
-  // picked a reason or typed a note, so never spread a stale render's copy).
-  function patchNotDone(id: string, patch: Partial<{ reason: string; note: string; photos: string[] }>) {
-    setAnswers(prev => {
-      const cur = prev[id]
-      if (!cur || cur.state !== 'not_done') return prev
-      return { ...prev, [id]: { ...cur, ...patch } }
-    })
-    setMissing(prev => {
-      if (!prev.has(id)) return prev
-      const copy = new Set(prev)
-      copy.delete(id)
-      return copy
-    })
-  }
-
-  function setAnswer(id: string, a: Answer | null) {
-    setAnswers(prev => {
-      const copy = { ...prev }
-      if (a) copy[id] = a
-      else delete copy[id]
-      return copy
-    })
-    setMissing(prev => {
-      if (!prev.has(id)) return prev
-      const copy = new Set(prev)
-      copy.delete(id)
-      return copy
-    })
-  }
-
-  async function handleClockIn() {
+  // ---- clock in / finish --------------------------------------------------
+  async function handleArrive() {
     setBusy('clock')
     try {
       const res = await fetch('/api/operations/clock', {
@@ -197,8 +287,7 @@ export default function FieldVisitPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ shiftId, locationId, action: 'in' }),
       })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || t.error)
+      if (!res.ok && res.status !== 409) throw new Error((await res.json().catch(() => ({}))).error || t.error)
       await load()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.error)
@@ -207,55 +296,36 @@ export default function FieldVisitPage({
     }
   }
 
-  function payload(action: 'save' | 'finish') {
-    const done: string[] = []
-    const notDone: Array<{ itemId: string; reason: string; note: string; photos: string[] }> = []
-    for (const [itemId, a] of Object.entries(answers)) {
-      if (a.state === 'done') done.push(itemId)
-      else notDone.push({ itemId, reason: a.reason, note: a.note, photos: a.photos })
-    }
-    return { shiftId, locationId, action, done, notDone, notes, photos }
-  }
+  useEffect(() => {
+    if (!confirmArmed) return
+    const timer = setTimeout(() => setConfirmArmed(false), 5000)
+    return () => clearTimeout(timer)
+  }, [confirmArmed])
 
-  async function submit(action: 'save' | 'finish') {
-    if (action === 'finish') {
-      const unanswered = allItems.filter(i => {
-        const a = answers[i.id]
-        return !a || (a.state === 'not_done' && (!a.reason || (a.reason === 'other' && !a.note.trim())))
-      })
-      if (unanswered.length > 0) {
-        setMissing(new Set(unanswered.map(i => i.id)))
-        toast.error(t.remaining(unanswered.length))
-        document.getElementById(`item-${unanswered[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        return
-      }
-      if (!confirmArmed) {
-        setConfirmArmed(true)
-        return
-      }
-      setConfirmArmed(false)
+  async function finish() {
+    if (needsReason.length > 0) {
+      setMissing(new Set(needsReason.map(i => i.id)))
+      toast.error(t.needsReason(needsReason.length))
+      document.getElementById(`item-${needsReason[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      return
     }
-    setBusy(action)
+    if (!confirmArmed) {
+      setConfirmArmed(true)
+      return
+    }
+    setConfirmArmed(false)
+    setBusy('finish')
     try {
       const res = await fetch('/api/field/visit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload(action)),
+        body: JSON.stringify(payload('finish')),
       })
       const json = await res.json()
-      if (res.status === 409 && json.alreadyFinished) {
-        // A retry after a dropped response: it already went through.
-        await load()
-        toast.success(t.finished)
-        return
-      }
-      if (!res.ok) throw new Error(json.error || t.error)
-      if (action === 'finish') {
-        toast.success(notDoneCount > 0 ? t.finishedWithFlags : t.finished)
-        router.push('/dashboard')
-      } else {
-        toast.success(t.saved)
-      }
+      if (!res.ok && !(res.status === 409 && json.alreadyFinished)) throw new Error(json.error || t.error)
+      dirty.current = false
+      toast.success(notDoneCount > 0 ? t.finishedWithFlags : t.finished)
+      router.push('/dashboard')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t.error)
     } finally {
@@ -263,6 +333,7 @@ export default function FieldVisitPage({
     }
   }
 
+  // ---- render -------------------------------------------------------------
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16 text-muted-foreground">
@@ -286,10 +357,9 @@ export default function FieldVisitPage({
     )
   }
 
-  const templateName = data.template
-    ? (lang === 'es' && data.template.nameEs) || data.template.name
-    : undefined
+  const templateName = data.template ? (lang === 'es' && data.template.nameEs) || data.template.name : undefined
   const hasAccessInfo = Boolean(data.location.accessInstructions || data.location.serviceNotes)
+  const showChecklist = Boolean(clockIn) || finished || data.readOnly
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -308,58 +378,44 @@ export default function FieldVisitPage({
 
       {data.readOnly && <Badge variant="neutral">{t.readOnly}</Badge>}
 
-      {/* Clock */}
-      <Card className="py-0">
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
-          <div className="flex items-center gap-3">
-            <div
+      {/* Not here yet: one big tap */}
+      {!clockIn && !finished && !data.readOnly && (
+        <Button
+          variant="gold"
+          className="h-16 w-full gap-2 text-lg"
+          onClick={handleArrive}
+          disabled={busy === 'clock'}
+        >
+          {busy === 'clock' ? <Loader2 className="size-5 animate-spin" /> : <MapPin className="size-5" />}
+          {t.imHere}
+        </Button>
+      )}
+
+      {/* Clock + save status, one quiet line */}
+      {(clockIn || finished) && (
+        <div className="flex items-center justify-between gap-3 rounded-[12px] border border-border bg-card px-4 py-3 text-sm">
+          <span className="flex items-center gap-2 text-foreground">
+            <Clock className="size-4 text-muted-foreground" />
+            {finished || clockOut
+              ? `${t.clockedOut} · ${t.inAt} ${formatTime(clockIn)}${clockOut ? ` · ${t.outAt} ${formatTime(clockOut)}` : ''}`
+              : `${t.onTheClock} ${t.sinceTime(formatTime(clockIn))}`}
+          </span>
+          {editable && saveState !== 'idle' && (
+            <span
               className={cn(
-                'grid size-10 shrink-0 place-items-center rounded-full',
-                onTheClock
-                  ? 'bg-teal-600/10 text-teal-600 dark:bg-teal-300/12 dark:text-teal-300'
-                  : clockOut
-                    ? 'bg-green-600/12 text-green-600 dark:bg-green-300/12 dark:text-green-300'
-                    : 'bg-secondary text-muted-foreground'
+                'flex items-center gap-1 text-xs',
+                saveState === 'error' ? 'text-coral-600 dark:text-coral-300' : 'text-muted-foreground'
               )}
             >
-              <Clock className="size-5" />
-            </div>
-            <div>
-              <p className="font-medium text-foreground">
-                {clockOut || finished ? t.clockedOut : onTheClock ? t.onTheClock : t.notStarted}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {clockIn ? `${t.inAt} ${formatTime(clockIn)}` : t.clockInHint}
-                {clockOut ? ` · ${t.outAt} ${formatTime(clockOut)}` : ''}
-              </p>
-            </div>
-          </div>
-          {!clockIn && !data.readOnly && (
-            <Button variant="gold" size="lg" className="gap-2" onClick={handleClockIn} disabled={busy === 'clock'}>
-              {busy === 'clock' ? <Loader2 className="size-4 animate-spin" /> : <LogIn className="size-4" />}
-              {t.clockIn}
-            </Button>
+              {saveState === 'saving' && <Loader2 className="size-3 animate-spin" />}
+              {saveState === 'saved' && <Check className="size-3" />}
+              {saveState === 'error' && <CloudOff className="size-3" />}
+              {saveState === 'saving' ? t.saving : saveState === 'saved' ? t.savedAuto : t.saveFailed}
+            </span>
           )}
-        </CardContent>
-        {allItems.length > 0 && (
-          <div className="px-4 pb-4">
-            <div className="mb-1.5 flex items-center justify-between text-xs text-muted-foreground">
-              <span>{answeredCount === allItems.length ? t.allAccounted : t.remaining(allItems.length - answeredCount)}</span>
-              <span className="font-mono tabular-nums">
-                {answeredCount} {t.of} {allItems.length}
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-              <div
-                className="h-full rounded-full bg-teal-600 transition-all duration-300 dark:bg-teal-300"
-                style={{ width: `${(answeredCount / allItems.length) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </Card>
+        </div>
+      )}
 
-      {/* Access + notes for the crew */}
       {hasAccessInfo && (
         <Card className="py-0">
           <button
@@ -382,207 +438,231 @@ export default function FieldVisitPage({
         </Card>
       )}
 
+      {!clockIn && !finished && !data.readOnly && (
+        <p className="text-center text-sm text-muted-foreground">{t.clockInHint}</p>
+      )}
+
       {finished && (
         <p className="rounded-[9px] border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground">
           {t.finishedNote}
         </p>
       )}
 
-      {/* Checklist */}
-      {sections.length === 0 ? (
-        <Card>
-          <CardContent>
-            <EmptyState icon={CheckCircle} title={t.noChecklist} description={t.noChecklistHint} />
-          </CardContent>
-        </Card>
-      ) : (
-        sections.map(section => (
-          <Card key={section.id} className="py-0">
-            <CardContent className="p-4">
-              <p className="mb-3 font-medium text-foreground">
-                {(lang === 'es' && section.nameEs) || section.name}
-              </p>
-              <div className="divide-y divide-border">
-                {section.items.map(item => {
-                  const a = answers[item.id]
-                  const isMissing = missing.has(item.id)
-                  return (
-                    <div
-                      key={item.id}
-                      id={`item-${item.id}`}
-                      className={cn('py-3', isMissing && '-mx-2 rounded-[9px] bg-coral-600/5 px-2 ring-1 ring-coral-600/30')}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={cn(
-                              'text-[15px] leading-snug text-foreground',
-                              a?.state === 'done' && 'text-muted-foreground line-through'
-                            )}
-                          >
-                            {(lang === 'es' && item.textEs) || item.text}
-                          </p>
-                          {(item.priority === 'high' || item.requiresPhoto) && (
-                            <div className="mt-1 flex flex-wrap gap-1.5">
-                              {item.priority === 'high' && (
-                                <Badge variant="gold" className="text-[10px]">
-                                  {t.priority}
-                                </Badge>
-                              )}
-                              {item.requiresPhoto && (
-                                <Badge variant="neutral" className="text-[10px]">
-                                  {t.photoRequired}
-                                </Badge>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex shrink-0 gap-1.5">
-                          <button
-                            type="button"
-                            disabled={!editable}
-                            aria-pressed={a?.state === 'done'}
-                            onClick={() => setAnswer(item.id, a?.state === 'done' ? null : { state: 'done' })}
-                            className={cn(
-                              'flex h-11 min-w-11 items-center justify-center gap-1 rounded-[9px] border px-2.5 text-sm font-medium transition-colors disabled:opacity-50',
-                              a?.state === 'done'
-                                ? 'border-green-600 bg-green-600 text-white dark:border-green-400 dark:bg-green-500'
-                                : 'border-border text-muted-foreground hover:bg-secondary'
-                            )}
-                          >
-                            <Check className="size-4" />
-                            <span className="hidden sm:inline">{t.done}</span>
-                          </button>
-                          <button
-                            type="button"
-                            disabled={!editable}
-                            aria-pressed={a?.state === 'not_done'}
-                            onClick={() =>
-                              setAnswer(
-                                item.id,
-                                a?.state === 'not_done' ? null : { state: 'not_done', reason: '', note: '', photos: [] }
-                              )
-                            }
-                            className={cn(
-                              'flex h-11 min-w-11 items-center justify-center gap-1 rounded-[9px] border px-2.5 text-sm font-medium transition-colors disabled:opacity-50',
-                              a?.state === 'not_done'
-                                ? 'border-coral-600 bg-coral-600 text-white dark:border-coral-400 dark:bg-coral-500'
-                                : 'border-border text-muted-foreground hover:bg-secondary'
-                            )}
-                          >
-                            <X className="size-4" />
-                            <span className="hidden sm:inline">{t.notDone}</span>
-                          </button>
-                        </div>
-                      </div>
+      {showChecklist && (
+        <>
+          {allItems.length > 0 && editable && (
+            <p
+              className={cn(
+                'rounded-[12px] px-4 py-3 text-sm font-medium',
+                notDoneCount === 0
+                  ? 'bg-green-600/10 text-green-700 dark:bg-green-300/10 dark:text-green-300'
+                  : 'bg-coral-600/10 text-coral-700 dark:bg-coral-300/10 dark:text-coral-300'
+              )}
+            >
+              {notDoneCount === 0 ? t.allMarkedDone(allItems.length) : t.someNotDone(notDoneCount)}
+            </p>
+          )}
 
-                      {a?.state === 'not_done' && (
-                        <div className="mt-3 space-y-3 rounded-[9px] border border-coral-600/30 bg-coral-600/5 p-3">
-                          <p className="text-sm font-medium text-foreground">{t.whyNotDone}</p>
-                          {editable ? (
-                            <div className="grid gap-1.5 sm:grid-cols-2">
-                              {NOT_DONE_REASONS.map(r => (
-                                <button
-                                  key={r.id}
-                                  type="button"
-                                  onClick={() => patchNotDone(item.id, { reason: r.id })}
-                                  className={cn(
-                                    'min-h-11 rounded-[9px] border px-3 text-left text-sm transition-colors',
-                                    a.reason === r.id
-                                      ? 'border-coral-600 bg-coral-600 font-medium text-white dark:border-coral-400 dark:bg-coral-500'
-                                      : 'border-border bg-background text-muted-foreground'
-                                  )}
-                                >
-                                  {r[lang]}
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-sm text-foreground">{reasonLabel(a.reason, lang)}</p>
+          {sections.length === 0 ? (
+            <Card>
+              <CardContent>
+                <EmptyState icon={CheckCircle} title={t.noChecklist} description={t.noChecklistHint} />
+              </CardContent>
+            </Card>
+          ) : (
+            sections.map(section => (
+              <Card key={section.id} className="py-0">
+                <CardContent className="p-4">
+                  <p className="mb-1 font-medium text-foreground">
+                    {(lang === 'es' && section.nameEs) || section.name}
+                  </p>
+                  <div className="divide-y divide-border">
+                    {section.items.map(item => {
+                      const n = notDone[item.id]
+                      const isMissing = missing.has(item.id)
+                      // Finished visits show what was actually recorded.
+                      const done = !n && (editable || data.log?.checklistData?.[item.id] === true)
+                      return (
+                        <div
+                          key={item.id}
+                          id={`item-${item.id}`}
+                          className={cn(
+                            'py-3',
+                            isMissing && '-mx-2 rounded-[9px] bg-coral-600/5 px-2 ring-1 ring-coral-600/30'
                           )}
-                          <Textarea
-                            value={a.note}
-                            disabled={!editable}
-                            onChange={e => patchNotDone(item.id, { note: e.target.value })}
-                            placeholder={a.reason === 'other' ? t.explain : t.addNote}
-                            rows={2}
-                          />
-                          <PhotoCapture
-                            photos={a.photos}
-                            onChange={p => patchNotDone(item.id, { photos: p })}
-                            label={t.addPhoto}
-                            uploadingLabel={t.uploading}
-                            disabled={!editable}
-                          />
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={cn(
+                                'grid size-7 shrink-0 place-items-center rounded-full',
+                                n
+                                  ? 'bg-coral-600 text-white dark:bg-coral-500'
+                                  : done
+                                    ? 'bg-green-600/12 text-green-600 dark:bg-green-300/12 dark:text-green-300'
+                                    : 'bg-secondary text-muted-foreground'
+                              )}
+                            >
+                              {n ? <X className="size-4" /> : <Check className="size-4" />}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className={cn('text-[15px] leading-snug text-foreground', n && 'font-medium')}>
+                                {(lang === 'es' && item.textEs) || item.text}
+                              </p>
+                              {(item.priority === 'high' || item.requiresPhoto) && (
+                                <div className="mt-1 flex flex-wrap gap-1.5">
+                                  {item.priority === 'high' && (
+                                    <Badge variant="gold" className="text-[10px]">
+                                      {t.priority}
+                                    </Badge>
+                                  )}
+                                  {item.requiresPhoto && (
+                                    <Badge variant="neutral" className="text-[10px]">
+                                      {t.photoRequired}
+                                    </Badge>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                            {editable && !n && (
+                              <button
+                                type="button"
+                                onClick={() => markNotDone(item.id)}
+                                className="h-11 shrink-0 rounded-[9px] border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary active:bg-secondary"
+                              >
+                                {t.notDone}
+                              </button>
+                            )}
+                          </div>
+
+                          {n && (
+                            <div className="mt-3 space-y-3 rounded-[9px] border border-coral-600/30 bg-coral-600/5 p-3">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="text-sm font-medium text-foreground">{t.whyNotDone}</p>
+                                {editable && (
+                                  <button
+                                    type="button"
+                                    onClick={() => markDone(item.id)}
+                                    className="h-9 rounded-[9px] px-2 text-sm font-medium text-green-700 underline-offset-2 hover:underline dark:text-green-300"
+                                  >
+                                    {t.itGotDone}
+                                  </button>
+                                )}
+                              </div>
+                              {editable ? (
+                                <div className="grid gap-1.5 sm:grid-cols-2">
+                                  {NOT_DONE_REASONS.map(r => (
+                                    <button
+                                      key={r.id}
+                                      type="button"
+                                      onClick={() => patchNotDone(item.id, { reason: r.id })}
+                                      className={cn(
+                                        'min-h-11 rounded-[9px] border px-3 text-left text-sm transition-colors',
+                                        n.reason === r.id
+                                          ? 'border-coral-600 bg-coral-600 font-medium text-white dark:border-coral-400 dark:bg-coral-500'
+                                          : 'border-border bg-background text-muted-foreground'
+                                      )}
+                                    >
+                                      {r[lang]}
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-foreground">{reasonLabel(n.reason, lang)}</p>
+                              )}
+                              {(editable || n.note) && (
+                                <Textarea
+                                  value={n.note}
+                                  disabled={!editable}
+                                  onChange={e => patchNotDone(item.id, { note: e.target.value })}
+                                  placeholder={n.reason === 'other' ? t.explain : t.addNote}
+                                  rows={2}
+                                />
+                              )}
+                              <PhotoCapture
+                                photos={n.photos}
+                                onChange={p => patchNotDone(item.id, { photos: p })}
+                                label={t.addPhoto}
+                                uploadingLabel={t.uploading}
+                                disabled={!editable}
+                              />
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        ))
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+
+          {/* Optional extras, tucked away */}
+          {editable && !showNotes ? (
+            <button
+              type="button"
+              onClick={() => setShowNotes(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-[12px] border border-dashed border-border py-3 text-sm text-muted-foreground"
+            >
+              <MessageSquarePlus className="size-4" />
+              {t.noteForManager}
+            </button>
+          ) : (
+            (showNotes || notes || photos.length > 0) && (
+              <Card className="py-0">
+                <CardContent className="space-y-3 p-4">
+                  <Textarea
+                    value={notes}
+                    onChange={e => {
+                      setNotes(e.target.value)
+                      markDirty()
+                    }}
+                    placeholder={t.notesPlaceholder}
+                    rows={3}
+                    disabled={!editable}
+                  />
+                  <PhotoCapture
+                    photos={photos}
+                    onChange={p => {
+                      setPhotos(p)
+                      markDirty()
+                    }}
+                    max={10}
+                    label={t.addPhoto}
+                    uploadingLabel={t.uploading}
+                    disabled={!editable}
+                  />
+                </CardContent>
+              </Card>
+            )
+          )}
+        </>
       )}
 
-      {/* Notes, photos, report a problem */}
-      <Card className="py-0">
-        <CardContent className="space-y-3 p-4">
-          <div>
-            <p className="mb-1.5 text-sm font-medium text-foreground">{t.notesLabel}</p>
-            <Textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder={t.notesPlaceholder}
-              rows={3}
-              disabled={!editable}
-            />
-          </div>
-          <PhotoCapture
-            photos={photos}
-            onChange={setPhotos}
-            max={10}
-            label={t.addPhoto}
-            uploadingLabel={t.uploading}
-            disabled={!editable}
-          />
-          {!data.readOnly && (
-            <ReportProblemButton
-              shiftId={shiftId}
-              locationId={locationId}
-              locationName={data.location.name}
-              lang={lang}
-              className="w-full"
-            />
-          )}
-        </CardContent>
-      </Card>
+      {!data.readOnly && !finished && (
+        <ReportProblemButton
+          shiftId={shiftId}
+          locationId={locationId}
+          locationName={data.location.name}
+          lang={lang}
+          className="w-full"
+        />
+      )}
 
-      {/* Sticky actions: thumb-reachable on phones */}
+      {/* One big finish button, thumb-reachable */}
       {editable && (
         <div className="sticky bottom-20 z-10 rounded-[14px] border border-border bg-background/95 p-3 shadow-card backdrop-blur md:bottom-4">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="lg"
-              className="flex-1"
-              onClick={() => submit('save')}
-              disabled={busy !== null}
-            >
-              {busy === 'save' && <Loader2 className="size-4 animate-spin" />}
-              {t.saveProgress}
-            </Button>
-            <Button
-              variant="gold"
-              size="lg"
-              className="flex-[1.4]"
-              onClick={() => submit('finish')}
-              disabled={busy !== null}
-            >
-              {busy === 'finish' ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}
-              {confirmArmed ? t.tapToConfirm : notDoneCount > 0 ? t.finishWithFlags(notDoneCount) : t.finish}
-            </Button>
-          </div>
+          <Button
+            variant="gold"
+            className={cn(
+              'h-14 w-full gap-2 text-base',
+              notDoneCount > 0 && !confirmArmed && 'bg-coral-600 text-white hover:bg-coral-600/90'
+            )}
+            onClick={finish}
+            disabled={busy !== null}
+          >
+            {busy === 'finish' ? <Loader2 className="size-5 animate-spin" /> : <CheckCircle className="size-5" />}
+            {confirmArmed ? t.tapToConfirm : notDoneCount > 0 ? t.finishWithFlags(notDoneCount) : t.finishAllDone}
+          </Button>
         </div>
       )}
     </div>
