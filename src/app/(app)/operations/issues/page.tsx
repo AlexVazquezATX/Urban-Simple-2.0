@@ -7,7 +7,7 @@ const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE']
 export default async function IssuesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; status?: string; locationId?: string; clientId?: string }>
+  searchParams: Promise<{ view?: string; status?: string; locationId?: string; clientId?: string; log?: string }>
 }) {
   const user = await getCurrentUser()
 
@@ -40,6 +40,7 @@ export default async function IssuesPage({
         initialStatus={sp.status}
         initialLocationId={sp.locationId}
         initialClientId={sp.clientId}
+        openLogUnfinished={sp.log === 'unfinished' && user.role !== 'ASSOCIATE'}
       />
     </div>
   )

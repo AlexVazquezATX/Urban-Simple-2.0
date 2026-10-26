@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Camera, Check, Loader2, Plus, Search, X } from 'lucide-react'
+import { Camera, Check, ClipboardX, Loader2, Plus, Search, X } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Dialog,
@@ -18,14 +18,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { ISSUE_CATEGORIES, SEVERITIES } from '@/lib/ops/constants'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ISSUE_CATEGORIES, NOT_DONE_REASONS, SEVERITIES } from '@/lib/ops/constants'
 import { useManagerLang } from '@/lib/i18n/use-manager-lang'
 import { cn } from '@/lib/utils'
 
@@ -36,21 +30,34 @@ export interface LocationOption {
 }
 
 const MAX_PHOTOS = 6
+const MAX_ITEMS = 10
+
+type Mode = 'issue' | 'unfinished'
+interface UnfinishedRow {
+  text: string
+  reason: string
+}
+const blankRow = (): UnfinishedRow => ({ text: '', reason: 'out_of_time' })
 
 export function NewIssueDialog({
   locations,
   defaultLocationId,
+  defaultMode = 'issue',
+  defaultOpen = false,
   onCreated,
   children,
 }: {
   locations: LocationOption[]
   defaultLocationId?: string
+  defaultMode?: Mode
+  /** Open on mount (deep link from the dashboard). */
+  defaultOpen?: boolean
   onCreated?: () => void
   children: React.ReactNode
 }) {
   const router = useRouter()
   const fileRef = useRef<HTMLInputElement>(null)
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(defaultOpen)
   const [search, setSearch] = useState('')
   const [locationId, setLocationId] = useState(defaultLocationId ?? '')
   const [category, setCategory] = useState('quality')
@@ -59,18 +66,25 @@ export function NewIssueDialog({
   const [description, setDescription] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [visibleToClient, setVisibleToClient] = useState(false)
+  const [mode, setMode] = useState<Mode>(defaultMode)
+  const [rows, setRows] = useState<UnfinishedRow[]>([blankRow()])
+  const [notifyClient, setNotifyClient] = useState(true)
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
-  const { t } = useManagerLang()
+  const { lang, t } = useManagerLang()
   const n = t.newIssue
+  const unfinished = mode === 'unfinished'
+  const filledRows = rows.filter((r) => r.text.trim())
+  const canSubmit = !!locationId && (unfinished ? filledRows.length > 0 : !!title.trim())
+
+  const updateRow = (idx: number, patch: Partial<UnfinishedRow>) =>
+    setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, ...patch } : r)))
 
   const selected = locations.find((l) => l.id === locationId)
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     const list = q
-      ? locations.filter(
-          (l) => l.name.toLowerCase().includes(q) || l.client.name.toLowerCase().includes(q)
-        )
+      ? locations.filter((l) => l.name.toLowerCase().includes(q) || l.client.name.toLowerCase().includes(q))
       : locations
     return list.slice(0, 60)
   }, [locations, search])
@@ -84,6 +98,9 @@ export function NewIssueDialog({
     setDescription('')
     setPhotos([])
     setVisibleToClient(false)
+    setMode(defaultMode)
+    setRows([blankRow()])
+    setNotifyClient(true)
   }
 
   const handleFiles = async (files: FileList | null) => {
@@ -116,26 +133,38 @@ export function NewIssueDialog({
   }
 
   const handleSubmit = async () => {
-    if (!locationId || !title.trim()) return
+    if (!canSubmit) return
     setSaving(true)
     try {
+      const payload = unfinished
+        ? {
+            type: 'incomplete_work',
+            locationId,
+            items: filledRows.map((r) => ({
+              text: r.text.trim(),
+              reason: r.reason,
+            })),
+            photos,
+            notifyClient,
+          }
+        : {
+            locationId,
+            category,
+            severity,
+            title: title.trim(),
+            description: description.trim() || undefined,
+            photos,
+            visibleToClient,
+          }
       const res = await fetch('/api/issues', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          locationId,
-          category,
-          severity,
-          title: title.trim(),
-          description: description.trim() || undefined,
-          photos,
-          visibleToClient,
-        }),
+        body: JSON.stringify(payload),
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(data.error || n.createFailed)
-      toast.success(n.created)
+      toast.success(unfinished ? (notifyClient ? n.loggedSent : n.loggedInternal) : n.created)
       setOpen(false)
       reset()
       onCreated?.()
@@ -158,11 +187,29 @@ export function NewIssueDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{n.title}</DialogTitle>
-          <DialogDescription>{n.description}</DialogDescription>
+          <DialogTitle>{unfinished ? n.unfinishedTitle : n.title}</DialogTitle>
+          <DialogDescription>{unfinished ? n.unfinishedDescription : n.description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-1 rounded-[10px] border border-border bg-secondary/40 p-1">
+            {(['issue', 'unfinished'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMode(m)}
+                className={cn(
+                  'rounded-[7px] px-3 py-1.5 text-sm font-medium transition-colors',
+                  mode === m
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
+              >
+                {m === 'issue' ? n.modeIssue : n.modeUnfinished}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-1.5">
             <Label>{n.location}</Label>
             {selected ? (
@@ -199,7 +246,9 @@ export function NewIssueDialog({
                       >
                         <span className="min-w-0">
                           <span className="block truncate text-sm text-foreground">{l.name}</span>
-                          <span className="block truncate text-xs text-muted-foreground">{l.client.name}</span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {l.client.name}
+                          </span>
                         </span>
                         {l.id === locationId && <Check className="size-4 text-primary" />}
                       </button>
@@ -210,60 +259,116 @@ export function NewIssueDialog({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="new-issue-category">{n.category}</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger id="new-issue-category" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {ISSUE_CATEGORIES.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {t.category[c.id] ?? c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          {unfinished ? (
+            <div className="space-y-2">
+              <Label>{n.whatNotDone}</Label>
+              {rows.map((row, idx) => (
+                <div key={idx} className="space-y-2 rounded-[12px] border border-border p-2.5">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      value={row.text}
+                      onChange={(e) => updateRow(idx, { text: e.target.value })}
+                      placeholder={n.itemPlaceholder}
+                      maxLength={200}
+                      aria-label={n.whatNotDone}
+                    />
+                    {rows.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setRows((prev) => prev.filter((_, i) => i !== idx))}
+                        aria-label={n.removeItem}
+                      >
+                        <X className="size-4" />
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={row.reason} onValueChange={(v) => updateRow(idx, { reason: v })}>
+                    <SelectTrigger className="w-full" aria-label={n.reason}>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {NOT_DONE_REASONS.map((r) => (
+                        <SelectItem key={r.id} value={r.id}>
+                          {r[lang]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+              {rows.length < MAX_ITEMS && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setRows((prev) => [...prev, blankRow()])}
+                >
+                  <Plus className="size-4" />
+                  {n.addItem}
+                </Button>
+              )}
+              <p className="text-xs text-muted-foreground">{n.clientSeesHint}</p>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="new-issue-severity">{n.severity}</Label>
-              <Select value={severity} onValueChange={setSeverity}>
-                <SelectTrigger id="new-issue-severity" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SEVERITIES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {t.severity[s]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-issue-category">{n.category}</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger id="new-issue-category" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ISSUE_CATEGORIES.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {t.category[c.id] ?? c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="new-issue-severity">{n.severity}</Label>
+                  <Select value={severity} onValueChange={setSeverity}>
+                    <SelectTrigger id="new-issue-severity" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SEVERITIES.map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {t.severity[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="new-issue-title">{n.issueTitle}</Label>
-            <Input
-              id="new-issue-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={n.titlePlaceholder}
-              maxLength={200}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-issue-title">{n.issueTitle}</Label>
+                <Input
+                  id="new-issue-title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={n.titlePlaceholder}
+                  maxLength={200}
+                />
+              </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="new-issue-description">{n.details}</Label>
-            <Textarea
-              id="new-issue-description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={n.detailsPlaceholder}
-              rows={4}
-            />
-          </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="new-issue-description">{n.details}</Label>
+                <Textarea
+                  id="new-issue-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={n.detailsPlaceholder}
+                  rows={4}
+                />
+              </div>
+            </>
+          )}
 
           <div className="space-y-2">
             <Label>{n.photos}</Label>
@@ -271,7 +376,11 @@ export function NewIssueDialog({
               {photos.map((url) => (
                 <div key={url} className="relative size-16">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={url} alt="" className="size-16 rounded-[10px] border border-border object-cover" />
+                  <img
+                    src={url}
+                    alt=""
+                    className="size-16 rounded-[10px] border border-border object-cover"
+                  />
                   <button
                     type="button"
                     onClick={() => setPhotos((prev) => prev.filter((p) => p !== url))}
@@ -289,7 +398,7 @@ export function NewIssueDialog({
                   disabled={uploading}
                   className={cn(
                     'grid size-16 place-items-center rounded-[10px] border border-dashed border-border text-muted-foreground transition-colors hover:border-ring/50 hover:text-foreground',
-                    uploading && 'opacity-60'
+                    uploading && 'opacity-60',
                   )}
                   aria-label={n.addPhotos}
                 >
@@ -309,10 +418,18 @@ export function NewIssueDialog({
 
           <label className="flex items-start justify-between gap-3 rounded-[12px] border border-border bg-secondary/40 p-3">
             <span>
-              <span className="block text-sm font-medium text-foreground">{n.visible}</span>
-              <span className="mt-0.5 block text-xs text-muted-foreground">{n.visibleHint}</span>
+              <span className="block text-sm font-medium text-foreground">
+                {unfinished ? n.notifyClient : n.visible}
+              </span>
+              <span className="mt-0.5 block text-xs text-muted-foreground">
+                {unfinished ? n.notifyClientHint : n.visibleHint}
+              </span>
             </span>
-            <Switch checked={visibleToClient} onCheckedChange={setVisibleToClient} />
+            {unfinished ? (
+              <Switch checked={notifyClient} onCheckedChange={setNotifyClient} />
+            ) : (
+              <Switch checked={visibleToClient} onCheckedChange={setVisibleToClient} />
+            )}
           </label>
         </div>
 
@@ -324,10 +441,16 @@ export function NewIssueDialog({
             type="button"
             variant="gold"
             onClick={handleSubmit}
-            disabled={saving || uploading || !locationId || !title.trim()}
+            disabled={saving || uploading || !canSubmit}
           >
-            {saving ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-            {n.create}
+            {saving ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : unfinished ? (
+              <ClipboardX className="size-4" />
+            ) : (
+              <Plus className="size-4" />
+            )}
+            {unfinished ? n.logUnfinished : n.create}
           </Button>
         </DialogFooter>
       </DialogContent>

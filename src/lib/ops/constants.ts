@@ -5,6 +5,7 @@ export const NOT_DONE_REASONS = [
   { id: 'out_of_time', en: 'Ran out of time', es: 'Se acabó el tiempo' },
   { id: 'no_access', en: 'No access / area locked', es: 'Sin acceso / área cerrada' },
   { id: 'area_in_use', en: 'Area in use (staff still working)', es: 'Área en uso (personal trabajando)' },
+  { id: 'vendor_on_site', en: 'Another vendor working there (pest control, repairs)', es: 'Otro proveedor trabajando ahí (fumigación, reparaciones)' },
   { id: 'equipment_broken', en: 'Equipment broken or missing', es: 'Equipo dañado o faltante' },
   { id: 'out_of_supplies', en: 'Out of supplies', es: 'Sin suministros' },
   { id: 'safety', en: 'Safety concern', es: 'Problema de seguridad' },

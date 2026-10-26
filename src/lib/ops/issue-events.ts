@@ -71,18 +71,23 @@ async function reporterEmailIfClient(issue: LoadedIssue): Promise<string[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Associate finished a visit with items not done.
+// Associate finished a visit with items not done, or a manager logged it for
+// them (crew texted in, or it was spotted after the visit).
 // ---------------------------------------------------------------------------
 export async function onIncompleteWorkSubmitted(params: {
   issueId: string
   items: IncompleteItem[]
   associateName: string
+  /** Night the work belongs to, when the issue has no service log. */
+  serviceDate?: Date
+  /** Staff member who logged it themselves; they don't need the alert. */
+  loggedById?: string
 }) {
   try {
     const issue = await loadIssue(params.issueId)
     if (!issue) return
     const companyId = issue.location.branch.companyId
-    const serviceDate = issue.serviceLog?.serviceDate ?? issue.createdAt
+    const serviceDate = issue.serviceLog?.serviceDate ?? params.serviceDate ?? issue.createdAt
     const items = params.items
     const photoCount = items.reduce((n, i) => n + (i.photos?.length ?? 0), 0)
 
@@ -92,6 +97,7 @@ export async function onIncompleteWorkSubmitted(params: {
       locationId: issue.locationId,
       serviceDate,
       escalate: issue.severity === 'high' || issue.severity === 'critical',
+      excludeUserIds: params.loggedById ? [params.loggedById] : undefined,
     })
     const lines = itemLines(items)
     await notifyStaff(staff, {
@@ -107,7 +113,7 @@ export async function onIncompleteWorkSubmitted(params: {
         rows: [
           ['Client', issue.client.name],
           ['Location', issue.location.name],
-          ['Associate', params.associateName],
+          [params.loggedById ? 'Logged by' : 'Associate', params.associateName],
           ['Service date', format(serviceDate, 'EEE MMM d')],
           ['Photos', photoCount ? String(photoCount) : ''],
         ],

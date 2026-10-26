@@ -10,6 +10,7 @@ import {
   ShieldAlert,
   CalendarDays,
   ClipboardList,
+  ClipboardX,
   Route,
   ChevronRight,
   Clock,
@@ -188,7 +189,18 @@ export function ManagerDashboard({
         kicker={kicker}
         title={`${d.greeting(greeting)}, ${userName}`}
         subtitle={d.subtitle}
-        actions={<LanguageToggle />}
+        actions={
+          <>
+            <LanguageToggle />
+            <Link
+              href="/operations/issues?log=unfinished"
+              className="inline-flex h-9 items-center gap-2 rounded-[9px] border border-border bg-card px-3 text-sm font-medium text-foreground hover:bg-secondary/60"
+            >
+              <ClipboardX className="size-4" />
+              {t.newIssue.unfinishedTitle}
+            </Link>
+          </>
+        }
       />
 
       {/* Warm status tiles — pastel in light, dim-tinted in dark */}

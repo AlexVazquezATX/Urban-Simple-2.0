@@ -9,6 +9,7 @@ import {
   Calendar,
   Camera,
   CheckCircle2,
+  ClipboardX,
   Clock,
   EyeOff,
   Loader2,
@@ -111,12 +112,14 @@ export function IssuesList({
   initialStatus,
   initialLocationId,
   initialClientId,
+  openLogUnfinished = false,
 }: {
   locations: LocationOption[]
   initialView?: string
   initialStatus?: string
   initialLocationId?: string
   initialClientId?: string
+  openLogUnfinished?: boolean
 }) {
   const [issues, setIssues] = useState<IssueListItem[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -195,6 +198,18 @@ export function IssuesList({
       actions={
         <>
           <LanguageToggle />
+          <NewIssueDialog
+            locations={locations}
+            defaultLocationId={locationId !== 'all' ? locationId : undefined}
+            defaultMode="unfinished"
+            defaultOpen={openLogUnfinished}
+            onCreated={load}
+          >
+            <Button variant="outline">
+              <ClipboardX className="size-4" />
+              {t.newIssue.unfinishedTitle}
+            </Button>
+          </NewIssueDialog>
           <NewIssueDialog
             locations={locations}
             defaultLocationId={locationId !== 'all' ? locationId : undefined}
