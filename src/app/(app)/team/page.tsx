@@ -56,6 +56,8 @@ async function TeamList() {
     isActive: u.isActive,
     branchId: u.branchId,
     branch: u.branch,
+    smsAlerts: u.smsAlerts,
+    preferredLanguage: u.preferredLanguage,
     createdAt: u.createdAt.toISOString(),
   }))
 

@@ -1,21 +1,26 @@
-// Admin-side issue endpoints. Mirrors the portal POST (which lets a client
-// report an issue from their portal) but adds: admin-only create / list, with
-// admin extras like assignedToId, status, and full filtering. Scoped to the
-// user's company via the location→client→companyId chain.
+// Staff-side issue endpoints. Clients report issues and requests through the
+// portal (its own route); this is the staff list + "New issue" create. Scoped
+// to the user's company via the location→client→companyId chain.
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { ISSUE_CATEGORIES, ISSUE_STATUSES, SEVERITIES } from '@/lib/ops/constants'
+import { onIssueCreated } from '@/lib/ops/issue-events'
 
-const CATEGORIES = new Set(['quality', 'equipment', 'communication', 'safety', 'other'])
-const SEVERITIES = new Set(['low', 'medium', 'high', 'critical'])
-const STATUSES = new Set(['open', 'in_progress', 'resolved', 'closed'])
+const CATEGORIES = new Set<string>(ISSUE_CATEGORIES.map(c => c.id))
+const SEVERITY_SET = new Set<string>(SEVERITIES)
+const STATUS_SET = new Set<string>(ISSUE_STATUSES)
+const TYPES = new Set(['issue', 'incomplete_work', 'request'])
+const SOURCES = new Set(['associate', 'manager_review', 'client', 'staff'])
 
-// Issue management is a staff surface. Clients report issues through the portal
-// (its own route); they must never read the company-wide admin list.
+// Issue management is a staff surface. Clients must never read the
+// company-wide list (it exposes internal notes and unshared findings).
 const STAFF_ROLES = new Set(['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE'])
 
-// GET /api/issues — list issues across the company with optional filters.
+// GET /api/issues: list issues across the company with optional filters
+// (type, source, status, severity, locationId, clientId, assignedToId).
+// Associates only ever see the issues they reported.
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -26,15 +31,21 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status')
   const severity = searchParams.get('severity')
+  const type = searchParams.get('type')
+  const source = searchParams.get('source')
   const locationId = searchParams.get('locationId')
   const clientId = searchParams.get('clientId')
   const assignedToId = searchParams.get('assignedToId')
+  const limit = Math.min(Math.max(Number(searchParams.get('limit')) || 500, 1), 1000)
 
   const issues = await prisma.issue.findMany({
     where: {
       client: { companyId: user.companyId },
-      ...(status && { status }),
-      ...(severity && { severity }),
+      ...(user.role === 'ASSOCIATE' && { reportedById: user.id }),
+      ...(status && STATUS_SET.has(status) && { status }),
+      ...(severity && SEVERITY_SET.has(severity) && { severity }),
+      ...(type && TYPES.has(type) && { type }),
+      ...(source && SOURCES.has(source) && { source }),
       ...(locationId && { locationId }),
       ...(clientId && { clientId }),
       ...(assignedToId && { assignedToId }),
@@ -47,15 +58,16 @@ export async function GET(request: NextRequest) {
       _count: { select: { comments: true } },
     },
     orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    take: limit,
   })
 
   return NextResponse.json(issues)
 }
 
-// POST /api/issues — admin creates an issue on a location.
+// POST /api/issues: staff "New issue" on a location.
 // Required: locationId, title.
-// Optional: clientId (derived from location if absent), category, severity,
-// description, status, assignedToId, photos[].
+// Optional: category, severity, description, photos[], serviceLogId,
+// visibleToClient (default false: staff findings stay internal until shared).
 export async function POST(request: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -64,16 +76,8 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => ({}))
-  const {
-    locationId,
-    title,
-    description,
-    category,
-    severity,
-    status,
-    assignedToId,
-    photos,
-  } = body
+  const { locationId, title, description, category, severity, photos, serviceLogId } = body
+  const isAssociate = user.role === 'ASSOCIATE'
 
   if (!locationId || typeof locationId !== 'string') {
     return NextResponse.json({ error: 'locationId is required' }, { status: 400 })
@@ -81,44 +85,65 @@ export async function POST(request: NextRequest) {
   if (!title || typeof title !== 'string' || !title.trim()) {
     return NextResponse.json({ error: 'title is required' }, { status: 400 })
   }
+  if (category != null && (typeof category !== 'string' || !CATEGORIES.has(category))) {
+    return NextResponse.json({ error: 'Invalid category' }, { status: 400 })
+  }
+  if (severity != null && (typeof severity !== 'string' || !SEVERITY_SET.has(severity))) {
+    return NextResponse.json({ error: 'Invalid severity' }, { status: 400 })
+  }
+  // Staff create plain issues here. Requests come from the portal and
+  // unfinished work from the associate visit flow.
+  if (body.type != null && body.type !== 'issue') {
+    return NextResponse.json({ error: 'Only type "issue" can be created here' }, { status: 400 })
+  }
 
   // Verify the location is in this user's company; pull clientId from it.
   const location = await prisma.location.findFirst({
-    where: { id: locationId, client: { companyId: user.companyId } },
+    where: { id: locationId, deletedAt: null, client: { companyId: user.companyId } },
     select: { id: true, clientId: true },
   })
   if (!location) {
     return NextResponse.json({ error: 'Location not found' }, { status: 404 })
   }
 
-  const resolvedCategory = typeof category === 'string' && CATEGORIES.has(category)
-    ? category
-    : 'other'
-  const resolvedSeverity = typeof severity === 'string' && SEVERITIES.has(severity)
-    ? severity
-    : 'medium'
-  const resolvedStatus = typeof status === 'string' && STATUSES.has(status)
-    ? status
-    : 'open'
+  let linkedServiceLogId: string | null = null
+  if (typeof serviceLogId === 'string' && serviceLogId) {
+    const log = await prisma.serviceLog.findFirst({
+      where: { id: serviceLogId, locationId: location.id },
+      select: { id: true },
+    })
+    if (!log) {
+      return NextResponse.json({ error: 'Service log not found for this location' }, { status: 400 })
+    }
+    linkedServiceLogId = log.id
+  }
 
   const issue = await prisma.issue.create({
     data: {
       locationId: location.id,
       clientId: location.clientId,
       reportedById: user.id,
-      title: title.trim(),
-      description: typeof description === 'string' ? description : null,
-      category: resolvedCategory,
-      severity: resolvedSeverity,
-      status: resolvedStatus,
-      assignedToId: typeof assignedToId === 'string' ? assignedToId : null,
-      photos: Array.isArray(photos) ? photos.filter((p) => typeof p === 'string') : [],
+      serviceLogId: linkedServiceLogId,
+      type: 'issue',
+      source: isAssociate ? 'associate' : 'staff',
+      title: title.trim().slice(0, 200),
+      description: typeof description === 'string' && description.trim() ? description.trim() : null,
+      category: category ?? 'other',
+      severity: severity ?? 'medium',
+      status: 'open',
+      // Associates never share directly with the client.
+      visibleToClient: !isAssociate && body.visibleToClient === true,
+      photos: Array.isArray(photos)
+        ? photos.filter((p: unknown): p is string => typeof p === 'string').slice(0, 20)
+        : [],
     },
     include: {
       location: { select: { id: true, name: true } },
       client: { select: { id: true, name: true } },
     },
   })
+
+  after(() => onIssueCreated(issue.id))
 
   return NextResponse.json(issue, { status: 201 })
 }

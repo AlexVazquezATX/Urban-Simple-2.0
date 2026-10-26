@@ -8,6 +8,7 @@ import { EditableDispatchProfile } from '@/components/locations/editable-dispatc
 import { EditableEquipment } from '@/components/locations/editable-equipment'
 import { EditableServiceAgreement } from '@/components/locations/editable-service-agreement'
 import { LocationRowActions } from '@/components/locations/location-row-actions'
+import { LocationAlertsCard } from '@/components/locations/location-alerts-card'
 import { reviewBadgeVariant } from '@/components/locations/tones'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
@@ -238,6 +239,8 @@ async function LocationDetail({ id }: { id: string }) {
           <EditableDispatchProfile location={location} />
         </div>
       </div>
+
+      <LocationAlertsCard locationId={location.id} clientId={location.client.id} />
 
       <EditableEquipment location={location} />
     </div>

@@ -33,3 +33,26 @@ export function IssueSeverityBadge({ severity }: { severity: string }) {
 export function issueStatusLabel(status: string) {
   return STATUS_META[status]?.label ?? status
 }
+
+const TYPE_META: Record<string, { label: string; tone: BadgeTone }> = {
+  issue: { label: 'Issue', tone: 'neutral' },
+  incomplete_work: { label: 'Unfinished work', tone: 'gold' },
+  request: { label: 'Service request', tone: 'teal' },
+}
+
+const SOURCE_META: Record<string, { label: string; tone: BadgeTone }> = {
+  client: { label: 'From client', tone: 'coral' },
+  associate: { label: 'From associate', tone: 'neutral' },
+  manager_review: { label: 'Manager review', tone: 'neutral' },
+  staff: { label: 'Staff', tone: 'neutral' },
+}
+
+export function IssueTypeBadge({ type }: { type: string }) {
+  const meta = TYPE_META[type] ?? TYPE_META.issue
+  return <Badge variant={meta.tone}>{meta.label}</Badge>
+}
+
+export function IssueSourceBadge({ source }: { source: string }) {
+  const meta = SOURCE_META[source] ?? { label: source, tone: 'neutral' as BadgeTone }
+  return <Badge variant={meta.tone}>{meta.label}</Badge>
+}

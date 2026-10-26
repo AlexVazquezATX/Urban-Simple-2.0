@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveContactAlertFields } from '@/lib/ops/contact-alerts'
+
+const MANAGER_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER']
 
 // PATCH /api/clients/[id]/contacts/[contactId] - Update contact
 export async function PATCH(
@@ -11,6 +14,10 @@ export async function PATCH(
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!MANAGER_ROLES.includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id, contactId } = await params
@@ -44,16 +51,20 @@ export async function PATCH(
       firstName,
       lastName,
       email,
-      phone,
       role,
       isPortalUser,
     } = body
 
-    const updateData: any = {}
+    // Alert routing (locations, email/SMS opt-in + consent, phone normalization).
+    const alerts = await resolveContactAlertFields({ clientId: id, body, existing: existingContact })
+    if ('error' in alerts) {
+      return NextResponse.json({ error: alerts.error }, { status: 400 })
+    }
+
+    const updateData: any = { ...alerts.data }
     if (firstName !== undefined) updateData.firstName = firstName
     if (lastName !== undefined) updateData.lastName = lastName
     if (email !== undefined) updateData.email = email
-    if (phone !== undefined) updateData.phone = phone
     if (role !== undefined) updateData.role = role
     if (isPortalUser !== undefined) {
       updateData.isPortalUser = isPortalUser
@@ -93,6 +104,9 @@ export async function DELETE(
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!MANAGER_ROLES.includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const { id, contactId } = await params

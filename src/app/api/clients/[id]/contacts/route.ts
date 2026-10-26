@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { resolveContactAlertFields } from '@/lib/ops/contact-alerts'
+
+const MANAGER_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER']
 
 // GET /api/clients/[id]/contacts - List all contacts for a client
 export async function GET(
@@ -58,6 +61,10 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!MANAGER_ROLES.includes(user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { id } = await params
     const body = await request.json()
 
@@ -77,10 +84,15 @@ export async function POST(
       firstName,
       lastName,
       email,
-      phone,
       role = 'primary',
       isPortalUser = false,
     } = body
+
+    // Alert routing (locations, email/SMS opt-in, phone normalization).
+    const alerts = await resolveContactAlertFields({ clientId: id, body })
+    if ('error' in alerts) {
+      return NextResponse.json({ error: alerts.error }, { status: 400 })
+    }
 
     const contact = await prisma.clientContact.create({
       data: {
@@ -88,10 +100,11 @@ export async function POST(
         firstName,
         lastName,
         email,
-        phone,
+        phone: typeof body.phone === 'string' && body.phone.trim() ? body.phone.trim() : null,
         role,
         isPortalUser,
         ...(isPortalUser && { portalAccessGranted: new Date() }),
+        ...alerts.data,
       },
     })
 

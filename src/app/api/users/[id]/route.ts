@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { toE164 } from '@/lib/notify/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -88,7 +89,16 @@ export async function PATCH(
       isActive,
       avatarUrl,
       password, // Optional — provisions a Supabase login for a member with none
+      smsAlerts,
+      preferredLanguage,
     } = body
+
+    if (smsAlerts !== undefined && typeof smsAlerts !== 'boolean') {
+      return NextResponse.json({ error: 'smsAlerts must be true or false' }, { status: 400 })
+    }
+    if (preferredLanguage !== undefined && preferredLanguage !== 'en' && preferredLanguage !== 'es') {
+      return NextResponse.json({ error: 'preferredLanguage must be en or es' }, { status: 400 })
+    }
 
     // Privileged fields — a non-admin editing their own profile must not be
     // able to change their role, branch, or active status. Without this a
@@ -137,6 +147,15 @@ export async function PATCH(
     if (branchId !== undefined) updateData.branchId = branchId
     if (isActive !== undefined) updateData.isActive = isActive
     if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl
+    if (smsAlerts !== undefined) updateData.smsAlerts = smsAlerts
+    if (preferredLanguage !== undefined) updateData.preferredLanguage = preferredLanguage
+
+    // Text alerts go to the phone on file, so it has to be a usable number.
+    const nextSms = smsAlerts ?? existing.smsAlerts
+    const nextPhone = phone !== undefined ? phone : existing.phone
+    if (nextSms && !toE164(nextPhone)) {
+      return NextResponse.json({ error: 'Text alerts need a valid mobile number' }, { status: 400 })
+    }
 
     // Provision a login for an existing member that doesn't have one yet.
     // Mirrors the POST create-auth-user flow. Admin-only, and only when the

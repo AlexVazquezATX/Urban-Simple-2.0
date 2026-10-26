@@ -48,6 +48,10 @@ import {
 import { cn } from '@/lib/utils'
 import { DarkModeToggle } from '@/components/ui/dark-mode-toggle'
 import { CommandPalette } from '@/components/layout/command-palette'
+import { NotificationBell } from '@/components/layout/notification-bell'
+import { useIsMobile } from '@/hooks/use-mobile'
+
+const BELL_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE']
 
 interface NavItem {
   href: string
@@ -132,6 +136,7 @@ export function AppSidebar() {
   const router = useRouter()
   const pathname = usePathname()
   const [paletteOpen, setPaletteOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   // User role state - cached to avoid refetching
   const [userRole, setUserRole] = useState<string | null>(() => {
@@ -218,7 +223,7 @@ export function AppSidebar() {
           <div className="grid size-8 shrink-0 place-items-center rounded-[9px] bg-primary font-display text-base font-extrabold tracking-[-0.5px] text-primary-foreground">
             US
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="font-display text-[15px] font-bold leading-tight tracking-[-0.2px] text-sidebar-foreground">
               Urban <span className="font-medium italic text-primary">Simple</span>
             </div>
@@ -226,6 +231,10 @@ export function AppSidebar() {
               Business OS
             </p>
           </div>
+          {/* Desktop bell; the mobile header carries its own. */}
+          {!isMobile && userRole && BELL_ROLES.includes(userRole) && (
+            <NotificationBell className="size-8" align="start" />
+          )}
         </div>
         <button
           type="button"

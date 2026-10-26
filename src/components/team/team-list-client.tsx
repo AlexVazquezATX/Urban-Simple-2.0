@@ -35,6 +35,8 @@ interface TeamMember {
     name: string
     code: string
   } | null
+  smsAlerts?: boolean
+  preferredLanguage?: string
   createdAt: string
 }
 

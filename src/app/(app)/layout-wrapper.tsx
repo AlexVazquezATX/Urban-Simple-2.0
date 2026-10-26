@@ -9,7 +9,12 @@ import { AppSidebar } from '@/components/layout/app-sidebar'
 import { AIChatSidebar } from '@/features/ai/components/ai-chat-sidebar'
 import { RoleSwitcher } from '@/components/layout/role-switcher'
 import { Button } from '@/components/ui/button'
-import { Sparkles, Plus, LayoutDashboard, CheckSquare, Menu } from 'lucide-react'
+import { NotificationBell } from '@/components/layout/notification-bell'
+import { useIsMobile } from '@/hooks/use-mobile'
+import { Sparkles, Plus, LayoutDashboard, CheckSquare, Menu, AlertTriangle } from 'lucide-react'
+
+const STAFF_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'ASSOCIATE']
+const MANAGER_ROLES = ['SUPER_ADMIN', 'ADMIN', 'MANAGER']
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -38,6 +43,12 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   // Tasks is an owner/admin tool — managers and associates never see the
   // Tasks shortcuts in the mobile chrome (matches the sidebar + middleware).
   const canUseTasks = userRole === 'SUPER_ADMIN' || userRole === 'ADMIN'
+  // /api/ai/chat is SUPER_ADMIN-only (effective role), so the assistant entry
+  // points are hidden for everyone else instead of dead-ending in a 403.
+  const canUseAI = userRole === 'SUPER_ADMIN'
+  const isStaff = !!userRole && STAFF_ROLES.includes(userRole)
+  const canSeeIssues = !!userRole && MANAGER_ROLES.includes(userRole)
+  const isMobile = useIsMobile()
 
   // Track if initial auth check has completed
   const hasCheckedAuth = useRef(false)
@@ -127,30 +138,33 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 </Link>
               </div>
 
-              {/* Right: Quick actions — Tasks is owner/admin only */}
-              {canUseTasks && (
-                <div className="flex items-center gap-2">
-                  <Link href="/tasks">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 rounded-lg"
-                      title="Tasks"
-                    >
-                      <CheckSquare className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                  <Link href="/tasks?new=true">
-                    <Button
-                      size="icon"
-                      className="h-10 w-10 rounded-lg"
-                      title="Add Task"
-                    >
-                      <Plus className="h-5 w-5" />
-                    </Button>
-                  </Link>
-                </div>
-              )}
+              {/* Right: notifications + quick actions (Tasks is owner/admin only) */}
+              <div className="flex items-center gap-2">
+                {isMobile && isStaff && <NotificationBell />}
+                {canUseTasks && (
+                  <>
+                    <Link href="/tasks">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 rounded-lg"
+                        title="Tasks"
+                      >
+                        <CheckSquare className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                    <Link href="/tasks?new=true">
+                      <Button
+                        size="icon"
+                        className="h-10 w-10 rounded-lg"
+                        title="Add Task"
+                      >
+                        <Plus className="h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </>
+                )}
+              </div>
             </div>
           </header>
 
@@ -209,13 +223,29 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 </Link>
               )}
 
-              <button
-                onClick={() => setIsAIChatOpen(true)}
-                className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Sparkles className="h-5 w-5" />
-                <span className="text-xs font-medium">AI</span>
-              </button>
+              {!canUseTasks && canSeeIssues && (
+                <Link
+                  href="/operations/issues"
+                  className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                    pathname?.startsWith('/operations/issues')
+                      ? 'text-primary bg-sidebar-accent'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <AlertTriangle className="h-5 w-5" />
+                  <span className="text-xs font-medium">Issues</span>
+                </Link>
+              )}
+
+              {canUseAI && (
+                <button
+                  onClick={() => setIsAIChatOpen(true)}
+                  className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Sparkles className="h-5 w-5" />
+                  <span className="text-xs font-medium">AI</span>
+                </button>
+              )}
 
               <SidebarTrigger className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                 <Menu className="h-5 w-5" />
@@ -227,20 +257,24 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
         {/* AI assistant FAB — the restyled gold spark. 48px, bottom-right
             24px inset; soft shadow on light, gold hairline on dark. */}
-        <Button
-          onClick={() => setIsAIChatOpen(true)}
-          size="icon"
-          className="hidden md:flex fixed bottom-6 right-6 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-card dark:shadow-none dark:border dark:border-gold-400/25 hover:bg-primary/90 hover:-translate-y-0.5 transition-all duration-200 z-30 group"
-          title="Open AI Assistant"
-        >
-          <Sparkles className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-        </Button>
+        {canUseAI && (
+          <Button
+            onClick={() => setIsAIChatOpen(true)}
+            size="icon"
+            className="hidden md:flex fixed bottom-6 right-6 h-12 w-12 rounded-full bg-primary text-primary-foreground shadow-card dark:shadow-none dark:border dark:border-gold-400/25 hover:bg-primary/90 hover:-translate-y-0.5 transition-all duration-200 z-30 group"
+            title="Open AI Assistant"
+          >
+            <Sparkles className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+          </Button>
+        )}
 
         {/* AI Chat Sidebar */}
-        <AIChatSidebar
-          isOpen={isAIChatOpen}
-          onClose={() => setIsAIChatOpen(false)}
-        />
+        {canUseAI && (
+          <AIChatSidebar
+            isOpen={isAIChatOpen}
+            onClose={() => setIsAIChatOpen(false)}
+          />
+        )}
       </div>
     </SidebarProvider>
   )

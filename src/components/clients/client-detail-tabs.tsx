@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Plus, MapPin, Mail, Phone, User, Pencil, MoreHorizontal, Trash2 } from 'lucide-react'
+import { Plus, MapPin, Mail, Phone, User, Pencil, MoreHorizontal, Trash2, BellRing, MessageSquareText } from 'lucide-react'
 import { LocationForm } from '@/components/forms/location-form'
 import { ContactForm } from '@/components/forms/contact-form'
 import { LocationCard } from '@/components/locations/location-card'
@@ -32,6 +32,11 @@ interface ClientDetailTabsProps {
 
 export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
   const [activeTab, setActiveTab] = useState('overview')
+  // For per-location alert routing on contacts.
+  const locationOptions: Array<{ id: string; name: string }> = (client.locations || []).map(
+    (l: any) => ({ id: l.id, name: l.name })
+  )
+  const locationName = new Map(locationOptions.map((l) => [l.id, l.name]))
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -69,7 +74,7 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
                     {client.contacts.length === 1 ? 'contact' : 'contacts'}
                   </CardDescription>
                 </div>
-                <ContactForm clientId={client.id}>
+                <ContactForm clientId={client.id} locations={locationOptions}>
                   <Button variant="outline" size="sm">
                     <Plus className="size-4" />
                     Add Contact
@@ -84,7 +89,7 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
                   title="No contacts yet"
                   description={`Add the people you coordinate with at ${client.name}.`}
                   action={
-                    <ContactForm clientId={client.id}>
+                    <ContactForm clientId={client.id} locations={locationOptions}>
                       <Button variant="outline" size="sm">
                         Add First Contact
                       </Button>
@@ -108,7 +113,37 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
                           </Badge>
                           {contact.isPortalUser && <Badge variant="teal">Portal</Badge>}
                         </div>
-                        <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
+                        {(contact.alertEmail || contact.alertSms || contact.smsOptedOutAt) && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            {contact.alertEmail && (
+                              <Badge variant="gold" title="Gets service alerts by email">
+                                <BellRing />
+                                Email alerts
+                              </Badge>
+                            )}
+                            {contact.alertSms && !contact.smsOptedOutAt && (
+                              <Badge variant="gold" title="Gets service alerts by text">
+                                <MessageSquareText />
+                                Text alerts
+                              </Badge>
+                            )}
+                            {contact.smsOptedOutAt && (
+                              <Badge variant="neutral" title="Replied STOP to our texts">
+                                Texts stopped
+                              </Badge>
+                            )}
+                            {(contact.alertEmail || (contact.alertSms && !contact.smsOptedOutAt)) && (
+                              <span className="text-xs text-muted-foreground">
+                                {contact.locationIds?.length
+                                  ? contact.locationIds
+                                      .map((id: string) => locationName.get(id) ?? 'Removed location')
+                                      .join(', ')
+                                  : 'All locations'}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
                           {contact.email && (
                             <div className="flex items-center gap-1">
                               <Mail className="h-3 w-3" />
@@ -141,7 +176,7 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <ContactForm clientId={client.id} contact={contact}>
+                            <ContactForm clientId={client.id} contact={contact} locations={locationOptions}>
                               <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                 <Pencil className="size-4" />
                                 Edit

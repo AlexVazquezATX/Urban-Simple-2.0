@@ -76,7 +76,8 @@ export function AssignmentForm({ assignment, children }: AssignmentFormProps) {
       fetch(getApiUrl('/api/users'))
         .then((res) => res.json())
         .then((data) => {
-          const associateUsers = data.filter(
+          // /api/users returns { success, users }
+          const associateUsers = (Array.isArray(data) ? data : data.users ?? []).filter(
             (u: any) => u.role === 'ASSOCIATE' && u.isActive
           )
           setAssociates(associateUsers)

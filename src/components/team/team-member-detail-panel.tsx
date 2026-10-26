@@ -14,6 +14,8 @@ import {
   Users,
   UserX,
   Key,
+  MessageSquareText,
+  Languages,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,6 +23,7 @@ import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -55,6 +58,8 @@ interface TeamMember {
     name: string
     code: string
   } | null
+  smsAlerts?: boolean
+  preferredLanguage?: string
   createdAt: string
 }
 
@@ -129,6 +134,8 @@ export function TeamMemberDetailPanel({
   const [isActive, setIsActive] = useState(member?.isActive ?? true)
   const [createAuthAccount, setCreateAuthAccount] = useState(false)
   const [password, setPassword] = useState('')
+  const [smsAlerts, setSmsAlerts] = useState(member?.smsAlerts ?? false)
+  const [preferredLanguage, setPreferredLanguage] = useState(member?.preferredLanguage || 'en')
 
   // Trigger slide-in animation
   useEffect(() => {
@@ -156,6 +163,8 @@ export function TeamMemberDetailPanel({
     setIsActive(member?.isActive ?? true)
     setCreateAuthAccount(false)
     setPassword('')
+    setSmsAlerts(member?.smsAlerts ?? false)
+    setPreferredLanguage(member?.preferredLanguage || 'en')
   }, [member])
 
   // For an existing member, look up whether they already have a login so we can
@@ -170,7 +179,11 @@ export function TeamMemberDetailPanel({
     fetch(`/api/users/${member.id}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (!cancelled && data) setHasLogin(!!data.authId)
+        if (!cancelled && data) {
+          setHasLogin(!!data.authId)
+          if (typeof data.smsAlerts === 'boolean') setSmsAlerts(data.smsAlerts)
+          if (data.preferredLanguage) setPreferredLanguage(data.preferredLanguage)
+        }
       })
       .catch(() => {})
     return () => {
@@ -199,6 +212,8 @@ export function TeamMemberDetailPanel({
         role,
         branchId: branchId || undefined,
         isActive,
+        smsAlerts,
+        preferredLanguage,
       }
 
       if (member && !isNew) {
@@ -434,6 +449,49 @@ export function TeamMemberDetailPanel({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+
+          {/* Alerts + field language */}
+          <div className="space-y-4 rounded-[12px] border border-border bg-secondary/40 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5">
+                <Label htmlFor="smsAlerts" className="flex items-center gap-2 font-medium text-foreground">
+                  <MessageSquareText className="w-4 h-4" />
+                  Text me alerts
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Urgent ops alerts by text to the phone above. In-app and email alerts are always on.
+                </p>
+              </div>
+              <Switch
+                id="smsAlerts"
+                checked={smsAlerts}
+                onCheckedChange={setSmsAlerts}
+                disabled={!canManage}
+              />
+            </div>
+            {smsAlerts && !phone.trim() && (
+              <p className="text-xs text-coral-600 dark:text-coral-300">Add a mobile number to get texts.</p>
+            )}
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Languages className="w-4 h-4" />
+                Field language
+              </Label>
+              <Select value={preferredLanguage} onValueChange={setPreferredLanguage} disabled={!canManage}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Español</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Language for the field screens associates use on shift.
+              </p>
             </div>
           </div>
 

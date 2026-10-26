@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { toE164 } from '@/lib/notify/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -37,6 +38,8 @@ export async function GET(request: NextRequest) {
         avatarUrl: true,
         isActive: true,
         lastLogin: true,
+        smsAlerts: true,
+        preferredLanguage: true,
         branch: {
           select: {
             id: true,
@@ -48,6 +51,22 @@ export async function GET(request: NextRequest) {
       },
       orderBy: [{ firstName: 'asc' }, { lastName: 'asc' }],
     })
+
+    // Associates only need names for chat pickers, not contact details.
+    if (user.role === 'ASSOCIATE') {
+      return NextResponse.json({
+        success: true,
+        users: users.map(u => ({
+          id: u.id,
+          firstName: u.firstName,
+          lastName: u.lastName,
+          displayName: u.displayName,
+          role: u.role,
+          avatarUrl: u.avatarUrl,
+          isActive: u.isActive,
+        })),
+      })
+    }
 
     return NextResponse.json({
       success: true,
@@ -92,7 +111,16 @@ export async function POST(request: NextRequest) {
       role,
       branchId,
       password, // Optional - if provided, will create Supabase auth user
+      smsAlerts,
+      preferredLanguage,
     } = body
+
+    if (preferredLanguage !== undefined && preferredLanguage !== 'en' && preferredLanguage !== 'es') {
+      return NextResponse.json({ error: 'preferredLanguage must be en or es' }, { status: 400 })
+    }
+    if (smsAlerts === true && !toE164(phone)) {
+      return NextResponse.json({ error: 'Text alerts need a valid mobile number' }, { status: 400 })
+    }
 
     if (!email || !firstName || !lastName || !role) {
       return NextResponse.json(
@@ -173,6 +201,8 @@ export async function POST(request: NextRequest) {
         role: role as any,
         isActive: true,
         authId: authId || undefined,
+        smsAlerts: smsAlerts === true,
+        preferredLanguage: preferredLanguage ?? 'en',
       },
       include: {
         branch: {
