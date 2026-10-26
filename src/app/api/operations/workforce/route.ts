@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getLocalDayOfWeek, getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { getLocalDayOfWeek, getLocalDateUTC } from '@/lib/services/autopilot-schedule'
 
 // Sane default when a crew has no explicit nights/estimate and no facility
 // frequency to fall back on — most accounts are serviced ~5 nights/week.
@@ -31,7 +31,7 @@ export async function GET() {
     // Start of the current local week (Sunday 00:00) as a UTC instant. Overtime
     // is a weekly measure, so actual worked hours are summed across this window.
     const now = new Date()
-    const startOfToday = getStartOfLocalDay(now, timezone)
+    const startOfToday = getLocalDateUTC(now, timezone)
     const localDow = getLocalDayOfWeek(now, timezone) // 0=Sun..6=Sat
     // Build DATE-ONLY UTC boundaries aligned to the local week's calendar dates.
     // ServiceLog.serviceDate is a @db.Date column stored at midnight UTC, so the

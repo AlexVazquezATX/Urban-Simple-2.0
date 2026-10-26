@@ -61,8 +61,16 @@ export async function GET() {
     ])
 
     const tonight = shifts.filter(shift => {
-      if (shift.date.getTime() >= today.getTime()) return true
       const onTheClock = shift.serviceLogs.some(l => l.clockIn && !l.clockOut)
+      if (shift.date.getTime() >= today.getTime()) {
+        // Before noon, tonight's evening shift isn't "tonight" yet: at 1:30am
+        // the associate is still on last night's route and must not clock into
+        // the coming night's shift by mistake.
+        const start = parseInt(shift.startTime.slice(0, 2), 10)
+        const startsInEvening = Number.isFinite(start) && start >= 12
+        if (nowMinutes < 12 * 60 && startsInEvening && !shift.serviceLogs.length) return false
+        return true
+      }
       return onTheClock || overnightStillActive(shift.startTime, shift.endTime, nowMinutes)
     })
 

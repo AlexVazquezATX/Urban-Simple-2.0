@@ -84,6 +84,10 @@ export async function POST(request: NextRequest) {
   }
 
   const shiftId = shift?.id ?? serviceLog?.shiftId ?? null
+  const previous = await prisma.clientVisitRating.findUnique({
+    where: { createdById_locationId_serviceDate: { createdById: ctx.userId, locationId, serviceDate } },
+    select: { rating: true },
+  })
   const saved = await prisma.clientVisitRating.upsert({
     where: {
       createdById_locationId_serviceDate: {
@@ -111,7 +115,8 @@ export async function POST(request: NextRequest) {
     select: { id: true, rating: true, comment: true },
   })
 
-  after(() => onVisitRated(saved.id))
+  // Page staff on a new rating, or when an edit makes it worse; not on every save.
+  if (!previous || saved.rating < previous.rating) after(() => onVisitRated(saved.id))
 
   return NextResponse.json(saved)
 }

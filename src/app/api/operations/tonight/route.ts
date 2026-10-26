@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { getLocalDateUTC } from '@/lib/services/autopilot-schedule'
 import { checklistProgress, parseIncompleteItems } from '@/lib/operations/nightly-reviews'
 
 // Resolve the operational "tonight" as the current calendar day in the
@@ -15,7 +15,7 @@ async function getOperationalDayRange(companyId: string, branchId?: string | nul
     select: { timezone: true },
   })
   const timezone = branch?.timezone || 'America/Chicago'
-  const localStart = getStartOfLocalDay(new Date(), timezone)
+  const localStart = getLocalDateUTC(new Date(), timezone)
   const today = new Date(
     Date.UTC(
       localStart.getUTCFullYear(),

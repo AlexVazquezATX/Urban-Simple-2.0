@@ -76,10 +76,14 @@ export async function PATCH(request: NextRequest) {
   const data: Record<string, unknown> = { alertEmail, alertSms, locationIds }
   if (phoneRaw) data.phone = phone
 
-  if (alertSms) {
-    if (!smsConfigured()) {
-      return NextResponse.json({ error: 'Text alerts are not available yet.' }, { status: 400 })
-    }
+  // Until texting is live, a text setting staff already turned on is kept as
+  // is (the switch is disabled in the UI) so email/location edits still save.
+  const smsUnavailable = alertSms && !smsConfigured()
+  if (smsUnavailable && !contact.alertSms) {
+    return NextResponse.json({ error: 'Text alerts are not available yet.' }, { status: 400 })
+  }
+  if (smsUnavailable) delete data.alertSms
+  if (alertSms && !smsUnavailable) {
     const normalizedPhone = toE164(phone)
     if (!normalizedPhone) {
       return NextResponse.json({ error: 'Add a mobile number to get text alerts.' }, { status: 400 })

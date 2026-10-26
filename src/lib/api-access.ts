@@ -30,6 +30,8 @@ const API_RULES: ApiRule[] = [
   { match: /^\/api\/(clients|locations|shifts|location-assignments|operations)(\/|$)/, allow: MANAGERS },
   { match: /^\/api\/(checklists|checklist-library)(\/|$)/, allow: MANAGERS, methods: WRITES },
   { match: /^\/api\/users(\/|$)/, allow: MANAGERS, methods: WRITES },
+  { match: /^\/api\/users\/[^/]+$/, allow: MANAGERS }, // individual records (contact details, documents)
+  { match: /^\/api\/issues$/, allow: MANAGERS, methods: ['POST'] }, // associates report via /api/field/flag
   { match: /^\/api\/issues\/[^/]+$/, allow: MANAGERS, methods: ['PUT', 'PATCH', 'DELETE'] },
   { match: /^\/api\/issues\/[^/]+\/notify-client$/, allow: MANAGERS },
 ]

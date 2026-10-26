@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { prisma } from '@/lib/db'
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit'
@@ -34,6 +34,9 @@ export async function POST(request: NextRequest) {
   const byEmail = checkRateLimit(`portal-forgot:email:${email}`, { limit: 3, windowSeconds: 15 * 60 })
   if (!byEmail.allowed) return NextResponse.json(GENERIC)
 
+  // Do the lookup + send after responding so response time doesn't reveal
+  // whether the address has an account.
+  after(async () => {
   try {
     // Only active portal users get a portal reset link; staff use /login.
     const user = await prisma.user.findFirst({
@@ -56,6 +59,7 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[portal/forgot-password] failed:', err)
   }
+  })
 
   return NextResponse.json(GENERIC)
 }

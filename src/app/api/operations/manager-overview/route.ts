@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { getLocalDateUTC } from '@/lib/services/autopilot-schedule'
 
 // Resolve the operational day as the current calendar day in the company's
 // timezone. Shifts store `date` as a @db.Date at UTC midnight of the calendar
@@ -14,7 +14,7 @@ async function getOperationalToday(companyId: string, branchId?: string | null) 
     select: { timezone: true },
   })
   const timezone = branch?.timezone || 'America/Chicago'
-  const localStart = getStartOfLocalDay(new Date(), timezone)
+  const localStart = getLocalDateUTC(new Date(), timezone)
   return new Date(
     Date.UTC(
       localStart.getUTCFullYear(),

@@ -140,12 +140,30 @@ export default function FieldVisitPage({
   const clockOut = data?.log?.clockOut ?? null
   const finished = Boolean(data?.log?.submittedAt)
   const onTheClock = Boolean(clockIn) && !clockOut && !finished
-  const editable = onTheClock && !data?.readOnly
+  // A visit clocked out some other way (old link, manager fix) can still be
+  // finished, so it never gets stuck half-done.
+  const editable = Boolean(clockIn) && !finished && !data?.readOnly
 
   function toggleLang() {
     const next = lang === 'en' ? 'es' : 'en'
     setLang(next)
     storeLang(next)
+  }
+
+  // Merge into the latest answer (uploads finish after the user may have
+  // picked a reason or typed a note, so never spread a stale render's copy).
+  function patchNotDone(id: string, patch: Partial<{ reason: string; note: string; photos: string[] }>) {
+    setAnswers(prev => {
+      const cur = prev[id]
+      if (!cur || cur.state !== 'not_done') return prev
+      return { ...prev, [id]: { ...cur, ...patch } }
+    })
+    setMissing(prev => {
+      if (!prev.has(id)) return prev
+      const copy = new Set(prev)
+      copy.delete(id)
+      return copy
+    })
   }
 
   function setAnswer(id: string, a: Answer | null) {
@@ -213,6 +231,12 @@ export default function FieldVisitPage({
         body: JSON.stringify(payload(action)),
       })
       const json = await res.json()
+      if (res.status === 409 && json.alreadyFinished) {
+        // A retry after a dropped response: it already went through.
+        await load()
+        toast.success(t.finished)
+        return
+      }
       if (!res.ok) throw new Error(json.error || t.error)
       if (action === 'finish') {
         toast.success(notDoneCount > 0 ? t.finishedWithFlags : t.finished)
@@ -449,7 +473,7 @@ export default function FieldVisitPage({
                                 <button
                                   key={r.id}
                                   type="button"
-                                  onClick={() => setAnswer(item.id, { ...a, reason: r.id })}
+                                  onClick={() => patchNotDone(item.id, { reason: r.id })}
                                   className={cn(
                                     'min-h-11 rounded-[9px] border px-3 text-left text-sm transition-colors',
                                     a.reason === r.id
@@ -467,13 +491,13 @@ export default function FieldVisitPage({
                           <Textarea
                             value={a.note}
                             disabled={!editable}
-                            onChange={e => setAnswer(item.id, { ...a, note: e.target.value })}
+                            onChange={e => patchNotDone(item.id, { note: e.target.value })}
                             placeholder={a.reason === 'other' ? t.explain : t.addNote}
                             rows={2}
                           />
                           <PhotoCapture
                             photos={a.photos}
-                            onChange={p => setAnswer(item.id, { ...a, photos: p })}
+                            onChange={p => patchNotDone(item.id, { photos: p })}
                             label={t.addPhoto}
                             uploadingLabel={t.uploading}
                             disabled={!editable}

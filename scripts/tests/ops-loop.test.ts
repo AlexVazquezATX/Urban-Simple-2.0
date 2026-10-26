@@ -10,6 +10,7 @@ import { toE164, verifyTwilioSignature } from '../../src/lib/notify/sms'
 import { renderAlertEmail, renderAlertText } from '../../src/lib/notify/email'
 import { overnightStillActive, normalizeSections, parseIncompleteItems } from '../../src/lib/ops/field'
 import { reasonLabel, NOT_DONE_REASONS } from '../../src/lib/ops/constants'
+import { getLocalDateUTC } from '../../src/lib/services/autopilot-schedule'
 import { FIELD_STRINGS } from '../../src/lib/ops/field-i18n'
 
 test('associates cannot touch pay, shifts, money or client records', () => {
@@ -27,6 +28,8 @@ test('associates cannot touch pay, shifts, money or client records', () => {
   assert.equal(apiAllowed('/api/users/abc', 'PATCH', A), false)
   assert.equal(apiAllowed('/api/issues/abc', 'PATCH', A), false)
   assert.equal(apiAllowed('/api/operations/workforce', 'GET', A), false)
+  assert.equal(apiAllowed('/api/users/abc123', 'GET', A), false) // coworker records
+  assert.equal(apiAllowed('/api/issues', 'POST', A), false) // they report via /api/field/flag
 })
 
 test('associates keep what the field flow needs', () => {
@@ -40,7 +43,7 @@ test('associates keep what the field flow needs', () => {
   assert.equal(apiAllowed('/api/upload', 'POST', A), true)
   assert.equal(apiAllowed('/api/users', 'GET', A), true) // chat member pickers
   assert.equal(apiAllowed('/api/users/me', 'PATCH', A), true)
-  assert.equal(apiAllowed('/api/issues', 'POST', A), true)
+  assert.equal(apiAllowed('/api/issues', 'GET', A), true) // own reports only (route-scoped)
   assert.equal(apiAllowed('/api/issues/abc/comments', 'POST', A), true)
   assert.equal(apiAllowed('/api/notifications', 'GET', A), true)
 })
@@ -146,4 +149,14 @@ test('reasons and field strings are complete in both languages', () => {
   for (const s of Object.values(FIELD_STRINGS.es)) {
     if (typeof s === 'string') assert.ok(!s.includes('—'))
   }
+})
+
+test('local calendar date is right for Central time on both sides of UTC midnight', () => {
+  const tz = 'America/Chicago'
+  // 10am Oct 25 local
+  assert.equal(getLocalDateUTC(new Date('2026-10-25T15:00:00Z'), tz).toISOString(), '2026-10-25T00:00:00.000Z')
+  // 10pm Oct 25 local (already Oct 26 in UTC)
+  assert.equal(getLocalDateUTC(new Date('2026-10-26T03:00:00Z'), tz).toISOString(), '2026-10-25T00:00:00.000Z')
+  // 1am Oct 26 local
+  assert.equal(getLocalDateUTC(new Date('2026-10-26T06:00:00Z'), tz).toISOString(), '2026-10-26T00:00:00.000Z')
 })

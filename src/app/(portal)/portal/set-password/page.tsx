@@ -68,7 +68,10 @@ function SetPasswordContent() {
       } = await supabase.auth.getSession()
 
       let ok = false
-      if (accessToken && refreshToken) {
+      // Only accept account links (not an arbitrary session pasted into a
+      // URL by someone else).
+      const linkTypeOk = !type || ['invite', 'recovery', 'signup', 'magiclink'].includes(type)
+      if (accessToken && refreshToken && linkTypeOk) {
         const { error: setError } = await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,

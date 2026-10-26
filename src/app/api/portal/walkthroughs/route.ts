@@ -44,6 +44,11 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const ctx = await getPortalContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // A super admin previewing the portal must not create real records,
+  // alerts or invite emails in the client's name.
+  if (ctx.impersonating) {
+    return NextResponse.json({ error: 'Disabled while viewing as a client' }, { status: 403 })
+  }
 
   const body = await request.json().catch(() => ({}))
   const { locationId, zones, notes } = body

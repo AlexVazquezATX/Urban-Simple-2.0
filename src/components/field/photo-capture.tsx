@@ -3,7 +3,7 @@
 // Phone-friendly photo capture: opens the camera, converts HEIC, downsizes to
 // keep uploads fast on cellular, uploads via /api/upload, and returns URLs.
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Camera, Loader2, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -44,6 +44,11 @@ export function PhotoCapture({
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  // Latest photos, so a slow upload doesn't resurrect one removed meanwhile.
+  const photosRef = useRef(photos)
+  useEffect(() => {
+    photosRef.current = photos
+  }, [photos])
 
   async function handleFiles(files: FileList | null) {
     if (!files?.length) return
@@ -63,7 +68,7 @@ export function PhotoCapture({
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Upload failed')
     } finally {
-      if (added.length) onChange([...photos, ...added])
+      if (added.length) onChange([...photosRef.current, ...added].slice(0, max))
       setUploading(false)
       if (inputRef.current) inputRef.current.value = ''
     }

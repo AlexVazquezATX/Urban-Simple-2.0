@@ -3,6 +3,7 @@
 // (status, resolution, assignee, severity, category, client visibility);
 // DELETE is admins only and hard-deletes (IssueComment cascades).
 
+import { isOwnStorageUrl } from '@/lib/ops/field'
 import { NextRequest, NextResponse, after } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
@@ -156,7 +157,7 @@ export async function PATCH(
   }
 
   if (Array.isArray(body.photos)) {
-    data.photos = body.photos.filter((p: unknown) => typeof p === 'string').slice(0, 20)
+    data.photos = body.photos.filter((p: unknown) => typeof p === 'string' && isOwnStorageUrl(p)).slice(0, 20)
   }
 
   const updated = await prisma.issue.update({ where: { id }, data })

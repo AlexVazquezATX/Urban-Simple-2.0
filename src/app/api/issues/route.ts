@@ -2,6 +2,7 @@
 // portal (its own route); this is the staff list + "New issue" create. Scoped
 // to the user's company via the location→client→companyId chain.
 
+import { isOwnStorageUrl } from '@/lib/ops/field'
 import { NextRequest, NextResponse, after } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
@@ -57,7 +58,9 @@ export async function GET(request: NextRequest) {
       assignedTo: { select: { id: true, firstName: true, lastName: true } },
       _count: { select: { comments: true } },
     },
-    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    // Newest first: alphabetical status order would let old closed issues
+    // crowd open ones out of the limit.
+    orderBy: [{ createdAt: 'desc' }],
     take: limit,
   })
 
@@ -134,7 +137,7 @@ export async function POST(request: NextRequest) {
       // Associates never share directly with the client.
       visibleToClient: !isAssociate && body.visibleToClient === true,
       photos: Array.isArray(photos)
-        ? photos.filter((p: unknown): p is string => typeof p === 'string').slice(0, 20)
+        ? photos.filter((p: unknown): p is string => typeof p === 'string' && isOwnStorageUrl(p)).slice(0, 20)
         : [],
     },
     include: {

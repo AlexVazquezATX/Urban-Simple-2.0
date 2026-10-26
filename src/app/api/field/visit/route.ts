@@ -87,7 +87,9 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       language: me?.preferredLanguage === 'es' ? 'es' : 'en',
-      readOnly: shift.associateId !== user.id && shift.managerId !== user.id,
+      // Whoever does the work records it: the associate on crew shifts, the
+      // manager only on manager-only shifts. Everyone else just views.
+      readOnly: workerId !== user.id,
       shift: {
         id: shift.id,
         date: shift.date.toISOString(),
@@ -153,8 +155,8 @@ export async function POST(request: NextRequest) {
     const locationId = body.locationId!
     const action = body.action === 'finish' ? 'finish' : 'save'
 
-    // Only the person working the stop records it.
-    if (shift.associateId !== user.id && shift.managerId !== user.id) {
+    // Only the person working the stop records it (see GET readOnly).
+    if ((shift.associateId ?? shift.managerId) !== user.id) {
       return NextResponse.json({ error: 'Only the assigned associate can record this visit' }, { status: 403 })
     }
 
@@ -177,7 +179,7 @@ export async function POST(request: NextRequest) {
     }
     if (existing.submittedAt) {
       return NextResponse.json(
-        { error: 'This visit was already finished. Ask your manager if something needs to change.' },
+        { error: 'This visit was already finished. Ask your manager if something needs to change.', alreadyFinished: true },
         { status: 409 }
       )
     }
@@ -206,7 +208,7 @@ export async function POST(request: NextRequest) {
         itemId: raw.itemId!,
         text: meta.text,
         section: meta.section,
-        reason: reason || 'other',
+        reason, // may be blank on a mid-visit save; finish requires one
         note: note || undefined,
         photos: (raw.photos ?? []).filter(isOwnStorageUrl).slice(0, 4),
       })
@@ -226,6 +228,18 @@ export async function POST(request: NextRequest) {
     const photos = (body.photos ?? []).filter(isOwnStorageUrl).slice(0, 10)
     const now = new Date()
     const checklistData = Object.fromEntries([...done].map(id => [id, true]))
+
+    // Claim the finish atomically so a retry or a second device can't create
+    // a duplicate unfinished-work issue and double alerts.
+    if (action === 'finish') {
+      const claimed = await prisma.serviceLog.updateMany({
+        where: { id: existing.id, submittedAt: null },
+        data: { submittedAt: now },
+      })
+      if (claimed.count === 0) {
+        return NextResponse.json({ error: 'This visit was already finished.', alreadyFinished: true }, { status: 409 })
+      }
+    }
 
     const log = await prisma.serviceLog.update({
       where: { id: existing.id },
@@ -255,7 +269,9 @@ export async function POST(request: NextRequest) {
           ? `Not done: ${notDone[0].text}`
           : `${notDone.length} items not done`
       const description = notDone
-        .map(n => `${n.section ? `${n.section}: ` : ''}${n.text} (${NOT_DONE_REASONS.find(r => r.id === n.reason)?.en ?? n.reason}${n.note ? `. ${n.note}` : ''})`)
+        // Reasons only: the description is client-visible; crew notes stay on
+        // the service log for managers.
+        .map(n => `${n.section ? `${n.section}: ` : ''}${n.text} (${NOT_DONE_REASONS.find(r => r.id === n.reason)?.en ?? n.reason})`)
         .join('\n')
       const issue = await prisma.issue.create({
         data: {

@@ -41,6 +41,11 @@ const TEAM_ROLES = ['primary', 'operations', 'billing', 'other'] as const
 export async function POST(request: NextRequest) {
   const ctx = await getPortalContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // A super admin previewing the portal must not create real records,
+  // alerts or invite emails in the client's name.
+  if (ctx.impersonating) {
+    return NextResponse.json({ error: 'Disabled while viewing as a client' }, { status: 403 })
+  }
 
   const limit = checkRateLimit(`portal-team-invite:${ctx.userId}`, {
     limit: 10,
@@ -108,7 +113,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'That email belongs to an Urban Simple staff account and cannot be added as a portal teammate.',
+            'That email cannot be added. Please use a different email, or email hello@urbansimple.net for help.',
         },
         { status: 409 }
       )
@@ -122,7 +127,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'That email is already used by another business on the Urban Simple portal. Please use a different email, or email hello@urbansimple.net for help.',
+            'That email cannot be added. Please use a different email, or email hello@urbansimple.net for help.',
         },
         { status: 409 }
       )
@@ -131,7 +136,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            'Portal access for that email was turned off. Email hello@urbansimple.net and we will restore it.',
+            'That email cannot be added. Please use a different email, or email hello@urbansimple.net for help.',
         },
         { status: 409 }
       )

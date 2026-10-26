@@ -149,11 +149,6 @@ export default async function IssueDetailPage({
                       Reason: {reasonLabel(item.reason, 'en')}
                     </p>
                   )}
-                  {item.note && (
-                    <p className="mt-1 whitespace-pre-wrap text-[12.5px] leading-relaxed text-cream-700">
-                      Crew note: {item.note}
-                    </p>
-                  )}
                   <PhotoRow photos={item.photos ?? []} size="sm" />
                 </li>
               ))}

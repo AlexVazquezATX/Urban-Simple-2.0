@@ -13,7 +13,6 @@ import {
   notifyStaff,
   staffRecipientsForLocation,
 } from '@/lib/notify'
-import { toEnglish } from '@/lib/notify/translate'
 import {
   categoryLabel,
   issueTypeLabel,
@@ -24,7 +23,7 @@ import {
 
 const ISSUE_INCLUDE = {
   location: { select: { id: true, name: true, branch: { select: { companyId: true } } } },
-  client: { select: { id: true, name: true } },
+  client: { select: { id: true, name: true, isSelfServe: true } },
   reportedBy: { select: { id: true, firstName: true, lastName: true, email: true, role: true } },
   serviceLog: { select: { serviceDate: true } },
 } as const
@@ -42,18 +41,33 @@ function name(u: { firstName: string; lastName: string } | null | undefined) {
   return u ? `${u.firstName} ${u.lastName}`.trim() : ''
 }
 
-/** Lines like "Kitchen: Mop floor (Ran out of time. Note...)" */
-function itemLines(items: IncompleteItem[], notes?: Map<string, string>): string[] {
+/** Lines like "Kitchen: Mop floor (Ran out of time. Note...)". Crew notes are
+ * internal: client copy passes withNotes=false and shows the reason only. */
+function itemLines(items: IncompleteItem[], withNotes = true): string[] {
   return items.map(i => {
-    const note = notes?.get(i.itemId) ?? i.note
-    const detail = [reasonLabel(i.reason, 'en'), note].filter(Boolean).join('. ')
+    const detail = [reasonLabel(i.reason, 'en'), withNotes ? i.note : undefined].filter(Boolean).join('. ')
     return `${i.section ? `${i.section}: ` : ''}${i.text}${detail ? ` (${detail})` : ''}`
   })
 }
 
-/** Portal users who reported it get updates on their own issue. */
-function reporterEmailIfClient(issue: LoadedIssue): string[] {
-  return issue.reportedBy.role === 'CLIENT_USER' && issue.reportedBy.email ? [issue.reportedBy.email] : []
+/** Portal users who reported it get updates on their own issue, while they
+ * still have portal access to that client. */
+async function reporterEmailIfClient(issue: LoadedIssue): Promise<string[]> {
+  if (issue.reportedBy.role !== 'CLIENT_USER' || !issue.reportedBy.email) return []
+  const link = await prisma.clientContact.findFirst({
+    where: {
+      userId: issue.reportedBy.id,
+      clientId: issue.clientId,
+      isPortalUser: true,
+      client: { deletedAt: null },
+    },
+    select: { id: true },
+  })
+  const active = await prisma.user.findFirst({
+    where: { id: issue.reportedBy.id, isActive: true },
+    select: { id: true },
+  })
+  return link && active ? [issue.reportedBy.email] : []
 }
 
 // ---------------------------------------------------------------------------
@@ -105,16 +119,13 @@ export async function onIncompleteWorkSubmitted(params: {
     })
 
     // Client: opted-in contacts for this location hear about it before they
-    // walk in, so their own team can cover it. Associate notes are translated.
+    // walk in, so their own team can cover it. They get each item and its
+    // standard reason; the crew's free-text notes stay with the manager.
     if (!issue.visibleToClient) return
     const clients = await clientRecipientsForLocation({ clientId: issue.clientId, locationId: issue.locationId })
     if (clients.length === 0) return
 
-    const translated = new Map<string, string>()
-    await Promise.all(
-      items.filter(i => i.note).map(async i => translated.set(i.itemId, await toEnglish(i.note)))
-    )
-    const clientLines = itemLines(items, translated)
+    const clientLines = itemLines(items, false)
     const result = await notifyClients(clients, {
       companyId,
       clientId: issue.clientId,
@@ -156,6 +167,7 @@ export async function onIssueCreated(issueId: string) {
     const reporter = name(issue.reportedBy)
     const typeLabel = issueTypeLabel(issue.type)
     const fromClient = issue.source === 'client'
+    if (issue.client.isSelfServe) return // no cleaning service to escalate
     const escalate = issue.severity === 'high' || issue.severity === 'critical'
 
     // Manager review pain points are created by the manager themselves; only
@@ -239,7 +251,7 @@ export async function sendIssueToClient(params: { issueId: string; message?: str
   const result = await notifyClients(clients, {
     companyId,
     clientId: issue.clientId,
-    extraEmails: reporterEmailIfClient(issue),
+    extraEmails: await reporterEmailIfClient(issue),
     subject: `Update from Urban Simple: ${issue.title} (${issue.location.name})`,
     email: {
       kicker: issueTypeLabel(issue.type),
@@ -323,7 +335,7 @@ export async function onIssueComment(params: { issueId: string; commentId: strin
       {
         companyId,
         clientId: issue.clientId,
-        extraEmails: reporterEmailIfClient(issue),
+        extraEmails: await reporterEmailIfClient(issue),
         subject: `Re: ${issue.title} (${issue.location.name})`,
         email: {
           kicker: 'New reply',
@@ -365,7 +377,7 @@ export async function onIssueStatusChanged(params: {
       {
         companyId,
         clientId: issue.clientId,
-        extraEmails: reporterEmailIfClient(issue),
+        extraEmails: await reporterEmailIfClient(issue),
         subject: done
           ? `Resolved: ${issue.title} (${issue.location.name})`
           : `In progress: ${issue.title} (${issue.location.name})`,

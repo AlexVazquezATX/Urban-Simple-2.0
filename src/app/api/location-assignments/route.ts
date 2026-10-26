@@ -58,6 +58,10 @@ export async function GET(request: NextRequest) {
       ],
     })
 
+    // Pay is admin-only.
+    if (!['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+      return NextResponse.json(assignments.map(({ monthlyPay: _pay, ...rest }) => rest))
+    }
     return NextResponse.json(assignments)
   } catch (error) {
     console.error('Error fetching location assignments:', error)

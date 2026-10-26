@@ -201,8 +201,17 @@ export function pickAssociateLog<
   const sameDay = logs.filter((log) => dateKey(log.serviceDate) === day).sort(byRecent)
   if (sameDay[0]) return sameDay[0]
 
+  // Only borrow last night's log while that work is fresh (an overnight stop
+  // that ran past midnight). A stale unreviewed log from a skipped review
+  // must not be credited to tonight.
+  const freshSince = Date.now() - 12 * 60 * 60 * 1000
   const priorNight = logs
-    .filter((log) => dateKey(log.serviceDate) === priorDay && log.reviews.length === 0)
+    .filter(
+      (log) =>
+        dateKey(log.serviceDate) === priorDay &&
+        log.reviews.length === 0 &&
+        recency(log) >= freshSince
+    )
     .sort(byRecent)
   return priorNight[0] ?? null
 }

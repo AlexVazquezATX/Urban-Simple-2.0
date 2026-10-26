@@ -42,6 +42,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const ctx = await getPortalContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Self-serve (studio-only) accounts have no cleaning service to report on.
+  if (ctx.client.isSelfServe) {
+    return NextResponse.json({ error: 'Issue reporting is for Urban Simple cleaning clients' }, { status: 403 })
+  }
+  if (ctx.impersonating) {
+    return NextResponse.json({ error: 'Disabled while viewing as a client' }, { status: 403 })
+  }
 
   const limit = checkRateLimit(`portal-issue:${ctx.userId}`, { limit: 20, windowSeconds: 60 * 60 })
   if (!limit.allowed) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { reconcileAssignmentShifts } from '@/lib/operations/associate-shift-generator'
+import { getOperationalWindow } from '@/lib/ops/field'
 
 // PUT /api/location-assignments/[id] - Update location assignment
 export async function PUT(
@@ -37,7 +39,11 @@ export async function PUT(
 
     const body = await request.json()
     // Pay is admin-only; managers may adjust schedule fields (workforce view).
-    if (body.monthlyPay !== undefined && !['SUPER_ADMIN', 'ADMIN'].includes(user.role)) {
+    if (
+      body.monthlyPay !== undefined &&
+      parseFloat(String(body.monthlyPay)) !== Number(existing.monthlyPay) &&
+      !['SUPER_ADMIN', 'ADMIN'].includes(user.role)
+    ) {
       return NextResponse.json({ error: 'Only admins can change pay' }, { status: 403 })
     }
     const {
@@ -86,6 +92,25 @@ export async function PUT(
         },
       },
     })
+
+    // Schedule changed: replace untouched future auto shifts so nobody is
+    // left with phantom stops (and phantom no-show alerts).
+    const scheduleChanged = ['daysOfWeek', 'cleaningWindowStart', 'cleaningWindowEnd', 'startDate', 'endDate', 'isActive']
+      .some(k => body[k] !== undefined)
+    if (scheduleChanged) {
+      try {
+        const { today } = await getOperationalWindow(user.companyId, user.branchId)
+        await reconcileAssignmentShifts({
+          companyId: user.companyId,
+          associateId: existing.userId,
+          locationId: existing.locationId,
+          fromDate: today,
+          assignmentId: assignment.isActive ? assignment.id : undefined,
+        })
+      } catch (err) {
+        console.error('[location-assignments] shift reconcile failed:', err)
+      }
+    }
 
     return NextResponse.json(assignment)
   } catch (error) {
@@ -138,6 +163,18 @@ export async function DELETE(
         id,
       },
     })
+
+    try {
+      const { today } = await getOperationalWindow(user.companyId, user.branchId)
+      await reconcileAssignmentShifts({
+        companyId: user.companyId,
+        associateId: existing.userId,
+        locationId: existing.locationId,
+        fromDate: today,
+      })
+    } catch (err) {
+      console.error('[location-assignments] shift cleanup failed:', err)
+    }
 
     return NextResponse.json({ success: true })
   } catch (error) {

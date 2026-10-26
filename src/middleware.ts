@@ -100,7 +100,15 @@ const AGENT_BEARER_PREFIXES = ['Bearer us_live_', 'Bearer us_oat_']
 function safeNextPath(raw: string | null): string | null {
   if (!raw) return null
   if (!raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) return null
-  return raw
+  // Browsers strip tabs/newlines while parsing ("/\t/evil.com" becomes
+  // "//evil.com"), so re-check the origin after resolving.
+  try {
+    const url = new URL(raw, 'https://same.invalid')
+    if (url.origin !== 'https://same.invalid') return null
+    return url.pathname + url.search + url.hash
+  } catch {
+    return null
+  }
 }
 
 // ============================================

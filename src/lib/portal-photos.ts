@@ -21,7 +21,7 @@ export async function uploadPortalPhoto(params: {
   const { file, clientId, folder } = params
   if (!file || file.size === 0) return { ok: false, error: 'No file provided', status: 400 }
   // Image only. Limit to 10MB per photo so the capture flow stays snappy.
-  if (!file.type.startsWith('image/')) {
+  if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/heic', 'image/heif'].includes(file.type)) {
     return { ok: false, error: 'File must be an image', status: 400 }
   }
   if (file.size > MAX_BYTES) return { ok: false, error: 'Photo too large (max 10MB)', status: 400 }

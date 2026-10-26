@@ -46,6 +46,18 @@ export function getLocalHour(date: Date, timeZone: string): number {
   return hour === 24 ? 0 : hour
 }
 
+// The company-local calendar date as a UTC-midnight Date (the convention
+// Shift.date / @db.Date columns use). Prefer this over getStartOfLocalDay for
+// "what day is it", which lands on the previous day for zones behind UTC.
+export function getLocalDateUTC(date: Date, timeZone: string): Date {
+  const parts = formatterParts(date, timeZone)
+  return new Date(Date.UTC(
+    parseInt(pickPart(parts, 'year'), 10),
+    parseInt(pickPart(parts, 'month'), 10) - 1,
+    parseInt(pickPart(parts, 'day'), 10),
+  ))
+}
+
 // Returns a UTC Date representing the instant that is midnight local time
 // for the given date in the given timezone.
 export function getStartOfLocalDay(date: Date, timeZone: string): Date {

@@ -47,7 +47,7 @@ export default function ResetPasswordPage() {
       // 1. Implicit flow: tokens in the hash.
       const accessToken = hash.get('access_token')
       const refreshToken = hash.get('refresh_token')
-      if (accessToken && refreshToken) {
+      if (accessToken && refreshToken && hash.get('type') === 'recovery') {
         await supabase.auth.setSession({
           access_token: accessToken,
           refresh_token: refreshToken,
