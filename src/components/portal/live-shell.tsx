@@ -327,17 +327,21 @@ const HOME_LINKS: Array<[href: string, label: string]> = [
   ['/portal/walkthroughs', 'Walkthroughs'],
   ['/portal/cleaning-log', 'Log'],
   ['/portal/issues', 'Issues'],
+  ['/portal/requests', 'Requests'],
   ['/portal/documents', 'Documents'],
   ['/portal/team', 'Team'],
+  ['/portal/alerts', 'Alerts'],
 ]
 
 // Inline nav for the home split layout (D · Quiet merge) — Home is always
 // the active link here; inner pages use the sticky <LiveNav /> instead.
-export function LiveHomeNav() {
+export function LiveHomeNav({ isSelfServe }: { isSelfServe?: boolean }) {
+  // Service requests are for Urban Simple cleaning clients only.
+  const links = isSelfServe ? HOME_LINKS.filter(([href]) => href !== '/portal/requests') : HOME_LINKS
   return (
     <div className="flex items-center gap-6">
-      <nav className="flex min-w-0 flex-1 gap-6 overflow-x-auto">
-        {HOME_LINKS.map(([href, label], i) => (
+      <nav className="flex min-w-0 flex-1 gap-6 overflow-x-auto pb-1">
+        {links.map(([href, label], i) => (
           <Link
             key={href}
             href={href}

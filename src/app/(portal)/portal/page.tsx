@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { format } from 'date-fns'
-import { ArrowRight, Camera, Flag, Sparkles } from 'lucide-react'
+import { ArrowRight, Camera, ClipboardList, Flag, Sparkles } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import { getLocalHour } from '@/lib/services/autopilot-schedule'
@@ -53,6 +53,7 @@ export default async function PortalHomePage() {
     nextShift,
     lastShiftWithManager,
     locationHero,
+    ratingStats,
   ] = await Promise.all([
     prisma.portalWalkthrough.findFirst({
       where: { clientId: ctx.client.id },
@@ -82,14 +83,15 @@ export default async function PortalHomePage() {
           },
         })
       : Promise.resolve(null),
-    locationIds.length > 0
-      ? prisma.issue.count({
-          where: {
-            locationId: { in: locationIds },
-            status: { in: ['open', 'in_progress'] },
-          },
-        })
-      : Promise.resolve(0),
+    // Same scope as the Issues list: client-visible reports + unfinished work.
+    prisma.issue.count({
+      where: {
+        clientId: ctx.client.id,
+        visibleToClient: true,
+        type: { in: ['issue', 'incomplete_work'] },
+        status: { in: ['open', 'in_progress'] },
+      },
+    }),
     !isSelfServe && locationIds.length > 0
       ? prisma.shift.count({
           where: {
@@ -160,7 +162,20 @@ export default async function PortalHomePage() {
           select: { photos: true, name: true },
         })
       : Promise.resolve(null),
+    !isSelfServe
+      ? prisma.clientVisitRating.aggregate({
+          where: {
+            clientId: ctx.client.id,
+            serviceDate: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+          },
+          _avg: { rating: true },
+          _count: { _all: true },
+        })
+      : Promise.resolve(null),
   ])
+
+  const ratedVisits = ratingStats?._count._all ?? 0
+  const avgRating = ratingStats?._avg.rating ?? null
 
   // Hero photo: prefer last review photo (real proof of work), then a stock
   // location photo, then nothing — the panel's gradient fallback handles it.
@@ -197,13 +212,13 @@ export default async function PortalHomePage() {
   if (lastReview) {
     timeline.push({
       time: format(lastReview.reviewDate, 'MMM d'),
-      text: `Visit reviewed at ${lastReview.location.name} — ${lastReview.photos.length} ${lastReview.photos.length === 1 ? 'photo' : 'photos'} added`,
+      text: `Visit reviewed at ${lastReview.location.name}, ${lastReview.photos.length} ${lastReview.photos.length === 1 ? 'photo' : 'photos'} added`,
     })
   }
   if (lastWalkthrough) {
     timeline.push({
       time: format(lastWalkthrough.capturedAt, 'MMM d'),
-      text: `Walkthrough at ${lastWalkthrough.location.name} — ${lastWalkthrough.photoCount} ${lastWalkthrough.photoCount === 1 ? 'photo' : 'photos'} captured`,
+      text: `Walkthrough at ${lastWalkthrough.location.name}, ${lastWalkthrough.photoCount} ${lastWalkthrough.photoCount === 1 ? 'photo' : 'photos'} captured`,
     })
   }
   if (nextShift) {
@@ -233,7 +248,7 @@ export default async function PortalHomePage() {
 
       <div className="flex min-w-0 flex-1 flex-col px-6 pb-10 pt-8 sm:px-9 lg:px-[clamp(36px,4.5vw,72px)]">
         <div className="mb-9">
-          <LiveHomeNav />
+          <LiveHomeNav isSelfServe={isSelfServe} />
         </div>
 
         {showTrialBanner && ctx.client.portalTrialEndsAt && (
@@ -293,7 +308,7 @@ export default async function PortalHomePage() {
                     ? recentVisitCount > 0
                       ? `${recentVisitCount} ${recentVisitCount === 1 ? 'visit' : 'visits'} in the last 30 days`
                       : 'Your visit history will collect here'
-                    : "We're on it — track progress in Issues"
+                    : "We're on it. Track progress in Issues."
                 }
               />
               <LiveStatTile
@@ -308,6 +323,16 @@ export default async function PortalHomePage() {
                   nextShift
                     ? "We'll be in and out while you're closed"
                     : "Reach out and we'll get you on the calendar"
+                }
+              />
+              <LiveStatTile
+                palette="gold"
+                label="Your rating"
+                value={avgRating !== null && ratedVisits > 0 ? `${avgRating.toFixed(1)} of 5` : 'Not rated yet'}
+                sub={
+                  ratedVisits > 0
+                    ? `Average of ${ratedVisits} rated ${ratedVisits === 1 ? 'visit' : 'visits'}, last 30 days`
+                    : 'Rate visits from your cleaning log'
                 }
               />
             </>
@@ -336,7 +361,7 @@ export default async function PortalHomePage() {
             </div>
             <p className="text-sm leading-relaxed text-cream-700">
               Welcome to your portal, {ctx.client.name}. Photos and notes from every visit
-              will collect here — walkthroughs you capture will too.
+              will collect here, and so will the walkthroughs you capture.
             </p>
           </div>
         )}
@@ -363,6 +388,14 @@ export default async function PortalHomePage() {
                 : 'Flag what needs attention'
             }
           />
+          {!isSelfServe && (
+            <LiveActionRow
+              href="/portal/requests/new"
+              icon={<ClipboardList className="h-[17px] w-[17px]" strokeWidth={1.7} />}
+              title="Request something extra"
+              sub="Deep cleaning, supplies, schedule changes, event prep"
+            />
+          )}
         </div>
 
         {/* Recent photos — only when there's something to show */}

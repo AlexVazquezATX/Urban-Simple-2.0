@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { cn } from '@/lib/utils'
+import { ensureWebCompatible } from '@/lib/image-utils'
 import { LivePageHead } from '@/components/portal/live-shell'
 
 // LiveWalkthrough capture (spec: usp-live-pages.jsx) — zone list left with
@@ -101,9 +102,11 @@ export function WalkthroughCapture({ kicker, locations, defaultZones }: Props) {
     advance(activeIdx, zones)
   }
 
-  const handlePhotoCapture = async (idx: number, file: File) => {
+  const handlePhotoCapture = async (idx: number, raw: File) => {
     updateZone(idx, { uploading: true })
     try {
+      // iPhone HEIC photos don't render in most browsers; convert first.
+      const file = await ensureWebCompatible(raw)
       const fd = new FormData()
       fd.append('file', file)
       const res = await fetch('/api/portal/walkthrough-photo', { method: 'POST', body: fd })
@@ -157,7 +160,11 @@ export function WalkthroughCapture({ kicker, locations, defaultZones }: Props) {
       })
       const payload = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(payload.error || 'Failed to save')
-      toast.success('Walkthrough recorded')
+      toast.success(
+        payload.issueId
+          ? `Walkthrough recorded. We sent ${payload.flaggedZones === 1 ? 'the flagged zone' : 'the flagged zones'} to your account manager.`
+          : 'Walkthrough recorded'
+      )
       router.push(`/portal/walkthroughs/${payload.id}`)
       router.refresh()
     } catch (error: any) {
@@ -172,7 +179,7 @@ export function WalkthroughCapture({ kicker, locations, defaultZones }: Props) {
       <LivePageHead
         kicker={kicker}
         title="Walkthrough"
-        sub="Move through the kitchen zone by zone — photos and notes land straight in your log."
+        sub="Move through the kitchen zone by zone. Photos and notes land straight in your log."
         right={
           <div className="text-right">
             <div className="mb-2 font-mono text-[11.5px] tabular-nums text-cream-700">
@@ -421,7 +428,7 @@ export function WalkthroughCapture({ kicker, locations, defaultZones }: Props) {
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <span className="text-xs text-muted-foreground">
-            Captured zones submit together — most walkthroughs take about 60 seconds.
+            Captured zones submit together. Most walkthroughs take about 60 seconds.
           </span>
           <button
             type="button"

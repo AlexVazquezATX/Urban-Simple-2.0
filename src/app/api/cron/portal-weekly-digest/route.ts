@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { Resend } from 'resend'
 import { format, subDays, startOfDay } from 'date-fns'
 import { PortalWeeklyDigestHtml } from '@/emails/PortalWeeklyDigest'
+import { appBaseUrl } from '@/lib/notify/email'
 
 let resendClient: Resend | null = null
 function getResend(): Resend | null {
@@ -27,9 +28,7 @@ async function handle(request: NextRequest) {
     return NextResponse.json({ error: 'Resend not configured' }, { status: 500 })
   }
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+  const baseUrl = appBaseUrl()
 
   const fromEmail = process.env.RESEND_PORTAL_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'no-reply@urbansimple.net'
   const replyTo = process.env.RESEND_PORTAL_REPLY_TO || 'alex@urbansimple.net'
@@ -38,16 +37,18 @@ async function handle(request: NextRequest) {
   const periodStart = subDays(periodEnd, 7)
   const weekRangeLabel = `${format(periodStart, 'MMM d')}–${format(subDays(periodEnd, 1), 'MMM d')}`
 
-  // Find all active portal users.
+  // Find all active portal users. Self-serve accounts have no cleaning visits
+  // to report on, so they're skipped.
   const portalUsers = await prisma.clientContact.findMany({
     where: {
       isPortalUser: true,
       userId: { not: null },
       email: { not: '' },
-      client: { deletedAt: null, status: { in: ['active'] } },
+      client: { deletedAt: null, status: { in: ['active'] }, isSelfServe: false },
     },
     select: {
       id: true,
+      userId: true,
       firstName: true,
       lastName: true,
       email: true,
@@ -64,10 +65,25 @@ async function handle(request: NextRequest) {
     },
   })
 
+  // ClientContact has no User relation; check the linked logins separately.
+  const activeUsers = await prisma.user.findMany({
+    where: {
+      id: { in: portalUsers.map(u => u.userId).filter((id): id is string => !!id) },
+      isActive: true,
+      role: 'CLIENT_USER',
+    },
+    select: { id: true },
+  })
+  const activeUserIds = new Set(activeUsers.map(u => u.id))
+
   type Result = { email: string; client: string; ok: boolean; error?: string; skipped?: string }
   const results: Result[] = []
 
   for (const u of portalUsers) {
+    if (!u.userId || !activeUserIds.has(u.userId)) {
+      results.push({ email: u.email, client: u.client.name, ok: false, skipped: 'inactive user' })
+      continue
+    }
     const locationIds = u.client.locations.map(l => l.id)
 
     // Skip if they have no locations to report on.
@@ -94,6 +110,7 @@ async function handle(request: NextRequest) {
       prisma.issue.findMany({
         where: {
           clientId: u.client.id,
+          visibleToClient: true,
           createdAt: { gte: periodStart, lt: periodEnd },
         },
         select: {
@@ -106,6 +123,7 @@ async function handle(request: NextRequest) {
       prisma.issue.findMany({
         where: {
           clientId: u.client.id,
+          visibleToClient: true,
           resolvedAt: { gte: periodStart, lt: periodEnd },
         },
         select: {
@@ -164,8 +182,8 @@ async function handle(request: NextRequest) {
         reportedAt: format(i.createdAt, 'MMM d'),
       })),
       visitCount,
-      // Rate link → mailto for v1 (zero new schema, real human reply to the team).
-      rateLink: `mailto:${replyTo}?subject=${encodeURIComponent(`Weekly rating · ${u.client.name}`)}&body=${encodeURIComponent('How was our service this week?\n\n')}`,
+      // Visits are rated (1-5 stars) from the cleaning log.
+      rateLink: `${baseUrl}/portal/cleaning-log`,
       portalLink: `${baseUrl}/portal`,
     })
 

@@ -17,27 +17,34 @@ const LINKS: Array<{ href: string; label: string; match: string }> = [
   { href: '/portal/walkthroughs', label: 'Walkthroughs', match: '/portal/walkthroughs' },
   { href: '/portal/cleaning-log', label: 'Cleaning log', match: '/portal/cleaning-log' },
   { href: '/portal/issues', label: 'Issues', match: '/portal/issues' },
+  { href: '/portal/requests', label: 'Requests', match: '/portal/requests' },
   { href: '/portal/documents', label: 'Documents', match: '/portal/documents' },
   { href: '/portal/team', label: 'Team', match: '/portal/team' },
+  { href: '/portal/alerts', label: 'Alerts', match: '/portal/alerts' },
 ]
 
 export function LiveNav({
   clientName,
   logoUrl,
+  isSelfServe,
 }: {
   clientName: string
   logoUrl: string | null
+  isSelfServe?: boolean
 }) {
   const pathname = usePathname()
 
   // Home uses the inline nav inside its photo-split layout.
   if (pathname === '/portal') return null
 
+  // Service requests are for Urban Simple cleaning clients only.
+  const links = isSelfServe ? LINKS.filter(l => l.href !== '/portal/requests') : LINKS
+
   const isActive = (match: string) =>
     match === '/portal' ? pathname === '/portal' : pathname.startsWith(match)
 
   return (
-    <div className="sticky top-0 z-20 flex items-center gap-5 border-b border-border bg-cream-50/95 px-5 py-4 backdrop-blur md:gap-6 md:px-12">
+    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-border bg-cream-50/95 px-5 py-3.5 backdrop-blur md:flex-nowrap md:gap-6 md:px-12 md:py-4">
       <Link href="/portal" className="flex shrink-0 items-center gap-2.5">
         <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-full border border-gold-600/30 bg-gold-600/10 font-display text-[13.5px] font-extrabold text-gold-600">
           {logoUrl ? (
@@ -58,8 +65,9 @@ export function LiveNav({
         </div>
       </Link>
 
-      <nav className="flex min-w-0 flex-1 gap-5 overflow-x-auto md:ml-4 md:gap-[22px]">
-        {LINKS.map(({ href, label, match }) => (
+      {/* Phones: links drop to their own scrollable row under the brand. */}
+      <nav className="order-last flex min-w-0 basis-full gap-5 overflow-x-auto pb-1 md:order-none md:ml-4 md:flex-1 md:basis-auto md:gap-[22px] md:pb-0">
+        {links.map(({ href, label, match }) => (
           <Link
             key={href}
             href={href}
@@ -75,7 +83,7 @@ export function LiveNav({
         ))}
       </nav>
 
-      <div className="shrink-0">
+      <div className="ml-auto shrink-0 md:ml-0">
         <LogoutButton />
       </div>
     </div>

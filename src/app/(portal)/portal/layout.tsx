@@ -22,7 +22,11 @@ export default async function PortalLayout({ children }: { children: React.React
       data-shell="portal"
       className="flex min-h-screen w-full flex-col bg-cream-50 font-sans text-foreground"
     >
-      <LiveNav clientName={ctx.client.name} logoUrl={ctx.client.logoUrl} />
+      <LiveNav
+        clientName={ctx.client.name}
+        logoUrl={ctx.client.logoUrl}
+        isSelfServe={ctx.client.isSelfServe}
+      />
 
       <main className="flex w-full flex-1 flex-col">{children}</main>
 

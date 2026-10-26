@@ -63,7 +63,11 @@ export function InviteTeammateButton() {
       })
       const payload = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(payload.error || 'Failed to invite')
-      toast.success(`Invited ${firstName}. Email is on the way.`)
+      if (payload.emailSent === false) {
+        toast.warning(payload.message || `${firstName} was added, but the email did not go out.`)
+      } else {
+        toast.success(`Invited ${firstName}. Email is on the way.`)
+      }
       reset()
       setOpen(false)
       router.refresh()

@@ -23,11 +23,14 @@ export default async function PortalDocumentsPage() {
     orderBy: [{ category: 'asc' }, { createdAt: 'desc' }],
   })
 
+  // Unknown categories (older uploads, admin-side values) land in "Other".
+  const known = new Set<string>(PORTAL_DOC_CATEGORIES.map(c => c.value))
   const byCategory = new Map<string, typeof docs>()
   for (const d of docs) {
-    const list = byCategory.get(d.category) ?? []
+    const key = known.has(d.category) ? d.category : 'other'
+    const list = byCategory.get(key) ?? []
     list.push(d)
-    byCategory.set(d.category, list)
+    byCategory.set(key, list)
   }
 
   const expiringCount = docs.filter(d => isExpiringSoon(d.expiresAt)).length
@@ -38,7 +41,7 @@ export default async function PortalDocumentsPage() {
       <LivePageHead
         kicker="Inspection-ready, always"
         title="Documents"
-        sub={`The compliance binder for ${ctx.client.name} — everything an inspector might ask for, in one place.`}
+        sub={`The compliance binder for ${ctx.client.name}. Everything an inspector might ask for, in one place.`}
         right={<UploadDocumentButton endpoint="/api/portal/documents" />}
       />
 
@@ -73,7 +76,7 @@ export default async function PortalDocumentsPage() {
         <div className="mt-5">
           <LiveEmpty
             icon={<FileText className="h-4.5 w-4.5" />}
-            title="No documents yet — start your binder"
+            title="No documents yet. Start your binder."
             sub="Upload your COI, training records, permits, or anything an inspector might ask for."
           />
         </div>
@@ -111,6 +114,7 @@ export default async function PortalDocumentsPage() {
                           <p className="truncate text-sm font-semibold text-foreground">{d.name}</p>
                           <p className="font-mono text-[10px] tabular-nums text-muted-foreground">
                             {format(d.createdAt, 'MMM d, yyyy')}
+                            {!d.uploadedFromPortal && ' · From Urban Simple'}
                             {d.expiresAt && (
                               <>
                                 {' · '}
@@ -139,11 +143,14 @@ export default async function PortalDocumentsPage() {
                         >
                           <Download className="h-4 w-4" />
                         </a>
-                        <DeleteDocumentButton
-                          docId={d.id}
-                          docName={d.name}
-                          endpoint={`/api/portal/documents/${d.id}`}
-                        />
+                        {/* Docs Urban Simple added (contracts, COIs) are read-only here. */}
+                        {d.uploadedFromPortal && (
+                          <DeleteDocumentButton
+                            docId={d.id}
+                            docName={d.name}
+                            endpoint={`/api/portal/documents/${d.id}`}
+                          />
+                        )}
                       </li>
                     )
                   })}

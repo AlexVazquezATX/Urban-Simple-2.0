@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, Suspense } from 'react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -12,6 +13,18 @@ import { LivePhotoPanel } from '@/components/portal/live-shell'
 // Portal login — LiveLogin spec (usp-live-home.jsx): split photo panel left,
 // right column with mono gold kicker, "Welcome back." display, mono-labeled
 // fields, gold pill Sign in, and the mono brand footer.
+
+// Only same-origin /portal paths are honored as a post-login destination.
+function safePortalNext(raw: string | null): string {
+  if (!raw || !/^\/portal(\/|\?|#|$)/.test(raw) || raw.includes('\\')) return '/portal'
+  try {
+    const url = new URL(raw, 'https://portal.invalid')
+    if (url.origin !== 'https://portal.invalid') return '/portal'
+    return `${url.pathname}${url.search}${url.hash}`
+  } catch {
+    return '/portal'
+  }
+}
 
 export default function PortalLoginPage() {
   return (
@@ -30,6 +43,8 @@ function PortalLoginContent() {
   const [error, setError] = useState<string | null>(null)
 
   const justInvited = searchParams.get('invited') === 'true'
+  const passwordReset = searchParams.get('reset') === 'true'
+  const next = safePortalNext(searchParams.get('next'))
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -49,7 +64,7 @@ function PortalLoginContent() {
         return
       }
 
-      router.push('/portal')
+      router.push(next)
       router.refresh()
     } catch {
       setError('Something went wrong. Please try again.')
@@ -77,6 +92,12 @@ function PortalLoginContent() {
           <p className="mt-3.5 text-[15px] leading-relaxed text-cream-700">
             Sign in to see last night&apos;s visit, photos, and what&apos;s scheduled next.
           </p>
+
+          {passwordReset && (
+            <div className="mt-6 rounded-2xl border border-sage-line bg-sage-bg p-3.5 text-sm text-sage-deep">
+              Your password is updated. Sign in with your new password.
+            </div>
+          )}
 
           {justInvited && (
             <div className="mt-6 rounded-2xl border border-sage-line bg-sage-bg p-3.5 text-sm text-sage-deep">
@@ -129,12 +150,12 @@ function PortalLoginContent() {
 
           <p className="mt-4.5 pt-4 text-center text-[13px] text-muted-foreground">
             Forgot your password?{' '}
-            <a
-              href="mailto:hello@urbansimple.net?subject=Portal%20sign-in%20help"
+            <Link
+              href="/portal/forgot-password"
               className="font-semibold text-gold-600 hover:underline"
             >
-              Email us for a sign-in link
-            </a>
+              Reset it here
+            </Link>
           </p>
 
           <div className="mt-14 border-t border-border pt-5 font-mono text-[10px] uppercase tracking-[1.8px] text-muted-foreground">

@@ -176,13 +176,16 @@ export const getPortalContext = cache(async (): Promise<PortalContext | null> =>
 })
 
 /**
- * Use in server components to enforce portal auth. Redirects to /portal/login
- * if the user is not a valid portal user.
+ * Use in server components to enforce portal auth. Signed-out visitors go to
+ * /portal/login; a signed-in user with no portal link goes to
+ * /portal/no-access (sending them to login would bounce straight back here).
  */
 export async function requirePortalContext(): Promise<PortalContext> {
   const ctx = await getPortalContext()
   if (!ctx) {
-    redirect('/portal/login')
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    redirect(user ? '/portal/no-access' : '/portal/login')
   }
   return ctx
 }

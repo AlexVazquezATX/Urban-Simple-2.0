@@ -48,6 +48,8 @@ export default async function InspectionPacketPage() {
       ? prisma.issue.findMany({
           where: {
             clientId: ctx.client.id,
+            visibleToClient: true,
+            type: { in: ['issue', 'incomplete_work'] },
             status: { in: ['open', 'in_progress'] },
           },
           orderBy: [{ severity: 'desc' }, { createdAt: 'desc' }],
@@ -64,11 +66,14 @@ export default async function InspectionPacketPage() {
       : Promise.resolve([]),
   ])
 
+  // Unknown categories fall into "Other" so nothing is silently dropped.
+  const knownCategories = new Set<string>(PORTAL_DOC_CATEGORIES.map(c => c.value))
   const docsByCategory = new Map<string, typeof docs>()
   for (const d of docs) {
-    const list = docsByCategory.get(d.category) ?? []
+    const key = knownCategories.has(d.category) ? d.category : 'other'
+    const list = docsByCategory.get(key) ?? []
     list.push(d)
-    docsByCategory.set(d.category, list)
+    docsByCategory.set(key, list)
   }
 
   const generatedAt = new Date()
@@ -173,7 +178,7 @@ export default async function InspectionPacketPage() {
         {/* Recent cleaning reviews */}
         <section className="mb-5">
           <h2 className="mb-2 font-mono text-[10px] uppercase tracking-[2px] text-muted-foreground">
-            Manager cleaning reviews — last 60 days ({recentReviews.length})
+            Manager cleaning reviews, last 60 days ({recentReviews.length})
           </h2>
           {recentReviews.length === 0 ? (
             <p className="text-sm text-muted-foreground">

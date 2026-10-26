@@ -4,6 +4,8 @@ import { Camera, MapPin, Star } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { addDaysToKey, dbDateKey, localDateKey } from '@/lib/portal-dates'
+import { VisitRating } from '@/components/portal/visit-rating'
 import {
   LiveEmpty,
   LiveFilterPill,
@@ -77,7 +79,10 @@ export default async function CleaningLogPage({
     timezone
   )
 
-  const [reviews, shifts] = await Promise.all([
+  const todayKey = localDateKey(new Date(), timezone)
+  const ratingFloorKey = addDaysToKey(todayKey, -30)
+
+  const [reviews, shifts, myRatings] = await Promise.all([
     prisma.serviceReview.findMany({
       where: {
         locationId: { in: locationIds },
@@ -113,10 +118,38 @@ export default async function CleaningLogPage({
         status: true,
         manager: { select: { firstName: true, lastName: true } },
         location: { select: { id: true, name: true } },
-        shiftLocations: { include: { location: { select: { id: true, name: true } } } },
+        // Shared routes stop at other clients too: only ever load our own stops.
+        shiftLocations: {
+          where: { locationId: { in: locationIds } },
+          orderBy: { sortOrder: 'asc' },
+          include: { location: { select: { id: true, name: true } } },
+        },
       },
     }),
+    prisma.clientVisitRating.findMany({
+      where: {
+        createdById: ctx.userId,
+        locationId: { in: locationIds },
+        serviceDate: { gte: new Date(`${ratingFloorKey}T00:00:00Z`) },
+      },
+      select: { locationId: true, serviceDate: true, rating: true, comment: true },
+    }),
   ])
+
+  const ratingByKey = new Map(
+    myRatings.map(r => [`${r.locationId}:${dbDateKey(r.serviceDate)}`, r])
+  )
+  const canRate = !ctx.impersonating
+  const isRateableDate = (key: string) => key >= ratingFloorKey && key <= todayKey
+  // One rating control per location + day, on the first (newest) row for it.
+  const ratingShown = new Set<string>()
+  const claimRating = (locationId: string, dateKey: string) => {
+    const key = `${locationId}:${dateKey}`
+    if (!canRate || !isRateableDate(dateKey) || ratingShown.has(key)) return null
+    ratingShown.add(key)
+    const r = ratingByKey.get(key)
+    return { initial: r ? { rating: r.rating, comment: r.comment } : null }
+  }
 
   // Merge into a single timeline keyed by date.
   type Entry =
@@ -150,7 +183,7 @@ export default async function CleaningLogPage({
       <LivePageHead
         kicker="Every visit, photographed"
         title="Cleaning log"
-        sub={`The full history of ${ctx.locations.length === 1 ? 'your kitchen' : `your ${ctx.locations.length} locations`} — what was done, by whom, with proof.`}
+        sub={`The full history of ${ctx.locations.length === 1 ? 'your kitchen' : `your ${ctx.locations.length} locations`}: what was done, by whom, with proof.`}
         right={
           <div className="flex gap-1.5">
             <LiveFilterPill href="/portal/cleaning-log" active={!activeMonth}>
@@ -177,7 +210,7 @@ export default async function CleaningLogPage({
               ? 'Nothing logged this month yet'
               : 'No activity logged yet in the last 90 days'
           }
-          sub="Every visit lands here with photos and crew notes — proof of work, always on hand."
+          sub="Every visit lands here with photos and crew notes. Proof of work, always on hand."
         />
       ) : (
         <div className="flex flex-col gap-3.5">
@@ -185,6 +218,8 @@ export default async function CleaningLogPage({
             if (entry.kind === 'review') {
               const r = entry.data
               const latest = latestKey === `review-${r.id}`
+              const reviewDateKey = dbDateKey(r.reviewDate)
+              const reviewRating = claimRating(r.location.id, reviewDateKey)
               return (
                 <article
                   key={`r-${r.id}`}
@@ -241,16 +276,35 @@ export default async function CleaningLogPage({
                       )}
                     </div>
                   )}
+
+                  {reviewRating && (
+                    <VisitRating
+                      locationId={r.location.id}
+                      serviceDate={reviewDateKey}
+                      initial={reviewRating.initial}
+                    />
+                  )}
                 </article>
               )
             }
 
             // Shift entry
             const s = entry.data
-            const locations =
+            const ownStops =
               s.shiftLocations.length > 0
-                ? s.shiftLocations.map(sl => sl.location.name)
-                : s.location ? [s.location.name] : []
+                ? s.shiftLocations.map(sl => sl.location)
+                : s.location && locationIds.includes(s.location.id)
+                  ? [s.location]
+                  : []
+            const locations = ownStops.map(l => l.name)
+            const shiftDateKey = dbDateKey(s.date)
+            const rateable = s.status === 'completed' || s.status === 'in_progress'
+            const ratingTargets = rateable
+              ? ownStops.flatMap(l => {
+                  const claim = claimRating(l.id, shiftDateKey)
+                  return claim ? [{ location: l, initial: claim.initial }] : []
+                })
+              : []
             const shiftChip =
               s.status === 'completed'
                 ? 'border-sage-line bg-sage-bg text-sage-deep'
@@ -279,28 +333,40 @@ export default async function CleaningLogPage({
             return (
               <article
                 key={`s-${s.id}`}
-                className="flex items-center gap-3.5 rounded-[18px] border border-border bg-card px-5 py-4 shadow-soft"
+                className="rounded-[18px] border border-border bg-card px-5 py-4 shadow-soft"
               >
-                <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-bg text-sky-deep">
-                  <MapPin className="h-4 w-4" />
+                <div className="flex items-center gap-3.5">
+                  <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-sky-bg text-sky-deep">
+                    <MapPin className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
+                      {shiftTitle}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-cream-700">
+                      <span className="font-mono tabular-nums">
+                        {format(s.date, 'EEE, MMM d')} · {s.startTime}–{s.endTime}
+                      </span>
+                      {' · '}
+                      {locations.join(', ') || ctx.client.name}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize ${shiftChip}`}
+                  >
+                    {s.status.replace('_', ' ')}
+                  </span>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="font-display text-[15px] font-semibold tracking-[-0.2px] text-foreground">
-                    {shiftTitle}
-                  </p>
-                  <p className="mt-0.5 truncate text-xs text-cream-700">
-                    <span className="font-mono tabular-nums">
-                      {format(s.date, 'EEE, MMM d')} · {s.startTime}–{s.endTime}
-                    </span>
-                    {' · '}
-                    {locations.join(', ') || 'Multiple stops'}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize ${shiftChip}`}
-                >
-                  {s.status.replace('_', ' ')}
-                </span>
+                {ratingTargets.map(t => (
+                  <VisitRating
+                    key={t.location.id}
+                    locationId={t.location.id}
+                    locationName={ownStops.length > 1 ? t.location.name : undefined}
+                    serviceDate={shiftDateKey}
+                    shiftId={s.id}
+                    initial={t.initial}
+                  />
+                ))}
               </article>
             )
           })}

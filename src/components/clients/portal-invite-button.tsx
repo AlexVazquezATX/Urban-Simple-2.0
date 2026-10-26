@@ -34,7 +34,11 @@ export function PortalInviteButton({ clientId, contactId, contactEmail, isPortal
       })
       const payload = await res.json().catch(() => ({}))
       if (!res.ok) throw new Error(payload.error || 'Failed to send invite')
-      toast.success(isPortalUser ? 'Re-sent portal invite' : 'Portal invite sent')
+      if (payload.emailSent === false) {
+        toast.warning(payload.message || 'Access saved, but the email could not be sent')
+      } else {
+        toast.success(isPortalUser ? 'Re-sent portal invite' : 'Portal invite sent')
+      }
       router.refresh()
     } catch (error: any) {
       toast.error(error.message || 'Failed to send invite')

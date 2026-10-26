@@ -41,7 +41,7 @@ export default async function WalkthroughsListPage() {
       {items.length === 0 ? (
         <LiveEmpty
           icon={<ClipboardList className="h-4.5 w-4.5" />}
-          title="No walkthroughs yet — your trail starts here"
+          title="No walkthroughs yet. Your trail starts here."
           sub="Most take about 60 seconds: a photo or two per zone, a note if something needs attention."
           action={
             <Link

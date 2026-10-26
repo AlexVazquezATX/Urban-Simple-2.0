@@ -161,6 +161,7 @@ export async function clientRecipientsForLocation(params: {
   const contacts = await prisma.clientContact.findMany({
     where: {
       clientId: params.clientId,
+      client: { deletedAt: null },
       OR: [{ alertEmail: true }, { alertSms: true }],
     },
     select: {

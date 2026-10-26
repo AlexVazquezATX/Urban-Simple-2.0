@@ -4,6 +4,8 @@ import { CheckCircle2, Flag } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
+import { categoryLabel } from '@/lib/ops/constants'
+import { StatusChip, UnfinishedBadge } from '@/components/portal/issue-chips'
 import {
   LiveEmpty,
   LiveFilterPill,
@@ -14,25 +16,8 @@ import {
 // Issues — LiveIssues spec (usp-live-pages.jsx): pastel status chips
 // (open→peach, in progress→sky, resolved→sage), filter pills, issue cards
 // with a meta line. "Report something" is the one gold pill in the head.
-
-const STATUS_CHIP: Record<string, { label: string; classes: string }> = {
-  open: {
-    label: "Open — we're on it",
-    classes: 'border-peach-line bg-peach-bg text-peach-deep',
-  },
-  in_progress: {
-    label: 'In progress',
-    classes: 'border-sky-line bg-sky-bg text-sky-deep',
-  },
-  resolved: {
-    label: 'Resolved',
-    classes: 'border-sage-line bg-sage-bg text-sage-deep',
-  },
-  closed: {
-    label: 'Resolved',
-    classes: 'border-sage-line bg-sage-bg text-sage-deep',
-  },
-}
+// Shows client reports plus unfinished work flagged by the crew; service
+// requests live on /portal/requests.
 
 export default async function PortalIssuesPage({
   searchParams,
@@ -43,11 +28,16 @@ export default async function PortalIssuesPage({
   const ctx = await requirePortalContext()
 
   const issues = await prisma.issue.findMany({
-    where: { clientId: ctx.client.id },
-    orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    where: {
+      clientId: ctx.client.id,
+      visibleToClient: true,
+      type: { in: ['issue', 'incomplete_work'] },
+    },
+    orderBy: [{ createdAt: 'desc' }],
     take: 60,
     select: {
       id: true,
+      type: true,
       title: true,
       category: true,
       severity: true,
@@ -57,6 +47,9 @@ export default async function PortalIssuesPage({
       location: { select: { id: true, name: true } },
     },
   })
+
+  const rank = (s: string) => (s === 'open' ? 0 : s === 'in_progress' ? 1 : 2)
+  const sorted = [...issues].sort((a, b) => rank(a.status) - rank(b.status))
 
   const counts = {
     open: issues.filter(i => i.status === 'open').length,
@@ -69,19 +62,19 @@ export default async function PortalIssuesPage({
     : null
 
   const filtered = activeFilter
-    ? issues.filter(i =>
+    ? sorted.filter(i =>
         activeFilter === 'resolved'
           ? i.status === 'resolved' || i.status === 'closed'
           : i.status === activeFilter
       )
-    : issues
+    : sorted
 
   return (
     <LivePage>
       <LivePageHead
-        kicker="Flag it — we'll handle it"
+        kicker="Flag it. We'll handle it."
         title="Issues"
-        sub="Anything that needs attention. You flag it, we schedule it, you see it resolved."
+        sub="Anything that needs attention. You flag it, we take care of it, you see it resolved."
         right={
           <Button asChild variant="gold" className="rounded-full px-5">
             <Link href="/portal/issues/new">
@@ -116,39 +109,33 @@ export default async function PortalIssuesPage({
       {filtered.length === 0 ? (
         <LiveEmpty
           icon={<CheckCircle2 className="h-4.5 w-4.5" />}
-          title={
-            activeFilter ? 'Nothing here right now' : 'No issues — everything looks good'
-          }
-          sub="Spot something that needs attention? Flag it and your account manager is notified immediately."
+          title={activeFilter ? 'Nothing here right now' : 'No issues. Everything looks good.'}
+          sub="Spot something that needs attention? Flag it and your account manager is notified right away."
         />
       ) : (
         <div className="flex flex-col gap-3.5">
-          {filtered.map((i) => {
-            const chip = STATUS_CHIP[i.status] ?? STATUS_CHIP.open
-            return (
-              <Link
-                key={i.id}
-                href={`/portal/issues/${i.id}`}
-                className="block rounded-[18px] border border-border bg-card p-6 shadow-soft transition-colors hover:border-gold-600/30"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="min-w-0 flex-1 font-display text-[16.5px] font-bold tracking-[-0.3px] text-foreground">
-                    {i.title}
-                  </span>
-                  <span
-                    className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-[3px] text-[11.5px] font-semibold ${chip.classes}`}
-                  >
-                    {chip.label}
-                  </span>
-                </div>
-                <div className="mt-1.5 text-xs text-muted-foreground">
-                  {i.location.name} · {format(i.createdAt, 'MMM d')} · {i.category} ·{' '}
-                  {i.severity}
-                  {i.resolvedAt ? ` · resolved ${format(i.resolvedAt, 'MMM d')}` : ''}
-                </div>
-              </Link>
-            )
-          })}
+          {filtered.map((i) => (
+            <Link
+              key={i.id}
+              href={`/portal/issues/${i.id}`}
+              className="block rounded-[18px] border border-border bg-card p-5 shadow-soft transition-colors hover:border-gold-600/30 sm:p-6"
+            >
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <span className="min-w-0 flex-1 font-display text-[16.5px] font-bold tracking-[-0.3px] text-foreground">
+                  {i.title}
+                </span>
+                {i.type === 'incomplete_work' && <UnfinishedBadge />}
+                <StatusChip status={i.status} />
+              </div>
+              <div className="mt-1.5 text-xs text-muted-foreground">
+                {i.location.name} · {format(i.createdAt, 'MMM d')}
+                {i.type === 'incomplete_work'
+                  ? ' · flagged by our crew'
+                  : ` · ${categoryLabel(i.category)} · ${i.severity}`}
+                {i.resolvedAt ? ` · resolved ${format(i.resolvedAt, 'MMM d')}` : ''}
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </LivePage>

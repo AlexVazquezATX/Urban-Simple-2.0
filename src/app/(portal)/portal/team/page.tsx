@@ -54,7 +54,7 @@ export default async function PortalTeamPage() {
       {contacts.length === 0 ? (
         <LiveEmpty
           icon={<Users className="h-4.5 w-4.5" />}
-          title="No teammates yet — bring in your crew"
+          title="No teammates yet. Bring in your crew."
           sub="Invite a GM, kitchen manager, or anyone else who needs access."
         />
       ) : (

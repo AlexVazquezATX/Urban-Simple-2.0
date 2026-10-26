@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { invitePortalUser, sendPortalAccessLink, type PortalAccessResult } from '@/lib/portal-access'
 
 // POST /api/clients/[id]/portal-invite — admin-only. Invites a ClientContact
-// to the Urban Simple Portal. Creates a Supabase auth user (with a magic-link
-// invite email), creates a User row with role CLIENT_USER, and links the
-// ClientContact to that User. Idempotent on re-invite (re-sends the email).
+// to the Urban Simple Portal. Creates a Supabase auth user (with an invite
+// email), creates a User row with role CLIENT_USER, and links the
+// ClientContact to that User. On re-invite it emails a fresh sign-in link and
+// reports honestly whether the email went out.
 //
 // Body: { contactId: string }
 export async function POST(
@@ -43,77 +44,86 @@ export async function POST(
     return NextResponse.json({ error: 'Contact has no email on file' }, { status: 400 })
   }
 
-  const admin = createAdminClient()
+  const email = contact.email.trim()
+  const accessParams = {
+    email,
+    firstName: contact.firstName,
+    clientName: contact.client.name,
+    companyId: user.companyId,
+    clientId,
+  }
 
-  // Determine the redirect-after-set-password destination. Vercel preview
-  // and prod use NEXT_PUBLIC_SITE_URL; local dev falls back to localhost.
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const redirectTo = `${baseUrl}/portal/set-password`
-
-  // If they already have a User record, re-send invite email and skip the
-  // role / contact-link work.
+  // If they already have a User record, re-send access and skip the role work.
   const existing = await prisma.user.findFirst({
-    where: { email: contact.email },
-    select: { id: true, authId: true, role: true },
+    where: { email: { equals: email, mode: 'insensitive' } },
+    select: { id: true, authId: true, role: true, isActive: true },
   })
 
   let userRecordId: string
+  let access: PortalAccessResult
 
   if (existing) {
-    userRecordId = existing.id
-
-    // If their existing role is something else (e.g., MANAGER), don't downgrade.
-    // Just make sure the contact links to them and they have portal access.
+    // Never pull a staff account into a client portal, and never share one
+    // portal login across two clients (getPortalContext would pick one at random).
     if (existing.role !== 'CLIENT_USER') {
-      // No-op — they may already be an internal user. Still link the contact.
+      return NextResponse.json(
+        { error: 'That email belongs to an Urban Simple staff account and cannot be given portal access.' },
+        { status: 409 }
+      )
+    }
+    const otherClient = await prisma.clientContact.findFirst({
+      where: { userId: existing.id, isPortalUser: true, clientId: { not: clientId } },
+      select: { client: { select: { name: true } } },
+    })
+    if (otherClient) {
+      return NextResponse.json(
+        { error: `That email already has portal access for ${otherClient.client.name}. Use a different email for this client.` },
+        { status: 409 }
+      )
     }
 
-    // Re-send invite (Supabase generates a new magic link).
+    userRecordId = existing.id
+    if (!existing.isActive) {
+      // An admin explicitly re-inviting a deactivated portal user restores them.
+      await prisma.user.update({ where: { id: existing.id }, data: { isActive: true } })
+    }
+
     if (existing.authId) {
-      const { error } = await admin.auth.admin.inviteUserByEmail(contact.email, {
-        redirectTo,
-      })
-      if (error) {
-        console.warn('[portal-invite] re-invite warning:', error.message)
-      }
+      access = await sendPortalAccessLink({ ...accessParams, userId: existing.id })
     } else {
-      // Existing User row with no login yet: actually send the invite and record
-      // the new authId. Without this the contact is portal-enabled but can never
-      // sign in (mirrors the portal/team route fix for the same case).
-      const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(
-        contact.email,
-        { redirectTo }
-      )
-      if (error || !invited?.user) {
-        return NextResponse.json(
-          { error: error?.message || 'Failed to send invite' },
-          { status: 500 }
-        )
+      // Existing User row with no login yet: invite (or link, if Supabase
+      // already knows the address) and record the auth id.
+      access = await invitePortalUser({ ...accessParams, userId: existing.id })
+      if (!access.authUserId) {
+        return NextResponse.json({ error: access.error || 'Failed to send invite' }, { status: 500 })
       }
       await prisma.user.update({
         where: { id: existing.id },
-        data: { authId: invited.user.id },
+        data: { authId: access.authUserId },
       })
     }
   } else {
-    // Create the auth user (sends invite email automatically).
-    const { data: invited, error: inviteError } =
-      await admin.auth.admin.inviteUserByEmail(contact.email, { redirectTo })
-    if (inviteError || !invited?.user) {
+    access = await invitePortalUser(accessParams)
+    if (!access.authUserId) {
+      return NextResponse.json({ error: access.error || 'Failed to send invite' }, { status: 500 })
+    }
+    const authUserId = access.authUserId
+
+    // The auth user may already be linked to a User row under another email.
+    const byAuth = await prisma.user.findUnique({ where: { authId: authUserId }, select: { id: true } })
+    if (byAuth) {
       return NextResponse.json(
-        { error: inviteError?.message || 'Failed to send invite' },
-        { status: 500 }
+        { error: 'That login is already linked to another account. Contact support to sort it out.' },
+        { status: 409 }
       )
     }
 
     const newUser = await prisma.user.create({
       data: {
-        authId: invited.user.id,
+        authId: authUserId,
         companyId: user.companyId,
         branchId: contact.client.branchId,
-        email: contact.email,
+        email,
         firstName: contact.firstName || contact.client.name,
         lastName: contact.lastName || '',
         role: 'CLIENT_USER',
@@ -134,5 +144,13 @@ export async function POST(
     },
   })
 
-  return NextResponse.json({ success: true, userId: userRecordId })
+  return NextResponse.json({
+    success: true,
+    userId: userRecordId,
+    emailSent: access.emailSent,
+    method: access.method,
+    message: access.emailSent
+      ? `Portal access email sent to ${email}.`
+      : `Portal access is set up, but the email to ${email} could not be sent${access.error ? ` (${access.error})` : ''}.`,
+  })
 }

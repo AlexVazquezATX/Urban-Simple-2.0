@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getPortalContext } from '@/lib/portal-auth'
-import { createAdminClient } from '@/lib/supabase/admin'
+import { checkRateLimit } from '@/lib/rate-limit'
+import { invitePortalUser, sendPortalAccessLink, type PortalAccessResult } from '@/lib/portal-access'
 
 // GET /api/portal/team — list all portal users for the authenticated client.
 export async function GET() {
@@ -30,6 +31,8 @@ export async function GET() {
   return NextResponse.json(contacts)
 }
 
+const TEAM_ROLES = ['primary', 'operations', 'billing', 'other'] as const
+
 // POST /api/portal/team — invite a new teammate to the portal. Any active
 // portal user can invite a teammate to their own client. Mirrors the admin
 // portal-invite flow but scoped to the inviter's own client.
@@ -39,21 +42,36 @@ export async function POST(request: NextRequest) {
   const ctx = await getPortalContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  const limit = checkRateLimit(`portal-team-invite:${ctx.userId}`, {
+    limit: 10,
+    windowSeconds: 60 * 60,
+  })
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { error: 'That is a lot of invites in a short time. Please try again in a bit.' },
+      { status: 429 }
+    )
+  }
+
   const body = await request.json().catch(() => ({}))
-  const firstName = (body.firstName as string | undefined)?.trim() || ''
-  const lastName = (body.lastName as string | undefined)?.trim() || ''
-  const email = (body.email as string | undefined)?.trim().toLowerCase() || ''
-  const phone = (body.phone as string | undefined)?.trim() || null
-  const role = (body.role as string | undefined)?.trim() || 'operations'
+  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  const firstName = str(body.firstName).slice(0, 80)
+  const lastName = str(body.lastName).slice(0, 80)
+  const email = str(body.email).toLowerCase()
+  const phone = str(body.phone).slice(0, 40) || null
+  const role = str(body.role) || 'operations'
 
   if (!firstName) return NextResponse.json({ error: 'First name required' }, { status: 400 })
-  if (!email || !email.includes('@')) {
+  if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
+  }
+  if (!(TEAM_ROLES as readonly string[]).includes(role)) {
+    return NextResponse.json({ error: 'Invalid role' }, { status: 400 })
   }
 
   // Check for an existing contact under this client with the same email.
   const existingContact = await prisma.clientContact.findFirst({
-    where: { clientId: ctx.client.id, email },
+    where: { clientId: ctx.client.id, email: { equals: email, mode: 'insensitive' } },
     select: { id: true, isPortalUser: true, userId: true },
   })
 
@@ -64,21 +82,24 @@ export async function POST(request: NextRequest) {
   })
   if (!client) return NextResponse.json({ error: 'Client missing' }, { status: 500 })
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-  const redirectTo = `${baseUrl}/portal/set-password`
-
-  const admin = createAdminClient()
+  const accessParams = {
+    email,
+    firstName,
+    clientName: ctx.client.name,
+    companyId: client.companyId,
+    clientId: ctx.client.id,
+    invitedByName: `${ctx.firstName} ${ctx.lastName}`.trim() || null,
+  }
 
   // If an existing User exists for this email, reuse them. Otherwise create
   // via Supabase invite + Prisma create.
   const existingUser = await prisma.user.findFirst({
-    where: { email },
+    where: { email: { equals: email, mode: 'insensitive' } },
     select: { id: true, authId: true, role: true, isActive: true },
   })
 
   let userRecordId: string
+  let access: PortalAccessResult
 
   if (existingUser) {
     // Don't silently pull an Urban Simple staff account into a client's portal.
@@ -92,42 +113,63 @@ export async function POST(request: NextRequest) {
         { status: 409 }
       )
     }
+    // One portal login belongs to one client. Never link another client's user.
+    const linkedElsewhere = await prisma.clientContact.findFirst({
+      where: { userId: existingUser.id, clientId: { not: ctx.client.id } },
+      select: { id: true },
+    })
+    if (linkedElsewhere) {
+      return NextResponse.json(
+        {
+          error:
+            'That email is already used by another business on the Urban Simple portal. Please use a different email, or email hello@urbansimple.net for help.',
+        },
+        { status: 409 }
+      )
+    }
+    if (!existingUser.isActive) {
+      return NextResponse.json(
+        {
+          error:
+            'Portal access for that email was turned off. Email hello@urbansimple.net and we will restore it.',
+        },
+        { status: 409 }
+      )
+    }
 
     userRecordId = existingUser.id
     if (existingUser.authId) {
-      // They already have an auth account — re-send the invite magic link.
-      const { error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo })
-      if (error) console.warn('[portal/team invite] re-invite warn:', error.message)
+      // They already have a login: email a fresh sign-in link.
+      access = await sendPortalAccessLink({ ...accessParams, userId: existingUser.id })
     } else {
       // A User row exists but was never provisioned in Supabase auth. Actually
       // send the invite now and link the new auth id, instead of pretending an
       // email went out.
-      const { data: invited, error } = await admin.auth.admin.inviteUserByEmail(email, {
-        redirectTo,
-      })
-      if (error || !invited?.user) {
-        return NextResponse.json(
-          { error: error?.message || 'Failed to send invite' },
-          { status: 500 }
-        )
+      access = await invitePortalUser({ ...accessParams, userId: existingUser.id })
+      if (!access.authUserId) {
+        return NextResponse.json({ error: access.error || 'Failed to send invite' }, { status: 500 })
       }
       await prisma.user.update({
         where: { id: existingUser.id },
-        data: { authId: invited.user.id },
+        data: { authId: access.authUserId },
       })
     }
   } else {
-    const { data: invited, error: inviteError } =
-      await admin.auth.admin.inviteUserByEmail(email, { redirectTo })
-    if (inviteError || !invited?.user) {
+    access = await invitePortalUser(accessParams)
+    if (!access.authUserId) {
+      return NextResponse.json({ error: access.error || 'Failed to send invite' }, { status: 500 })
+    }
+    const authUserId = access.authUserId
+    const byAuth = await prisma.user.findUnique({ where: { authId: authUserId }, select: { id: true } })
+    if (byAuth) {
       return NextResponse.json(
-        { error: inviteError?.message || 'Failed to send invite' },
-        { status: 500 }
+        { error: 'That email is already in use. Email hello@urbansimple.net and we will sort it out.' },
+        { status: 409 }
       )
     }
     const created = await prisma.user.create({
       data: {
-        authId: invited.user.id,
+        authId: authUserId,
         companyId: client.companyId,
         branchId: client.branchId,
         email,
@@ -174,5 +216,12 @@ export async function POST(request: NextRequest) {
     contactId = newContact.id
   }
 
-  return NextResponse.json({ success: true, contactId })
+  return NextResponse.json({
+    success: true,
+    contactId,
+    emailSent: access.emailSent,
+    message: access.emailSent
+      ? `Invite sent to ${email}.`
+      : `${firstName} was added, but we could not send the email. Please try again in a few minutes.`,
+  })
 }
