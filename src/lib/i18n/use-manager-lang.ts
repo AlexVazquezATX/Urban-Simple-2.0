@@ -51,11 +51,12 @@ function ensureLoaded() {
   fetch('/api/users/me', { credentials: 'include' })
     .then((r) => (r.ok ? r.json() : null))
     .then((data) => {
-      if (!current) publish(data?.preferredLanguage === 'es' ? 'es' : 'en')
+      // A failed lookup (e.g. the session cookie isn't readable yet right after
+      // sign-in) must not lock the language to English: leave it unset so the
+      // layout's primeManagerLang call can still apply the profile language.
+      if (!current && data?.preferredLanguage) publish(data.preferredLanguage === 'es' ? 'es' : 'en')
     })
-    .catch(() => {
-      if (!current) publish('en')
-    })
+    .catch(() => {})
     .finally(() => {
       loading = false
     })

@@ -185,7 +185,7 @@ export function NewIssueDialog({
       }}
     >
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[92vh] overflow-x-hidden overflow-y-auto sm:max-w-lg [&>*]:min-w-0">
         <DialogHeader>
           <DialogTitle>{unfinished ? n.unfinishedTitle : n.title}</DialogTitle>
           <DialogDescription>{unfinished ? n.unfinishedDescription : n.description}</DialogDescription>
@@ -285,7 +285,10 @@ export function NewIssueDialog({
                     )}
                   </div>
                   <Select value={row.reason} onValueChange={(v) => updateRow(idx, { reason: v })}>
-                    <SelectTrigger className="w-full" aria-label={n.reason}>
+                    <SelectTrigger
+                      className="h-auto min-h-9 w-full min-w-0 whitespace-normal text-left"
+                      aria-label={n.reason}
+                    >
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

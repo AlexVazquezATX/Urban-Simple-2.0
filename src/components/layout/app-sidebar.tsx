@@ -157,8 +157,8 @@ export function AppSidebar() {
   })
 
   useEffect(() => {
-    // Only fetch if we don't have the role cached
-    if (userRole) return
+    // Only fetch if we don't have the role and name cached
+    if (userRole && userName) return
 
     const fetchUserRole = async () => {
       try {
@@ -167,7 +167,8 @@ export function AppSidebar() {
           const userData = await response.json()
           setUserRole(userData.role)
           sessionStorage.setItem('user-role', userData.role)
-          const name = userData.name || userData.fullName || userData.email || null
+          const fullName = [userData.firstName, userData.lastName].filter(Boolean).join(' ')
+          const name = fullName || userData.email || null
           if (name) {
             setUserName(name)
             sessionStorage.setItem('user-name', name)
@@ -178,7 +179,7 @@ export function AppSidebar() {
       }
     }
     fetchUserRole()
-  }, [userRole])
+  }, [userRole, userName])
 
   // ⌘K / Ctrl+K opens the jump-to palette from anywhere in the admin.
   useEffect(() => {
@@ -302,7 +303,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="gap-2.5 border-t border-sidebar-border p-3">
-        <DarkModeToggle />
+        <DarkModeToggle labels={{ dark: t.nav.darkMode, light: t.nav.lightMode }} />
         <div className="flex items-center gap-2.5 rounded-[10px] border border-border bg-card p-2">
           <div className="grid size-7 shrink-0 place-items-center rounded-full bg-gradient-to-br from-gold-400 to-gold-600 font-display text-xs font-bold text-primary-foreground dark:text-ink-950">
             {displayName.charAt(0).toUpperCase()}

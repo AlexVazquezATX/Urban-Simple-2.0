@@ -4,7 +4,13 @@ import { Moon, Sun } from 'lucide-react'
 import { useDarkMode } from '@/lib/hooks/use-dark-mode'
 import { cn } from '@/lib/utils'
 
-export function DarkModeToggle({ className }: { className?: string }) {
+export function DarkModeToggle({
+  className,
+  labels = { dark: 'Dark mode', light: 'Light mode' },
+}: {
+  className?: string
+  labels?: { dark: string; light: string }
+}) {
   const { isDark, toggle } = useDarkMode()
 
   return (
@@ -22,7 +28,7 @@ export function DarkModeToggle({ className }: { className?: string }) {
       ) : (
         <Moon className="h-4 w-4" />
       )}
-      <span className="font-medium text-[13px]">{isDark ? 'Light mode' : 'Dark mode'}</span>
+      <span className="font-medium text-[13px]">{isDark ? labels.light : labels.dark}</span>
     </button>
   )
 }

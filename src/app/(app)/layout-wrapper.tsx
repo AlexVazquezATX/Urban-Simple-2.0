@@ -249,7 +249,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
                 </button>
               )}
 
-              <SidebarTrigger className="flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
+              <SidebarTrigger className="size-auto flex flex-col items-center gap-1 px-4 py-2 rounded-lg text-muted-foreground hover:text-foreground transition-colors">
                 <Menu className="h-5 w-5" />
                 <NavText k="more" />
               </SidebarTrigger>

@@ -402,6 +402,8 @@ const en = {
     home: 'Home',
     issues: 'Issues',
     more: 'More',
+    darkMode: 'Dark mode',
+    lightMode: 'Light mode',
   },
 
   team: {
@@ -886,6 +888,8 @@ const es: ManagerStrings = {
     home: 'Inicio',
     issues: 'Problemas',
     more: 'Más',
+    darkMode: 'Modo oscuro',
+    lightMode: 'Modo claro',
   },
 
   team: {
