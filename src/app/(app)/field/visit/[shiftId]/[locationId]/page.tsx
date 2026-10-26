@@ -58,7 +58,7 @@ interface VisitData {
     name: string
     clientName: string
     accessInstructions: string | null
-    serviceNotes: string | null
+    painPoints: string | null
   }
   template: { id: string; name: string; nameEs: string | null; sections: Section[] } | null
   log: {
@@ -78,6 +78,7 @@ interface NotDone {
   reason: string
   note: string
   photos: string[]
+  text?: string // typed-in items not on the checklist (id 'custom-…')
 }
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
@@ -120,7 +121,12 @@ export default function FieldVisitPage({
       setLang(readStoredLang(json.language))
       const restored: Record<string, NotDone> = {}
       for (const i of (json.log?.incompleteItems ?? []) as IncompleteItem[]) {
-        restored[i.itemId] = { reason: i.reason, note: i.note ?? '', photos: i.photos ?? [] }
+        restored[i.itemId] = {
+          reason: i.reason,
+          note: i.note ?? '',
+          photos: i.photos ?? [],
+          ...(i.itemId.startsWith('custom-') ? { text: i.text } : {}),
+        }
       }
       setNotDone(restored)
       setNotes(json.log?.overallNotes ?? '')
@@ -140,9 +146,16 @@ export default function FieldVisitPage({
   const sections = useMemo(() => data?.template?.sections ?? [], [data])
   const allItems = useMemo(() => sections.flatMap(s => s.items), [sections])
   const notDoneCount = Object.keys(notDone).length
-  const needsReason = allItems.filter(i => {
-    const n = notDone[i.id]
-    return n && (!n.reason || (n.reason === 'other' && !n.note.trim()))
+  const customIds = Object.keys(notDone).filter(id => id.startsWith('custom-'))
+  const needsReason = [
+    ...allItems.map(i => i.id),
+    ...customIds,
+  ].filter(id => {
+    const n = notDone[id]
+    return (
+      n &&
+      (!n.reason || (n.reason === 'other' && !n.note.trim()) || (id.startsWith('custom-') && !n.text?.trim()))
+    )
   })
 
   const clockIn = data?.log?.clockIn ?? null
@@ -240,6 +253,13 @@ export default function FieldVisitPage({
   }
 
   // ---- item actions -------------------------------------------------------
+  function addCustom() {
+    const id = `custom-${Date.now().toString(36)}`
+    setNotDone(prev => ({ ...prev, [id]: { reason: '', note: '', photos: [], text: '' } }))
+    markDirty()
+    setTimeout(() => document.getElementById(`custom-text-${id}`)?.focus(), 50)
+  }
+
   function markNotDone(id: string) {
     setNotDone(prev => ({ ...prev, [id]: prev[id] ?? { reason: '', note: '', photos: [] } }))
     markDirty()
@@ -304,9 +324,9 @@ export default function FieldVisitPage({
 
   async function finish() {
     if (needsReason.length > 0) {
-      setMissing(new Set(needsReason.map(i => i.id)))
+      setMissing(new Set(needsReason))
       toast.error(t.needsReason(needsReason.length))
-      document.getElementById(`item-${needsReason[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      document.getElementById(`item-${needsReason[0]}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       return
     }
     if (!confirmArmed) {
@@ -358,7 +378,7 @@ export default function FieldVisitPage({
   }
 
   const templateName = data.template ? (lang === 'es' && data.template.nameEs) || data.template.name : undefined
-  const hasAccessInfo = Boolean(data.location.accessInstructions || data.location.serviceNotes)
+  const hasAccessInfo = Boolean(data.location.accessInstructions)
   const showChecklist = Boolean(clockIn) || finished || data.readOnly
 
   return (
@@ -432,10 +452,16 @@ export default function FieldVisitPage({
           {showAccess && (
             <CardContent className="space-y-2 whitespace-pre-wrap px-4 pb-4 text-sm text-muted-foreground">
               {data.location.accessInstructions && <p>{data.location.accessInstructions}</p>}
-              {data.location.serviceNotes && <p>{data.location.serviceNotes}</p>}
             </CardContent>
           )}
         </Card>
+      )}
+
+      {data.location.painPoints && !finished && (
+        <div className="rounded-[12px] border border-gold-600/30 bg-gold-600/10 px-4 py-3 text-sm text-foreground">
+          <span className="font-semibold">{t.watchOutFor}: </span>
+          <span className="whitespace-pre-wrap">{data.location.painPoints}</span>
+        </div>
       )}
 
       {!clockIn && !finished && !data.readOnly && (
@@ -594,6 +620,98 @@ export default function FieldVisitPage({
                 </CardContent>
               </Card>
             ))
+          )}
+
+          {/* Things not on the checklist that didn't get done */}
+          {customIds.length > 0 && (
+            <Card className="py-0">
+              <CardContent className="space-y-4 p-4">
+                <p className="font-medium text-foreground">{t.somethingElse}</p>
+                {customIds.map(id => {
+                  const n = notDone[id]
+                  return (
+                    <div
+                      key={id}
+                      id={`item-${id}`}
+                      className={cn(
+                        'space-y-3 rounded-[9px] border border-coral-600/30 bg-coral-600/5 p-3',
+                        missing.has(id) && 'ring-1 ring-coral-600/40'
+                      )}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Textarea
+                          id={`custom-text-${id}`}
+                          value={n.text ?? ''}
+                          disabled={!editable}
+                          onChange={e => patchNotDone(id, { text: e.target.value })}
+                          placeholder={t.somethingElsePlaceholder}
+                          rows={2}
+                          className="flex-1"
+                        />
+                        {editable && (
+                          <button
+                            type="button"
+                            onClick={() => markDone(id)}
+                            className="h-9 shrink-0 rounded-[9px] px-2 text-sm text-muted-foreground underline-offset-2 hover:underline"
+                          >
+                            {t.remove}
+                          </button>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-foreground">{t.whyNotDone}</p>
+                      {editable ? (
+                        <div className="grid gap-1.5 sm:grid-cols-2">
+                          {NOT_DONE_REASONS.map(r => (
+                            <button
+                              key={r.id}
+                              type="button"
+                              onClick={() => patchNotDone(id, { reason: r.id })}
+                              className={cn(
+                                'min-h-11 rounded-[9px] border px-3 text-left text-sm transition-colors',
+                                n.reason === r.id
+                                  ? 'border-coral-600 bg-coral-600 font-medium text-white dark:border-coral-400 dark:bg-coral-500'
+                                  : 'border-border bg-background text-muted-foreground'
+                              )}
+                            >
+                              {r[lang]}
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-foreground">{reasonLabel(n.reason, lang)}</p>
+                      )}
+                      {(editable || n.note) && (
+                        <Textarea
+                          value={n.note}
+                          disabled={!editable}
+                          onChange={e => patchNotDone(id, { note: e.target.value })}
+                          placeholder={n.reason === 'other' ? t.explain : t.addNote}
+                          rows={2}
+                        />
+                      )}
+                      <PhotoCapture
+                        photos={n.photos}
+                        onChange={p => patchNotDone(id, { photos: p })}
+                        label={t.addPhoto}
+                        uploadingLabel={t.uploading}
+                        disabled={!editable}
+                      />
+                    </div>
+                  )
+                })}
+              </CardContent>
+            </Card>
+          )}
+
+          {editable && (
+            <button
+              type="button"
+              onClick={addCustom}
+              className="flex h-12 w-full items-center justify-center gap-2 rounded-[12px] border border-dashed border-coral-600/40 text-sm font-medium text-coral-700 dark:text-coral-300"
+            >
+              <X className="size-4" />
+              {t.somethingElse}
+            </button>
           )}
 
           {/* Optional extras, tucked away */}

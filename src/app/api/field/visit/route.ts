@@ -55,7 +55,9 @@ export async function GET(request: NextRequest) {
           name: true,
           address: true,
           accessInstructions: true,
-          serviceNotes: true,
+          // Crew-facing heads-up. (serviceNotes is internal and can hold
+          // revenue/margin from imports, so it never goes to the field.)
+          painPoints: true,
           client: { select: { name: true } },
           checklistTemplate: {
             select: { id: true, name: true, nameEs: true, sections: true },
@@ -102,7 +104,7 @@ export async function GET(request: NextRequest) {
         clientName: location.client.name,
         address: location.address,
         accessInstructions: location.accessInstructions,
-        serviceNotes: location.serviceNotes,
+        painPoints: location.painPoints,
       },
       template: location.checklistTemplate
         ? {
@@ -138,7 +140,8 @@ interface VisitBody {
   locationId?: string
   action?: 'save' | 'finish'
   done?: string[] // item ids completed
-  notDone?: Array<{ itemId?: string; reason?: string; note?: string; photos?: string[] }>
+  // itemId 'custom-…' + text = something not on the checklist, typed in
+  notDone?: Array<{ itemId?: string; text?: string; reason?: string; note?: string; photos?: string[] }>
   notes?: string
   photos?: string[]
 }
@@ -193,7 +196,20 @@ export async function POST(request: NextRequest) {
 
     const done = new Set((body.done ?? []).filter(id => itemIndex.has(id)))
     const notDone: IncompleteItem[] = []
+    let customCount = 0
     for (const raw of body.notDone ?? []) {
+      // Typed-in item that isn't on the checklist (power out, lights broken…)
+      if (raw.itemId?.startsWith('custom-') && customCount < 10) {
+        const text = (raw.text ?? '').trim().slice(0, 200)
+        if (!text) {
+          if (action === 'finish') {
+            return NextResponse.json({ error: 'Describe what was not done' }, { status: 400 })
+          }
+          continue
+        }
+        itemIndex.set(raw.itemId, { text, section: 'Other', requiresPhoto: false })
+        customCount++
+      }
       const meta = raw.itemId ? itemIndex.get(raw.itemId) : undefined
       if (!meta || done.has(raw.itemId!)) continue
       const reason = REASON_IDS.has(raw.reason ?? '') ? raw.reason! : ''
@@ -215,7 +231,9 @@ export async function POST(request: NextRequest) {
     }
 
     if (action === 'finish') {
-      const unaccounted = [...itemIndex.keys()].filter(id => !done.has(id) && !notDone.some(n => n.itemId === id))
+      const unaccounted = [...itemIndex.keys()].filter(
+        id => !id.startsWith('custom-') && !done.has(id) && !notDone.some(n => n.itemId === id)
+      )
       if (unaccounted.length > 0) {
         return NextResponse.json(
           { error: `${unaccounted.length} item(s) still need to be marked done or not done`, unaccounted },
