@@ -114,7 +114,7 @@ export default async function IssueDetailPage({
           {isRequest ? 'Request' : isUnfinished ? 'Unfinished work' : 'Issue'}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="min-w-0 flex-1 font-display text-[22px] font-bold tracking-[-0.4px] text-foreground">
+          <h1 className="min-w-0 basis-full font-display text-[22px] font-bold tracking-[-0.4px] text-foreground [text-wrap:balance] sm:flex-1 sm:basis-auto">
             {issue.title}
           </h1>
           {isUnfinished && <UnfinishedBadge />}

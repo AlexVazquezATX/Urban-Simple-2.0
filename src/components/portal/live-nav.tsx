@@ -44,7 +44,7 @@ export function LiveNav({
     match === '/portal' ? pathname === '/portal' : pathname.startsWith(match)
 
   return (
-    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-border bg-cream-50/95 px-5 py-3.5 backdrop-blur md:flex-nowrap md:gap-6 md:px-12 md:py-4">
+    <div className="sticky top-0 z-20 flex flex-wrap items-center gap-x-5 gap-y-3 border-b border-border bg-cream-50/95 px-5 py-3.5 backdrop-blur md:px-12 md:py-4 xl:flex-nowrap xl:gap-6">
       <Link href="/portal" className="flex shrink-0 items-center gap-2.5">
         <div className="grid h-8 w-8 place-items-center overflow-hidden rounded-full border border-gold-600/30 bg-gold-600/10 font-display text-[13.5px] font-extrabold text-gold-600">
           {logoUrl ? (
@@ -65,8 +65,9 @@ export function LiveNav({
         </div>
       </Link>
 
-      {/* Phones: links drop to their own scrollable row under the brand. */}
-      <nav className="order-last flex min-w-0 basis-full gap-5 overflow-x-auto pb-1 md:order-none md:ml-4 md:flex-1 md:basis-auto md:gap-[22px] md:pb-0">
+      {/* Below xl the nine links don't fit beside the brand, so they get their
+          own row under it (scrolling sideways only on phones). */}
+      <nav className="order-last flex min-w-0 basis-full gap-5 overflow-x-auto pb-1 md:gap-[22px] xl:order-none xl:ml-4 xl:flex-1 xl:basis-auto xl:pb-0">
         {links.map(({ href, label, match }) => (
           <Link
             key={href}
@@ -83,7 +84,7 @@ export function LiveNav({
         ))}
       </nav>
 
-      <div className="ml-auto shrink-0 md:ml-0">
+      <div className="ml-auto shrink-0 xl:ml-0">
         <LogoutButton />
       </div>
     </div>

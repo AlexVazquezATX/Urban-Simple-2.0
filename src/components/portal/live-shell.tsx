@@ -339,8 +339,10 @@ export function LiveHomeNav({ isSelfServe }: { isSelfServe?: boolean }) {
   // Service requests are for Urban Simple cleaning clients only.
   const links = isSelfServe ? HOME_LINKS.filter(([href]) => href !== '/portal/requests') : HOME_LINKS
   return (
-    <div className="flex items-center gap-6">
-      <nav className="flex min-w-0 flex-1 gap-6 overflow-x-auto pb-1">
+    <div className="flex items-start gap-6">
+      {/* Wraps instead of scrolling sideways: in the narrow home column a
+          scroll row hid Requests, Documents, Team and Alerts. */}
+      <nav className="flex min-w-0 flex-1 flex-wrap gap-x-5 gap-y-2.5 pb-1">
         {links.map(([href, label], i) => (
           <Link
             key={href}
