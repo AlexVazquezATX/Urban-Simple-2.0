@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import { categoryLabel, reasonLabel, type IncompleteItem } from '@/lib/ops/constants'
-import { clientTimezone, formatLocalDateTime } from '@/lib/portal-dates'
+import { clientTimezone, formatLocalDateTime, dbDate } from '@/lib/portal-dates'
 import { LivePage } from '@/components/portal/live-shell'
 import { StatusChip, UnfinishedBadge } from '@/components/portal/issue-chips'
 import { IssueReplyForm } from '@/components/portal/issue-reply-form'
@@ -89,7 +89,7 @@ export default async function IssueDetailPage({
   const meta = [
     issue.location.name,
     isUnfinished
-      ? `Flagged by our crew${issue.serviceLog ? ` after the ${format(issue.serviceLog.serviceDate, 'EEE, MMM d')} visit` : ''}`
+      ? `Flagged by our crew${issue.serviceLog ? ` after the ${format(dbDate(issue.serviceLog.serviceDate), 'EEE, MMM d')} visit` : ''}`
       : `${isRequest ? 'Sent' : 'Reported'} ${format(issue.createdAt, 'EEE, MMM d, yyyy')} by ${reporter}`,
     isUnfinished ? null : categoryLabel(issue.category, issue.type),
     isRequest || isUnfinished ? null : `${issue.severity} priority`,

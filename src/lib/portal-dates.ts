@@ -44,3 +44,12 @@ export function formatLocalDateTime(date: Date, timeZone: string): string {
     minute: '2-digit',
   }).format(date)
 }
+
+/**
+ * A @db.Date value (UTC midnight of a calendar day) as a local Date on that
+ * same day, for date-fns format(). Formatting the raw value shows the day
+ * before on any server or browser west of UTC.
+ */
+export function dbDate(date: Date): Date {
+  return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}

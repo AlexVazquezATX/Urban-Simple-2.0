@@ -62,7 +62,10 @@ async function NightlyReviewDetail({ id }: { id: string }) {
       clientName={reviewContext.location.clientName}
       address={formatAddress(reviewContext.location.address)}
       scheduledTime={reviewContext.shift.startTime}
+      // Shift.date is a calendar date stored at UTC midnight; format it in UTC
+      // or it shows the day before anywhere west of Greenwich.
       serviceDateLabel={reviewContext.shift.date.toLocaleDateString('en-US', {
+        timeZone: 'UTC',
         weekday: 'long',
         month: 'short',
         day: 'numeric',

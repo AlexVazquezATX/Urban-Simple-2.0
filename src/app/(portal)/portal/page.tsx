@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { dbDate } from '@/lib/portal-dates'
 import { format } from 'date-fns'
 import { ArrowRight, Camera, ClipboardList, Flag, Sparkles } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
@@ -93,16 +94,28 @@ export default async function PortalHomePage() {
       },
     }),
     !isSelfServe && locationIds.length > 0
-      ? prisma.shift.count({
-          where: {
-            OR: [
-              { locationId: { in: locationIds } },
-              { shiftLocations: { some: { locationId: { in: locationIds } } } },
-            ],
-            date: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-            status: { in: ['scheduled', 'in_progress', 'completed'] },
-          },
-        })
+      ? prisma.shift
+          .findMany({
+            where: {
+              OR: [
+                { locationId: { in: locationIds } },
+                { shiftLocations: { some: { locationId: { in: locationIds } } } },
+              ],
+              date: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+              status: { in: ['scheduled', 'in_progress', 'completed'] },
+            },
+            select: { date: true, locationId: true, shiftLocations: { select: { locationId: true } } },
+          })
+          // A crew shift and a manager review route on the same night are one
+          // visit: count distinct location-nights.
+          .then(rows => {
+            const visits = new Set<string>()
+            for (const r of rows) {
+              const locs = r.shiftLocations.length ? r.shiftLocations.map(l => l.locationId) : r.locationId ? [r.locationId] : []
+              for (const l of locs) if (locationIds.includes(l)) visits.add(`${l}|${r.date.toISOString().slice(0, 10)}`)
+            }
+            return visits.size
+          })
       : Promise.resolve(0),
     isSelfServe
       ? prisma.portalWalkthrough.count({
@@ -211,7 +224,7 @@ export default async function PortalHomePage() {
   const timeline: Array<{ time: string; text: string }> = []
   if (lastReview) {
     timeline.push({
-      time: format(lastReview.reviewDate, 'MMM d'),
+      time: format(dbDate(lastReview.reviewDate), 'MMM d'),
       text: `Visit reviewed at ${lastReview.location.name}, ${lastReview.photos.length} ${lastReview.photos.length === 1 ? 'photo' : 'photos'} added`,
     })
   }
@@ -223,7 +236,7 @@ export default async function PortalHomePage() {
   }
   if (nextShift) {
     timeline.push({
-      time: format(nextShift.date, 'MMM d'),
+      time: format(dbDate(nextShift.date), 'MMM d'),
       text: `Next visit on the books · crew arrives at ${nextShift.startTime}`,
     })
   }
@@ -231,7 +244,7 @@ export default async function PortalHomePage() {
   const photoPanelPill = isSelfServe
     ? 'Inspection-ready, every day'
     : lastReview
-      ? `Serviced ${format(lastReview.reviewDate, 'EEEE')} · ready for today's service`
+      ? `Serviced ${format(dbDate(lastReview.reviewDate), 'EEEE')} · ready for today's service`
       : 'We clean while you sleep'
 
   // ──────────────── render ────────────────
@@ -316,7 +329,7 @@ export default async function PortalHomePage() {
                 label="Next visit"
                 value={
                   nextShift
-                    ? `${format(nextShift.date, 'EEE')} · ${nextShift.startTime}`
+                    ? `${format(dbDate(nextShift.date), 'EEE')} · ${nextShift.startTime}`
                     : 'Not scheduled'
                 }
                 sub={
@@ -507,11 +520,11 @@ function buildStoryLine(input: StoryLineInput): string {
     const photoLabel =
       lastReview.photos.length === 1 ? '1 photo' : `${lastReview.photos.length} photos`
     parts.push(
-      `Your team was at ${lastReview.location.name} ${format(lastReview.reviewDate, 'EEEE')} (${photoLabel})`
+      `Your team was at ${lastReview.location.name} ${format(dbDate(lastReview.reviewDate), 'EEEE')} (${photoLabel})`
     )
   }
   if (nextShift) {
-    parts.push(`next visit ${format(nextShift.date, 'EEE, MMM d')} at ${nextShift.startTime}`)
+    parts.push(`next visit ${format(dbDate(nextShift.date), 'EEE, MMM d')} at ${nextShift.startTime}`)
   } else if (recentVisitCount > 0 && !lastReview) {
     parts.push(
       `${recentVisitCount} visit${recentVisitCount === 1 ? '' : 's'} in the last 30 days`

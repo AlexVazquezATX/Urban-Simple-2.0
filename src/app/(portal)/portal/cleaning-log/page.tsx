@@ -1,10 +1,10 @@
 import Link from 'next/link'
-import { format, formatDistanceToNow, subMonths } from 'date-fns'
+import { format, subMonths } from 'date-fns'
 import { Camera, MapPin, Star } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
 import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
-import { addDaysToKey, dbDateKey, localDateKey } from '@/lib/portal-dates'
+import { addDaysToKey, dbDate, dbDateKey, localDateKey } from '@/lib/portal-dates'
 import { VisitRating } from '@/components/portal/visit-rating'
 import {
   LiveEmpty,
@@ -230,7 +230,7 @@ export default async function CleaningLogPage({
                 >
                   <div className="flex flex-wrap items-baseline gap-3">
                     <span className="font-display text-[17.5px] font-bold tracking-[-0.3px] text-foreground">
-                      {format(r.reviewDate, 'EEEE · MMMM d')}
+                      {format(dbDate(r.reviewDate), 'EEEE · MMMM d')}
                     </span>
                     <span className="font-mono text-[11px] text-muted-foreground">
                       {r.location.name}
@@ -345,7 +345,7 @@ export default async function CleaningLogPage({
                     </p>
                     <p className="mt-0.5 truncate text-xs text-cream-700">
                       <span className="font-mono tabular-nums">
-                        {format(s.date, 'EEE, MMM d')} · {s.startTime}–{s.endTime}
+                        {format(dbDate(s.date), 'EEE, MMM d')} · {s.startTime}–{s.endTime}
                       </span>
                       {' · '}
                       {locations.join(', ') || ctx.client.name}
@@ -377,7 +377,7 @@ export default async function CleaningLogPage({
         Showing {timeline.length} {timeline.length === 1 ? 'entry' : 'entries'}
         {activeMonth ? '' : ' from the last 90 days'}.{' '}
         {timeline.length > 0
-          ? `Most recent: ${formatDistanceToNow(timeline[0].date, { addSuffix: true })}.`
+          ? `Most recent: ${format(dbDate(timeline[0].date), 'EEEE, MMM d')}.`
           : ''}
       </p>
     </LivePage>

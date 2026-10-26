@@ -1,4 +1,5 @@
 import { format } from 'date-fns'
+import { dbDate } from '@/lib/portal-dates'
 import { ArrowLeft, FileText, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { requirePortalContext } from '@/lib/portal-auth'
@@ -189,7 +190,7 @@ export default async function InspectionPacketPage() {
               {recentReviews.map(r => (
                 <li key={r.id} className="flex items-baseline gap-2 text-xs">
                   <span className="w-20 shrink-0 font-mono tabular-nums text-muted-foreground">
-                    {format(r.reviewDate, 'MMM d, yyyy')}
+                    {format(dbDate(r.reviewDate), 'MMM d, yyyy')}
                   </span>
                   <span className="font-medium text-foreground">{r.location.name}</span>
                   <span className="text-muted-foreground">

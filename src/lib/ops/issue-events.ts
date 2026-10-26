@@ -269,7 +269,8 @@ export async function sendIssueToClient(params: { issueId: string; message?: str
   })
   await prisma.issue.update({
     where: { id: issue.id },
-    data: { visibleToClient: true, clientNotifiedAt: new Date() },
+    // Shared either way; "notified" only when an alert actually went out.
+    data: { visibleToClient: true, ...(result.emailed || result.texted ? { clientNotifiedAt: new Date() } : {}) },
   })
   return result
 }

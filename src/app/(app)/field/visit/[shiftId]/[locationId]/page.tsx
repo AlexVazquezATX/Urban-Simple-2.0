@@ -95,6 +95,14 @@ export default function FieldVisitPage({
   const [notes, setNotes] = useState('')
   const [photos, setPhotos] = useState<string[]>([])
   const [busy, setBusy] = useState<null | 'clock' | 'save' | 'finish'>(null)
+  // Finishing locks the visit, so it takes a second tap (no native dialogs:
+  // some in-app browsers block confirm()).
+  const [confirmArmed, setConfirmArmed] = useState(false)
+  useEffect(() => {
+    if (!confirmArmed) return
+    const timer = setTimeout(() => setConfirmArmed(false), 5000)
+    return () => clearTimeout(timer)
+  }, [confirmArmed])
   const [showAccess, setShowAccess] = useState(false)
   const [missing, setMissing] = useState<Set<string>>(new Set())
 
@@ -221,7 +229,11 @@ export default function FieldVisitPage({
         document.getElementById(`item-${unanswered[0].id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
         return
       }
-      if (!window.confirm(t.confirmFinish)) return
+      if (!confirmArmed) {
+        setConfirmArmed(true)
+        return
+      }
+      setConfirmArmed(false)
     }
     setBusy(action)
     try {
@@ -477,7 +489,7 @@ export default function FieldVisitPage({
                                   className={cn(
                                     'min-h-11 rounded-[9px] border px-3 text-left text-sm transition-colors',
                                     a.reason === r.id
-                                      ? 'border-coral-600 bg-white font-medium text-foreground dark:bg-black/20'
+                                      ? 'border-coral-600 bg-coral-600 font-medium text-white dark:border-coral-400 dark:bg-coral-500'
                                       : 'border-border bg-background text-muted-foreground'
                                   )}
                                 >
@@ -568,7 +580,7 @@ export default function FieldVisitPage({
               disabled={busy !== null}
             >
               {busy === 'finish' ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle className="size-4" />}
-              {notDoneCount > 0 ? t.finishWithFlags(notDoneCount) : t.finish}
+              {confirmArmed ? t.tapToConfirm : notDoneCount > 0 ? t.finishWithFlags(notDoneCount) : t.finish}
             </Button>
           </div>
         </div>
