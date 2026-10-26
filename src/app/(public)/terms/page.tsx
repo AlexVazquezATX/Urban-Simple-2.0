@@ -20,7 +20,7 @@ export default function TermsPage() {
           <h1 className="text-2xl font-display font-semibold text-charcoal-900 mb-1">
             Terms of Service
           </h1>
-          <p className="text-sm text-charcoal-500 mb-6">Last updated: March 31, 2026</p>
+          <p className="text-sm text-charcoal-500 mb-6">Last updated: October 26, 2026</p>
 
           <div className="prose prose-charcoal max-w-none text-sm leading-relaxed space-y-4">
             <p>
@@ -45,6 +45,11 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Limitation of Liability</h2>
             <p>
               Urban Simple shall not be liable for any indirect, incidental, or consequential damages arising from the use of this website. Our total liability is limited to the amount paid for services rendered.
+            </p>
+
+            <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Service Alert Text Messages</h2>
+            <p>
+              Urban Simple Service Alerts sends text messages to clients and staff who opt in, about cleaning service status: items not finished during a visit, issue updates, and resolutions. Message frequency varies with service activity. Message and data rates may apply. Reply STOP to opt out at any time; reply HELP for help, or contact info@urbansimple.net. Carriers are not liable for delayed or undelivered messages. Your mobile information is handled as described in our Privacy Policy.
             </p>
 
             <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Changes to Terms</h2>

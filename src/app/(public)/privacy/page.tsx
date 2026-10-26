@@ -20,7 +20,7 @@ export default function PrivacyPage() {
           <h1 className="text-2xl font-display font-semibold text-charcoal-900 mb-1">
             Privacy Policy
           </h1>
-          <p className="text-sm text-charcoal-500 mb-6">Last updated: March 31, 2026</p>
+          <p className="text-sm text-charcoal-500 mb-6">Last updated: October 26, 2026</p>
 
           <div className="prose prose-charcoal max-w-none text-sm leading-relaxed space-y-4">
             <p>
@@ -45,6 +45,11 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Third-Party Services</h2>
             <p>
               We may use third-party services (such as analytics and email providers) that collect, monitor, and analyze data to improve our service. These third parties have their own privacy policies.
+            </p>
+
+            <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Text Messages (SMS)</h2>
+            <p>
+              If you opt in to service alert text messages, we use your mobile number only to send those alerts, such as notice that an item was not finished during a scheduled cleaning or an update on a service issue. No mobile information will be shared with third parties or affiliates for marketing or promotional purposes. Text messaging opt-in data and consent are not shared with any third parties. You can opt out at any time by replying STOP, or get help by replying HELP.
             </p>
 
             <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Contact Us</h2>
