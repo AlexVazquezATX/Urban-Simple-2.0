@@ -82,7 +82,10 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { locationId, userId, monthlyPay, startDate, endDate, isActive = true } = body
+    const {
+      locationId, userId, monthlyPay, startDate, endDate, isActive = true,
+      daysOfWeek, cleaningWindowStart, cleaningWindowEnd,
+    } = body
 
     if (!locationId || !userId || !monthlyPay || !startDate) {
       return NextResponse.json(
@@ -139,6 +142,11 @@ export async function POST(request: NextRequest) {
         startDate: new Date(startDate),
         endDate: endDate ? new Date(endDate) : null,
         isActive,
+        ...(Array.isArray(daysOfWeek)
+          ? { daysOfWeek: daysOfWeek.filter((d: unknown) => Number.isInteger(d) && (d as number) >= 0 && (d as number) <= 6) }
+          : {}),
+        cleaningWindowStart: cleaningWindowStart || null,
+        cleaningWindowEnd: cleaningWindowEnd || null,
       },
       include: {
         location: {

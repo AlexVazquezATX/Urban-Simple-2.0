@@ -58,6 +58,10 @@ export function AssignmentForm({ assignment, children }: AssignmentFormProps) {
   const [loading, setLoading] = useState(false)
   const [locations, setLocations] = useState<any[]>([])
   const [associates, setAssociates] = useState<any[]>([])
+  // Nights + cleaning window drive automatic shift creation (My Night).
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>(assignment?.daysOfWeek ?? [])
+  const [windowStart, setWindowStart] = useState<string>(assignment?.cleaningWindowStart ?? '')
+  const [windowEnd, setWindowEnd] = useState<string>(assignment?.cleaningWindowEnd ?? '')
   const router = useRouter()
 
   useEffect(() => {
@@ -114,6 +118,9 @@ export function AssignmentForm({ assignment, children }: AssignmentFormProps) {
           ...data,
           monthlyPay: parseFloat(data.monthlyPay),
           endDate: data.endDate || null,
+          daysOfWeek,
+          cleaningWindowStart: windowStart || null,
+          cleaningWindowEnd: windowEnd || null,
         }),
       })
 
@@ -122,7 +129,19 @@ export function AssignmentForm({ assignment, children }: AssignmentFormProps) {
         throw new Error(error.error || 'Failed to save assignment')
       }
 
-      toast.success(assignment ? 'Assignment updated' : 'Assignment created')
+      // Put the next two weeks of nights on the calendar right away.
+      const saved = await response.json().catch(() => null)
+      let shiftNote = ''
+      if (saved?.id && daysOfWeek.length && windowStart && windowEnd) {
+        const gen = await fetch('/api/operations/associate-shifts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ assignmentId: saved.id, days: 14 }),
+        }).then(r => (r.ok ? r.json() : null)).catch(() => null)
+        if (gen?.created) shiftNote = ` · ${gen.created} shifts scheduled`
+      }
+
+      toast.success((assignment ? 'Assignment updated' : 'Assignment created') + shiftNote)
       setOpen(false)
       router.refresh()
     } catch (error: any) {
@@ -246,6 +265,43 @@ export function AssignmentForm({ assignment, children }: AssignmentFormProps) {
                 </FormItem>
               )}
             />
+
+            <div className="space-y-2">
+              <FormLabel>Nights worked</FormLabel>
+              <div className="flex flex-wrap gap-1.5">
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => {
+                  const on = daysOfWeek.includes(i)
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() =>
+                        setDaysOfWeek(prev => (on ? prev.filter(x => x !== i) : [...prev, i].sort()))
+                      }
+                      className={`h-9 min-w-11 rounded-[9px] border px-2 text-sm ${
+                        on ? 'border-primary bg-primary/10 font-medium text-foreground' : 'border-border text-muted-foreground'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  )
+                })}
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <FormLabel className="text-xs text-muted-foreground">Starts</FormLabel>
+                  <Input type="time" value={windowStart} onChange={e => setWindowStart(e.target.value)} />
+                </div>
+                <div>
+                  <FormLabel className="text-xs text-muted-foreground">Ends</FormLabel>
+                  <Input type="time" value={windowEnd} onChange={e => setWindowEnd(e.target.value)} />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Nights and hours put this associate&apos;s shifts on the calendar automatically, so the stop shows
+                up in their My Night.
+              </p>
+            </div>
 
             <DialogFooter>
               <Button

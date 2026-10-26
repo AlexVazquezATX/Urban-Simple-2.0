@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { addDays, endOfDay, startOfDay } from 'date-fns'
 import { prisma } from '@/lib/db'
 import { generateDispatchForCompany } from '@/lib/operations/dispatch-generator'
+import { generateAssociateShifts } from '@/lib/operations/associate-shift-generator'
+import { getOperationalWindow } from '@/lib/ops/field'
 
 /**
  * Vercel cron endpoint that regenerates next week's dispatch routes for every
@@ -75,8 +77,24 @@ async function handle(request: NextRequest) {
     }
   }
 
+  // Associate shifts from assignment schedules: keep two weeks filled ahead
+  // so My Night always has tonight's stops. Runs for every company.
+  const associateShifts: Array<{ companyId: string; created?: number; error?: string }> = []
+  const companies = await prisma.company.findMany({ select: { id: true } })
+  for (const company of companies) {
+    try {
+      const { today } = await getOperationalWindow(company.id)
+      const r = await generateAssociateShifts({ companyId: company.id, fromDate: today, days: 14 })
+      associateShifts.push({ companyId: company.id, created: r.created })
+    } catch (error: unknown) {
+      console.error('[cron/dispatch-regenerate] associate shifts failed:', error)
+      associateShifts.push({ companyId: company.id, error: error instanceof Error ? error.message : 'Unknown error' })
+    }
+  }
+
   return NextResponse.json({
     success: true,
+    associateShifts,
     rangeStart: rangeStart.toISOString(),
     rangeEnd: rangeEnd.toISOString(),
     companiesProcessed: results.length,
