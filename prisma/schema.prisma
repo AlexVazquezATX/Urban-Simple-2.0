@@ -66,6 +66,11 @@ model Company {
   // the trend charts on the financials dashboard).
   financialSnapshots MonthlyFinancialSnapshot[]
 
+  // Lead machine (nightly account sourcing; see src/lib/lead-machine)
+  leadMachineSettings LeadMachineSettings?
+  leadMachineRuns     LeadMachineRun[]
+  prospectSignals     ProspectSignal[]
+
   @@map("companies")
 }
 
@@ -1532,6 +1537,7 @@ model Prospect {
   campaigns        OutreachCampaign[]
   outreachMessages OutreachMessage[]
   leadIntakes      LeadIntake[]
+  signals          ProspectSignal[]
 
   @@index([companyId, status])
   @@index([companyId, agentQueued])
@@ -2976,4 +2982,67 @@ model QBOConnection {
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@map("qbo_connections")
+}
+
+// ---- Lead machine ----
+// One row per company. No row = machine off. dryRun logs what a run would do
+// without writing prospects or signals.
+model LeadMachineSettings {
+  companyId             String   @id @map("company_id")
+  enabled               Boolean  @default(false)
+  dryRun                Boolean  @default(true) @map("dry_run")
+  dailyNewCap           Int      @default(25) @map("daily_new_cap")
+  // Per-source daily caps, e.g. {"tabc": 8, "alcohol_sales": 10, "places_hotels": 7}
+  sourceCaps            Json     @default("{}") @map("source_caps")
+  placesMonthlyCallCap  Int      @default(300) @map("places_monthly_call_cap")
+  briefEnabled          Boolean  @default(true) @map("brief_enabled")
+  notifyEmail           String?  @map("notify_email")
+  updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("lead_machine_settings")
+}
+
+// Run log: one row per stage per run. The health check and the morning brief
+// read this; nothing in the machine runs without leaving a row here.
+model LeadMachineRun {
+  id         String    @id @default(cuid())
+  companyId  String    @map("company_id")
+  stage      String // sourcing, tabc, alcohol_sales, places_hotels, brief, health
+  status     String // running, succeeded, failed, skipped
+  dryRun     Boolean   @default(false) @map("dry_run")
+  startedAt  DateTime  @default(now()) @map("started_at")
+  finishedAt DateTime? @map("finished_at")
+  stats      Json?
+  error      String?   @db.Text
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, stage, startedAt])
+  @@map("lead_machine_runs")
+}
+
+// Why an account is worth contacting now: a dated fact from a public source
+// (new liquor license filing, monthly alcohol sales, Google listing).
+// sourceKey dedupes across runs, e.g. "tabc:662480", "mixbev:MB984434:2026-09".
+// Signals outlive a deleted prospect (prospectId goes null) so the machine
+// remembers it already handled that business and never re-adds it.
+model ProspectSignal {
+  id         String   @id @default(cuid())
+  companyId  String   @map("company_id")
+  prospectId String?  @map("prospect_id")
+  kind       String // tabc_new_license, alcohol_sales, google_places, machine_seen
+  sourceKey  String   @map("source_key")
+  observedAt DateTime @map("observed_at")
+  data       Json
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  prospect Prospect? @relation(fields: [prospectId], references: [id], onDelete: SetNull)
+
+  @@unique([companyId, sourceKey])
+  @@index([prospectId])
+  @@index([companyId, kind, observedAt])
+  @@map("prospect_signals")
 }

@@ -39,6 +39,14 @@
     {
       "path": "/api/cron/qbo-sync",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/lead-machine",
+      "schedule": "0 7,8 * * *"
+    },
+    {
+      "path": "/api/cron/lead-machine-brief",
+      "schedule": "30 12,13 * * *"
     }
   ]
 }
