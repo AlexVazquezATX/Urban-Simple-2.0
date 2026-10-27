@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { canSeeFinancials, hideFinancialNotes, keepHiddenFinancialLines } from '@/lib/financials'
 import { normalizeServiceProfile } from '@/lib/operations/dispatch'
 
 // GET /api/locations/[id] - Get location by ID
@@ -73,7 +74,7 @@ export async function GET(
       return NextResponse.json({ error: 'Location not found' }, { status: 404 })
     }
 
-    return NextResponse.json(location)
+    return NextResponse.json(hideFinancialNotes(location, user.role))
   } catch (error) {
     console.error('Error fetching location:', error)
     return NextResponse.json(
@@ -142,6 +143,9 @@ export async function PATCH(
       }
     }
 
+    // Non-admins edit notes with the money lines stripped out; keep those lines.
+    const hidesFinancials = !canSeeFinancials(user.role)
+
     const location = await prisma.location.update({
       where: { id },
       data: {
@@ -149,8 +153,16 @@ export async function PATCH(
         ...(address !== undefined && { address }),
         ...(logoUrl !== undefined && { logoUrl: logoUrl || null }),
         ...(accessInstructions !== undefined && { accessInstructions }),
-        ...(serviceNotes !== undefined && { serviceNotes }),
-        ...(painPoints !== undefined && { painPoints }),
+        ...(serviceNotes !== undefined && {
+          serviceNotes: hidesFinancials
+            ? keepHiddenFinancialLines(existingLocation.serviceNotes, serviceNotes)
+            : serviceNotes,
+        }),
+        ...(painPoints !== undefined && {
+          painPoints: hidesFinancials
+            ? keepHiddenFinancialLines(existingLocation.painPoints, painPoints)
+            : painPoints,
+        }),
         ...(checklistTemplateId !== undefined && {
           checklistTemplateId: checklistTemplateId || null,
         }),
@@ -200,7 +212,7 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json(location)
+    return NextResponse.json(hideFinancialNotes(location, user.role))
   } catch (error) {
     console.error('Error updating location:', error)
     return NextResponse.json(

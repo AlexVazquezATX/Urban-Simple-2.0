@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
+import { canSeeFinancials } from '@/lib/financials'
 import { getLocalDayOfWeek, getLocalDateUTC } from '@/lib/services/autopilot-schedule'
 
 // Sane default when a crew has no explicit nights/estimate and no facility
@@ -183,7 +184,8 @@ export async function GET() {
           clientId: assignment.location.client.id,
           category: assignment.location.facilityProfile?.category || null,
           monthlyPay: parseFloat(assignment.monthlyPay.toString()),
-          accountRevenue,
+          // Revenue is a financial figure: admins only (crew pay stays visible).
+          accountRevenue: canSeeFinancials(user.role) ? accountRevenue : null,
           estimatedHoursPerVisit: hoursPerVisit,
           nightsPerWeek: nights,
           estWeeklyHours,
@@ -225,7 +227,9 @@ export async function GET() {
         totalAccounts: accounts.length,
         totalEstWeeklyHours: Math.round(weeklyHours * 100) / 100,
         totalMonthlyPay: Math.round(totalMonthlyPay * 100) / 100,
-        totalAccountRevenue: Math.round(totalAccountRevenue * 100) / 100,
+        totalAccountRevenue: canSeeFinancials(user.role)
+          ? Math.round(totalAccountRevenue * 100) / 100
+          : null,
         hoursStatus,
         hoursSource: actualsDominate ? ('actual' as const) : ('estimate' as const),
         hasEstimateGap: !actualsDominate && hasEstimateGap,

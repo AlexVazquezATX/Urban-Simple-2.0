@@ -13,7 +13,7 @@ import { reviewBadgeVariant } from '@/components/locations/tones'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { getReviewFreshness } from '@/lib/operations/review-freshness'
-import { canSeeFinancials } from '@/lib/financials'
+import { canSeeFinancials, hideFinancialNotes } from '@/lib/financials'
 import { cn } from '@/lib/utils'
 
 async function LocationDetail({ id }: { id: string }) {
@@ -169,7 +169,7 @@ async function LocationDetail({ id }: { id: string }) {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        <EditableLocationInfo location={location} />
+        <EditableLocationInfo location={hideFinancialNotes(location, user.role)} />
 
         <div className="space-y-6">
           <Card>

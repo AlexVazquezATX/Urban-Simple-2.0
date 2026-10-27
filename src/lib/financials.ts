@@ -114,6 +114,51 @@ export function canSeeFinancials(role: string | null | undefined): boolean {
   return role === 'SUPER_ADMIN'
 }
 
+// Billing configuration (facility monthly rates, billing previews) follows
+// the API matrix in api-access.ts: ADMIN and SUPER_ADMIN.
+export function canSeeBilling(role: string | null | undefined): boolean {
+  return role === 'SUPER_ADMIN' || role === 'ADMIN'
+}
+
+// Free-text notes were seeded from the books and carry lines like
+// "Monthly revenue: $5,421", "Margin: 53.3%" or "labor $7,200 vs revenue
+// $6,588". For anyone who can't see financials, any line naming a dollar
+// figure, revenue, profit or margin is dropped; the rest of the note stays.
+const FINANCIAL_LINE = /\$\s*-?\d|\b(revenue|profit|margin)\b/i
+
+function splitNoteLines(text: string | null | undefined): string[] {
+  return text ? text.split(/\r?\n/) : []
+}
+
+export function stripFinancialLines(text: string | null | undefined): string | null {
+  const kept = splitNoteLines(text).filter((line) => !FINANCIAL_LINE.test(line))
+  return kept.join('\n').trim() || null
+}
+
+// Saving a redacted note must not erase the lines its editor never saw:
+// re-attach the stored financial lines after whatever they typed.
+export function keepHiddenFinancialLines(
+  stored: string | null | undefined,
+  incoming: string | null | undefined
+): string | null {
+  const hidden = splitNoteLines(stored).filter((line) => FINANCIAL_LINE.test(line))
+  return [incoming?.trim(), ...hidden].filter(Boolean).join('\n') || null
+}
+
+const NOTE_FIELDS = ['serviceNotes', 'painPoints', 'notes'] as const
+type NoteFields = Partial<Record<(typeof NOTE_FIELDS)[number], string | null>>
+
+// Location (serviceNotes, painPoints) and client (notes) rows, as the role
+// may see them.
+export function hideFinancialNotes<T extends NoteFields>(row: T, role: string | null | undefined): T {
+  if (canSeeFinancials(role)) return row
+  const out: T = { ...row }
+  for (const field of NOTE_FIELDS) {
+    if (typeof out[field] === 'string') out[field] = stripFinancialLines(out[field]) as T[typeof field]
+  }
+  return out
+}
+
 // Recurring expense categories used by the dashboard for grouping. Keep the
 // list short and meaningful — too many buckets dilutes the breakdown chart.
 // Free-form strings are still accepted at the DB level; this just provides

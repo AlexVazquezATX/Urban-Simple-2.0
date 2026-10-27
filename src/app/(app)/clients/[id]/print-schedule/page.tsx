@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getCurrentUser } from '@/lib/auth'
+import { canSeeBilling } from '@/lib/financials'
 import { generateBillingPreview } from '@/lib/billing/billing-engine'
 import type { FacilityLineItem } from '@/lib/billing/billing-types'
 
@@ -35,6 +36,8 @@ export default async function PrintSchedulePage({
 }) {
   const user = await getCurrentUser()
   if (!user) redirect('/login')
+  // A billing printout (rates and totals): admins only.
+  if (!canSeeBilling(user.role)) redirect('/clients')
 
   const { id } = await params
   const sp = await searchParams

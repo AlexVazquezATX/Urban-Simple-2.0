@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db'
 import { LocationsListClient } from '@/components/locations/locations-list-client'
 import {
   canSeeFinancials,
+  hideFinancialNotes,
   summarizeAgreements,
   summarizeBand,
   type FinancialSummary,
@@ -124,7 +125,7 @@ async function LocationsList() {
   }
 
   const locationsWithFinancials = locations.map((l) => ({
-    ...l,
+    ...hideFinancialNotes(l, user.role),
     financials: showFinancials ? financialsByLocation.get(l.id) ?? null : null,
   }))
 

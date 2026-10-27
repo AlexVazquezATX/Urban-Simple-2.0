@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import {
+  canSeeBilling,
+  canSeeFinancials,
+  hideFinancialNotes,
+  keepHiddenFinancialLines,
+} from '@/lib/financials'
 
 // GET /api/clients/[id] - Get client by ID
 export async function GET(
@@ -90,7 +96,12 @@ export async function GET(
       return NextResponse.json({ error: 'Client not found' }, { status: 404 })
     }
 
-    return NextResponse.json(client)
+    return NextResponse.json({
+      ...hideFinancialNotes(client, user.role),
+      locations: client.locations.map((l) => hideFinancialNotes(l, user.role)),
+      // Facility rows carry monthly rates (billing config).
+      facilityProfiles: canSeeBilling(user.role) ? client.facilityProfiles : [],
+    })
   } catch (error) {
     console.error('Error fetching client:', error)
     return NextResponse.json(
@@ -165,7 +176,11 @@ export async function PATCH(
         ...(paymentTerms !== undefined && { paymentTerms }),
         ...(preferredPaymentMethod !== undefined && { preferredPaymentMethod }),
         ...(taxExempt !== undefined && { taxExempt }),
-        ...(notes !== undefined && { notes }),
+        ...(notes !== undefined && {
+          notes: canSeeFinancials(user.role)
+            ? notes
+            : keepHiddenFinancialLines(existingClient.notes, notes),
+        }),
         ...(status !== undefined && { status }),
         ...(parentClientId !== undefined && { parentClientId: parentClientId || null }),
       },
@@ -179,7 +194,7 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json(client)
+    return NextResponse.json(hideFinancialNotes(client, user.role))
   } catch (error) {
     console.error('Error updating client:', error)
     return NextResponse.json(

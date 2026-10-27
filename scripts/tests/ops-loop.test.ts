@@ -12,6 +12,7 @@ import { overnightStillActive, normalizeSections, parseIncompleteItems } from '.
 import { reasonLabel, NOT_DONE_REASONS } from '../../src/lib/ops/constants'
 import { getLocalDateUTC } from '../../src/lib/services/autopilot-schedule'
 import { FIELD_STRINGS } from '../../src/lib/ops/field-i18n'
+import { hideFinancialNotes, keepHiddenFinancialLines, stripFinancialLines } from '../../src/lib/financials'
 
 test('associates cannot touch pay, shifts, money or client records', () => {
   const A = 'ASSOCIATE'
@@ -159,4 +160,29 @@ test('local calendar date is right for Central time on both sides of UTC midnigh
   assert.equal(getLocalDateUTC(new Date('2026-10-26T03:00:00Z'), tz).toISOString(), '2026-10-25T00:00:00.000Z')
   // 1am Oct 26 local
   assert.equal(getLocalDateUTC(new Date('2026-10-26T06:00:00Z'), tz).toISOString(), '2026-10-26T00:00:00.000Z')
+})
+
+test('money lines in notes are hidden from managers and survive their edits', () => {
+  const stored = [
+    'Note: Negative margin (labor $7,200 vs revenue $6,588).',
+    'Kitchen floors and drains nightly.',
+    'Monthly revenue: $6,588',
+    'Monthly profit: $-612',
+    'Margin: 53.3%',
+    'Seasonal: Feb to Sep (2027 pricing schedule), paused Oct to Jan.',
+  ].join('\n')
+  const visible = stripFinancialLines(stored)
+  assert.equal(visible, 'Kitchen floors and drains nightly.\nSeasonal: Feb to Sep (2027 pricing schedule), paused Oct to Jan.')
+  assert.equal(stripFinancialLines('Monthly revenue: $5,421\nMonthly profit: $1,821'), null)
+
+  const row = { serviceNotes: stored, painPoints: null, name: 'HSB | Summit' }
+  assert.equal(hideFinancialNotes(row, 'MANAGER').serviceNotes, visible)
+  assert.equal(hideFinancialNotes(row, 'SUPER_ADMIN').serviceNotes, stored)
+  assert.equal(hideFinancialNotes({ notes: 'CDNC: $23,000/mo. Reconcile.' }, 'MANAGER').notes, null)
+
+  // A manager saves the redacted note with one line added: nothing hidden is lost.
+  const saved = keepHiddenFinancialLines(stored, `${visible}\nGate code changed.`)!
+  for (const line of stored.split('\n')) assert.ok(saved.includes(line), line)
+  assert.ok(saved.includes('Gate code changed.'))
+  assert.equal(stripFinancialLines(saved), `${visible}\nGate code changed.`)
 })

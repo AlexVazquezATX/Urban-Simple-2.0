@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClientDetailTabs } from '@/components/clients/client-detail-tabs'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { canSeeFinancials } from '@/lib/financials'
+import { canSeeBilling, canSeeFinancials, hideFinancialNotes } from '@/lib/financials'
 
 // Heavier detail content — locations, contacts, facility profiles and the
 // tabbed interface. Wrapped in its own Suspense boundary so it streams in
@@ -78,10 +78,14 @@ export async function ClientDetailContent({ id }: { id: string }) {
   }
 
   // Convert Decimal fields to plain numbers for client component serialization.
+  // Notes lose their money lines for non-admins, and facility rows (monthly
+  // rates) only reach roles that may see billing.
+  const showBilling = canSeeBilling(user.role)
   const serializedClient = {
-    ...client,
+    ...hideFinancialNotes(client, user.role),
+    locations: client.locations.map((l) => hideFinancialNotes(l, user.role)),
     taxRate: client.taxRate ? Number(client.taxRate) : null,
-    facilityProfiles: client.facilityProfiles.map((fp: any) => ({
+    facilityProfiles: (showBilling ? client.facilityProfiles : []).map((fp: any) => ({
       ...fp,
       defaultMonthlyRate: Number(fp.defaultMonthlyRate),
       monthlyOverrides: fp.monthlyOverrides.map((mo: any) => ({
@@ -125,7 +129,7 @@ export async function ClientDetailContent({ id }: { id: string }) {
         </Card>
       )}
 
-      <ClientDetailTabs client={serializedClient} />
+      <ClientDetailTabs client={serializedClient} showBilling={showBilling} />
     </div>
   )
 }

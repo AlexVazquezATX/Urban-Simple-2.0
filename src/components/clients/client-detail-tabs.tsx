@@ -28,9 +28,12 @@ import { DeltaReportTab } from '@/components/clients/tabs/delta-report-tab'
 
 interface ClientDetailTabsProps {
   client: any
+  // Facilities, billing preview, calendar, delta and change log all read
+  // billing data whose APIs are admin-only; managers get overview + documents.
+  showBilling?: boolean
 }
 
-export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
+export function ClientDetailTabs({ client, showBilling = false }: ClientDetailTabsProps) {
   const [activeTab, setActiveTab] = useState('overview')
   // For per-location alert routing on contacts.
   const locationOptions: Array<{ id: string; name: string }> = (client.locations || []).map(
@@ -42,18 +45,22 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="w-full overflow-x-auto">
         <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="facilities">
-          Facilities
-          {client.facilityProfiles?.length > 0 && (
-            <Badge variant="neutral" className="px-1.5 py-0 font-mono text-[10px]">
-              {client.facilityProfiles.length}
-            </Badge>
-          )}
-        </TabsTrigger>
-        <TabsTrigger value="billing">Billing Preview</TabsTrigger>
-        <TabsTrigger value="calendar">Calendar</TabsTrigger>
-        <TabsTrigger value="delta">Delta Report</TabsTrigger>
-        <TabsTrigger value="changelog">Change Log</TabsTrigger>
+        {showBilling && (
+          <>
+            <TabsTrigger value="facilities">
+              Facilities
+              {client.facilityProfiles?.length > 0 && (
+                <Badge variant="neutral" className="px-1.5 py-0 font-mono text-[10px]">
+                  {client.facilityProfiles.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="billing">Billing Preview</TabsTrigger>
+            <TabsTrigger value="calendar">Calendar</TabsTrigger>
+            <TabsTrigger value="delta">Delta Report</TabsTrigger>
+            <TabsTrigger value="changelog">Change Log</TabsTrigger>
+          </>
+        )}
         <TabsTrigger value="documents">Documents</TabsTrigger>
       </TabsList>
 
@@ -272,38 +279,42 @@ export function ClientDetailTabs({ client }: ClientDetailTabsProps) {
         </Card>
       </TabsContent>
 
-      {/* Facilities Tab */}
-      <TabsContent value="facilities" className="mt-4">
-        <FacilitiesTab
-          clientId={client.id}
-          facilities={client.facilityProfiles || []}
-          locations={client.locations || []}
-        />
-      </TabsContent>
+      {showBilling && (
+        <>
+          {/* Facilities Tab */}
+          <TabsContent value="facilities" className="mt-4">
+            <FacilitiesTab
+              clientId={client.id}
+              facilities={client.facilityProfiles || []}
+              locations={client.locations || []}
+            />
+          </TabsContent>
 
-      {/* Billing Preview Tab */}
-      <TabsContent value="billing" className="mt-4">
-        <BillingPreviewTab
-          clientId={client.id}
-          facilities={(client.facilityProfiles || []).map((fp: any) => ({
-            id: fp.id,
-            location: { name: fp.location?.name || 'Unknown' },
-          }))}
-        />
-      </TabsContent>
+          {/* Billing Preview Tab */}
+          <TabsContent value="billing" className="mt-4">
+            <BillingPreviewTab
+              clientId={client.id}
+              facilities={(client.facilityProfiles || []).map((fp: any) => ({
+                id: fp.id,
+                location: { name: fp.location?.name || 'Unknown' },
+              }))}
+            />
+          </TabsContent>
 
-      {/* Calendar Tab */}
-      <TabsContent value="calendar" className="mt-4">
-        <ScheduleCalendarTab clientId={client.id} />
-      </TabsContent>
+          {/* Calendar Tab */}
+          <TabsContent value="calendar" className="mt-4">
+            <ScheduleCalendarTab clientId={client.id} />
+          </TabsContent>
 
-      <TabsContent value="delta" className="mt-4">
-        <DeltaReportTab clientId={client.id} />
-      </TabsContent>
+          <TabsContent value="delta" className="mt-4">
+            <DeltaReportTab clientId={client.id} />
+          </TabsContent>
 
-      <TabsContent value="changelog" className="mt-4">
-        <ChangelogTab clientId={client.id} />
-      </TabsContent>
+          <TabsContent value="changelog" className="mt-4">
+            <ChangelogTab clientId={client.id} />
+          </TabsContent>
+        </>
+      )}
 
       <TabsContent value="documents" className="mt-4">
         <DocumentsTab clientId={client.id} />

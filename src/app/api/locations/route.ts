@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { hideFinancialNotes } from '@/lib/financials'
 
 // GET /api/locations - List all locations
 export async function GET(request: NextRequest) {
@@ -52,7 +53,7 @@ export async function GET(request: NextRequest) {
       ],
     })
 
-    return NextResponse.json(locations)
+    return NextResponse.json(locations.map((l) => hideFinancialNotes(l, user.role)))
   } catch (error) {
     console.error('Error fetching locations:', error)
     return NextResponse.json(

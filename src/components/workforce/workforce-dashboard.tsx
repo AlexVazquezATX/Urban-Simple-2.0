@@ -50,7 +50,7 @@ interface Account {
   clientId: string
   category: string | null
   monthlyPay: number
-  accountRevenue: number
+  accountRevenue: number | null // null for roles that can't see financials
   estimatedHoursPerVisit: number
   nightsPerWeek: number
   estWeeklyHours: number
@@ -72,7 +72,7 @@ interface Associate {
   totalAccounts: number
   totalEstWeeklyHours: number
   totalMonthlyPay: number
-  totalAccountRevenue: number
+  totalAccountRevenue: number | null
   hoursStatus: 'safe' | 'watch' | 'warning' | 'danger'
   hoursSource?: 'actual' | 'estimate'
   hasEstimateGap?: boolean
@@ -399,12 +399,14 @@ function AssociateRow({ associate, onUpdate, canManage }: { associate: Associate
                   </div>
 
                   {/* Revenue */}
-                  <div className="hidden w-20 text-right lg:block">
-                    <div className="font-mono text-sm tabular-nums text-foreground">
-                      {formatMoney(account.accountRevenue)}
+                  {account.accountRevenue !== null && (
+                    <div className="hidden w-20 text-right lg:block">
+                      <div className="font-mono text-sm tabular-nums text-foreground">
+                        {formatMoney(account.accountRevenue)}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">revenue</div>
                     </div>
-                    <div className="text-[10px] text-muted-foreground">revenue</div>
-                  </div>
+                  )}
 
                   {/* Actions */}
                   <div className="flex items-center gap-0.5">
@@ -532,7 +534,7 @@ export function WorkforceDashboard() {
   const warningCount = associates.filter((a) => a.hoursStatus === 'warning').length
   const watchCount = associates.filter((a) => a.hoursStatus === 'watch').length
   const totalMonthlyPayroll = associates.reduce((sum, a) => sum + a.totalMonthlyPay, 0)
-  const totalMonthlyRevenue = associates.reduce((sum, a) => sum + a.totalAccountRevenue, 0)
+  const totalMonthlyRevenue = associates.reduce((sum, a) => sum + (a.totalAccountRevenue ?? 0), 0)
 
   // Filter
   const filtered = filter === 'all'

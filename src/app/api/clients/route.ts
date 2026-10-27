@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
+import { hideFinancialNotes } from '@/lib/financials'
 
 // GET /api/clients - List all clients
 export async function GET(request: NextRequest) {
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(clients)
+    return NextResponse.json(clients.map((c) => hideFinancialNotes(c, user.role)))
   } catch (error) {
     console.error('Error fetching clients:', error)
     return NextResponse.json(

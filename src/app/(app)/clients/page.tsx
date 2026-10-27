@@ -7,6 +7,7 @@ import { prisma } from '@/lib/db'
 import { ClientsListClient } from '@/components/clients/clients-list-client'
 import {
   canSeeFinancials,
+  hideFinancialNotes,
   summarizeAgreements,
   summarizeBand,
   type FinancialSummary,
@@ -94,7 +95,7 @@ async function ClientsList() {
       : null
 
     return {
-      ...c,
+      ...hideFinancialNotes(c, user.role),
       taxRate: c.taxRate ? Number(c.taxRate) : null,
       financials,
     }
