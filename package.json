@@ -11,6 +11,7 @@
     "test:lead-analytics": "tsx --test scripts/tests/lead-analytics.test.ts",
     "test:ops": "tsx --test scripts/tests/ops-loop.test.ts",
     "db:check": "tsx scripts/db-check.ts",
+    "crew:logins": "node --use-system-ca --import tsx scripts/crew-logins.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-demo": "tsx scripts/seed-demo-data.ts",
     "db:seed-agreements": "tsx scripts/seed-service-agreements.ts",
