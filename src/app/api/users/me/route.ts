@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/auth'
 import { prisma } from '@/lib/db'
-import { toE164 } from '@/lib/notify/sms'
+import { sendSms, toE164 } from '@/lib/notify/sms'
+import { SMS_OPT_IN_CONFIRMATION } from '@/lib/notify/sms-consent'
 
 /**
  * GET /api/users/me
@@ -86,6 +87,7 @@ export async function PATCH(request: NextRequest) {
       data.preferredLanguage = body.preferredLanguage
     }
 
+    let confirmSmsTo: string | null = null
     if ('smsAlerts' in body || 'phone' in body) {
       const current = await prisma.user.findUnique({
         where: { id: user.id },
@@ -95,6 +97,10 @@ export async function PATCH(request: NextRequest) {
       const nextPhone = 'phone' in data ? (data.phone as string | null) : current?.phone ?? null
       if (nextSms && !toE164(nextPhone)) {
         return NextResponse.json({ error: 'Text alerts need a valid mobile number' }, { status: 400 })
+      }
+      // Newly on, or on with a new number: confirm the opt-in by text.
+      if (nextSms && (!current?.smsAlerts || toE164(nextPhone) !== toE164(current?.phone))) {
+        confirmSmsTo = nextPhone
       }
     }
 
@@ -116,6 +122,10 @@ export async function PATCH(request: NextRequest) {
         preferredLanguage: true,
       },
     })
+
+    if (confirmSmsTo) {
+      await sendSms({ companyId: updatedUser.companyId, to: confirmSmsTo, body: SMS_OPT_IN_CONFIRMATION, userId: user.id })
+    }
 
     return NextResponse.json(updatedUser)
   } catch (error: any) {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { toE164 } from '@/lib/notify/sms'
+import { sendSms, toE164 } from '@/lib/notify/sms'
+import { SMS_OPT_IN_CONFIRMATION } from '@/lib/notify/sms-consent'
 
 export const dynamic = 'force-dynamic'
 
@@ -244,6 +245,11 @@ export async function PATCH(
         },
       },
     })
+
+    // Newly on, or on with a new number: confirm the opt-in by text.
+    if (nextSms && (!existing.smsAlerts || toE164(nextPhone) !== toE164(existing.phone))) {
+      await sendSms({ companyId: updatedUser.companyId, to: nextPhone, body: SMS_OPT_IN_CONFIRMATION, userId: id })
+    }
 
     return NextResponse.json(updatedUser)
   } catch (error: any) {

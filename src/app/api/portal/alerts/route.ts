@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getPortalContext } from '@/lib/portal-auth'
-import { smsConfigured, toE164 } from '@/lib/notify/sms'
+import { sendSms, smsConfigured, toE164 } from '@/lib/notify/sms'
+import { SMS_OPT_IN_CONFIRMATION } from '@/lib/notify/sms-consent'
 
 // Alert preferences for the signed-in portal user. They only ever manage
 // their OWN ClientContact row (userId = them, clientId = their client).
@@ -108,5 +109,13 @@ export async function PATCH(request: NextRequest) {
     data,
     select: CONTACT_SELECT,
   })
+
+  // Fresh consent (first opt-in, re-opt-in, or new number): confirm by text.
+  if (data.smsConsentAt) {
+    const client = await prisma.client.findUnique({ where: { id: ctx.client.id }, select: { companyId: true } })
+    if (client) {
+      await sendSms({ companyId: client.companyId, to: updated.phone, body: SMS_OPT_IN_CONFIRMATION, clientId: ctx.client.id })
+    }
+  }
   return NextResponse.json({ contact: updated })
 }
