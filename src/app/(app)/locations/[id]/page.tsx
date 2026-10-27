@@ -27,7 +27,7 @@ async function LocationDetail({ id }: { id: string }) {
 
   // The location query and the per-location agreement query are independent —
   // the agreement query keys off the route param, so it runs concurrently.
-  const [location, agreement] = await Promise.all([
+  const [foundLocation, agreement] = await Promise.all([
     prisma.location.findFirst({
       where: {
         id,
@@ -116,6 +116,10 @@ async function LocationDetail({ id }: { id: string }) {
       : Promise.resolve(null),
   ])
 
+  // Every child component gets the record with money lines stripped from
+  // the notes (non-admins), since each one is serialized to the browser.
+  const location = foundLocation && hideFinancialNotes(foundLocation, user.role)
+
   if (!location) {
     return (
       <div className="text-sm text-muted-foreground">
@@ -169,7 +173,7 @@ async function LocationDetail({ id }: { id: string }) {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        <EditableLocationInfo location={hideFinancialNotes(location, user.role)} />
+        <EditableLocationInfo location={location} />
 
         <div className="space-y-6">
           <Card>
