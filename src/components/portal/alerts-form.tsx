@@ -9,9 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-
-export const SMS_CONSENT_TEXT =
-  'I agree to receive service alert text messages from Urban Simple at this number. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.'
+import { SMS_CONSENT_TEXT } from '@/lib/notify/sms-consent'
 
 export interface AlertsContact {
   email: string
@@ -157,7 +155,11 @@ export function AlertsForm({
                   className="mt-0.5"
                   aria-label="Agree to text alerts"
                 />
-                <span className="text-[12.5px] leading-relaxed text-foreground">{SMS_CONSENT_TEXT}</span>
+                <span className="text-[12.5px] leading-relaxed text-foreground">
+                  {SMS_CONSENT_TEXT} See our{' '}
+                  <a href="/terms" target="_blank" className="underline">Terms</a> and{' '}
+                  <a href="/privacy" target="_blank" className="underline">Privacy Policy</a>.
+                </span>
               </label>
             )}
           </div>

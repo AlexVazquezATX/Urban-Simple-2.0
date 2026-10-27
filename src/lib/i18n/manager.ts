@@ -451,7 +451,7 @@ const en = {
       selectBranch: 'Select branch',
       textAlerts: 'Text me alerts',
       textAlertsHint:
-        'Urgent ops alerts by text to the phone above. In-app and email alerts are always on.',
+        'Urgent ops alerts by text to the phone above. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help. In-app and email alerts are always on.',
       needPhone: 'Add a mobile number to get texts.',
       fieldLanguage: 'Field language',
       fieldLanguageHint: 'Language for the field screens associates use on shift.',
@@ -936,7 +936,7 @@ const es: ManagerStrings = {
       selectBranch: 'Elegir sucursal',
       textAlerts: 'Recibir alertas por texto',
       textAlertsHint:
-        'Alertas urgentes de operaciones por texto al teléfono de arriba. Las alertas en la app y por correo siempre están activas.',
+        'Alertas urgentes de operaciones por texto al teléfono de arriba. La frecuencia varía. Pueden aplicar tarifas de mensajes y datos. Responde STOP para cancelar, HELP para ayuda. Las alertas en la app y por correo siempre están activas.',
       needPhone: 'Agrega un número de celular para recibir textos.',
       fieldLanguage: 'Idioma en campo',
       fieldLanguageHint: 'Idioma de las pantallas que usan los asociados en su turno.',
