@@ -16,8 +16,12 @@ clients without IDs. Database advisory locks serialize races across instances.
 Later distinct requests remain distinct; this does not merge unrelated CRM records
 by contact email or reset an existing prospect's stage/owner.
 
-UTM source, medium, campaign, and referrer remain in the prospect's `discoveryData`
-and immutable receipt. Set `LEAD_OWNER_USER_ID` to Demian's verified staff ID
+UTM source, medium, campaign, content (creative), and referrer remain in the
+prospect's `discoveryData` and immutable receipt. `utm_content` is optional and
+limited to 200 characters, like the other UTM fields. Missing or empty content
+leaves campaign attribution intact; invalid types or longer values return `400`
+before any writes. Existing JSON storage needs no database migration. Set
+`LEAD_OWNER_USER_ID` to Demian's verified staff ID
 if walkthroughs should be assigned automatically. The ID must be active and
 belong to the intake company. Julio's estimating/staffing and Alex's pricing
 handoff remain existing business procedures. This change sends no Slack alert.

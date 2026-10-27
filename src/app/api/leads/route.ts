@@ -35,6 +35,7 @@ export async function POST(request: NextRequest) {
     utm_source: data.utm_source || undefined,
     utm_medium: data.utm_medium || undefined,
     utm_campaign: data.utm_campaign || undefined,
+    utm_content: data.utm_content || undefined,
     referrer: data.referrer || undefined,
   }
   try {

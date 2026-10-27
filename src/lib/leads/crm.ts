@@ -96,6 +96,7 @@ export function buildCrmPayload(payload: LeadPayload) {
       utm_source: payload.utm_source ?? null,
       utm_medium: payload.utm_medium ?? null,
       utm_campaign: payload.utm_campaign ?? null,
+      utm_content: payload.utm_content ?? null,
       referrer: payload.referrer ?? null,
     },
   }

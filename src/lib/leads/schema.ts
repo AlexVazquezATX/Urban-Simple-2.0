@@ -94,6 +94,7 @@ export const leadFormSchema = z.object({
   utm_source: z.string().max(200).optional().or(z.literal('')),
   utm_medium: z.string().max(200).optional().or(z.literal('')),
   utm_campaign: z.string().max(200).optional().or(z.literal('')),
+  utm_content: z.string().max(200).optional().or(z.literal('')),
   referrer: z.string().max(500).optional().or(z.literal('')),
 })
 
@@ -120,6 +121,7 @@ export type LeadPayload = {
   utm_source?: string
   utm_medium?: string
   utm_campaign?: string
+  utm_content?: string
   referrer?: string
 }
 
