@@ -3,7 +3,7 @@ import { format, subMonths } from 'date-fns'
 import { Camera, MapPin, Star } from 'lucide-react'
 import { requirePortalContext } from '@/lib/portal-auth'
 import { prisma } from '@/lib/db'
-import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { getLocalDateUTC } from '@/lib/services/autopilot-schedule'
 import { addDaysToKey, dbDate, dbDateKey, localDateKey } from '@/lib/portal-dates'
 import { VisitRating } from '@/components/portal/visit-rating'
 import {
@@ -72,9 +72,10 @@ export default async function CleaningLogPage({
   const timezone = clientBranch?.branch?.timezone || 'America/Chicago'
 
   // Last 90 days of service reviews + shifts, bounded to end of today so
-  // future scheduled shifts never appear under this history view.
+  // future scheduled shifts never appear under this history view. Shift.date
+  // is a @db.Date, so the bound is tomorrow's date at UTC midnight.
   const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-  const endOfToday = getStartOfLocalDay(
+  const endOfToday = getLocalDateUTC(
     new Date(Date.now() + 24 * 60 * 60 * 1000),
     timezone
   )

@@ -47,8 +47,8 @@ export function getLocalHour(date: Date, timeZone: string): number {
 }
 
 // The company-local calendar date as a UTC-midnight Date (the convention
-// Shift.date / @db.Date columns use). Prefer this over getStartOfLocalDay for
-// "what day is it", which lands on the previous day for zones behind UTC.
+// Shift.date / @db.Date columns use). Use this to compare against @db.Date
+// columns; use getStartOfLocalDay to compare against timestamps.
 export function getLocalDateUTC(date: Date, timeZone: string): Date {
   const parts = formatterParts(date, timeZone)
   return new Date(Date.UTC(
@@ -58,25 +58,34 @@ export function getLocalDateUTC(date: Date, timeZone: string): Date {
   ))
 }
 
-// Returns a UTC Date representing the instant that is midnight local time
-// for the given date in the given timezone.
-export function getStartOfLocalDay(date: Date, timeZone: string): Date {
+// The zone's UTC offset at an instant, in ms (negative west of UTC): the local
+// wall-clock time read as if it were UTC, minus the instant itself.
+function zoneOffsetMs(date: Date, timeZone: string): number {
   const parts = formatterParts(date, timeZone)
-  const y = parseInt(pickPart(parts, 'year'), 10)
-  const m = parseInt(pickPart(parts, 'month'), 10)
-  const d = parseInt(pickPart(parts, 'day'), 10)
+  const hour = parseInt(pickPart(parts, 'hour'), 10)
+  const wallAsUtc = Date.UTC(
+    parseInt(pickPart(parts, 'year'), 10),
+    parseInt(pickPart(parts, 'month'), 10) - 1,
+    parseInt(pickPart(parts, 'day'), 10),
+    hour === 24 ? 0 : hour,
+    parseInt(pickPart(parts, 'minute'), 10),
+    parseInt(pickPart(parts, 'second'), 10),
+  )
+  return wallAsUtc - Math.floor(date.getTime() / 1000) * 1000
+}
 
-  // Construct a candidate UTC timestamp for midnight on that date, then adjust
-  // by the tz offset. We iterate at most twice to handle DST boundaries.
-  let candidate = Date.UTC(y, m - 1, d, 0, 0, 0)
+// Returns a UTC Date representing the instant that is midnight local time
+// for the given date in the given timezone (05:00Z for a CDT day).
+export function getStartOfLocalDay(date: Date, timeZone: string): Date {
+  const localMidnightAsUtc = getLocalDateUTC(date, timeZone).getTime()
+
+  // Subtract the zone offset, then re-check it at the result in case midnight
+  // sits on the other side of a DST change.
+  let candidate = localMidnightAsUtc
   for (let i = 0; i < 2; i++) {
-    const candidateParts = formatterParts(new Date(candidate), timeZone)
-    const h = parseInt(pickPart(candidateParts, 'hour'), 10) || 0
-    const min = parseInt(pickPart(candidateParts, 'minute'), 10) || 0
-    const offsetMinutes = h * 60 + min
-    if (offsetMinutes === 0) break
-    // Shift back so that the candidate lands on local 00:00.
-    candidate -= offsetMinutes * 60 * 1000
+    const next = localMidnightAsUtc - zoneOffsetMs(new Date(candidate), timeZone)
+    if (next === candidate) break
+    candidate = next
   }
   return new Date(candidate)
 }

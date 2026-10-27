@@ -10,7 +10,13 @@ import { toE164, verifyTwilioSignature } from '../../src/lib/notify/sms'
 import { renderAlertEmail, renderAlertText } from '../../src/lib/notify/email'
 import { overnightStillActive, normalizeSections, parseIncompleteItems } from '../../src/lib/ops/field'
 import { reasonLabel, NOT_DONE_REASONS } from '../../src/lib/ops/constants'
-import { getLocalDateUTC } from '../../src/lib/services/autopilot-schedule'
+import {
+  getLocalDateUTC,
+  getLocalDayOfWeek,
+  getLocalHour,
+  getStartOfLocalDay,
+  nextSendSlot,
+} from '../../src/lib/services/autopilot-schedule'
 import { FIELD_STRINGS } from '../../src/lib/ops/field-i18n'
 import { hideFinancialNotes, keepHiddenFinancialLines, stripFinancialLines } from '../../src/lib/financials'
 
@@ -160,6 +166,32 @@ test('local calendar date is right for Central time on both sides of UTC midnigh
   assert.equal(getLocalDateUTC(new Date('2026-10-26T03:00:00Z'), tz).toISOString(), '2026-10-25T00:00:00.000Z')
   // 1am Oct 26 local
   assert.equal(getLocalDateUTC(new Date('2026-10-26T06:00:00Z'), tz).toISOString(), '2026-10-26T00:00:00.000Z')
+})
+
+test('start of local day is the instant of local midnight, today not yesterday', () => {
+  const start = (iso: string, tz: string) => getStartOfLocalDay(new Date(iso), tz).toISOString()
+  const ct = 'America/Chicago'
+  // 10am and 10pm Oct 25 CDT both start at Oct 25 00:00 CDT
+  assert.equal(start('2026-10-25T15:00:00Z', ct), '2026-10-25T05:00:00.000Z')
+  assert.equal(start('2026-10-26T03:00:00Z', ct), '2026-10-25T05:00:00.000Z')
+  // CST in winter
+  assert.equal(start('2026-12-10T18:00:00Z', ct), '2026-12-10T06:00:00.000Z')
+  // DST days: Nov 1 starts in CDT, Mar 8 starts in CST
+  assert.equal(start('2026-11-01T20:00:00Z', ct), '2026-11-01T05:00:00.000Z')
+  assert.equal(start('2026-03-08T20:00:00Z', ct), '2026-03-08T06:00:00.000Z')
+  // Zones east of UTC and UTC itself
+  assert.equal(start('2026-10-25T20:00:00Z', 'Asia/Tokyo'), '2026-10-25T15:00:00.000Z')
+  assert.equal(start('2026-10-25T20:00:00Z', 'UTC'), '2026-10-25T00:00:00.000Z')
+})
+
+test('next send slot lands on an allowed local day inside the window', () => {
+  const window = { timezone: 'America/Chicago', hourStart: 9, hourEnd: 11, daysOfWeek: [1, 2, 3, 4, 5] }
+  // Saturday Oct 24, noon CDT: next slot is Monday Oct 26 between 9 and 11 CDT
+  const slot = nextSendSlot(new Date('2026-10-24T17:00:00Z'), window)
+  assert.equal(getLocalDayOfWeek(slot, window.timezone), 1)
+  assert.equal(getLocalDateUTC(slot, window.timezone).toISOString(), '2026-10-26T00:00:00.000Z')
+  const h = getLocalHour(slot, window.timezone)
+  assert.ok(h >= 9 && h < 11, `hour ${h}`)
 })
 
 test('money lines in notes are hidden from managers and survive their edits', () => {

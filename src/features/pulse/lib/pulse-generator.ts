@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db'
 import { GoogleGenAI, Type } from '@google/genai'
 import { buildBusinessContext, formatContextForAI } from '@/features/ai/lib/context-builder'
-import { getStartOfLocalDay } from '@/lib/services/autopilot-schedule'
+import { getLocalDateUTC } from '@/lib/services/autopilot-schedule'
 import type {
   GenerationOptions,
   GenerationResult,
@@ -19,14 +19,7 @@ const DEFAULT_TIMEZONE = 'America/Chicago'
  * a plain UTC midnight rolls to tomorrow after ~7pm Central and hides it.
  */
 export function getBriefingDate(now: Date, timezone: string): Date {
-  const localMidnight = getStartOfLocalDay(now, timezone)
-  return new Date(
-    Date.UTC(
-      localMidnight.getUTCFullYear(),
-      localMidnight.getUTCMonth(),
-      localMidnight.getUTCDate()
-    )
-  )
+  return getLocalDateUTC(now, timezone)
 }
 
 /** Resolve the company's operating timezone (first branch), defaulting to CT. */
