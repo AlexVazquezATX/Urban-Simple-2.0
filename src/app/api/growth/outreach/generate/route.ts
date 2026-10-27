@@ -7,6 +7,7 @@ import {
   type ProspectData,
   type ComposerOptions,
 } from '@/lib/ai/outreach-composer'
+import { recipientFirst } from '@/lib/services/outreach-recipient'
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,7 +59,8 @@ export async function POST(request: NextRequest) {
       address: prospect.address as any,
       website: prospect.website || undefined,
       priceLevel: prospect.priceLevel || undefined,
-      contacts: prospect.contacts.map((c) => ({
+      // Recipient first: the composer greets contacts[0]
+      contacts: recipientFirst(prospect.contacts).map((c) => ({
         firstName: c.firstName,
         lastName: c.lastName,
         title: c.title || undefined,

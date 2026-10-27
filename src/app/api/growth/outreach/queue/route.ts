@@ -63,6 +63,8 @@ export async function POST(request: NextRequest) {
         channel,
         subject: subject || null,
         body: messageBody,
+        // Send to the address the operator chose, not the prospect's first contact
+        ...(channel === 'email' && typeof to === 'string' ? { recipientEmail: to.trim() } : {}),
         status: 'pending',
         approvalStatus: 'pending',
         isAiGenerated: false,

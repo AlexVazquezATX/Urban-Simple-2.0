@@ -17,10 +17,32 @@ export async function GET(request: NextRequest) {
 
     const companyId = user.companyId
 
+    // Leave out internal test prospects (contacts at our own sending domains),
+    // which made up most of the "failed" count and skewed every rate.
+    const ownDomains = [
+      ...new Set(
+        [process.env.RESEND_OUTREACH_FROM_EMAIL, process.env.RESEND_FROM_EMAIL]
+          .map((a) => a?.match(/@([^>\s]+)/)?.[1]?.toLowerCase())
+          .filter((d): d is string => !!d && d !== 'resend.dev'),
+      ),
+    ]
+    const realProspect = {
+      companyId,
+      ...(ownDomains.length
+        ? {
+            NOT: {
+              contacts: {
+                some: { OR: ownDomains.map((d) => ({ email: { endsWith: `@${d}`, mode: 'insensitive' as const } })) },
+              },
+            },
+          }
+        : {}),
+    }
+
     // Get all outreach messages for this company that have been sent (or beyond)
     const messages = await prisma.outreachMessage.findMany({
       where: {
-        prospect: { companyId },
+        prospect: realProspect,
         status: { in: ['sent', 'delivered', 'opened', 'clicked', 'replied', 'bounced', 'failed'] },
       },
       select: {
@@ -52,7 +74,7 @@ export async function GET(request: NextRequest) {
     // Count both as a reply.
     const replied = await prisma.prospectActivity.count({
       where: {
-        prospect: { companyId },
+        prospect: realProspect,
         outcome: { in: ['interested', 'replied'] },
         type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
       },
@@ -140,7 +162,7 @@ export async function GET(request: NextRequest) {
     const pipeline = await prisma.outreachMessage.groupBy({
       by: ['approvalStatus', 'status'],
       where: {
-        prospect: { companyId },
+        prospect: realProspect,
         status: 'pending',
       },
       _count: true,

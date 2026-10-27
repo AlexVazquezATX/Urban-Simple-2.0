@@ -10,6 +10,7 @@
     "test:leads": "tsx --test scripts/tests/lead-intake.test.ts",
     "test:lead-analytics": "tsx --test scripts/tests/lead-analytics.test.ts",
     "test:ops": "tsx --test scripts/tests/ops-loop.test.ts",
+    "test:outreach": "tsx --test scripts/tests/outreach-deliverability.test.ts",
     "db:check": "tsx scripts/db-check.ts",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed-demo": "tsx scripts/seed-demo-data.ts",

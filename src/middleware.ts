@@ -267,6 +267,7 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith('/api/quote-request') ||
       pathname.startsWith('/api/walkthrough-request') ||
       pathname.startsWith('/api/webhooks') ||
+      pathname.startsWith('/api/outreach/unsubscribe') ||
       pathname.startsWith('/api/cron') ||
       pathname.startsWith('/api/stripe')
 

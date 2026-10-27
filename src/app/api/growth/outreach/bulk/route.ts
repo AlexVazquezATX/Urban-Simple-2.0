@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { pickRecipient } from '@/lib/services/outreach-recipient'
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,9 +41,7 @@ export async function POST(request: NextRequest) {
         companyId: user.companyId,
       },
       include: {
-        contacts: {
-          take: 1,
-        },
+        contacts: true,
       },
     })
 
@@ -80,7 +79,9 @@ export async function POST(request: NextRequest) {
           personalizedSubject = personalizedSubject.replace(/\{\{company_name\}\}/g, prospect.companyName)
         }
 
-        const contact = prospect.contacts[0]
+        // Greet and pin the same contact the sender will email
+        const recipient = pickRecipient(prospect.contacts)
+        const contact = recipient ?? prospect.contacts[0]
         if (contact) {
           if (contact.firstName) {
             personalizedBody = personalizedBody.replace(/\{\{contact_first_name\}\}/g, contact.firstName)
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
             channel,
             subject: channel === 'email' ? personalizedSubject : null,
             body: personalizedBody,
+            contactId: recipient?.id ?? null,
             status: 'pending',
             scheduledAt: new Date(), // Send immediately, but stagger in processing
           },

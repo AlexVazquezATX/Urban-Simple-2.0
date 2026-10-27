@@ -332,7 +332,7 @@ export function MessagesHub() {
         toast.success(`Sent ${sentCount} message${sentCount > 1 ? 's' : ''}`)
       }
       if (failedCount > 0) {
-        const failedResults = (data.results || []).filter((r: any) => r.status === 'failed')
+        const failedResults = (data.results || []).filter((r: any) => r.status === 'failed' || r.status === 'blocked')
         const reasons = failedResults.map((r: any) => r.reason).filter(Boolean)
         toast.error(`${failedCount} failed: ${reasons[0] || 'Unknown error'}`)
       }

@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/db'
 import type { Prisma } from '@prisma/client'
 import { nextSendSlot, slotAfterDays } from './autopilot-schedule'
+import { pickRecipient } from './outreach-recipient'
 
 // Shared enrollment logic used by both the manual "apply sequence" route and
 // the automatic CSV-import autopilot enrollment path.
@@ -31,10 +32,14 @@ type ProspectData = {
   companyName: string
   address: unknown
   contacts: Array<{
+    id?: string
     firstName: string
     lastName: string
     title: string | null
     email: string | null
+    isDecisionMaker?: boolean | null
+    emailVerificationStatus?: string | null
+    createdAt?: Date | null
   }>
 }
 
@@ -48,10 +53,10 @@ type CompanyAutopilot = {
 
 function resolveMergeTags(
   text: string | null,
-  prospect: ProspectData
+  prospect: ProspectData,
+  contact: ProspectData['contacts'][number] | null
 ): string | null {
   if (!text) return text
-  const contact = prospect.contacts?.[0]
   const addr = (prospect.address as Record<string, string> | null) || {}
   const locationParts = [addr.city, addr.state].filter(Boolean)
 
@@ -160,6 +165,13 @@ export async function enrollProspectInSequence(args: {
     }
   }
 
+  // Resolve the greeting and pin the recipient from the same contact, so
+  // "Hi Bryce" never lands in Devon's inbox.
+  // Only a contact with a usable address gets pinned; with none, the greeting
+  // falls back to the first contact and the sender re-picks once one exists.
+  const recipient = pickRecipient(prospect.contacts)
+  const greeted = recipient ?? prospect.contacts?.[0] ?? null
+
   for (let i = 0; i < template.messages.length; i++) {
     const step = template.messages[i]
     const scheduledAt = scheduledTimes[i]
@@ -179,8 +191,9 @@ export async function enrollProspectInSequence(args: {
         step: step.step,
         delayDays: step.delayDays,
         channel: step.channel,
-        subject: resolveMergeTags(step.subject, prospect),
-        body: resolveMergeTags(step.body, prospect) || step.body,
+        subject: resolveMergeTags(step.subject, prospect, greeted),
+        body: resolveMergeTags(step.body, prospect, greeted) || step.body,
+        contactId: recipient?.id ?? null,
         isAiGenerated: step.isAiGenerated,
         status: 'pending',
         approvalStatus,

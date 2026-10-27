@@ -43,11 +43,15 @@ export async function POST(request: NextRequest) {
         data: {
           emailVerified: result.is_valid,
           emailVerifiedAt: new Date(),
+          // UNKNOWN means the mail server couldn't be reached, not that the
+          // address doesn't exist; storing it as 'invalid' would block it for good.
           emailVerificationStatus: result.is_valid
             ? 'valid'
-            : result.is_catch_all
+            : result.is_catch_all || result.deliverability === 'RISKY'
               ? 'risky'
-              : 'invalid',
+              : result.deliverability === 'UNKNOWN'
+                ? 'unknown'
+                : 'invalid',
           emailConfidence: Math.round(result.quality_score),
           updatedAt: new Date(),
         },
