@@ -54,6 +54,7 @@ export async function verifyEmail(email: string): Promise<VerificationResult> {
     is_catch_all: data.is_catchall_email.value,
     quality_score: parseFloat(data.quality_score) * 100,
     did_you_mean: data.autocorrect || undefined,
+    deliverability: data.deliverability,
   }
 }
 

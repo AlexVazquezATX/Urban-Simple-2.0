@@ -3,6 +3,12 @@ import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { Resend } from 'resend'
 import { outreachReplyTo } from '@/lib/services/outreach-guards'
+import {
+  checkSendable,
+  describeSendCheck,
+  resolveMessageRecipient,
+} from '@/lib/services/outreach-recipient'
+import { buildOutreachEmail } from '@/lib/services/outreach-email'
 import { logComm } from '@/lib/comms/log'
 
 // Initialize Resend lazily to avoid build-time errors
@@ -37,6 +43,7 @@ export async function POST(request: NextRequest) {
         id: prospectId,
         companyId: user.companyId,
       },
+      include: { contacts: { orderBy: { createdAt: 'asc' } } },
     })
 
     if (!prospect) {
@@ -46,6 +53,22 @@ export async function POST(request: NextRequest) {
     if (prospect.doNotContact) {
       return NextResponse.json({ error: 'This prospect is marked Do Not Contact' }, { status: 403 })
     }
+
+    // Email goes through the same verification gate as automated sends.
+    const recipient = channel === 'email'
+      ? resolveMessageRecipient({ recipientEmail: String(to) }, prospect.contacts)
+      : null
+    if (channel === 'email') {
+      // A one-off a person typed is their call on catch-all/unverified domains;
+      // bounced and opted-out addresses are still refused.
+      const check = await checkSendable(recipient, prospect, { allowUnverified: true })
+      if (!check.ok) {
+        return NextResponse.json({ error: describeSendCheck(check.reason, String(to)) }, { status: 422 })
+      }
+    }
+    const recipientFields = channel === 'email'
+      ? { recipientEmail: String(to).trim(), contactId: recipient?.id ?? null }
+      : {}
 
     // If scheduled, create scheduled message
     if (scheduledAt) {
@@ -86,6 +109,8 @@ export async function POST(request: NextRequest) {
           approvedAt: new Date(),
           approvedById: user.id,
           scheduledAt: new Date(scheduledAt),
+          // The executor sends to this exact address, not the prospect's first contact
+          ...recipientFields,
         },
       })
 
@@ -128,23 +153,20 @@ export async function POST(request: NextRequest) {
 
       const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
-      // Build email body with optional signature and logo
-      let emailHtml = messageBody.replace(/\n/g, '<br>')
-      if (user.emailSignature || user.signatureLogoUrl) {
-        emailHtml += '<br><br>--<br>'
-        if (user.emailSignature) {
-          emailHtml += user.emailSignature.replace(/\n/g, '<br>')
-        }
-        if (user.signatureLogoUrl) {
-          emailHtml += `<br><br><img src="${user.signatureLogoUrl}" alt="Logo" style="max-height: 60px; width: auto;" />`
-        }
-      }
+      const email = buildOutreachEmail({
+        body: messageBody,
+        signature: user,
+        prospectId,
+        contactId: recipient?.id,
+      })
 
       const { data, error } = await resendClient.emails.send({
         from: fromEmail,
         to,
         subject,
-        html: emailHtml,
+        html: email.html,
+        text: email.text,
+        headers: email.headers,
         ...outreachReplyTo(),
       })
 
@@ -185,6 +207,7 @@ export async function POST(request: NextRequest) {
         channel,
         subject: subject || null,
         body: messageBody,
+        ...recipientFields,
         status: 'sent',
         approvalStatus: 'approved',
         approvedAt: now,

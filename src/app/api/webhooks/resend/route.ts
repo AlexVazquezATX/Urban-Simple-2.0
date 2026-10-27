@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import crypto from 'crypto'
 import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
 import { resolveOutreachActorId } from '@/lib/services/outreach-guards'
+import { suppressBouncedAddress } from '@/lib/services/outreach-recipient'
 import { logComm, stampCommByResendId } from '@/lib/comms/log'
 import { classifyInbound } from '@/lib/comms/classify'
 
@@ -283,6 +284,20 @@ export async function POST(request: NextRequest) {
         // Auto-cancel remaining messages for this prospect
         if (message.prospectId) {
           await cancelPendingMessagesForProspect(message.prospectId, 'email_bounced')
+        }
+        // A hard bounce means the address doesn't exist: mark it bad on every
+        // prospect record so no future sequence picks it. Soft (transient)
+        // bounces like a full mailbox leave the address alone.
+        {
+          const bounceType = typeof data?.bounce?.type === 'string' ? data.bounce.type : null
+          const bouncedTo = message.recipientEmail || extractEmail(data?.to)
+          if (bouncedTo && (!bounceType || /permanent|hard/i.test(bounceType))) {
+            const owner = message.prospectId
+              ? await prisma.prospect.findUnique({ where: { id: message.prospectId }, select: { companyId: true } })
+              : null
+            const marked = await suppressBouncedAddress(bouncedTo, owner?.companyId)
+            console.warn(`[RESEND WEBHOOK] Hard bounce for ${bouncedTo}: ${marked} contact record(s) marked invalid`)
+          }
         }
         break
 

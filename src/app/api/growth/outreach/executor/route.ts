@@ -10,11 +10,12 @@ import {
 import {
   findDuplicateAlreadySent,
   findUnresolvedMergeTags,
-  isValidEmail,
   outreachReplyTo,
   resolveOutreachActorId,
 } from '@/lib/services/outreach-guards'
 import { logComm } from '@/lib/comms/log'
+import { checkSendable, resolveMessageRecipient } from '@/lib/services/outreach-recipient'
+import { buildOutreachEmail } from '@/lib/services/outreach-email'
 
 // Initialize Resend lazily
 let resend: Resend | null = null
@@ -34,6 +35,12 @@ function getResend() {
  *      the company's send window + daily cap. The first send of step 1 is how
  *      prospects auto-imported via CSV get their initial cold email.
  */
+// Address verification runs inline the first time an address is sent to.
+// Cap lookups per run so a backlog of never-verified contacts can't turn one
+// hourly run into hundreds of paid API calls (the rest verify next run).
+const VERIFICATIONS_PER_RUN = 25
+export const maxDuration = 300
+
 export async function GET(request: NextRequest) {
   return POST(request)
 }
@@ -77,7 +84,7 @@ export async function POST(request: NextRequest) {
       include: {
         prospect: {
           include: {
-            contacts: { take: 1 },
+            contacts: { orderBy: { createdAt: 'asc' } },
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
@@ -119,7 +126,7 @@ export async function POST(request: NextRequest) {
       include: {
         prospect: {
           include: {
-            contacts: { take: 1 },
+            contacts: { orderBy: { createdAt: 'asc' } },
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
@@ -155,7 +162,7 @@ export async function POST(request: NextRequest) {
       include: {
         prospect: {
           include: {
-            contacts: { take: 1 },
+            contacts: { orderBy: { createdAt: 'asc' } },
             activities: {
               where: {
                 type: { in: ['email', 'sms', 'linkedin', 'instagram_dm'] },
@@ -192,6 +199,9 @@ export async function POST(request: NextRequest) {
 
     const autopilotGated: typeof autopilotCandidates = []
     const gatedReasons: Record<string, string> = {}
+    // Sends left today per company. Spent only on actual sends, so messages the
+    // recipient gate blocks don't starve the ones queued behind them.
+    const autopilotBudget = new Map<string, number>()
 
     for (const [companyId, messages] of byCompany.entries()) {
       const company = await prisma.company.findUnique({
@@ -237,18 +247,24 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Take up to `remaining` messages from the front of the (scheduledAt-ordered) list.
-      const toSend = messages.slice(0, remaining)
-      const deferred = messages.slice(remaining)
-      for (const m of deferred) gatedReasons[m.id] = 'daily_cap_reached'
-      autopilotGated.push(...toSend)
+      // Every window-eligible message goes forward in scheduledAt order; the
+      // send loop stops spending once the day's budget is used up.
+      autopilotBudget.set(companyId, remaining)
+      autopilotGated.push(...messages)
     }
 
     const readyMessages = [...manualReady, ...scheduledReady, ...autopilotGated]
 
     const results = []
+    const verifyBudget = { remaining: VERIFICATIONS_PER_RUN }
 
     for (const message of readyMessages) {
+      const budgetKey = message.campaign?.autopilot ? message.campaign.companyId : null
+      if (budgetKey && (autopilotBudget.get(budgetKey) ?? 0) <= 0) {
+        gatedReasons[message.id] = 'daily_cap_reached'
+        continue
+      }
+
       // Skip messages without a prospect (sequence templates)
       if (!message.prospect || !message.prospectId) {
         results.push({ messageId: message.id, action: 'skipped', reason: 'no_prospect' })
@@ -325,16 +341,35 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      // Guard: email channel needs a plausible recipient address.
-      const recipientEmail = message.prospect.contacts?.[0]?.email ?? null
-      if (message.channel === 'email' && !isValidEmail(recipientEmail)) {
-        console.warn(`[EXECUTOR GUARD] message ${message.id} skipped: missing/invalid recipient email ${JSON.stringify(recipientEmail)}`)
-        results.push({
-          messageId: message.id,
-          action: 'skipped',
-          reason: recipientEmail ? 'invalid_recipient_email' : 'no_recipient_email',
+      // Guard: email needs a recipient that passes the verification gate
+      // (well-formed, never bounced, verified unless they came to us). Skip,
+      // not cancel, so a blocked message stays visible in the queue.
+      // An unpinned follow-up goes to whoever got the earlier step, so a
+      // sequence never switches people midway.
+      let pin: { contactId: string | null; recipientEmail: string | null } = message
+      if (message.channel === 'email' && !message.contactId && !message.recipientEmail && message.step > 1) {
+        const prior = await prisma.outreachMessage.findFirst({
+          where: {
+            prospectId: message.prospectId,
+            campaignId: message.campaignId,
+            step: { lt: message.step },
+            sentAt: { not: null },
+            recipientEmail: { not: null },
+          },
+          orderBy: { step: 'asc' },
+          select: { recipientEmail: true, contactId: true },
         })
-        continue
+        if (prior) pin = prior
+      }
+      const recipient = resolveMessageRecipient(pin, message.prospect.contacts)
+      const recipientEmail = recipient?.email?.trim() ?? null
+      if (message.channel === 'email') {
+        const check = await checkSendable(recipient, message.prospect, { verifyBudget })
+        if (!check.ok) {
+          console.warn(`[EXECUTOR GUARD] message ${message.id} skipped: ${check.reason} ${JSON.stringify(recipientEmail)}`)
+          results.push({ messageId: message.id, action: 'skipped', reason: check.reason })
+          continue
+        }
       }
 
       // Guard: identical body already sent to this address (duplicate
@@ -355,16 +390,22 @@ export async function POST(request: NextRequest) {
 
       try {
         // Send the message via Resend (email) or mark as sent (other channels)
-        const sendResult = await sendMessage(message)
+        const sendResult = await sendMessage(message, recipientEmail, recipient?.id ?? null)
 
         if (sendResult.sent) {
-          // Update message status + store Resend email ID for webhook tracking
+          if (budgetKey) autopilotBudget.set(budgetKey, (autopilotBudget.get(budgetKey) ?? 1) - 1)
+
+          // Update message status + store Resend email ID for webhook tracking,
+          // and record who it actually went to.
           await prisma.outreachMessage.update({
             where: { id: message.id },
             data: {
               status: 'sent',
               sentAt: new Date(),
               resendEmailId: sendResult.emailId || null,
+              ...(message.channel === 'email'
+                ? { recipientEmail, contactId: recipient?.id ?? message.contactId }
+                : {}),
             },
           })
 
@@ -463,9 +504,12 @@ export async function POST(request: NextRequest) {
  * Send message via appropriate channel
  * Returns { sent: boolean, emailId?: string }
  */
-async function sendMessage(message: any): Promise<{ sent: boolean; emailId?: string }> {
+async function sendMessage(
+  message: any,
+  recipientEmail: string | null,
+  contactId: string | null,
+): Promise<{ sent: boolean; emailId?: string }> {
   if (message.channel === 'email') {
-    const recipientEmail = message.prospect?.contacts?.[0]?.email
     if (!recipientEmail) {
       console.warn(`[SEND] No email for prospect ${message.prospectId}, skipping`)
       return { sent: false }
@@ -479,31 +523,28 @@ async function sendMessage(message: any): Promise<{ sent: boolean; emailId?: str
 
     const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
-    // Build HTML body with optional signature
-    let emailHtml = message.body.replace(/\n/g, '<br>')
+    // Sender's signature, if the campaign has a creator
+    const sender = message.campaign?.createdById
+      ? await prisma.user.findUnique({
+          where: { id: message.campaign.createdById },
+          select: { emailSignature: true, signatureLogoUrl: true },
+        })
+      : null
 
-    // Fetch sender's signature if available
-    if (message.campaign?.createdById) {
-      const sender = await prisma.user.findUnique({
-        where: { id: message.campaign.createdById },
-        select: { emailSignature: true, signatureLogoUrl: true },
-      })
-      if (sender?.emailSignature || sender?.signatureLogoUrl) {
-        emailHtml += '<br><br>--<br>'
-        if (sender.emailSignature) {
-          emailHtml += sender.emailSignature.replace(/\n/g, '<br>')
-        }
-        if (sender.signatureLogoUrl) {
-          emailHtml += `<br><br><img src="${sender.signatureLogoUrl}" alt="Logo" style="max-height: 60px; width: auto;" />`
-        }
-      }
-    }
+    const email = buildOutreachEmail({
+      body: message.body,
+      signature: sender,
+      prospectId: message.prospectId,
+      contactId,
+    })
 
     const { data, error } = await resendClient.emails.send({
       from: fromEmail,
       to: recipientEmail,
       subject: message.subject || 'Hello',
-      html: emailHtml,
+      html: email.html,
+      text: email.text,
+      headers: email.headers,
       ...outreachReplyTo(),
     })
 

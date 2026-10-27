@@ -18,6 +18,8 @@ export interface VerificationResult {
   is_catch_all: boolean
   quality_score: number
   did_you_mean?: string
+  // Raw provider verdict, so "couldn't check" (UNKNOWN) isn't mistaken for "doesn't exist"
+  deliverability?: 'DELIVERABLE' | 'UNDELIVERABLE' | 'RISKY' | 'UNKNOWN'
 }
 
 export interface ApolloContact {

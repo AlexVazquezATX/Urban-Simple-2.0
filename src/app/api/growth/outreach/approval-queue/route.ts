@@ -8,9 +8,14 @@ import {
 import {
   findDuplicateAlreadySent,
   findUnresolvedMergeTags,
-  isValidEmail,
   outreachReplyTo,
 } from '@/lib/services/outreach-guards'
+import {
+  checkSendable,
+  describeSendCheck,
+  resolveMessageRecipient,
+} from '@/lib/services/outreach-recipient'
+import { buildOutreachEmail } from '@/lib/services/outreach-email'
 import { logComm } from '@/lib/comms/log'
 import { Resend } from 'resend'
 
@@ -89,7 +94,7 @@ export async function GET(request: NextRequest) {
       include: {
         prospect: {
           include: {
-            contacts: { take: 1 },
+            contacts: { orderBy: { createdAt: 'asc' } },
           },
         },
         campaign: {
@@ -110,15 +115,19 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       total,
-      messages: messages.map((m) => ({
+      messages: messages.map((m) => {
+        // Show who the message actually goes (or went) to, not whichever
+        // contact the database happened to return first.
+        const r = resolveMessageRecipient(m, m.prospect?.contacts)
+        const c = r && 'firstName' in r ? r : null // null when it's a typed-in address
+        return {
         id: m.id,
         prospectId: m.prospectId,
         prospectName: m.prospect?.companyName ?? null,
-        contactName: m.prospect?.contacts[0]
-          ? `${m.prospect.contacts[0].firstName} ${m.prospect.contacts[0].lastName}`.trim()
-          : null,
-        contactEmail: m.prospect?.contacts[0]?.email ?? null,
-        contactPhone: m.prospect?.contacts[0]?.phone ?? null,
+        contactName: c ? `${c.firstName} ${c.lastName}`.trim() : null,
+        contactEmail: r?.email ?? null,
+        contactPhone: c?.phone ?? null,
+        contactEmailStatus: c?.emailVerificationStatus ?? null,
         channel: m.channel,
         subject: m.subject,
         body: m.body,
@@ -137,7 +146,8 @@ export async function GET(request: NextRequest) {
         bouncedAt: m.bouncedAt,
         openCount: m.openCount,
         clickCount: m.clickCount,
-      })),
+        }
+      }),
     })
   } catch (error) {
     console.error('Error fetching messages:', error)
@@ -340,7 +350,7 @@ export async function POST(request: NextRequest) {
         },
         include: {
           prospect: {
-            include: { contacts: { take: 1 } },
+            include: { contacts: { orderBy: { createdAt: 'asc' } } },
           },
           campaign: {
             select: { id: true, createdById: true },
@@ -373,13 +383,24 @@ export async function POST(request: NextRequest) {
           }
 
           if (msg.channel === 'email') {
-            // Use override email if provided, otherwise fall back to contact's email
-            const toEmail = toOverrides[msg.id] || msg.prospect?.contacts[0]?.email
-
-            if (!isValidEmail(toEmail)) {
-              results.push({ messageId: msg.id, status: 'failed', reason: toEmail ? `Invalid recipient email "${toEmail}"` : 'No email address — edit the "To" field before sending' })
+            // Use the operator's override if provided, otherwise the message's
+            // pinned/best recipient. Either way it has to pass the verification gate.
+            const recipient = resolveMessageRecipient(
+              { contactId: msg.contactId, recipientEmail: toOverrides[msg.id] || msg.recipientEmail },
+              msg.prospect?.contacts,
+            )
+            // allowUnverified: the operator knowingly sends to a catch-all or
+            // unverifiable address. Bounced and opted-out addresses stay blocked.
+            const check = await checkSendable(recipient, msg.prospect ?? {}, { allowUnverified: body.allowUnverified === true })
+            if (!check.ok) {
+              results.push({
+                messageId: msg.id,
+                status: check.reason === 'no_recipient_email' || check.reason === 'invalid_recipient_email' ? 'failed' : 'blocked',
+                reason: describeSendCheck(check.reason, recipient?.email ?? null),
+              })
               continue
             }
+            const toEmail = recipient!.email!.trim()
 
             // Duplicate-prospect protection: identical body already sent to this address.
             const dupId = await findDuplicateAlreadySent(msg.body, toEmail, msg.id)
@@ -397,23 +418,20 @@ export async function POST(request: NextRequest) {
 
             const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
-            // Build HTML with signature
-            let emailHtml = msg.body.replace(/\n/g, '<br>')
-            if (freshUser?.emailSignature || freshUser?.signatureLogoUrl) {
-              emailHtml += '<br><br>--<br>'
-              if (freshUser.emailSignature) {
-                emailHtml += freshUser.emailSignature.replace(/\n/g, '<br>')
-              }
-              if (freshUser.signatureLogoUrl) {
-                emailHtml += `<br><br><img src="${freshUser.signatureLogoUrl}" alt="Logo" style="max-height: 60px; width: auto;" />`
-              }
-            }
+            const email = buildOutreachEmail({
+              body: msg.body,
+              signature: freshUser,
+              prospectId: msg.prospectId!,
+              contactId: recipient?.id,
+            })
 
             const { data: emailData, error: emailError } = await resendClient.emails.send({
               from: fromEmail,
               to: toEmail,
               subject: msg.subject || 'Hello',
-              html: emailHtml,
+              html: email.html,
+              text: email.text,
+              headers: email.headers,
               ...outreachReplyTo(),
             })
 
@@ -429,6 +447,8 @@ export async function POST(request: NextRequest) {
                 status: 'sent',
                 sentAt: new Date(),
                 resendEmailId: emailData?.id || null,
+                recipientEmail: toEmail,
+                contactId: recipient?.id ?? msg.contactId,
               },
             })
 

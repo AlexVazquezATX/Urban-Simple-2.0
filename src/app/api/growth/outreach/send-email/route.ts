@@ -3,6 +3,12 @@ import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/db'
 import { Resend } from 'resend'
 import { outreachReplyTo } from '@/lib/services/outreach-guards'
+import {
+  checkSendable,
+  describeSendCheck,
+  resolveMessageRecipient,
+} from '@/lib/services/outreach-recipient'
+import { buildOutreachEmail } from '@/lib/services/outreach-email'
 import { logComm } from '@/lib/comms/log'
 
 // POST /api/growth/outreach/send-email - Send outreach email
@@ -42,27 +48,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'This prospect is marked Do Not Contact' }, { status: 403 })
     }
 
+    // Same verification gate as automated sends
+    const recipient = resolveMessageRecipient({ recipientEmail: String(to) }, prospect.contacts)
+    // A one-off a person typed is their call on catch-all/unverified domains;
+    // bounced and opted-out addresses are still refused.
+    const check = await checkSendable(recipient, prospect, { allowUnverified: true })
+    if (!check.ok) {
+      return NextResponse.json({ error: describeSendCheck(check.reason, String(to)) }, { status: 422 })
+    }
+
     // Send email via Resend
     const resend = new Resend(process.env.RESEND_API_KEY || '')
     const from = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
 
-    // Build email body with optional signature and logo
-    let emailHtml = emailBody
-    if (user.emailSignature || user.signatureLogoUrl) {
-      emailHtml += '<br><br>--<br>'
-      if (user.emailSignature) {
-        emailHtml += user.emailSignature.replace(/\n/g, '<br>')
-      }
-      if (user.signatureLogoUrl) {
-        emailHtml += `<br><br><img src="${user.signatureLogoUrl}" alt="Logo" style="max-height: 60px; width: auto;" />`
-      }
-    }
+    // This route's body is already HTML (rich editor)
+    const email = buildOutreachEmail({
+      body: emailBody,
+      bodyIsHtml: true,
+      signature: user,
+      prospectId,
+      contactId: recipient?.id,
+    })
 
     const { data, error } = await resend.emails.send({
       from,
       to,
       subject,
-      html: emailHtml,
+      html: email.html,
+      text: email.text,
+      headers: email.headers,
       ...outreachReplyTo(),
     })
 
@@ -82,6 +96,8 @@ export async function POST(request: NextRequest) {
         channel: 'email',
         subject,
         body: emailBody,
+        recipientEmail: String(to).trim(),
+        contactId: recipient?.id ?? null,
         status: 'sent',
         approvalStatus: 'approved',
         approvedAt: now,

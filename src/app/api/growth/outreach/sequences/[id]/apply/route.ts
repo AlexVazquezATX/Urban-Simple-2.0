@@ -83,12 +83,15 @@ export async function POST(
         companyName: true,
         address: true,
         contacts: {
-          take: 1,
           select: {
+            id: true,
             firstName: true,
             lastName: true,
             title: true,
             email: true,
+            isDecisionMaker: true,
+            emailVerificationStatus: true,
+            createdAt: true,
           },
         },
       },
