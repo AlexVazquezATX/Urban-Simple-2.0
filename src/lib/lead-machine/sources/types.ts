@@ -28,10 +28,21 @@ export type FetchLike = (url: string, init?: RequestInit) => Promise<Response>
 export const AREA_CITIES = ['AUSTIN', 'WEST LAKE HILLS', 'ROLLINGWOOD', 'LAKEWAY', 'BEE CAVE', 'SUNSET VALLEY']
 
 /**
- * Brand and keyword hints for classifying a business by name. Words that are
- * also common in bar names ("inn", "proper") only count as part of a brand.
+ * Hotels and resorts worth the drive: the Austin metro. Google's "near
+ * Austin" happily returns San Antonio and the Hill Country.
  */
-const HOTEL_WORDS = /\b(hotel|hotels|suites|lodge|marriott|hilton|hyatt|omni|fairmont|westin|sheraton|kimpton|hampton inn|holiday inn|courtyard|four seasons|ritz|thompson|canopy|aloft|embassy suites|doubletree|renaissance|intercontinental|driskill)\b/i
+export const METRO_CITIES = new Set([
+  ...AREA_CITIES,
+  'ROUND ROCK', 'CEDAR PARK', 'PFLUGERVILLE', 'LEANDER', 'GEORGETOWN', 'MANOR',
+  'BUDA', 'KYLE', 'DRIPPING SPRINGS', 'SPICEWOOD', 'THE HILLS', 'HUTTO', 'DEL VALLE',
+])
+
+/**
+ * Brand and keyword hints for classifying a business by name. Words that are
+ * also common in bar names ("inn", "proper", "lodge") only count as part of a
+ * brand.
+ */
+const HOTEL_WORDS = /\b(hotel|hotels|suites|marriott|hilton|hyatt|omni|fairmont|westin|sheraton|kimpton|hampton inn|holiday inn|courtyard|four seasons|ritz|thompson|canopy|aloft|embassy suites|doubletree|renaissance|intercontinental|driskill)\b/i
 const BAR_WORDS = /\b(bar|pub|saloon|tavern|lounge|icehouse|ice house|beer garden|biergarten|taproom|cantina|club|brewery|brewing|distillery|winery)\b/i
 
 /**
@@ -45,8 +56,11 @@ export function classifyByName(name: string): Segment {
   return 'restaurant'
 }
 
-/** Places that sell a lot of alcohol but aren't cleaning buyers for us. */
-export const EXCLUDE_NAMES = /\b(church|stadium|arena|center at university|university|airport|festival|concession|catering|liquor store|wine and spirits|spec'?s|total wine|grocery|h-?e-?b|whole foods|costco|walmart|target|cvs|walgreens|7-eleven|circle k|temporary|event)\b/i
+/**
+ * Places that sell a lot of alcohol but aren't cleaning buyers for us,
+ * including stadium concessionaires and bare permit-holder names.
+ */
+export const EXCLUDE_NAMES = /\b(church|stadium|arena|center at university|university|airport|festival|concessions?|catering|liquor store|wine and spirits|spec'?s|total wine|grocery|h-?e-?b|whole foods|costco|walmart|target|cvs|walgreens|7-eleven|circle k|temporary|event|levy|aramark|sodexo|delaware north|centerplate|legends hospitality|at austin fc|q2 stadium|beverage (company|co|corp|corporation|llc|inc))\b/i
 
 export async function fetchJson<T>(fetchImpl: FetchLike, url: string, timeoutMs = 20_000): Promise<T> {
   const ctrl = new AbortController()
