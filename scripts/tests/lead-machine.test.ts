@@ -2,7 +2,7 @@ import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { prisma } from '../../src/lib/db'
 import { ProspectIndex, streetKey, displayName } from '../../src/lib/lead-machine/match'
-import { classifyByName } from '../../src/lib/lead-machine/sources/types'
+import { classifyByName, EXCLUDE_NAMES } from '../../src/lib/lead-machine/sources/types'
 import { pickCompleteMonth } from '../../src/lib/lead-machine/sources/alcohol-sales'
 import { fetchTabcCandidates } from '../../src/lib/lead-machine/sources/tabc'
 import { fetchPlacesHotelCandidates, parseFormattedAddress } from '../../src/lib/lead-machine/sources/places-hotels'
@@ -38,6 +38,22 @@ test('ProspectIndex matches on name, or on address plus a shared name word, neve
   assert.equal(idx.find('Corner Restaurant', '110 E 2nd St'), null, 'restaurant inside a hotel is a different buyer')
 })
 
+test('hotel names match the CRM without "hotel", "resort", "spa", "downtown"', () => {
+  const idx = new ProspectIndex([
+    { id: 'fair', companyName: 'Fairmont Austin' },
+    { id: 'omni', companyName: 'Omni Barton Creek Resort' },
+  ])
+  assert.equal(idx.find('Fairmont Austin Hotel'), 'fair')
+  assert.equal(idx.find('Omni Barton Creek Resort & Spa'), 'omni')
+  assert.equal(idx.find('Hyatt Place Austin Downtown'), null)
+})
+
+test('concessionaires and permit-holder names are excluded', () => {
+  assert.ok(EXCLUDE_NAMES.test('Levy At Austin Fc'))
+  assert.ok(EXCLUDE_NAMES.test('Wls Beverage Company'))
+  assert.ok(!EXCLUDE_NAMES.test('Black Sheep Lodge'))
+})
+
 test('classifyByName: bar words beat hotel words; resorts are resorts', () => {
   assert.equal(classifyByName('Omni Barton Creek Resort & Spa'), 'resort')
   assert.equal(classifyByName('Fairmont Austin Hotel'), 'hotel')
@@ -45,6 +61,7 @@ test('classifyByName: bar words beat hotel words; resorts are resorts', () => {
   assert.equal(classifyByName("The Cedar Door/Foxy's Proper Pub"), 'bar')
   assert.equal(classifyByName('Inn Cahoots'), 'restaurant')
   assert.equal(classifyByName('Hampton Inn & Suites Downtown'), 'hotel')
+  assert.equal(classifyByName('Black Sheep Lodge'), 'restaurant', 'Austin lodges are bars and restaurants')
   assert.equal(classifyByName('Matt\'s El Rancho'), 'restaurant')
 })
 
@@ -85,6 +102,7 @@ test('Places: filters small/economy/closed listings, counts calls, retries a war
       { place_id: 'a', name: 'Fairmont Austin', formatted_address: '101 Red River St, Austin, TX 78701, United States', user_ratings_total: 9000, rating: 4.6, business_status: 'OPERATIONAL' },
       { place_id: 'b', name: 'Motel 6 Austin', formatted_address: '1 Main St, Austin, TX 78701, United States', user_ratings_total: 900, rating: 3.1 },
       { place_id: 'c', name: 'Tiny Inn', user_ratings_total: 20 },
+      { place_id: 'e', name: 'JW Marriott San Antonio Hill Country Resort & Spa', formatted_address: '23808 Resort Pkwy, San Antonio, TX 78261, United States', user_ratings_total: 8000 },
     ] },
     { status: 'INVALID_REQUEST' },
     { status: 'OK', results: [{ place_id: 'd', name: 'Lake Austin Spa Resort', formatted_address: '1705 S Quinlan Park Rd, Austin, TX 78732, United States', user_ratings_total: 1200 }] },
@@ -203,7 +221,7 @@ test('a business whose prospect was deleted or renamed is not re-added', async (
   settingsRow = liveSettings()
   knownSignals = [
     { sourceKey: 'tabc:9', prospectId: null }, // Tema was added, then deleted
-    { sourceKey: 'seen:proper hotel|600 2nd', prospectId: 'renamed-prospect' }, // renamed in the CRM
+    { sourceKey: 'seen:proper|600 2nd', prospectId: 'renamed-prospect' }, // renamed in the CRM
   ]
   const r = await runSourcing('co', { fetchImpl: fakeFetch })
   assert.equal(r!.created, 0)
@@ -215,7 +233,7 @@ test('every new prospect gets a permanent seen marker', async () => {
   settingsRow = liveSettings()
   await runSourcing('co', { fetchImpl: fakeFetch })
   const markers = signalWrites.filter((s) => s.kind === 'machine_seen').map((s) => s.sourceKey).sort()
-  assert.deepEqual(markers, ['seen:proper hotel|600 2nd', 'seen:tema|314 congress'])
+  assert.deepEqual(markers, ['seen:proper|600 2nd', 'seen:tema|314 congress'])
 })
 
 test('a failed Google run still reports the calls it spent', async () => {

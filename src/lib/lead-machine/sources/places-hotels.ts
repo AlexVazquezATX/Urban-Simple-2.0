@@ -1,7 +1,7 @@
 // Hotels and resorts in the Austin area from Google Places text search.
 // Paid per call, so it runs weekly and stops at the monthly call cap.
 
-import { fetchJson, type Candidate, type FetchLike } from './types'
+import { fetchJson, METRO_CITIES, type Candidate, type FetchLike } from './types'
 
 const TEXT_SEARCH = 'https://maps.googleapis.com/maps/api/place/textsearch/json'
 
@@ -101,6 +101,7 @@ export async function fetchPlacesHotelCandidates(opts: {
     if (ECONOMY.test(p.name)) continue
     const addr = parseFormattedAddress(p.formatted_address)
     if (addr.state && addr.state !== 'TX') continue
+    if (addr.city && !METRO_CITIES.has(addr.city.toUpperCase())) continue
     const isResort = /\bresort\b/i.test(p.name) || /resort/.test(query)
     const reviews = p.user_ratings_total ?? 0
     candidates.push({

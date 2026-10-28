@@ -1,9 +1,12 @@
 // Name and address matching, so an account found by two sources (or already
 // in the CRM under a slightly different name) becomes one prospect.
 
+// Legal suffixes, place words and property-type words: "Fairmont Austin
+// Hotel" and "Fairmont Austin" are the same account.
 const NOISE_WORDS = new Set([
   'the', 'llc', 'inc', 'co', 'corp', 'corporation', 'ltd', 'lp', 'llp', 'company',
   'austin', 'atx', 'tx', 'texas', 'and', 'at', 'of',
+  'hotel', 'hotels', 'resort', 'spa', 'downtown', 'dt',
 ])
 
 const DIRECTIONS = new Set(['n', 's', 'e', 'w', 'north', 'south', 'east', 'west', 'ne', 'nw', 'se', 'sw'])
