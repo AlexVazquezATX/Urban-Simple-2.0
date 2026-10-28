@@ -9,6 +9,7 @@
 import { prisma } from '@/lib/db'
 import { verifyEmail as abstractVerify } from './email-verification'
 import { verifyEmail as hunterVerify } from './hunter-service'
+import { Findymail } from '@/lib/lead-machine/prep/findymail'
 import { isValidEmail } from './outreach-guards'
 
 export type RecipientCandidate = {
@@ -116,6 +117,25 @@ type VerificationStatus = 'valid' | 'invalid' | 'risky' | 'unknown'
 const UNKNOWN_RECHECK_MS = 7 * 24 * 60 * 60 * 1000
 
 async function runVerification(email: string): Promise<VerificationStatus | null> {
+  // Findymail answers only deliverable or not. "Not" covers both bad
+  // addresses and catch-all domains, so ask the others which it is, and hold
+  // it as risky if nobody can say.
+  let findymailSaidNo = false
+  if (process.env.FINDYMAIL_API_KEY) {
+    try {
+      const ok = await new Findymail(process.env.FINDYMAIL_API_KEY, { remaining: 1 }).verify(email)
+      if (ok === true) return 'valid'
+      findymailSaidNo = ok === false
+    } catch (err) {
+      console.error('[OUTREACH VERIFY] Findymail failed, trying Abstract/Hunter:', err)
+    }
+  }
+  const other = await runOtherVerifiers(email)
+  if (findymailSaidNo && (other === null || other === 'valid' || other === 'unknown')) return 'risky'
+  return other
+}
+
+async function runOtherVerifiers(email: string): Promise<VerificationStatus | null> {
   if (process.env.ABSTRACT_API_KEY) {
     try {
       const r = await abstractVerify(email)
@@ -171,7 +191,7 @@ const OVERRIDABLE = new Set(['address_risky', 'address_unverified'])
  *   That also catches a later CSV re-import of someone who unsubscribed.
  * - Inbound leads otherwise pass on a well-formed address.
  * - Everyone else needs a 'valid' verification. Unverified addresses are checked
- *   here (Abstract, then Hunter) and the result is saved on the contact, so each
+ *   here (Findymail, then Abstract, then Hunter) and the result is saved on the contact, so each
  *   address costs one lookup. `verifyBudget` caps lookups per call site run.
  * - Catch-all ("risky") and unverifiable addresses are blocked unless a human
  *   passes `allowUnverified` for a one-off send they chose deliberately.

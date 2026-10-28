@@ -45,6 +45,10 @@
       "schedule": "0 7,8 * * *"
     },
     {
+      "path": "/api/cron/lead-machine-prep",
+      "schedule": "0 8,9 * * *"
+    },
+    {
       "path": "/api/cron/lead-machine-brief",
       "schedule": "30 12,13 * * *"
     }

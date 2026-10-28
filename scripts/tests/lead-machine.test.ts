@@ -258,13 +258,32 @@ test('health: failures, a missed night, and three empty live nights are problems
   const now = new Date('2026-10-28T08:00:00Z')
   const at = (h: number) => new Date(now.getTime() - h * 3600_000)
   const ok = (h: number, created = 3) => ({ stage: 'sourcing', status: 'succeeded', startedAt: at(h), error: null, stats: { created } })
+  const prep = { stage: 'prep', status: 'succeeded', startedAt: at(23), error: null, stats: { accounts: 3 } }
   assert.deepEqual(findProblems({ enabled: false, dryRun: false, runs: [], now }), [])
   assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [ok(1)], now }), [])
   assert.match(findProblems({ enabled: true, dryRun: false, runs: [ok(30)], now })[0], /No successful nightly run/)
   assert.match(findProblems({ enabled: true, dryRun: false, runs: [ok(1), { stage: 'tabc', status: 'failed', startedAt: at(1), error: 'HTTP 503', stats: null }], now })[0], /tabc failed: HTTP 503/)
-  assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [ok(1, 0), ok(25, 0), ok(49, 0)], now }), ['Three nights in a row added no new accounts'])
+  assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [ok(1, 0), prep, ok(25, 0), ok(49, 0)], now }), ['Three nights in a row added no new accounts'])
   assert.deepEqual(findProblems({ enabled: true, dryRun: true, runs: [ok(1, 0), ok(25, 0), ok(49, 0)], now }), [])
-  assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [{ ...ok(1, 0), dryRun: true }, { ...ok(2, 0), dryRun: true }, ok(25, 0)], now }), [], "manual dry runs while live do not count")
+  assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [{ ...ok(1, 0), dryRun: true }, { ...ok(2, 0), dryRun: true }, prep, ok(25, 0)], now }), [], "manual dry runs while live do not count")
+})
+
+test('health: account research that stops, pauses or runs out of Findymail is a problem once the machine is live', () => {
+  const now = new Date('2026-10-28T08:00:00Z')
+  const at = (h: number) => new Date(now.getTime() - h * 3600_000)
+  const ok = (h: number) => ({ stage: 'sourcing', status: 'succeeded', startedAt: at(h), error: null, stats: { created: 3 } })
+  const prep = (stats: Record<string, unknown>, status = 'succeeded') => ({ stage: 'prep', status, startedAt: at(23), error: null, stats })
+  assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [ok(1)], now }), [], 'first live night: no prep expected yet')
+  assert.deepEqual(findProblems({ enabled: true, dryRun: false, runs: [ok(1), ok(25)], now }), ['Account research did not run in the last 26 hours'])
+  assert.deepEqual(
+    findProblems({ enabled: true, dryRun: false, runs: [ok(1), prep({ reason: 'ANTHROPIC_API_KEY is not set' }, 'skipped'), ok(25)], now }),
+    ['Account research is paused: ANTHROPIC_API_KEY is not set'],
+  )
+  assert.deepEqual(
+    findProblems({ enabled: true, dryRun: false, runs: [ok(1), prep({ findymailStopped: 'Findymail is out of credits (402)' }), ok(25)], now }),
+    ['Contact finding stopped: Findymail is out of credits (402)'],
+  )
+  assert.deepEqual(findProblems({ enabled: true, dryRun: true, runs: [ok(1), ok(25)], now }), [], 'dry run never preps')
 })
 
 test('settings patches are validated', () => {
@@ -272,4 +291,7 @@ test('settings patches are validated', () => {
   assert.ok('error' in validatePatch({ dailyNewCap: -1 }))
   assert.ok('error' in validatePatch({ sourceCaps: { yelp: 3 } }))
   assert.ok('error' in validatePatch({}))
+  assert.deepEqual(validatePatch({ prepDailyCap: 12, findymailMonthlyCap: 800 }), { patch: { prepDailyCap: 12, findymailMonthlyCap: 800 } })
+  assert.ok('error' in validatePatch({ prepDailyCap: 51 }))
+  assert.ok('error' in validatePatch({ findymailMonthlyCap: 1.5 }))
 })

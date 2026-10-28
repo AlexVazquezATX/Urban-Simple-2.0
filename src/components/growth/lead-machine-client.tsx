@@ -19,6 +19,8 @@ type Settings = {
   placesMonthlyCallCap: number
   briefEnabled: boolean
   notifyEmail: string | null
+  prepDailyCap: number
+  findymailMonthlyCap: number
 }
 type Run = {
   id: string
@@ -34,10 +36,23 @@ type Status = {
   settings: Settings
   runs: Run[]
   placesCallsThisMonth: number
+  findymailUsedThisMonth: number
   addedThisWeek: number
   totalAdded: number
   signals: number
+  researched: number
+  draftsWaiting: number
 }
+type PrepOutcome = {
+  prospectId: string
+  name: string
+  status: string
+  contact: { name: string; email: string; status: string; source: string } | null
+  draft: { subject: string; body: string; angle: string } | null
+  problems: string[]
+  error?: string
+}
+type CapFields = { daily: string; places: string; prep: string; findymail: string; sources: Record<SourceKey, string> }
 
 const SOURCE_LABELS: Record<SourceKey, string> = {
   tabc: 'New liquor license filings',
@@ -50,6 +65,7 @@ const STAGE_LABELS: Record<string, string> = {
   tabc: 'License filings',
   alcohol_sales: 'Alcohol sales',
   places_hotels: 'Google hotels',
+  prep: 'Account research',
   health: 'Health check',
   brief: 'Morning brief',
 }
@@ -72,6 +88,9 @@ function summarize(run: Run): string {
   if (run.stage === 'places_hotels') return `${s.candidates ?? 0} hotels from ${s.placesCalls ?? 0} calls`
   if (run.stage === 'alcohol_sales') return `${s.candidates ?? 0} accounts from ${s.month ?? '?'} sales`
   if (run.stage === 'tabc') return `${s.candidates ?? 0} businesses from ${s.rows ?? 0} filings`
+  if (run.stage === 'prep') {
+    return `${s.accounts ?? 0} accounts: ${s.drafted ?? 0} drafted, ${s.noContact ?? 0} no contact${s.noDraft ? `, ${s.noDraft} draft rejected` : ''}${s.failed ? `, ${s.failed} failed` : ''}`
+  }
   if (run.stage === 'brief') return `Sent by ${s.channel ?? 'nothing'}`
   if (run.stage === 'health') {
     return Array.isArray(s.problems) && s.problems.length ? (s.problems as string[]).join('; ') : 'All clear'
@@ -82,7 +101,8 @@ function summarize(run: Run): string {
 export function LeadMachineClient() {
   const [status, setStatus] = useState<Status | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
-  const [caps, setCaps] = useState<{ daily: string; places: string; sources: Record<SourceKey, string> } | null>(null)
+  const [caps, setCaps] = useState<CapFields | null>(null)
+  const [preview, setPreview] = useState<PrepOutcome[] | null>(null)
   const capsDirty = useRef(false)
 
   const load = useCallback(async (opts: { resetCaps?: boolean } = {}) => {
@@ -99,6 +119,8 @@ export function LeadMachineClient() {
       setCaps({
         daily: String(data.settings.dailyNewCap),
         places: String(data.settings.placesMonthlyCallCap),
+        prep: String(data.settings.prepDailyCap),
+        findymail: String(data.settings.findymailMonthlyCap),
         sources: Object.fromEntries(
           Object.entries(data.settings.sourceCaps).map(([k, v]) => [k, String(v)]),
         ) as Record<SourceKey, string>,
@@ -106,7 +128,7 @@ export function LeadMachineClient() {
     }
   }, [])
 
-  function editCaps(next: { daily: string; places: string; sources: Record<SourceKey, string> }) {
+  function editCaps(next: CapFields) {
     setCaps(next)
     capsDirty.current = true
   }
@@ -149,6 +171,10 @@ export function LeadMachineClient() {
         toast.success(r.dryRun
           ? `Dry run: ${r.candidates} candidates, ${r.matchedExisting} already in CRM, would add ${r.createdNames.length}`
           : `Added ${r.created} new accounts`)
+      } else if (stage === 'prep') {
+        const r = data.result as { accounts: number; drafted: number; outcomes: PrepOutcome[] }
+        setPreview(r.outcomes)
+        toast.success(r.accounts ? `Researched ${r.accounts}, ${r.drafted} draft${r.drafted === 1 ? '' : 's'} written (nothing saved)` : 'No new accounts are waiting for research')
       } else if (stage === 'brief') {
         toast.success(data.channel ? `Brief sent by ${data.channel}` : 'The brief could not be sent')
       } else {
@@ -167,13 +193,15 @@ export function LeadMachineClient() {
     // An empty box must not silently become 0 (which turns a source off).
     const toInt = (v: string) => (v.trim() === '' ? NaN : Number(v.trim()))
     const sourceCaps = Object.fromEntries(Object.entries(caps.sources).map(([k, v]) => [k, toInt(v)]))
-    if ([toInt(caps.daily), toInt(caps.places), ...Object.values(sourceCaps)].some((n) => !Number.isInteger(n) || n < 0)) {
+    if ([toInt(caps.daily), toInt(caps.places), toInt(caps.prep), toInt(caps.findymail), ...Object.values(sourceCaps)].some((n) => !Number.isInteger(n) || n < 0)) {
       toast.error('Caps must be whole numbers, 0 or more')
       return
     }
     void patch({
       dailyNewCap: toInt(caps.daily),
       placesMonthlyCallCap: toInt(caps.places),
+      prepDailyCap: toInt(caps.prep),
+      findymailMonthlyCap: toInt(caps.findymail),
       sourceCaps: sourceCaps as Record<SourceKey, number>,
     }, 'caps')
   }
@@ -186,7 +214,7 @@ export function LeadMachineClient() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           label="Machine"
           value={s.enabled ? (s.dryRun ? 'Dry run' : 'Live') : 'Off'}
@@ -194,12 +222,23 @@ export function LeadMachineClient() {
           sub={lastNightly ? `Last run ${new Date(lastNightly.startedAt).toLocaleString()}` : 'Has not run yet'}
         />
         <StatCard label="Added this week" value={status.addedThisWeek} sub={`${status.totalAdded} all time`} />
-        <StatCard label="Signals on file" value={status.signals} sub="Licenses, sales, listings" />
+        <StatCard
+          label="Drafts waiting"
+          value={status.draftsWaiting}
+          sub={`${status.researched} accounts researched`}
+          tone={status.draftsWaiting ? 'gold' : 'neutral'}
+        />
         <StatCard
           label="Google Places"
           value={`${status.placesCallsThisMonth} / ${s.placesMonthlyCallCap}`}
           sub="Calls this month"
           tone={status.placesCallsThisMonth >= s.placesMonthlyCallCap ? 'coral' : 'neutral'}
+        />
+        <StatCard
+          label="Findymail"
+          value={`${status.findymailUsedThisMonth} / ${s.findymailMonthlyCap}`}
+          sub="Credits this month"
+          tone={status.findymailUsedThisMonth >= s.findymailMonthlyCap ? 'coral' : 'neutral'}
         />
       </div>
 
@@ -212,14 +251,14 @@ export function LeadMachineClient() {
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <Label htmlFor="lm-enabled">Run every night</Label>
-                <p className="text-sm text-muted-foreground">Finds accounts at 2 a.m. and sends a brief at 7:30 a.m., Austin time. Off stops both.</p>
+                <p className="text-sm text-muted-foreground">Finds accounts at 2 a.m., researches them and drafts first emails at 3 a.m., and sends a brief at 7:30 a.m., Austin time. Off stops all of it.</p>
               </div>
               <Switch id="lm-enabled" checked={s.enabled} disabled={!!busy} onCheckedChange={(v) => patch({ enabled: v }, 'enabled')} />
             </div>
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <Label htmlFor="lm-dry">Dry run</Label>
-                <p className="text-sm text-muted-foreground">Report what it would add without touching the CRM. Turn off to start adding accounts.</p>
+                <p className="text-sm text-muted-foreground">Report what it would add without touching the CRM. Turn off to start adding accounts and drafting first emails. Drafts wait for your approval; nothing sends on its own.</p>
               </div>
               <Switch id="lm-dry" checked={s.dryRun} disabled={!!busy} onCheckedChange={(v) => patch({ dryRun: v }, 'dryRun')} />
             </div>
@@ -233,6 +272,9 @@ export function LeadMachineClient() {
             <div className="flex flex-wrap gap-2 pt-1">
               <Button variant="outline" size="sm" disabled={!!busy} onClick={() => run('sourcing', { dryRun: true })}>
                 {busy === 'sourcing' ? 'Running…' : 'Dry run now'}
+              </Button>
+              <Button variant="outline" size="sm" disabled={!!busy} onClick={() => run('prep', { dryRun: true, limit: 1 })}>
+                {busy === 'prep' ? 'Researching…' : 'Preview research'}
               </Button>
               <Button variant="outline" size="sm" disabled={!!busy} onClick={() => run('brief')}>
                 {busy === 'brief' ? 'Sending…' : 'Send brief now'}
@@ -255,6 +297,14 @@ export function LeadMachineClient() {
                 <Label htmlFor="lm-places">Google calls per month</Label>
                 <Input id="lm-places" inputMode="numeric" value={caps.places} onChange={(e) => editCaps({ ...caps, places: e.target.value })} />
               </div>
+              <div className="min-w-0 space-y-1.5">
+                <Label htmlFor="lm-prep">Accounts researched per night</Label>
+                <Input id="lm-prep" inputMode="numeric" value={caps.prep} onChange={(e) => editCaps({ ...caps, prep: e.target.value })} />
+              </div>
+              <div className="min-w-0 space-y-1.5">
+                <Label htmlFor="lm-findymail">Findymail credits per month</Label>
+                <Input id="lm-findymail" inputMode="numeric" value={caps.findymail} onChange={(e) => editCaps({ ...caps, findymail: e.target.value })} />
+              </div>
             </div>
             <div className="space-y-2">
               <p className="text-sm text-muted-foreground">Most new accounts per day from each source (0 turns a source off):</p>
@@ -275,6 +325,34 @@ export function LeadMachineClient() {
           </CardContent>
         </Card>
       </div>
+
+      {preview && preview.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Research preview (not saved)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {preview.map((o) => (
+              <div key={o.prospectId} className="space-y-2 border-b pb-4 last:border-0 last:pb-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-medium">{o.name}</span>
+                  <Badge variant={o.status === 'drafted' ? 'green' : o.status === 'failed' ? 'coral' : 'neutral'}>{o.status.replace('_', ' ')}</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {o.contact ? `To ${o.contact.name} <${o.contact.email}> (${o.contact.status}, from ${o.contact.source})` : o.error ?? 'No contact email found'}
+                </p>
+                {o.draft && (
+                  <div className="rounded-md border bg-muted/30 p-3 text-sm">
+                    <p className="font-medium">{o.draft.subject}</p>
+                    <p className="mt-2 whitespace-pre-wrap">{o.draft.body}</p>
+                  </div>
+                )}
+                {o.problems.length > 0 && <p className="text-sm text-muted-foreground">Rejected: {o.problems.join('; ')}</p>}
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
