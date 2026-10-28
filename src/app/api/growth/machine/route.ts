@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { getSettings, updateSettings, validatePatch } from '@/lib/lead-machine/settings'
 import { placesCallsThisMonth } from '@/lib/lead-machine/runs'
+import { findymailUsedThisMonth } from '@/lib/lead-machine/prep/run'
 
 async function admin(request: NextRequest) {
   const user = await getAuthenticatedUser(request)
@@ -13,13 +14,14 @@ async function admin(request: NextRequest) {
   return { user }
 }
 
-// GET /api/growth/machine - settings, recent runs, Places usage, machine-added counts.
+// GET /api/growth/machine - settings, recent runs, Places and Findymail usage,
+// machine-added counts, accounts researched and drafts waiting for approval.
 export async function GET(request: NextRequest) {
   const auth = await admin(request)
   if ('error' in auth) return auth.error
   const companyId = auth.user.companyId
   const weekAgo = new Date(Date.now() - 7 * 86_400_000)
-  const [settings, runs, placesCalls, addedThisWeek, totalAdded, signals] = await Promise.all([
+  const [settings, runs, placesCalls, addedThisWeek, totalAdded, signals, findymailUsed, researched, draftsWaiting] = await Promise.all([
     getSettings(companyId),
     prisma.leadMachineRun.findMany({
       where: { companyId },
@@ -31,11 +33,27 @@ export async function GET(request: NextRequest) {
     prisma.prospect.count({ where: { companyId, source: 'lead_machine', createdAt: { gte: weekAgo } } }),
     prisma.prospect.count({ where: { companyId, source: 'lead_machine' } }),
     prisma.prospectSignal.count({ where: { companyId } }),
+    findymailUsedThisMonth(companyId),
+    prisma.prospectResearch.count({ where: { companyId } }),
+    prisma.outreachMessage.count({
+      where: { prospect: { companyId, source: 'lead_machine' }, approvalStatus: 'pending', status: 'pending', step: 1 },
+    }),
   ])
-  return NextResponse.json({ settings, runs, placesCallsThisMonth: placesCalls, addedThisWeek, totalAdded, signals })
+  return NextResponse.json({
+    settings,
+    runs,
+    placesCallsThisMonth: placesCalls,
+    findymailUsedThisMonth: findymailUsed,
+    addedThisWeek,
+    totalAdded,
+    signals,
+    researched,
+    draftsWaiting,
+  })
 }
 
-// PATCH /api/growth/machine - { enabled?, dryRun?, dailyNewCap?, sourceCaps?, placesMonthlyCallCap?, briefEnabled?, notifyEmail? }
+// PATCH /api/growth/machine - { enabled?, dryRun?, dailyNewCap?, sourceCaps?, placesMonthlyCallCap?,
+//   prepDailyCap?, findymailMonthlyCap?, briefEnabled?, notifyEmail? }
 export async function PATCH(request: NextRequest) {
   const auth = await admin(request)
   if ('error' in auth) return auth.error
