@@ -115,3 +115,40 @@ export async function stampCommByResendId(
     console.error('[COMMS] stampCommByResendId failed:', err)
   }
 }
+
+/**
+ * Apply a Twilio delivery receipt to the text it belongs to (matched by
+ * message SID). Delivered never downgrades; a failure always wins and its
+ * reason goes in the subject, which for texts is otherwise just "SMS".
+ * Fire-and-forget safe. Returns false when no row matched.
+ */
+export async function stampCommBySmsStatus(
+  messageSid: string,
+  outcome: 'delivered' | 'failed',
+  failureReason?: string,
+): Promise<boolean> {
+  try {
+    const existing = await prisma.commMessage.findUnique({
+      where: { sourceType_sourceId: { sourceType: 'twilio', sourceId: messageSid } },
+      select: { id: true, status: true, deliveredAt: true },
+    })
+    if (!existing) return false
+    const now = new Date()
+    if (outcome === 'delivered') {
+      if (existing.status === 'failed') return true
+      await prisma.commMessage.update({
+        where: { id: existing.id },
+        data: { status: 'delivered', ...(existing.deliveredAt ? {} : { deliveredAt: now }) },
+      })
+    } else {
+      await prisma.commMessage.update({
+        where: { id: existing.id },
+        data: { status: 'failed', bouncedAt: now, subject: `SMS ${failureReason ?? 'not delivered'}` },
+      })
+    }
+    return true
+  } catch (err) {
+    console.error('[COMMS] stampCommBySmsStatus failed:', err)
+    return false
+  }
+}

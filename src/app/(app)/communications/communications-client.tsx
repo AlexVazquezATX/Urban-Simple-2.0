@@ -66,6 +66,13 @@ function timeAgo(iso: string | null): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
+// Problems stand out; everything else stays quiet.
+const LIFECYCLE_STYLES: Record<string, string> = {
+  failed: 'text-red-600 font-semibold',
+  bounced: 'text-red-600 font-semibold',
+  delivered: 'text-sage-700',
+}
+
 function lifecycle(row: CommRow): string {
   if (row.direction === 'inbound') return 'received'
   return row.status
@@ -269,7 +276,7 @@ export function CommunicationsClient() {
               </div>
               <div className="text-right shrink-0">
                 <div className="text-xs text-charcoal-400">{timeAgo(r.receivedAt ?? r.sentAt ?? r.createdAt)}</div>
-                <div className="text-[11px] uppercase tracking-wide text-charcoal-400">{lifecycle(r)}</div>
+                <div className={`text-[11px] uppercase tracking-wide ${LIFECYCLE_STYLES[lifecycle(r)] ?? 'text-charcoal-400'}`}>{lifecycle(r)}</div>
               </div>
             </button>
           ))

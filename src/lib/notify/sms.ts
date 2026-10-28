@@ -7,6 +7,12 @@
 
 import { createHmac, timingSafeEqual } from 'crypto'
 import { logComm } from '@/lib/comms/log'
+import { appBaseUrl } from '@/lib/notify/email'
+
+/** Where Twilio posts delivery receipts (signed with the same URL). */
+export function smsStatusCallbackUrl(): string {
+  return `${appBaseUrl()}/api/webhooks/twilio/status`
+}
 
 export function smsConfigured(): boolean {
   return Boolean(
@@ -52,6 +58,9 @@ export async function sendSms(input: SendSmsInput): Promise<boolean> {
   } else {
     params.set('From', process.env.TWILIO_FROM_NUMBER!)
   }
+  // Delivery receipts. Twilio can't reach localhost, so only on a real host.
+  const callback = smsStatusCallbackUrl()
+  if (callback.startsWith('https://')) params.set('StatusCallback', callback)
 
   try {
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
@@ -66,7 +75,9 @@ export async function sendSms(input: SendSmsInput): Promise<boolean> {
       console.error('[notify/sms] Twilio rejected:', res.status, await res.text().catch(() => ''))
       return false
     }
-    void logComm({
+    // The message SID ties Twilio's later delivery receipt back to this row.
+    const messageSid = ((await res.json().catch(() => null)) as { sid?: string } | null)?.sid
+    await logComm({
       companyId: input.companyId,
       direction: 'outbound',
       channel: 'sms',
@@ -77,6 +88,7 @@ export async function sendSms(input: SendSmsInput): Promise<boolean> {
       body,
       clientId: input.clientId ?? null,
       userId: input.userId ?? null,
+      ...(messageSid ? { sourceType: TWILIO_SOURCE, sourceId: messageSid } : {}),
     })
     return true
   } catch (err) {
@@ -106,6 +118,35 @@ export function verifyTwilioSignature(
   const a = Buffer.from(expected)
   const b = Buffer.from(signature)
   return a.length === b.length && timingSafeEqual(a, b)
+}
+
+/** CommMessage.sourceType for texts; sourceId holds the Twilio message SID. */
+export const TWILIO_SOURCE = 'twilio'
+
+/** Map Twilio's MessageStatus onto the hub lifecycle, or null to ignore it. */
+export function smsLifecycle(messageStatus: string | null | undefined): 'delivered' | 'failed' | null {
+  if (messageStatus === 'delivered') return 'delivered'
+  if (messageStatus === 'undelivered' || messageStatus === 'failed') return 'failed'
+  return null // queued, accepted, sending, sent: still on its way
+}
+
+// The errors we're likely to hit, in plain words. Anything else shows the code.
+const SMS_ERRORS: Record<string, string> = {
+  '21610': 'the person replied STOP',
+  '30003': 'phone off or out of service',
+  '30004': 'blocked by the recipient or carrier',
+  '30005': 'number does not exist',
+  '30006': 'landline or a number that cannot get texts',
+  '30007': 'filtered as spam by the carrier',
+  '30008': 'unknown carrier error',
+  '30034': 'our number is not registered yet (A2P campaign pending)',
+}
+
+/** One line for the hub: why a text didn't arrive. */
+export function smsFailureReason(errorCode: string | null | undefined): string {
+  if (!errorCode) return 'not delivered'
+  const plain = SMS_ERRORS[errorCode]
+  return plain ? `not delivered: ${plain} (error ${errorCode})` : `not delivered (Twilio error ${errorCode})`
 }
 
 export const STOP_WORDS = ['stop', 'stopall', 'unsubscribe', 'cancel', 'end', 'quit']

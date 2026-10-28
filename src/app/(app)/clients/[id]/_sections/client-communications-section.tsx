@@ -52,7 +52,7 @@ export async function ClientCommunicationsSection({ id }: { id: string }) {
               ? <ArrowDownLeft className="h-3.5 w-3.5 text-bronze-500 shrink-0" />
               : <ArrowUpRight className="h-3.5 w-3.5 text-charcoal-400 shrink-0" />}
             <span className="truncate flex-1 text-charcoal-800">{r.subject || '(no subject)'}</span>
-            <span className="text-xs text-charcoal-400 shrink-0 uppercase tracking-wide">{r.status}</span>
+            <span className={`text-xs shrink-0 uppercase tracking-wide ${r.status === 'failed' || r.status === 'bounced' ? 'text-red-600 font-semibold' : 'text-charcoal-400'}`}>{r.status}</span>
             <span className="text-xs text-charcoal-400 shrink-0 w-14 text-right">
               {fmt(r.receivedAt ?? r.sentAt ?? r.createdAt)}
             </span>

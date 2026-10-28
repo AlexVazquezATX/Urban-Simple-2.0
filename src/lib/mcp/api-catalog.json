@@ -1079,9 +1079,9 @@
             "firstName",
             "lastName",
             "email",
-            "phone",
             "role",
-            "isPortalUser"
+            "isPortalUser",
+            "phone"
           ],
           "doc": "POST /api/clients/[id]/contacts - Create new contact"
         }
@@ -1099,7 +1099,6 @@
             "firstName",
             "lastName",
             "email",
-            "phone",
             "role",
             "isPortalUser"
           ],
@@ -1372,7 +1371,7 @@
             "SUPER_ADMIN",
             "ADMIN"
           ],
-          "doc": "POST /api/clients/[id]/portal-invite — admin-only. Invites a ClientContact to the Urban Simple Portal. Creates a Supabase auth user (with a magic-link invite email), creates a User row with role CLIENT_USER, and links the ClientContact to that User. Idempotent on re-invite (re-sends the email).  Body: { contactId: string }"
+          "doc": "POST /api/clients/[id]/portal-invite — admin-only. Invites a ClientContact to the Urban Simple Portal. Creates a Supabase auth user (with an invite email), creates a User row with role CLIENT_USER, and links the ClientContact to that User. On re-invite it emails a fresh sign-in link and reports honestly whether the email went out.  Body: { contactId: string }"
         }
       }
     },
@@ -2291,6 +2290,39 @@
       }
     },
     {
+      "path": "/api/cron/lead-machine",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/cron/lead-machine - nightly sourcing + health check for every company that switched the machine on. Scheduled at 07:00 and 08:00 UTC; each company runs only on the one that is 2 a.m. local. Returns counts only."
+        }
+      }
+    },
+    {
+      "path": "/api/cron/lead-machine-brief",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/cron/lead-machine-brief - the morning brief, Telegram or email. Scheduled at 12:30 and 13:30 UTC; each company gets it at 7:30 local."
+        }
+      }
+    },
+    {
+      "path": "/api/cron/ops-watch",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {}
+      }
+    },
+    {
       "path": "/api/cron/portal-weekly-digest",
       "methods": [
         "GET",
@@ -2363,6 +2395,52 @@
         },
         "DELETE": {
           "doc": "DELETE /api/dev/switch-role Clear impersonation cookies. Permissive on purpose — any authenticated user can clear their own impersonation state. Worst case: a non-admin who somehow has stale cookies clears them and is restored to their real role. That's exactly the recovery path we want anyone in a stuck state to have."
+        }
+      }
+    },
+    {
+      "path": "/api/field/flag",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "locationId",
+            "shiftId",
+            "description",
+            "category",
+            "severity",
+            "photos"
+          ],
+          "required": [
+            "shiftId and locationId are required"
+          ],
+          "roles": [
+            "ASSOCIATE"
+          ],
+          "doc": "POST /api/field/flag — an associate reports a problem at a stop that isn't a checklist item (broken equipment, no key, pests, leak...). Goes straight to the manager; it stays internal until a manager shares it with the client.  Body: { shiftId, locationId, category, severity?, description, photos? }"
+        }
+      }
+    },
+    {
+      "path": "/api/field/visit",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {
+          "body": [
+            "shiftId",
+            "locationId",
+            "action",
+            "done",
+            "notDone",
+            "notes",
+            "photos"
+          ]
         }
       }
     },
@@ -2797,6 +2875,41 @@
       }
     },
     {
+      "path": "/api/growth/machine",
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/growth/machine - settings, recent runs, Places usage, machine-added counts."
+        },
+        "PATCH": {
+          "doc": "PATCH /api/growth/machine - { enabled?, dryRun?, dailyNewCap?, sourceCaps?, placesMonthlyCallCap?, briefEnabled?, notifyEmail? }"
+        }
+      }
+    },
+    {
+      "path": "/api/growth/machine/run",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "stage",
+            "dryRun",
+            "forcePlaces"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
+          "doc": "POST /api/growth/machine/run - run a stage now. { stage: 'sourcing' | 'health' | 'brief' | 'brief_preview', dryRun?: boolean, forcePlaces?: boolean } Sourcing defaults to dry run here; pass dryRun:false to write for real."
+        }
+      }
+    },
+    {
       "path": "/api/growth/outreach/approval-queue",
       "methods": [
         "GET",
@@ -2818,7 +2931,7 @@
             "subject",
             "customInstructions",
             "toOverrides",
-            "replace"
+            "allowUnverified"
           ],
           "required": [
             "Message IDs required",
@@ -2922,14 +3035,8 @@
         "POST"
       ],
       "handlers": {
-        "GET": {
-          "doc": "Sequence Executor - Runs as a cron job to send pending outreach messages. Two lanes: 1. Manual follow-ups — approvalStatus='approved', step > 1. No cap, no window. 2. Autopilot (campaign.autopilot=true) — all steps, auto-approved, gated by the company's send window + daily cap. The first send of step 1 is how prospects auto-imported via CSV get their initial cold email."
-        },
-        "POST": {
-          "body": [
-            "replace"
-          ]
-        }
+        "GET": {},
+        "POST": {}
       }
     },
     {
@@ -3522,17 +3629,23 @@
         "GET",
         "POST"
       ],
-      "summary": "Admin-side issue endpoints. Mirrors the portal POST (which lets a client report an issue from their portal) but adds: admin-only create / list, with admin extras like assignedToId, status, and full filtering. Scoped to the user's company via the location→client→companyId chain.",
+      "summary": "Staff-side issue endpoints. Clients report issues and requests through the portal (its own route); this is the staff list + \"New issue\" create. Scoped to the user's company via the location→client→companyId chain.",
       "handlers": {
         "GET": {
           "query": [
             "status",
             "severity",
+            "type",
+            "source",
             "locationId",
             "clientId",
-            "assignedToId"
+            "assignedToId",
+            "limit"
           ],
-          "doc": "GET /api/issues — list issues across the company with optional filters."
+          "roles": [
+            "ASSOCIATE"
+          ],
+          "doc": "GET /api/issues: list issues across the company with optional filters (type, source, status, severity, locationId, clientId, assignedToId). Associates only ever see the issues they reported."
         },
         "POST": {
           "body": [
@@ -3541,15 +3654,21 @@
             "description",
             "category",
             "severity",
-            "status",
-            "assignedToId",
-            "photos"
+            "photos",
+            "serviceLogId",
+            "type",
+            "visibleToClient",
+            "items",
+            "notifyClient"
           ],
           "required": [
             "locationId is required",
             "title is required"
           ],
-          "doc": "POST /api/issues — admin creates an issue on a location. Required: locationId, title. Optional: clientId (derived from location if absent), category, severity, description, status, assignedToId, photos[]."
+          "roles": [
+            "ASSOCIATE"
+          ],
+          "doc": "POST /api/issues: staff \"New issue\" on a location. Required: locationId, title. Optional: category, severity, description, photos[], serviceLogId, visibleToClient (default false: staff findings stay internal until shared).  Managers can also log unfinished work for a crew (type \"incomplete_work\"): locationId, items[{ text, reason }], photos[], notifyClient (default true). It alerts staff and opted"
         }
       }
     },
@@ -3560,9 +3679,13 @@
         "PATCH",
         "DELETE"
       ],
-      "summary": "Single-issue admin endpoints. GET / PATCH / DELETE, all scoped to the user's company via the issue→client→companyId chain. PATCH supports partial updates of any user-editable field (notably status + resolution for resolving). DELETE is hard delete — the IssueComment relation cascades on delete.",
+      "summary": "Single-issue staff endpoints. GET / PATCH / DELETE, all scoped to the user's company via the issue→client→companyId chain. PATCH is managers and up (status, resolution, assignee, severity, category, client visibility); DELETE is admins only and hard-deletes (IssueComment cascades).",
       "handlers": {
-        "GET": {},
+        "GET": {
+          "roles": [
+            "ASSOCIATE"
+          ]
+        },
         "PATCH": {
           "body": [
             "title",
@@ -3571,11 +3694,47 @@
             "severity",
             "status",
             "resolution",
+            "visibleToClient",
             "assignedToId",
             "photos"
           ]
         },
         "DELETE": {}
+      }
+    },
+    {
+      "path": "/api/issues/[id]/comments",
+      "methods": [
+        "POST"
+      ],
+      "summary": "POST /api/issues/[id]/comments: add to an issue's thread. Managers and up may comment on any issue; an associate only on an issue they reported, and their comments are always internal (associates don't message clients directly). Public staff comments on client-visible issues are emailed to the clien",
+      "handlers": {
+        "POST": {
+          "body": [
+            "comment",
+            "isInternal"
+          ],
+          "required": [
+            "comment is required"
+          ],
+          "roles": [
+            "ASSOCIATE"
+          ]
+        }
+      }
+    },
+    {
+      "path": "/api/issues/[id]/notify-client",
+      "methods": [
+        "POST"
+      ],
+      "summary": "POST /api/issues/[id]/notify-client { message? }: share an issue with the client and alert their opted-in contacts for that location now. Marks the issue visible in the portal either way. Managers and up.",
+      "handlers": {
+        "POST": {
+          "body": [
+            "message"
+          ]
+        }
       }
     },
     {
@@ -3602,6 +3761,10 @@
             "userId",
             "isActive"
           ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
           "doc": "GET /api/location-assignments - List all location assignments"
         },
         "POST": {
@@ -3611,10 +3774,17 @@
             "monthlyPay",
             "startDate",
             "endDate",
-            "isActive"
+            "isActive",
+            "daysOfWeek",
+            "cleaningWindowStart",
+            "cleaningWindowEnd"
           ],
           "required": [
             "Location ID, User ID, monthly pay, and start date are required"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
           ],
           "doc": "POST /api/location-assignments - Create new location assignment"
         }
@@ -3639,9 +3809,17 @@
             "daysOfWeek",
             "nightsPerWeek"
           ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
           "doc": "PUT /api/location-assignments/[id] - Update location assignment"
         },
         "DELETE": {
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN"
+          ],
           "doc": "DELETE /api/location-assignments/[id] - Delete location assignment"
         }
       }
@@ -3725,7 +3903,26 @@
         "GET"
       ],
       "handlers": {
-        "GET": {}
+        "GET": {
+          "doc": "GET /api/my-night — the signed-in associate's stops for tonight. \"Tonight\" = today's shifts, plus yesterday's overnight shifts that haven't ended (a 21:00-02:00 route must not vanish at midnight), plus any stop the associate is still clocked in on."
+        }
+      }
+    },
+    {
+      "path": "/api/notifications",
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "summary": "In-app notifications for the signed-in user (the staff bell). GET   → latest 30 + unread count PATCH { ids: string[] } marks those read; { all: true } marks everything read.",
+      "handlers": {
+        "GET": {},
+        "PATCH": {
+          "body": [
+            "ids",
+            "all"
+          ]
+        }
       }
     },
     {
@@ -3780,6 +3977,26 @@
       "summary": "OAuth 2.1 token endpoint. grant_type=authorization_code  code + code_verifier (PKCE S256, mandatory) grant_type=refresh_token       rotating refresh tokens (old one revoked) Access tokens are `us_oat_…` bearers accepted by the whole API surface via authenticateOAuthToken (src/lib/api-key-verify.ts).",
       "handlers": {
         "POST": {}
+      }
+    },
+    {
+      "path": "/api/operations/associate-shifts",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "days",
+            "assignmentId"
+          ],
+          "roles": [
+            "SUPER_ADMIN",
+            "ADMIN",
+            "MANAGER"
+          ],
+          "doc": "POST /api/operations/associate-shifts — fill associate shifts from assignment schedules for the next N nights (default 14). Idempotent. Body: { days?: number, assignmentId?: string }"
+        }
       }
     },
     {
@@ -3923,6 +4140,17 @@
       }
     },
     {
+      "path": "/api/outreach/unsubscribe",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handlers": {
+        "GET": {},
+        "POST": {}
+      }
+    },
+    {
       "path": "/api/payments",
       "methods": [
         "GET",
@@ -3962,6 +4190,28 @@
       }
     },
     {
+      "path": "/api/portal/alerts",
+      "methods": [
+        "GET",
+        "PATCH"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/portal/alerts"
+        },
+        "PATCH": {
+          "body": [
+            "alertEmail",
+            "alertSms",
+            "phone",
+            "locationIds",
+            "smsConsent"
+          ],
+          "doc": "PATCH /api/portal/alerts Body: { alertEmail, alertSms, phone?, locationIds: string[], smsConsent? }"
+        }
+      }
+    },
+    {
       "path": "/api/portal/documents",
       "methods": [
         "GET",
@@ -3991,10 +4241,38 @@
             "description",
             "expiresAt"
           ],
-          "doc": "PATCH /api/portal/documents/[id] — update name/category/description/expiresAt. Only the uploader (or any portal user from the same client) can edit."
+          "required": [
+            "Name is required"
+          ],
+          "doc": "PATCH /api/portal/documents/[id]: update name/category/description/expiresAt. Only documents uploaded from the portal can be edited or deleted here; contracts, COIs and other docs Urban Simple uploaded are read-only."
         },
         "DELETE": {
-          "doc": "DELETE /api/portal/documents/[id] — removes the file from storage and the row."
+          "doc": "DELETE /api/portal/documents/[id]: removes the file from storage and the row."
+        }
+      }
+    },
+    {
+      "path": "/api/portal/forgot-password",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "email"
+          ]
+        }
+      }
+    },
+    {
+      "path": "/api/portal/issue-photo",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "multipart": true,
+          "doc": "POST /api/portal/issue-photo — upload one photo for an issue report or a service request. Same validation as walkthrough photos; the returned URL is submitted with the issue/request itself."
         }
       }
     },
@@ -4006,20 +4284,65 @@
       ],
       "handlers": {
         "GET": {
-          "doc": "GET /api/portal/issues — list issues for the authenticated client."
+          "query": [
+            "type"
+          ],
+          "doc": "GET /api/portal/issues — list client-visible issues for the authenticated client. ?type=request returns service requests instead."
         },
         "POST": {
           "body": [
             "locationId",
+            "title",
+            "description",
             "category",
             "severity",
-            "title",
-            "description"
+            "photos"
           ],
           "required": [
             "Location and title are required"
           ],
-          "doc": "POST /api/portal/issues — create a new issue from the portal."
+          "doc": "POST /api/portal/issues — create a new issue from the portal. Body: { locationId, category, severity, title, description?, photos?: string[] }"
+        }
+      }
+    },
+    {
+      "path": "/api/portal/issues/[id]/comments",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "comment",
+            "reopen"
+          ],
+          "doc": "POST /api/portal/issues/[id]/comments — client reply on an issue/request. Replying with { reopen: true } on a resolved issue sets it back to open (\"This isn't fixed\").  Body: { comment: string, reopen?: boolean }"
+        }
+      }
+    },
+    {
+      "path": "/api/portal/requests",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/portal/requests — the client's service requests."
+        },
+        "POST": {
+          "body": [
+            "locationId",
+            "kind",
+            "title",
+            "details",
+            "preferredDate",
+            "photos"
+          ],
+          "required": [
+            "Location and a short summary are required"
+          ],
+          "doc": "POST /api/portal/requests Body: { locationId, kind, title, details?, preferredDate?: 'yyyy-MM-dd', photos?: string[] }"
         }
       }
     },
@@ -4072,6 +4395,24 @@
             "Valid email required"
           ],
           "doc": "POST /api/portal/team — invite a new teammate to the portal. Any active portal user can invite a teammate to their own client. Mirrors the admin portal-invite flow but scoped to the inviter's own client.  Body: { firstName, lastName, email, phone?, role? }"
+        }
+      }
+    },
+    {
+      "path": "/api/portal/visit-ratings",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "body": [
+            "locationId",
+            "serviceDate",
+            "rating",
+            "comment",
+            "shiftId"
+          ],
+          "doc": "POST /api/portal/visit-ratings — \"How was this visit?\" from the cleaning log. One rating per user, location and service date (re-rating updates it).  Body: { locationId, serviceDate: 'yyyy-MM-dd', rating: 1-5, comment?, shiftId? }"
         }
       }
     },
@@ -4642,6 +4983,9 @@
             "includeInactive",
             "role"
           ],
+          "roles": [
+            "ASSOCIATE"
+          ],
           "doc": "GET /api/users Get all users in the company"
         },
         "POST": {
@@ -4653,7 +4997,8 @@
             "phone",
             "role",
             "branchId",
-            "password"
+            "password",
+            "preferredLanguage"
           ],
           "required": [
             "email, firstName, lastName, and role are required"
@@ -4687,7 +5032,8 @@
             "branchId",
             "isActive",
             "avatarUrl",
-            "password"
+            "password",
+            "preferredLanguage"
           ],
           "roles": [
             "SUPER_ADMIN",
@@ -4717,9 +5063,12 @@
         "PATCH": {
           "body": [
             "emailSignature",
-            "signatureLogoUrl"
+            "signatureLogoUrl",
+            "phone",
+            "smsAlerts",
+            "preferredLanguage"
           ],
-          "doc": "PATCH /api/users/me Update current user's settings (e.g., email signature)"
+          "doc": "PATCH /api/users/me Update the current user's own settings: email signature, phone, text alerts, field language. Nothing privileged (role, branch, active) here. Only the fields present in the body are changed."
         }
       }
     },
@@ -4756,6 +5105,29 @@
             "type",
             "data"
           ]
+        }
+      }
+    },
+    {
+      "path": "/api/webhooks/twilio",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "multipart": true
+        }
+      }
+    },
+    {
+      "path": "/api/webhooks/twilio/status",
+      "methods": [
+        "POST"
+      ],
+      "handlers": {
+        "POST": {
+          "multipart": true,
+          "doc": "POST /api/webhooks/twilio/status — delivery receipts for texts we send. sendSms sets this as each message's StatusCallback, so no Twilio console setup is needed. Delivered and failed texts update their Comms Hub row; in-flight statuses (queued, sent) are ignored."
         }
       }
     }

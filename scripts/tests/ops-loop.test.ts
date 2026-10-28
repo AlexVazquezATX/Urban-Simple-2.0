@@ -6,7 +6,13 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { createHmac } from 'crypto'
 import { apiAllowed } from '../../src/lib/api-access'
-import { toE164, verifyTwilioSignature } from '../../src/lib/notify/sms'
+import {
+  smsFailureReason,
+  smsLifecycle,
+  smsStatusCallbackUrl,
+  toE164,
+  verifyTwilioSignature,
+} from '../../src/lib/notify/sms'
 import { renderAlertEmail, renderAlertText } from '../../src/lib/notify/email'
 import { overnightStillActive, normalizeSections, parseIncompleteItems } from '../../src/lib/ops/field'
 import { reasonLabel, NOT_DONE_REASONS } from '../../src/lib/ops/constants'
@@ -95,6 +101,29 @@ test('Twilio signature verification', () => {
   assert.equal(verifyTwilioSignature(url, params, sig), true)
   assert.equal(verifyTwilioSignature(url, { ...params, Body: 'START' }, sig), false)
   assert.equal(verifyTwilioSignature(url, params, null), false)
+})
+
+test('Twilio delivery receipts map to delivered or failed', () => {
+  assert.equal(smsLifecycle('delivered'), 'delivered')
+  assert.equal(smsLifecycle('undelivered'), 'failed')
+  assert.equal(smsLifecycle('failed'), 'failed')
+  for (const inFlight of ['queued', 'accepted', 'sending', 'sent', undefined]) {
+    assert.equal(smsLifecycle(inFlight), null)
+  }
+  assert.match(smsFailureReason('30034'), /not registered yet.*30034/)
+  assert.equal(smsFailureReason('99999'), 'not delivered (Twilio error 99999)')
+  assert.equal(smsFailureReason(undefined), 'not delivered')
+})
+
+test('status callback URL is the one the receipt webhook verifies', () => {
+  const prev = process.env.NEXT_PUBLIC_APP_URL
+  process.env.NEXT_PUBLIC_APP_URL = 'https://www.urbansimple.net/'
+  try {
+    assert.equal(smsStatusCallbackUrl(), 'https://www.urbansimple.net/api/webhooks/twilio/status')
+  } finally {
+    if (prev === undefined) delete process.env.NEXT_PUBLIC_APP_URL
+    else process.env.NEXT_PUBLIC_APP_URL = prev
+  }
 })
 
 test('overnight shifts stay "tonight" until end + 3h', () => {
