@@ -222,8 +222,9 @@ test('client mail never uses the cold outreach address', async () => {
     assert.equal(hubReplyFromAddress({ prospect: { source: 'lead_machine', convertedToClientId: 'c1' } }), 'alex@urbansimple.net', 'became a client')
     assert.equal(hubReplyFromAddress({ prospect: { source: 'website' } }), 'alex@urbansimple.net', 'came to us')
     assert.equal(hubReplyFromAddress({ prospect: null }), 'alex@urbansimple.net', 'no prospect')
-    process.env.RESEND_FROM_EMAIL = 'billing@urbansimple.net'
-    assert.equal(mainFromAddress(), 'billing@urbansimple.net')
+    process.env.RESEND_FROM_EMAIL = 'BackHaus <hello@backhaus.ai>'
+    assert.equal(mainFromAddress(), 'alex@urbansimple.net', 'that variable is BackHaus mail')
+    assert.equal(fromAddress(), 'alex@urbansimple.net')
   } finally {
     for (const [k, v] of [['RESEND_OUTREACH_FROM_EMAIL', saved.cold], ['RESEND_FROM_EMAIL', saved.main], ['RESEND_PORTAL_FROM_EMAIL', saved.portal]] as const) {
       if (v === undefined) delete process.env[k]

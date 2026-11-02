@@ -21,10 +21,10 @@ addresses out and make every email CAN-SPAM compliant.
 | Mail | From |
 |---|---|
 | Cold outreach, and hub replies to prospects we emailed cold | `RESEND_OUTREACH_FROM_EMAIL` |
-| Invoices, payment reminders, hub replies to clients and inbound leads | `RESEND_FROM_EMAIL`, else `alex@urbansimple.net` |
+| Invoices, payment reminders, hub replies to clients and inbound leads | `alex@urbansimple.net` |
 | Portal and machine notifications | `RESEND_PORTAL_FROM_EMAIL`, else the line above |
 
-Client mail must never use the outreach address. See `src/lib/services/sender-address.ts`.
+Client mail must never use the outreach address, or `RESEND_FROM_EMAIL`, which is BackHaus's. See `src/lib/services/sender-address.ts`.
 
 ## Rollout (in order)
 

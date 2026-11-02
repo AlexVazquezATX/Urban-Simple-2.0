@@ -6,9 +6,13 @@ import { isInboundSource } from './outreach-recipient'
 
 const MAIN_FROM = 'alex@urbansimple.net'
 
-/** Invoices, reminders, notifications, and anything else a client may read. */
+/**
+ * Invoices, reminders, notifications, and anything else a client may read.
+ * Not RESEND_FROM_EMAIL: in production that is BackHaus's address, for the
+ * studio's own mail.
+ */
 export function mainFromAddress(): string {
-  return process.env.RESEND_FROM_EMAIL || MAIN_FROM
+  return MAIN_FROM
 }
 
 export function outreachFromAddress(): string {
