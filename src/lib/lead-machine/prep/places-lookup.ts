@@ -85,6 +85,21 @@ export function samePlace(want: { name: string; street?: string | null }, got: {
   return ours.every((t) => theirs.has(t))
 }
 
+/**
+ * Google's name, when it's safe to use instead of a license record's. Stricter
+ * than samePlace: a shared address isn't enough (the bar inside a hotel would
+ * become the hotel) and neither is a shared name at another address.
+ */
+export function listingName(want: { name: string; street?: string | null }, got: { name: string; address?: string | null }): string | null {
+  const ours = distinctive(want.name)
+  const theirs = new Set(distinctive(got.name))
+  if (ours.length === 0 || !ours.every((t) => theirs.has(t))) return null
+  const wantStreet = streetKey(want.street)
+  const gotStreet = streetKey(parseFormattedAddress(got.address ?? undefined).street)
+  if (wantStreet && gotStreet && wantStreet !== gotStreet) return null
+  return got.name.trim() || null
+}
+
 export async function lookupPlace(opts: {
   apiKey: string
   name: string

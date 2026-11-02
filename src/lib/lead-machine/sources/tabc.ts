@@ -2,7 +2,7 @@
 // A filing means a bar or restaurant is opening or changing hands soon,
 // usually weeks before the doors open: the best time to be their first call.
 
-import { displayName, normName } from '../match'
+import { cleanBusinessName, displayName, normName } from '../match'
 import {
   AREA_CITIES, classifyByName, EXCLUDE_NAMES, fetchJson, soql,
   type Candidate, type FetchLike,
@@ -60,11 +60,12 @@ export async function fetchTabcCandidates(opts: {
   const candidates: Candidate[] = []
   for (const group of groups.values()) {
     const first = group[0]
-    const name = displayName((first.trade_name?.trim() || first.owner!.trim()))
+    const rawName = first.trade_name?.trim() || first.owner!.trim()
+    const name = cleanBusinessName(rawName)
     const types = [...new Set(group.map((g) => g.license_type))]
     const submitted = first.submission_date ? new Date(first.submission_date) : now
     const street = [first.address, first.address_2].filter(Boolean).join(' ').trim()
-    const segment = classifyByName(name)
+    const segment = classifyByName(rawName)
     candidates.push({
       source: 'tabc',
       name,

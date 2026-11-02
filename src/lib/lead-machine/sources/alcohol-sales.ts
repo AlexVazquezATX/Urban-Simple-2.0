@@ -3,7 +3,7 @@
 // restaurants and hotel F&B: a place selling $150k of drinks a month has a
 // kitchen, a bar and a cleaning problem worth solving.
 
-import { displayName } from '../match'
+import { cleanBusinessName, displayName } from '../match'
 import {
   AREA_CITIES, classifyByName, EXCLUDE_NAMES, fetchJson, soql,
   type Candidate, type FetchLike,
@@ -71,9 +71,10 @@ export async function fetchAlcoholSalesCandidates(opts: {
   for (const r of rows) {
     const rawName = r.location_name?.trim() || r.taxpayer_name?.trim()
     if (!rawName || EXCLUDE_NAMES.test(rawName)) continue
-    const name = displayName(rawName)
+    const name = cleanBusinessName(rawName)
     const total = money(r.total_receipts)
-    const segment = classifyByName(name)
+    // The full record, since a cleaned name can drop the word that says "hotel".
+    const segment = classifyByName(rawName)
     candidates.push({
       source: 'alcohol_sales',
       name,
@@ -100,6 +101,7 @@ export async function fetchAlcoholSalesCandidates(opts: {
           beerReceipts: money(r.beer_receipts),
           permit: r.tabc_permit_number ?? null,
           taxpayer: r.taxpayer_name ?? null,
+          recordName: rawName,
         },
       }],
     })

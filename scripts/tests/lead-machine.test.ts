@@ -1,7 +1,7 @@
 import { test, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { prisma } from '../../src/lib/db'
-import { ProspectIndex, streetKey, displayName } from '../../src/lib/lead-machine/match'
+import { cleanBusinessName, ProspectIndex, streetKey, displayName } from '../../src/lib/lead-machine/match'
 import { classifyByName, EXCLUDE_NAMES } from '../../src/lib/lead-machine/sources/types'
 import { pickCompleteMonth } from '../../src/lib/lead-machine/sources/alcohol-sales'
 import { fetchTabcCandidates } from '../../src/lib/lead-machine/sources/tabc'
@@ -68,6 +68,29 @@ test('classifyByName: bar words beat hotel words; resorts are resorts', () => {
 test('displayName fixes ALL CAPS but keeps brand acronyms', () => {
   assert.equal(displayName('JW MARRIOTT AUSTIN'), 'JW Marriott Austin')
   assert.equal(displayName('Already Mixed Case'), 'Already Mixed Case')
+})
+
+test('cleanBusinessName turns license records into names people use', () => {
+  const cases: Array<[string, string]> = [
+    ['SALC. INC.(HILTON HOTEL)', 'Hilton Hotel'],
+    ['HOTEL MAGDALENA/EQUIPMENT ROOM', 'Hotel Magdalena'],
+    ['THE OTIS/AC HOTEL AUSTIN DT/UT', 'The Otis'],
+    ['ALOFT/ELEMENT AUSTIN DT', 'Aloft'],
+    ['WESTIN AUSTIN DT', 'Westin Austin Downtown'],
+    ['THE ORIGINAL HOFFBRAU INC DBA THE HOFFBRAU', 'The Hoffbrau'],
+    ["MATT'S EL RANCHO, INC.", "Matt's El Rancho"],
+    ['ROSE ROOM/ 77 DEGREES', 'Rose Room'],
+    ['CHUPACABRA CANTINA / JACKALOPE', 'Chupacabra Cantina'],
+    ["CHUY'S #6001", "Chuy's"],
+    ['III FORKS #350', 'III Forks'],
+    ["MAGGIE MAE'S - A BRITISH PUB INC", "Maggie Mae's"],
+    ['75 1/2 RAINEY STREET', '75 1/2 Rainey Street'],
+    ['AUSTIN OYSTER CO.', 'Austin Oyster Co.'],
+    ['VIET ALLEY LLC', 'Viet Alley'],
+    ['Ceremony Botanical Brews Inc', 'Ceremony Botanical Brews'],
+    ['Tandoori Lounge', 'Tandoori Lounge'],
+  ]
+  for (const [raw, want] of cases) assert.equal(cleanBusinessName(raw), want, raw)
 })
 
 // ---- sources ----

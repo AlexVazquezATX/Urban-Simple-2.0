@@ -4,7 +4,7 @@ import { greetingName, validateDraft } from '../../src/lib/lead-machine/prep/cop
 import { bestSiteEmail, findContacts, splitName } from '../../src/lib/lead-machine/prep/contacts'
 import { Findymail, FindymailStopped } from '../../src/lib/lead-machine/prep/findymail'
 import { extractEmails, htmlToText, ownDomain } from '../../src/lib/lead-machine/prep/site'
-import { samePlace } from '../../src/lib/lead-machine/prep/places-lookup'
+import { listingName, samePlace } from '../../src/lib/lead-machine/prep/places-lookup'
 import { buildMaterial } from '../../src/lib/lead-machine/prep/run'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -96,6 +96,13 @@ test('samePlace accepts a shared name word or the same street, never a stranger'
   assert.ok(!samePlace({ name: 'The Bar' }, { name: 'The Bar', address: '1 Main St, Austin, TX 78701, USA' }), 'nothing distinctive needs the street')
 })
 
+test('listingName only adopts Google\'s name when it is plainly the same business', () => {
+  assert.equal(listingName({ name: 'Aloft', street: '109 E 7th St' }, { name: 'Aloft Austin Downtown', address: '109 E 7th St, Austin, TX 78701, USA' }), 'Aloft Austin Downtown')
+  assert.equal(listingName({ name: 'Hilton Hotel' }, { name: 'Hilton Austin', address: '500 E 4th St, Austin, TX 78701, USA' }), 'Hilton Austin')
+  assert.equal(listingName({ name: 'The Alright', street: '200 Lavaca St' }, { name: 'The Westin', address: '200 Lavaca St, Austin, TX 78701, USA' }), null, 'a bar inside a hotel stays the bar')
+  assert.equal(listingName({ name: 'Hilton Hotel', street: '500 E 4th St' }, { name: 'Hilton Garden Inn', address: '500 N Interstate 35, Austin, TX 78701, USA' }), null, 'another property')
+})
+
 function fakeFindymail(routes: Record<string, (body: any) => Response>, remaining = 10) {
   const calls: string[] = []
   const fm = new Findymail('key', { remaining }, async (url, init) => {
@@ -143,6 +150,13 @@ test('findContacts: no name falls back to the right title, then to a verified si
 test('findContacts without Findymail still offers the site inbox, unverified', async () => {
   const found = await findContacts({ segment: 'bar', domain: 'x.com', decisionMaker: null, siteEmails: ['hello@x.com'], findymail: null })
   assert.equal(found[0].emailVerificationStatus, 'unknown')
+})
+
+test('Findymail: a usage limit stops the run, and capacity is read from the account', async () => {
+  const limited = fakeFindymail({ '/api/search/name': () => json({ error: 'limit' }, 429) })
+  await assert.rejects(limited.fm.findByName('Ana Ruiz', 'temaatx.com'), FindymailStopped)
+  const account = fakeFindymail({ '/api/credits': () => json({ credits: 21, verifier_credits: 9, has_capacity: true }) })
+  assert.deepEqual(await account.fm.credits(), { finder: 21, verifier: 9, hasCapacity: true })
 })
 
 test('Findymail: misses are free, the budget is respected, and a 402 stops the run', async () => {

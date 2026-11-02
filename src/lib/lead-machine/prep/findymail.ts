@@ -44,6 +44,7 @@ export class Findymail {
       if (res.status === 401) throw new FindymailStopped('Findymail rejected the API key (401)')
       if (res.status === 402) throw new FindymailStopped('Findymail is out of credits (402)')
       if (res.status === 423) throw new FindymailStopped('Findymail subscription is paused (423)')
+      if (res.status === 429) throw new FindymailStopped('Findymail usage limit reached for now (429)')
       if (res.status === 404) return { status: 404, json: null }
       if (!res.ok) throw new Error(`Findymail ${path} returned HTTP ${res.status}`)
       return { status: res.status, json: (await res.json()) as T }
@@ -94,11 +95,12 @@ export class Findymail {
     return json?.verified === true
   }
 
-  async credits(): Promise<{ finder: number | null; verifier: number | null }> {
-    const { json } = await this.call<{ credits?: number; verifier_credits?: number }>('GET', '/api/credits')
+  async credits(): Promise<{ finder: number | null; verifier: number | null; hasCapacity: boolean | null }> {
+    const { json } = await this.call<{ credits?: number; verifier_credits?: number; has_capacity?: boolean }>('GET', '/api/credits')
     return {
       finder: typeof json?.credits === 'number' ? json.credits : null,
       verifier: typeof json?.verifier_credits === 'number' ? json.verifier_credits : null,
+      hasCapacity: typeof json?.has_capacity === 'boolean' ? json.has_capacity : null,
     }
   }
 }

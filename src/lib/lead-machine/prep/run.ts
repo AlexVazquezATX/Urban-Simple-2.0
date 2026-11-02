@@ -17,7 +17,7 @@ import { ClaudeWriter, OutOfTime, type ResearchNotes } from './claude'
 import { greetingName } from './copy'
 import { findContacts, type FoundContact } from './contacts'
 import { Findymail, FindymailStopped } from './findymail'
-import { lookupPlace, type PlaceFacts } from './places-lookup'
+import { listingName, lookupPlace, type PlaceFacts } from './places-lookup'
 import { ownDomain, readSite, type SiteFacts } from './site'
 
 const DAY = 86_400_000
@@ -79,7 +79,7 @@ function signalLine(s: { kind: string; observedAt: Date; data: unknown }): strin
     case 'tabc_new_license':
       return `Texas liquor license application (${d.licenseType ?? '?'}) filed ${day}, status ${d.status ?? 'pending'}; owner on the filing: ${d.owner ?? 'not listed'}; trade name: ${d.tradeName ?? 'not listed'}.`
     case 'alcohol_sales':
-      return `State alcohol sales records: about $${Number(d.totalReceipts ?? 0).toLocaleString('en-US')} in alcohol sales in ${d.month ?? 'a recent month'} (a busy operation); taxpayer: ${d.taxpayer ?? 'not listed'}.`
+      return `State alcohol sales records: about $${Number(d.totalReceipts ?? 0).toLocaleString('en-US')} in alcohol sales in ${d.month ?? 'a recent month'} (a busy operation); listed as ${d.recordName ?? 'not listed'}; taxpayer: ${d.taxpayer ?? 'not listed'}.`
     case 'google_places':
       return `Google: ${d.rating ?? '?'} stars from ${d.reviews ?? '?'} reviews.`
     default:
@@ -138,9 +138,15 @@ async function prepOne(p: ProspectForPrep, deps: {
     deps.stats.placesCalls++
     place = await lookupPlace({ apiKey: deps.placesKey, name: p.companyName, street: addr.street, city: addr.city, fetchImpl: deps.fetchImpl }).catch(() => null)
   }
+  // An account the machine named and no one has touched takes Google's name
+  // on its first pass: what the business calls itself beats a license record.
+  const untouched = p.source === 'lead_machine' && !p.research && p.updatedAt.getTime() - p.createdAt.getTime() < 60_000
+  const renamed = untouched && place ? listingName({ name: p.companyName, street: addr.street }, place) : null
+  const name = renamed ?? p.companyName
+
   const website = p.website || place?.website || null
   const site = website ? await readSite(website, { fetchImpl: deps.fetchImpl }) : null
-  const notes = await deps.claude.research(buildMaterial(p, segment, signals, place, site))
+  const notes = await deps.claude.research(buildMaterial({ ...p, companyName: name }, segment, signals, place, site))
   if (deps.signal.aborted) throw new OutOfTime('Out of time for this run')
 
   // Contacts already on file (with a usable address) win: no paid lookups.
@@ -179,7 +185,7 @@ async function prepOne(p: ProspectForPrep, deps: {
 
   let outcome: PrepOutcome = {
     prospectId: p.id,
-    name: p.companyName,
+    name,
     status: 'no_contact',
     contact: recipient
       ? {
@@ -197,15 +203,15 @@ async function prepOne(p: ProspectForPrep, deps: {
 
   let draftFailed = false
   if (recipient) {
-    const greet = greetingName(recipient.firstName, p.companyName)
+    const greet = greetingName(recipient.firstName, name)
     const firstName = greet ? displayName(greet) : null
     // A draft that errors (time, refusal, bad output) must not lose the
     // contacts already paid for: they are saved and the draft retried later.
     try {
       const { draft, problems } = await deps.claude.draft(
-        draftBrief(p.companyName, segment, notes, firstName ? { firstName, title: recipient.title } : null),
+        draftBrief(name, segment, notes, firstName ? { firstName, title: recipient.title } : null),
         firstName,
-        p.companyName,
+        name,
       )
       outcome = { ...outcome, status: problems.length ? 'no_draft' : 'drafted', draft, problems }
     } catch (err) {
@@ -221,6 +227,7 @@ async function prepOne(p: ProspectForPrep, deps: {
     await tx.prospect.update({
       where: { id: p.id },
       data: {
+        ...(renamed ? { companyName: renamed } : {}),
         ...(!p.website && website ? { website } : {}),
         ...(!p.phone && place?.phone ? { phone: place.phone } : {}),
       },
