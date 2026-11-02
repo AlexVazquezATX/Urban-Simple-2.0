@@ -9,12 +9,15 @@ import { prisma } from '@/lib/db'
 
 export type CommCategory = 'outreach' | 'billing' | 'portal' | 'transactional' | 'reply' | 'other'
 
+/** A subject without its leading Re:/Fwd: prefixes. */
+export function stripReplyPrefix(subject: string | null | undefined): string {
+  return (subject ?? '').replace(/^\s*((re|fwd?|aw)\s*:\s*)+/i, '').trim()
+}
+
 /** Normalized thread key: counterpart email + subject stripped of Re:/Fwd:. */
 export function threadKeyFor(counterpartEmail: string | null | undefined, subject: string | null | undefined): string | null {
   if (!counterpartEmail) return null
-  const normSubject = (subject ?? '')
-    .replace(/^\s*((re|fwd?|aw)\s*:\s*)+/i, '')
-    .trim()
+  const normSubject = stripReplyPrefix(subject)
     .toLowerCase()
     .slice(0, 120)
   return `${counterpartEmail.trim().toLowerCase()}::${normSubject}`
