@@ -14,6 +14,7 @@ import { placesCallsThisMonth, runStage, skipStage } from '../runs'
 import { getSettings } from '../settings'
 import type { FetchLike } from '../sources/types'
 import { ClaudeWriter, OutOfTime, type ResearchNotes } from './claude'
+import { greetingName } from './copy'
 import { findContacts, type FoundContact } from './contacts'
 import { Findymail, FindymailStopped } from './findymail'
 import { lookupPlace, type PlaceFacts } from './places-lookup'
@@ -105,7 +106,7 @@ export function buildMaterial(p: { companyName: string; legalName: string | null
   return parts.filter(Boolean).join('\n\n')
 }
 
-function draftBrief(name: string, segment: string, notes: ResearchNotes, recipient: { firstName: string; title: string | null } | null): string {
+export function draftBrief(name: string, segment: string, notes: ResearchNotes, recipient: { firstName: string; title: string | null } | null): string {
   return [
     `Write the first email to ${name} (${segment}).`,
     recipient?.firstName ? `Recipient: ${recipient.firstName}${recipient.title ? `, ${recipient.title}` : ''}. Greet them as "Hi ${recipient.firstName},".` : 'Recipient: a general inbox, no name. Greet with "Hi,".',
@@ -196,7 +197,8 @@ async function prepOne(p: ProspectForPrep, deps: {
 
   let draftFailed = false
   if (recipient) {
-    const firstName = recipient.firstName?.trim() ? displayName(recipient.firstName.trim()) : null
+    const greet = greetingName(recipient.firstName, p.companyName)
+    const firstName = greet ? displayName(greet) : null
     // A draft that errors (time, refusal, bad output) must not lose the
     // contacts already paid for: they are saved and the draft retried later.
     try {

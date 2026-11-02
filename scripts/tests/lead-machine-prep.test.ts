@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { validateDraft } from '../../src/lib/lead-machine/prep/copy'
+import { greetingName, validateDraft } from '../../src/lib/lead-machine/prep/copy'
 import { bestSiteEmail, findContacts, splitName } from '../../src/lib/lead-machine/prep/contacts'
 import { Findymail, FindymailStopped } from '../../src/lib/lead-machine/prep/findymail'
 import { extractEmails, htmlToText, ownDomain } from '../../src/lib/lead-machine/prep/site'
@@ -167,4 +167,14 @@ test('buildMaterial lists public records, the Google listing and the website tex
   assert.match(text, /4\.6 stars, 88 reviews/)
   assert.match(text, /never quote them/)
   assert.match(text, /Founded by Maria Lopez/)
+})
+
+test('greetingName drops role words, inboxes and the business name, keeps real names', () => {
+  assert.equal(greetingName('Justin', "Shug's Bagels"), 'Justin')
+  assert.equal(greetingName("O'Neil", 'Some Bar'), "O'Neil")
+  assert.equal(greetingName('Facilities', 'The Driskill'), null)
+  assert.equal(greetingName('info', 'La Unica Motel'), null)
+  assert.equal(greetingName('Kinsho', 'Kinsho'), null)
+  assert.equal(greetingName('', 'X'), null)
+  assert.equal(greetingName('J.', 'X'), 'J.')
 })

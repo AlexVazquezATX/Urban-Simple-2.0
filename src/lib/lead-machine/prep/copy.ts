@@ -35,7 +35,7 @@ ${URBAN_SIMPLE_FACTS}
 
 HOW TO WRITE IT:
 The reader gets dozens of vendor emails a week and deletes anything that reads like a template. This one has to read like Alex wrote it himself after looking at their place for five minutes.
-- First line after the greeting: one specific, true observation about them from the research notes (what they are opening, what they are known for, how busy they are, their story). Make it about them, not us.
+- First line after the greeting: one specific, true observation about them from the research notes (what they are opening, what they are known for, how busy they are, their story). Make it about them, not us. Never open with their star rating or review count: it reads like a bot scraped their listing.
 - Then connect it to the problem nightly cleaning solves for a place like theirs, in their terms. A new opening is building routines and is stretched thin. A busy bar has a closing crew that wants to go home. A hotel runs several outlets to brand standards and needs a record.
 - Then the difference: they would see every clean in their portal and rate it, instead of wondering what happened overnight. If they already have a cleaning company, this is what makes switching worth it.
 - Then the offer, stated plainly: the first deep clean of every location is free with a 3-month agreement.
@@ -47,7 +47,7 @@ ${DRAFT_RULES}`
 export const RESEARCH_SYSTEM = `You research hospitality businesses in Austin for Urban Simple, a nightly cleaning company, before Alex Vazquez writes to them.
 From the material given (public records, Google listing, the business's own website), return:
 - decisionMaker: the person most likely to buy cleaning (owner, founder, general manager, managing partner; for hotels the general manager or director of operations), only if the material names them. Never guess or invent a name. A company or LLC name is not a person.
-- highlights: up to 4 short, specific, true facts Alex could mention to show he looked them up (what they are, what is new, what they are known for, their story). Each must be supported by the material. No numbers you can't see in the material.
+- highlights: up to 4 short, specific, true facts Alex could mention to show he looked them up (what they are, what is new, what they are known for, their story). Each must be supported by the material. No numbers you can't see in the material, and no star ratings or review counts.
 - segmentNote: one sentence on what kind of operation this is (new opening, established busy bar, multi-outlet hotel, and so on).
 - cautions: anything the email must avoid (for example a recent ownership change, a closure notice, or complaints about cleanliness in reviews, which must never be mentioned).
 Be literal and conservative. Empty arrays are fine.`
@@ -76,6 +76,19 @@ const BANNED = [
 const SIGN_OFF = /^(?=.{0,30}$).*\b(best|thanks|thank you|cheers|regards|sincerely|talk soon|warmly|alex)\b/i
 // Place names that contain a banned word but are just addresses.
 const PLACE_NAMES = /\bdirty (sixth|6th)\b/gi
+
+// First names that are really a role or an inbox ("Facilities", "Info").
+const NOT_A_NAME = /^(info|hello|contact|office|admin|team|general|facilities|facility|manager|management|gm|owner|operations|ops|reservations?|events?|sales|marketing|support|front|desk|hotel|restaurant|bar|kitchen|catering|accounting|billing|hr|careers|jobs|inquir\w*|the)$/i
+
+/** The first name to greet, or null when the CRM "name" is a role, an inbox or the business itself. */
+export function greetingName(firstName: string | null | undefined, businessName?: string | null): string | null {
+  const name = firstName?.trim()
+  if (!name || name.length < 2 || !/^\p{L}[\p{L}'.-]*$/u.test(name)) return null
+  if (NOT_A_NAME.test(name)) return null
+  const biz = (businessName ?? '').toLowerCase().split(/[^\p{L}']+/u).filter(Boolean)
+  if (biz.includes(name.toLowerCase())) return null
+  return name
+}
 
 export type Draft = { subject: string; body: string }
 
