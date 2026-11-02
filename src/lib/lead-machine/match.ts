@@ -88,6 +88,29 @@ export class ProspectIndex {
 
 const KEEP_UPPER = new Set(['jw', 'atx', 'bbq', 'usa', 'ii', 'iii', 'iv', 'llc', 'tx', 'ut', 'acl', 'w'])
 
+const LEGAL_SUFFIX = /[,\s]+(llc|l\.l\.c\.?|inc\.?|lp|llp|ltd\.?|corp\.?)\s*$/i
+
+/**
+ * License records aren't names: "SALC. INC.(HILTON HOTEL)", "HOTEL
+ * MAGDALENA/EQUIPMENT ROOM", "CHUY'S #6001". Reduce one to the name a person
+ * would use: the trade name after a DBA or an entity's parentheses, the first
+ * concept of a slash list, no store number or legal suffix.
+ */
+export function cleanBusinessName(raw: string): string {
+  let s = raw.trim().replace(/\s+/g, ' ')
+  const dba = s.match(/\bd\/?b\/?a\b[\s:]*(.+)$/i)
+  if (dba) s = dba[1]
+  const parens = s.match(/^(.*?)\s*\(([^)]+)\)(.*)$/)
+  if (parens) s = LEGAL_SUFFIX.test(parens[1]) ? parens[2] : `${parens[1]}${parens[3]}`
+  s = s.split(/\s+[-–—]\s+/)[0]
+  // "75 1/2 Rainey Street" is a real name; so is a short "DC/...".
+  const slash = s.match(/^(.*?[^\d\s])\s*\/\s*\S/)
+  if (slash && slash[1].length >= 3) s = slash[1]
+  s = s.replace(/\s*#\s*\d+\s*$/, '')
+  s = s.replace(LEGAL_SUFFIX, '').replace(/[,\s]+$/, '').replace(/\bdt$/i, (m) => (m === m.toUpperCase() ? 'DOWNTOWN' : 'Downtown'))
+  return displayName(s.trim().length >= 2 ? s : raw)
+}
+
 /** Public datasets shout in ALL CAPS; make names readable. */
 export function displayName(raw: string): string {
   const s = raw.trim().replace(/\s+/g, ' ')

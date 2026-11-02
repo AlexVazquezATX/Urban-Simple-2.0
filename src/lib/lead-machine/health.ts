@@ -93,9 +93,12 @@ export async function checkHealth(companyId: string, now = new Date()): Promise<
       problems.push('FINDYMAIL_API_KEY is not set, so contacts come only from websites and stay unverified')
     } else {
       try {
-        const { finder, verifier } = await new Findymail(key, { remaining: 0 }).credits()
-        if (finder !== null && finder < 50) problems.push(`Findymail has ${finder} finder credits left`)
-        if (verifier !== null && verifier < 50) problems.push(`Findymail has ${verifier} verifier credits left`)
+        const { finder, verifier, hasCapacity } = await new Findymail(key, { remaining: 0 }).credits()
+        // Current plans have rolling usage windows, not credits: the balance
+        // left over from a trial means nothing once the account reports capacity.
+        if (hasCapacity === false) problems.push('Findymail has hit its usage limit for now')
+        if (hasCapacity === null && finder !== null && finder < 50) problems.push(`Findymail has ${finder} finder credits left`)
+        if (hasCapacity === null && verifier !== null && verifier < 50) problems.push(`Findymail has ${verifier} verifier credits left`)
       } catch (err) {
         problems.push(`Could not check Findymail credits: ${err instanceof Error ? err.message : String(err)}`)
       }
