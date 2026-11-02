@@ -16,6 +16,16 @@ addresses out and make every email CAN-SPAM compliant.
 | **Autopilot cap** | The daily cap is spent on actual sends, so gate-blocked messages don't starve the ones behind them. |
 | **Stats** | Internal test prospects (contacts at our own sending domains) are excluded. The hardcoded "AI insights" are gone. |
 
+## Which address sends what
+
+| Mail | From |
+|---|---|
+| Cold outreach, and hub replies to prospects we emailed cold | `RESEND_OUTREACH_FROM_EMAIL` |
+| Invoices, payment reminders, hub replies to clients and inbound leads | `alex@urbansimple.net` |
+| Portal and machine notifications | `RESEND_PORTAL_FROM_EMAIL`, else the line above |
+
+Client mail must never use the outreach address, or `RESEND_FROM_EMAIL`, which is BackHaus's. See `src/lib/services/sender-address.ts`.
+
 ## Rollout (in order)
 
 1. **Apply the schema** before deploying. It's additive and idempotent:

@@ -3,6 +3,7 @@ import { InvoiceEmail } from '@/emails/invoice-email'
 import { PaymentReminderEmail } from '@/emails/payment-reminder-email'
 import { prisma } from '@/lib/db'
 import { logComm } from '@/lib/comms/log'
+import { mainFromAddress } from '@/lib/services/sender-address'
 
 interface SendInvoiceEmailParams {
   invoiceId: string
@@ -13,9 +14,7 @@ interface SendInvoiceEmailParams {
 export async function sendInvoiceEmail({
   invoiceId,
   to,
-  from = process.env.RESEND_FROM_EMAIL ||
-    process.env.RESEND_OUTREACH_FROM_EMAIL ||
-    'onboarding@resend.dev',
+  from = mainFromAddress(),
 }: SendInvoiceEmailParams) {
   try {
     // Check if Resend API key is configured
@@ -184,9 +183,7 @@ interface SendPaymentReminderEmailParams {
 export async function sendPaymentReminderEmail({
   invoiceId,
   to,
-  from = process.env.RESEND_FROM_EMAIL ||
-    process.env.RESEND_OUTREACH_FROM_EMAIL ||
-    'onboarding@resend.dev',
+  from = mainFromAddress(),
 }: SendPaymentReminderEmailParams) {
   const subjectFor = (invoiceNumber: string) =>
     `Payment reminder: Invoice ${invoiceNumber} from Urban Simple`

@@ -4,6 +4,7 @@ import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
 import { logComm } from '@/lib/comms/log'
 import { outreachReplyTo, findUnresolvedMergeTags } from '@/lib/services/outreach-guards'
+import { hubReplyFromAddress } from '@/lib/services/sender-address'
 
 /**
  * POST /api/communications/[id]/reply — reply to an inbound message from the
@@ -46,18 +47,21 @@ export async function POST(
     if (!toEmail) return NextResponse.json({ error: 'Original message has no sender address' }, { status: 400 })
 
     // DNC check when prospect-linked.
-    if (original.prospectId) {
-      const p = await prisma.prospect.findUnique({ where: { id: original.prospectId }, select: { doNotContact: true } })
-      if (p?.doNotContact) {
-        return NextResponse.json({ error: 'Prospect is marked Do Not Contact' }, { status: 409 })
-      }
+    const prospect = original.prospectId
+      ? await prisma.prospect.findUnique({
+          where: { id: original.prospectId },
+          select: { doNotContact: true, source: true, convertedToClientId: true },
+        })
+      : null
+    if (prospect?.doNotContact) {
+      return NextResponse.json({ error: 'Prospect is marked Do Not Contact' }, { status: 409 })
     }
 
     if (!process.env.RESEND_API_KEY) {
       return NextResponse.json({ error: 'Email service not configured' }, { status: 503 })
     }
     const resend = new Resend(process.env.RESEND_API_KEY)
-    const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromEmail = hubReplyFromAddress({ clientId: original.clientId, prospect })
     const baseSubject = original.subject ?? ''
     const subject = typeof payload?.subject === 'string' && payload.subject.trim()
       ? payload.subject.trim()
