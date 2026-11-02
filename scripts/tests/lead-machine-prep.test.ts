@@ -46,6 +46,8 @@ test('validateDraft catches meeting asks, soft sign-offs and hyphen dashes, but 
   assert.ok(check(`${good.body}\n\nKind regards,`).some((p) => /sign-off/.test(p)))
   assert.ok(check(good.body.replace('close. The', 'close - the')).some((p) => /hyphen/.test(p)))
   assert.ok(check(good.body.replace('stretched.', 'stretched, and the health inspector is coming.')).some((p) => /inspect/.test(p)))
+  assert.ok(check(good.body.replace('Want me to walk the space with you before you open?', 'Mind if I stop by this week?')).some((p) => /stop by/.test(p)))
+  assert.ok(check(good.body.replace('Want me to walk the space with you before you open?', 'Can I swing by before you open?')).some((p) => /swing by/.test(p)))
   assert.deepEqual(check(good.body.replace('on Congress', 'on Dirty Sixth')), [])
   assert.deepEqual(check(good.body.replace('Saw Tema', "Saw Dirty Bill's"), "Dirty Bill's"), [])
 })

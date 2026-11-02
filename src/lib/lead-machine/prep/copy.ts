@@ -24,7 +24,7 @@ export const DRAFT_RULES = `WRITING RULES (a draft that breaks any of these is t
 - Never use an em dash or en dash. Never use brackets, braces, placeholders, links, or emoji.
 - At most one exclamation mark, and only if it fits.
 - No filler or sales cliches: no "I hope this finds you well", "I wanted to reach out", "just checking", "touch base", "circle back", "leverage", "game-changer", "seamless", "elevate", "unlock", "world-class", "top-notch", "cutting-edge".
-- Never ask for a call or a meeting slot. The ask is a reply: a yes to a short walkthrough of their space, or a yes to seeing the client portal.
+- Never ask for a call or a meeting slot. The ask is a reply: a yes to a short walkthrough of their space at a time that suits them, or a yes to seeing the client portal. Call it a walkthrough: never "stop by", "drop by", "swing by" or "come by", which sound like showing up unannounced.
 - Never mention health inspections, inspection scores, violations, or anything that implies their place is dirty. Never quote or refer to their reviews' complaints.
 - Use only facts from the research notes and the facts about Urban Simple. If a fact isn't there, don't write it.
 - Subject: 2 to 6 words, lowercase except names, no punctuation tricks, no "quick question", no exclamation mark.`
@@ -71,6 +71,8 @@ const BANNED = [
   /\b(phone call|quick call|a call|call me|call you|on a call|zoom|calendar|meet|meeting|chat|hop on|jump on|schedule a|schedule time|\d+[- ]minutes?)\b/i,
   /\b(inspect\w*|health (code|department|score|grade|permit)|violations?|dirty|filthy|grimy|gross|sticky)\b/i,
   /\b(daily report|morning report|loyalty)\b/i,
+  // A walkthrough is scheduled; these sound like showing up unannounced.
+  /\b((stop|swing|pop)(ping|ing)? (by|in)|drop(ping)? by|com(e|ing) by)\b/i,
 ]
 // A short last line that is a valediction, or just the sender's name.
 const SIGN_OFF = /^(?=.{0,30}$).*\b(best|thanks|thank you|cheers|regards|sincerely|talk soon|warmly|alex)\b/i
