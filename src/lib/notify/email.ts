@@ -4,6 +4,7 @@
 
 import { Resend } from 'resend'
 import { logComm, type CommCategory } from '@/lib/comms/log'
+import { mainFromAddress } from '@/lib/services/sender-address'
 
 let resendClient: Resend | null = null
 function getResend(): Resend | null {
@@ -32,12 +33,7 @@ export function appBaseUrl(): string {
 }
 
 export function fromAddress(): string {
-  return (
-    process.env.RESEND_PORTAL_FROM_EMAIL ||
-    process.env.RESEND_FROM_EMAIL ||
-    process.env.RESEND_OUTREACH_FROM_EMAIL ||
-    'onboarding@resend.dev'
-  )
+  return process.env.RESEND_PORTAL_FROM_EMAIL || mainFromAddress()
 }
 
 export interface AlertEmailContent {

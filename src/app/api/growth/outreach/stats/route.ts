@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { getCurrentUser } from '@/lib/auth'
+import { mainFromAddress } from '@/lib/services/sender-address'
 
 // GET /api/growth/outreach/stats
 export async function GET(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     // which made up most of the "failed" count and skewed every rate.
     const ownDomains = [
       ...new Set(
-        [process.env.RESEND_OUTREACH_FROM_EMAIL, process.env.RESEND_FROM_EMAIL]
+        [process.env.RESEND_OUTREACH_FROM_EMAIL, mainFromAddress()]
           .map((a) => a?.match(/@([^>\s]+)/)?.[1]?.toLowerCase())
           .filter((d): d is string => !!d && d !== 'resend.dev'),
       ),

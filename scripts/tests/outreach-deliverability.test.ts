@@ -205,3 +205,29 @@ test('a forged unsubscribe link changes nothing', async () => {
   assert.equal(res.status, 400)
   assert.deepEqual(prospectUpdates, [])
 })
+
+test('client mail never uses the cold outreach address', async () => {
+  const { hubReplyFromAddress, mainFromAddress, outreachFromAddress } = await import('../../src/lib/services/sender-address')
+  const { fromAddress } = await import('../../src/lib/notify/email')
+  const saved = { cold: process.env.RESEND_OUTREACH_FROM_EMAIL, main: process.env.RESEND_FROM_EMAIL, portal: process.env.RESEND_PORTAL_FROM_EMAIL }
+  try {
+    process.env.RESEND_OUTREACH_FROM_EMAIL = 'alex@urbansimple.services'
+    delete process.env.RESEND_FROM_EMAIL
+    delete process.env.RESEND_PORTAL_FROM_EMAIL
+    assert.equal(mainFromAddress(), 'alex@urbansimple.net')
+    assert.equal(fromAddress(), 'alex@urbansimple.net')
+    assert.equal(outreachFromAddress(), 'alex@urbansimple.services')
+    assert.equal(hubReplyFromAddress({ prospect: { source: 'lead_machine' } }), 'alex@urbansimple.services')
+    assert.equal(hubReplyFromAddress({ clientId: 'c1', prospect: { source: 'lead_machine' } }), 'alex@urbansimple.net', 'linked to a client')
+    assert.equal(hubReplyFromAddress({ prospect: { source: 'lead_machine', convertedToClientId: 'c1' } }), 'alex@urbansimple.net', 'became a client')
+    assert.equal(hubReplyFromAddress({ prospect: { source: 'website' } }), 'alex@urbansimple.net', 'came to us')
+    assert.equal(hubReplyFromAddress({ prospect: null }), 'alex@urbansimple.net', 'no prospect')
+    process.env.RESEND_FROM_EMAIL = 'billing@urbansimple.net'
+    assert.equal(mainFromAddress(), 'billing@urbansimple.net')
+  } finally {
+    for (const [k, v] of [['RESEND_OUTREACH_FROM_EMAIL', saved.cold], ['RESEND_FROM_EMAIL', saved.main], ['RESEND_PORTAL_FROM_EMAIL', saved.portal]] as const) {
+      if (v === undefined) delete process.env[k]
+      else process.env[k] = v
+    }
+  }
+})
