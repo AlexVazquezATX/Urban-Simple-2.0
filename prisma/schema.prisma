@@ -1538,6 +1538,7 @@ model Prospect {
   outreachMessages OutreachMessage[]
   leadIntakes      LeadIntake[]
   signals          ProspectSignal[]
+  research         ProspectResearch?
 
   @@index([companyId, status])
   @@index([companyId, agentQueued])
@@ -2994,9 +2995,13 @@ model LeadMachineSettings {
   dailyNewCap           Int      @default(25) @map("daily_new_cap")
   // Per-source daily caps, e.g. {"tabc": 8, "alcohol_sales": 10, "places_hotels": 7}
   sourceCaps            Json     @default("{}") @map("source_caps")
-  placesMonthlyCallCap  Int      @default(300) @map("places_monthly_call_cap")
+  placesMonthlyCallCap  Int      @default(600) @map("places_monthly_call_cap")
   briefEnabled          Boolean  @default(true) @map("brief_enabled")
   notifyEmail           String?  @map("notify_email")
+  // Phase B: accounts researched, given contacts and drafted per night, and
+  // the monthly ceiling on paid Findymail lookups (finds + checks).
+  prepDailyCap          Int      @default(10) @map("prep_daily_cap")
+  findymailMonthlyCap   Int      @default(500) @map("findymail_monthly_cap")
   updatedAt             DateTime @default(now()) @updatedAt @map("updated_at")
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -3045,4 +3050,28 @@ model ProspectSignal {
   @@index([prospectId])
   @@index([companyId, kind, observedAt])
   @@map("prospect_signals")
+}
+
+// What the lead machine learned about one account before writing to it:
+// the research packet, who it found to contact, and the first draft it
+// queued for approval. One row per prospect; a row means "already handled",
+// so the nightly run never pays for the same account twice.
+model ProspectResearch {
+  prospectId     String    @id @map("prospect_id")
+  companyId      String    @map("company_id")
+  status         String // drafted, no_contact, no_draft, failed
+  packet         Json
+  contactsFound  Int       @default(0) @map("contacts_found")
+  draftMessageId String?   @map("draft_message_id")
+  error          String?   @db.Text
+  attempts       Int       @default(1)
+  researchedAt   DateTime  @default(now()) @map("researched_at")
+  // When a no_contact or failed account is worth another try.
+  revisitAfter   DateTime? @map("revisit_after")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  prospect Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  @@index([companyId, status, researchedAt])
+  @@map("prospect_research")
 }

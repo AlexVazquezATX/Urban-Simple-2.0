@@ -10,14 +10,21 @@ export async function runStage<T>(
   companyId: string,
   stage: string,
   dryRun: boolean,
-  fn: () => Promise<StageResult<T>>,
+  fn: (report: (stats: Record<string, unknown>) => Promise<void>) => Promise<StageResult<T>>,
 ): Promise<T | null> {
   const run = await prisma.leadMachineRun.create({
     data: { companyId, stage, status: 'running', dryRun },
     select: { id: true },
   })
+  // Long stages save their running totals as they go, so a run the platform
+  // kills mid-way still records what it spent.
+  const report = async (stats: Record<string, unknown>) => {
+    await prisma.leadMachineRun
+      .update({ where: { id: run.id }, data: { stats: stats as Prisma.InputJsonValue } })
+      .catch((err) => console.error(`[lead-machine] ${stage} progress write failed:`, err))
+  }
   try {
-    const { value, stats } = await fn()
+    const { value, stats } = await fn(report)
     await prisma.leadMachineRun.update({
       where: { id: run.id },
       data: { status: 'succeeded', finishedAt: new Date(), stats: stats as Prisma.InputJsonValue },
@@ -56,11 +63,14 @@ export async function skipStage(companyId: string, stage: string, dryRun: boolea
   })
 }
 
-/** Google Places calls made this calendar month (UTC), dry runs included: they cost the same. */
+/**
+ * Google Places calls made this calendar month (UTC) by hotel sourcing and
+ * account prep, dry runs included: they cost the same.
+ */
 export async function placesCallsThisMonth(companyId: string, now = new Date()): Promise<number> {
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
   const runs = await prisma.leadMachineRun.findMany({
-    where: { companyId, stage: 'places_hotels', startedAt: { gte: monthStart } },
+    where: { companyId, stage: { in: ['places_hotels', 'prep'] }, startedAt: { gte: monthStart } },
     select: { stats: true },
   })
   return runs.reduce((sum, r) => {

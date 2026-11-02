@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db'
 import { getLocalHour } from '@/lib/services/autopilot-schedule'
 
 export const SOURCING_LOCAL_HOUR = 2 // 2 a.m.
+export const PREP_LOCAL_HOUR = 3 // 3 a.m., after sourcing has added the night's accounts
 export const BRIEF_LOCAL_HOUR = 7 // 7:30 a.m. (cron fires at :30)
 
 export async function companyTimezone(companyId: string): Promise<string> {

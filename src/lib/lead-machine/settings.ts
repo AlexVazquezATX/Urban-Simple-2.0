@@ -26,6 +26,8 @@ export type MachineSettings = {
   placesMonthlyCallCap: number
   briefEnabled: boolean
   notifyEmail: string | null
+  prepDailyCap: number
+  findymailMonthlyCap: number
   exists: boolean
 }
 
@@ -48,9 +50,11 @@ export async function getSettings(companyId: string): Promise<MachineSettings> {
     dryRun: row?.dryRun ?? true,
     dailyNewCap: row?.dailyNewCap ?? 25,
     sourceCaps: parseCaps(row?.sourceCaps),
-    placesMonthlyCallCap: row?.placesMonthlyCallCap ?? 300,
+    placesMonthlyCallCap: row?.placesMonthlyCallCap ?? 600,
     briefEnabled: row?.briefEnabled ?? true,
     notifyEmail: row?.notifyEmail ?? null,
+    prepDailyCap: row?.prepDailyCap ?? 10,
+    findymailMonthlyCap: row?.findymailMonthlyCap ?? 500,
     exists: !!row,
   }
 }
@@ -77,6 +81,12 @@ export function validatePatch(body: unknown): { error: string } | { patch: Setti
     const n = b.placesMonthlyCallCap
     if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n > 5000) return { error: 'placesMonthlyCallCap must be a whole number from 0 to 5000' }
     patch.placesMonthlyCallCap = n
+  }
+  for (const [key, max] of [['prepDailyCap', 50], ['findymailMonthlyCap', 5000]] as const) {
+    const n = b[key]
+    if (n === undefined) continue
+    if (typeof n !== 'number' || !Number.isInteger(n) || n < 0 || n > max) return { error: `${key} must be a whole number from 0 to ${max}` }
+    patch[key] = n
   }
   if (b.sourceCaps !== undefined) {
     if (!b.sourceCaps || typeof b.sourceCaps !== 'object') return { error: 'sourceCaps must be an object' }
