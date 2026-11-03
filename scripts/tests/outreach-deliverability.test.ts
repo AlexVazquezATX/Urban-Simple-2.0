@@ -232,3 +232,64 @@ test('client mail never uses the cold outreach address', async () => {
     }
   }
 })
+
+test('a reply finds its prospect by sender, then by a subject only one prospect got', async () => {
+  const { findProspectForReply } = await import('../../src/lib/comms/inbound-reply')
+  const saved = { contacts: db.prospectContact.findMany, comms: db.commMessage.findMany, unique: db.prospect.findUnique }
+  const hotel = { id: 'p-hotel', companyId: 'co-1', companyName: 'The Hotel', deletedAt: null }
+  try {
+    db.prospectContact.findMany = async () => [
+      { prospect: { ...hotel, id: 'p-old', lastContactedAt: day(1) } },
+      { prospect: { ...hotel, id: 'p-new', lastContactedAt: day(5) } },
+      { prospect: { ...hotel, id: 'p-gone', lastContactedAt: day(9), deletedAt: day(9) } },
+    ]
+    assert.equal((await findProspectForReply('gm@hotel.test', 'Re: anything'))?.id, 'p-new')
+
+    db.prospectContact.findMany = async () => []
+    let asked: any = null
+    db.prospect.findUnique = async () => hotel
+    db.commMessage.findMany = async (args: any) => { asked = args; return [{ prospectId: 'p-hotel' }, { prospectId: 'p-hotel' }] }
+    assert.equal((await findProspectForReply('owner@gmail.test', 'RE: Fwd: nightly cleaning'))?.id, 'p-hotel')
+    assert.equal(asked.where.subject.equals, 'nightly cleaning')
+
+    db.commMessage.findMany = async () => [{ prospectId: 'p-a' }, { prospectId: 'p-b' }]
+    assert.equal(await findProspectForReply('owner@gmail.test', 'Re: same subject'), null, 'two prospects got it')
+
+    db.commMessage.findMany = async () => []
+    assert.equal(await findProspectForReply('stranger@gmail.test', 'Re: hello'), null)
+    assert.equal(await findProspectForReply('stranger@gmail.test', null), null)
+  } finally {
+    db.prospectContact.findMany = saved.contacts
+    db.commMessage.findMany = saved.comms
+    db.prospect.findUnique = saved.unique
+  }
+})
+
+test('reply text comes from the event, then the API, and a failed read is not fatal', async () => {
+  const { receivedEmailText } = await import('../../src/lib/comms/inbound-reply')
+  const saved = process.env.RESEND_RECEIVING_API_KEY
+  process.env.RESEND_RECEIVING_API_KEY = 'full-access'
+  try {
+    const never = async () => { throw new Error('should not fetch') }
+    assert.equal(await receivedEmailText({ text: 'in the event' }, never), 'in the event')
+
+    let url = ''
+    let auth = ''
+    const ok = async (u: string, init?: RequestInit) => {
+      url = u
+      auth = (init?.headers as Record<string, string>).Authorization
+      return new Response(JSON.stringify({ text: null, html: '<p>Yes, <b>please</b></p>' }))
+    }
+    assert.equal(await receivedEmailText({ email_id: 'e-1' }, ok), 'Yes, please')
+    assert.match(url, /\/emails\/receiving\/e-1$/)
+    assert.equal(auth, 'Bearer full-access')
+
+    const denied = async () => new Response('{}', { status: 401 })
+    assert.equal(await receivedEmailText({ email_id: 'e-1' }, denied), '')
+    const broken = async () => { throw new Error('network') }
+    assert.equal(await receivedEmailText({ email_id: 'e-1' }, broken), '')
+  } finally {
+    if (saved === undefined) delete process.env.RESEND_RECEIVING_API_KEY
+    else process.env.RESEND_RECEIVING_API_KEY = saved
+  }
+})

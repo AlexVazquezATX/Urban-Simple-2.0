@@ -6,6 +6,9 @@ import { resolveOutreachActorId } from '@/lib/services/outreach-guards'
 import { suppressBouncedAddress } from '@/lib/services/outreach-recipient'
 import { logComm, stampCommByResendId } from '@/lib/comms/log'
 import { classifyInbound } from '@/lib/comms/classify'
+import { companyForUnmatchedReply, findProspectForReply, receivedEmailText } from '@/lib/comms/inbound-reply'
+import { sendMachineNotice } from '@/lib/lead-machine/notify'
+import { appBaseUrl } from '@/lib/notify/email'
 
 /**
  * POST /api/webhooks/resend
@@ -40,9 +43,10 @@ function extractEmail(raw: unknown): string | null {
 }
 
 /**
- * Inbound reply → prospect activity timeline. Matches the sender against
- * ProspectContact emails; on match: logs a `replied` activity, marks the
- * latest sent message replied, and cancels the rest of the sequence.
+ * Inbound reply → prospect activity timeline. Matches the sender, or failing
+ * that the subject, to a prospect; on match: logs a `replied` activity, marks
+ * the latest sent message replied, and cancels the rest of the sequence. No
+ * match still lands in the hub, with a notice, so no reply is ever lost.
  */
 async function handleInboundReply(data: Record<string, unknown>) {
   const fromEmail = extractEmail(data?.from)
@@ -54,36 +58,51 @@ async function handleInboundReply(data: Record<string, unknown>) {
   // check silently ate that reply. True loops can't occur: nothing in the
   // system sends TO the inbound domain, and unmatched senders fall out below.
 
-  // Sender → prospect. Same address on several records (duplicate prospects,
-  // shared owner inbox) → most recently contacted wins.
-  const contacts = await prisma.prospectContact.findMany({
-    where: { email: { equals: fromEmail, mode: 'insensitive' } },
-    select: {
-      prospect: {
-        select: { id: true, companyId: true, companyName: true, lastContactedAt: true, deletedAt: true },
-      },
-    },
-  })
-  const prospect = contacts
-    .map((c) => c.prospect)
-    .filter((p) => p && !p.deletedAt)
-    .sort((a, b) => (b.lastContactedAt?.getTime() ?? 0) - (a.lastContactedAt?.getTime() ?? 0))[0]
-  if (!prospect) {
-    console.log(`[RESEND INBOUND] Reply from ${fromEmail} matches no prospect contact — ignoring`)
-    return NextResponse.json({ received: true, matched: false, reason: 'no_prospect_for_sender' })
-  }
-
   const subject = typeof data?.subject === 'string' ? data.subject : null
-  const rawText = typeof data?.text === 'string' && data.text.trim()
-    ? data.text
-    : typeof data?.html === 'string' ? data.html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : ''
-  const bodyText = rawText.slice(0, 10_000)
-
-  const actorId = await resolveOutreachActorId(prospect.companyId)
+  const bodyText = await receivedEmailText(data)
+  const prospect = await findProspectForReply(fromEmail, subject)
   const now = new Date()
 
   // AI triage (fail-soft): category + one-line summary.
   const classification = await classifyInbound(subject, bodyText)
+
+  if (!prospect) {
+    const companyId = await companyForUnmatchedReply()
+    if (!companyId) {
+      console.error(`[RESEND INBOUND] Reply from ${fromEmail} matches no prospect and no company to file it under`)
+      return NextResponse.json({ received: true, matched: false, reason: 'no_company' })
+    }
+    const isOoo = classification?.category === 'ooo'
+    await logComm({
+      companyId,
+      direction: 'inbound',
+      category: 'reply',
+      fromEmail,
+      toEmail: extractEmail(data?.to),
+      subject,
+      body: bodyText || null,
+      resendEmailId: typeof data?.email_id === 'string' ? data.email_id : null,
+      messageIdHeader: typeof data?.message_id === 'string' ? data.message_id : null,
+      receivedAt: now,
+      triageState: isOoo ? 'done' : 'needs_reply',
+      aiCategory: classification?.category ?? null,
+      aiSummary: classification?.summary ?? null,
+    })
+    if (!isOoo) {
+      await sendMachineNotice(companyId, `Reply from ${fromEmail}`, {
+        kicker: 'Outreach reply',
+        title: 'A reply came from an address not on any lead',
+        rows: [['From', fromEmail], ['Subject', subject ?? '']],
+        body: bodyText || 'The text could not be read here. Open it in the Communications Hub or Resend.',
+        ctaLabel: 'Open the Communications Hub',
+        ctaUrl: `${appBaseUrl()}/communications`,
+      })
+    }
+    console.log(`[RESEND INBOUND] Reply from ${fromEmail} matches no prospect; kept in the hub`)
+    return NextResponse.json({ received: true, matched: false, reason: 'no_prospect_for_sender', stored: true })
+  }
+
+  const actorId = await resolveOutreachActorId(prospect.companyId)
 
   // Comms Hub row (the inbox lane feeds off triageState).
   const messageIdHeader =
