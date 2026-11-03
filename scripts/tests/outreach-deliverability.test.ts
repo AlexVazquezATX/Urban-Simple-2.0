@@ -37,7 +37,20 @@ db.outreachMessage.findMany = async () => []
 db.user.findFirst = async () => ({ id: 'admin-1' })
 db.prospectActivity.create = async () => ({})
 
-mock.method(globalThis, 'fetch', async () => {
+let telegrams: string[] = []
+let triageAnswer = '{}'
+
+mock.method(globalThis, 'fetch', async (url: unknown, init?: RequestInit) => {
+  if (String(url).includes('api.anthropic.com')) {
+    return new Response(JSON.stringify({
+      id: 'msg_1', type: 'message', role: 'assistant', model: 'test', stop_reason: 'end_turn', stop_sequence: null,
+      usage: { input_tokens: 1, output_tokens: 1 }, content: [{ type: 'text', text: triageAnswer }],
+    }), { status: 200, headers: { 'content-type': 'application/json' } })
+  }
+  if (String(url).includes('api.telegram.org')) {
+    telegrams.push(JSON.parse(String(init?.body)).text)
+    return new Response('{}')
+  }
   abstractCalls++
   return new Response(JSON.stringify({
     email: 'x', autocorrect: '', deliverability: abstractVerdict, quality_score: '0.9',
@@ -48,6 +61,7 @@ mock.method(globalThis, 'fetch', async () => {
 })
 
 beforeEach(() => {
+  telegrams = []
   knownBad = null
   optedOut = null
   contactUpdates = []
@@ -291,5 +305,105 @@ test('reply text comes from the event, then the API, and a failed read is not fa
   } finally {
     if (saved === undefined) delete process.env.RESEND_RECEIVING_API_KEY
     else process.env.RESEND_RECEIVING_API_KEY = saved
+  }
+})
+
+test('triage reads Claude\'s answer and fails soft', async () => {
+  const { classifyInbound, draftReply } = await import('../../src/lib/comms/classify')
+  const answering = (text: string, stop_reason = 'end_turn') => ({
+    beta: { messages: { create: async () => ({ stop_reason, content: [{ type: 'text', text }] }) } },
+  }) as any
+  const silence = mock.method(console, 'error', () => {})
+  try {
+    assert.deepEqual(
+      await classifyInbound('Re: hi', 'Please remove me', answering('{"category":"unsubscribe","summary":"Asked to be removed."}')),
+      { category: 'unsubscribe', summary: 'Asked to be removed.' },
+    )
+    assert.equal((await classifyInbound('Re: hi', 'x', answering('{"category":"spam","summary":""}')))?.category, 'other')
+    assert.equal(await classifyInbound('Re: hi', 'x', answering('not json')), null)
+    assert.equal(await classifyInbound('Re: hi', 'x', answering('{}', 'refusal')), null)
+    assert.equal(await classifyInbound(null, null, answering('{}')), null, 'nothing to read')
+    assert.equal(await classifyInbound('Re: hi', 'x', null), null, 'no key')
+    assert.equal(await classifyInbound('Re: hi', 'x', { beta: { messages: { create: async () => { throw new Error('down') } } } } as any), null)
+
+    assert.equal(await draftReply({ inboundSubject: 'Re: hi', inboundBody: 'x' }, answering(' Hi,\n\nAlex ')), 'Hi,\n\nAlex')
+    assert.equal(await draftReply({ inboundSubject: 'Re: hi', inboundBody: 'x' }, null), null)
+  } finally {
+    silence.mock.restore()
+  }
+})
+
+test('every reply alerts Alex, except out-of-office, and a redelivery does nothing', async () => {
+  const { POST } = await import('../../src/app/api/webhooks/resend/route')
+  const hotel = { id: 'p-hotel', companyId: 'co-1', companyName: 'The Hotel', deletedAt: null, lastContactedAt: day(1) }
+  const saved = {
+    contacts: db.prospectContact.findMany, comms: db.commMessage.findMany, unique: db.commMessage.findUnique,
+    create: db.commMessage.create, first: db.commMessage.findFirst, messages: db.outreachMessage.findFirst,
+    anthropic: process.env.ANTHROPIC_API_KEY,
+  }
+  let logged: any[] = []
+  let contacts: unknown[] = []
+  let seen: { id: string } | null = null
+  db.prospectContact.findMany = async () => contacts
+  db.commMessage.findMany = async () => []
+  db.commMessage.findUnique = async () => seen
+  db.commMessage.findFirst = async () => ({ companyId: 'co-1' })
+  db.commMessage.create = async (args: any) => { logged.push(args.data); return { id: 'm-1' } }
+  db.outreachMessage.findFirst = async () => null
+  delete process.env.ANTHROPIC_API_KEY // triage off: a reply must still land and alert
+  const receive = (text: string, from = 'gm@hotel.test') => POST(new NextRequest('https://www.example.test/api/webhooks/resend', {
+    method: 'POST',
+    body: JSON.stringify({ type: 'email.received', data: { email_id: 'e-1', from, to: ['reply@in.example.test'], subject: 'Re: nightly cleaning', text } }),
+  }))
+  try {
+    contacts = [{ prospect: hotel }]
+    assert.equal((await (await receive('Send me a quote')).json()).matched, true)
+    assert.equal(logged.length, 1)
+    assert.equal(logged[0].prospectId, 'p-hotel')
+    assert.equal(logged[0].body, 'Send me a quote')
+    assert.equal(telegrams.length, 1)
+    assert.match(telegrams[0], /The Hotel replied/)
+    assert.match(telegrams[0], /Send me a quote/)
+
+    logged = []
+    telegrams = []
+    contacts = []
+    assert.equal((await (await receive('Who is this?', 'stranger@gmail.test')).json()).stored, true)
+    assert.equal(logged.length, 1, 'kept in the hub with no prospect')
+    assert.equal(logged[0].prospectId, null)
+    assert.match(telegrams[0], /not on any lead/)
+
+    process.env.ANTHROPIC_API_KEY = 'test-anthropic'
+    contacts = [{ prospect: hotel }]
+    logged = []
+    telegrams = []
+    triageAnswer = '{"category":"ooo","summary":"Away until Monday."}'
+    await receive('I am out of the office')
+    assert.equal(logged[0].aiCategory, 'ooo')
+    assert.equal(logged[0].triageState, 'done')
+    assert.equal(telegrams.length, 0, 'no alert for an out-of-office')
+    assert.deepEqual(prospectUpdates, [])
+
+    logged = []
+    triageAnswer = '{"category":"unsubscribe","summary":"Asked to stop."}'
+    await receive('Please stop emailing me')
+    assert.deepEqual(prospectUpdates, ['p-hotel'], 'marked Do Not Contact')
+    assert.match(telegrams[0], /asked to stop hearing from us/)
+    assert.match(telegrams[0], /Asked to stop\./)
+
+    logged = []
+    telegrams = []
+    seen = { id: 'm-1' }
+    assert.equal((await (await receive('Send me a quote')).json()).duplicate, true)
+    assert.deepEqual([logged.length, telegrams.length], [0, 0])
+  } finally {
+    db.prospectContact.findMany = saved.contacts
+    db.commMessage.findMany = saved.comms
+    db.commMessage.findUnique = saved.unique
+    db.commMessage.create = saved.create
+    db.commMessage.findFirst = saved.first
+    db.outreachMessage.findFirst = saved.messages
+    if (saved.anthropic === undefined) delete process.env.ANTHROPIC_API_KEY
+    else process.env.ANTHROPIC_API_KEY = saved.anthropic
   }
 })

@@ -46,7 +46,8 @@ function extractEmail(raw: unknown): string | null {
  * Inbound reply → prospect activity timeline. Matches the sender, or failing
  * that the subject, to a prospect; on match: logs a `replied` activity, marks
  * the latest sent message replied, and cancels the rest of the sequence. No
- * match still lands in the hub, with a notice, so no reply is ever lost.
+ * match still lands in the hub, so no reply is ever lost. Either way Alex gets
+ * a notice, except for out-of-office replies.
  */
 async function handleInboundReply(data: Record<string, unknown>) {
   const fromEmail = extractEmail(data?.from)
@@ -57,6 +58,12 @@ async function handleInboundReply(data: Record<string, unknown>) {
   // test account is alex@… replying to alex@…), and an early own-address
   // check silently ate that reply. True loops can't occur: nothing in the
   // system sends TO the inbound domain, and unmatched senders fall out below.
+
+  // A redelivered webhook must not log or alert twice.
+  if (typeof data?.email_id === 'string') {
+    const seen = await prisma.commMessage.findUnique({ where: { resendEmailId: data.email_id }, select: { id: true } })
+    if (seen) return NextResponse.json({ received: true, duplicate: true })
+  }
 
   const subject = typeof data?.subject === 'string' ? data.subject : null
   const bodyText = await receivedEmailText(data)
@@ -111,7 +118,7 @@ async function handleInboundReply(data: Record<string, unknown>) {
       : typeof (data?.headers as Record<string, unknown> | undefined)?.['message-id'] === 'string'
         ? ((data!.headers as Record<string, string>)['message-id'])
         : null
-  void logComm({
+  await logComm({
     companyId: prospect.companyId,
     direction: 'inbound',
     category: 'reply',
@@ -137,6 +144,19 @@ async function handleInboundReply(data: Record<string, unknown>) {
       data: { doNotContact: true, doNotContactAt: now },
     }).catch(() => {})
     console.warn(`[RESEND INBOUND] Unsubscribe detected from ${fromEmail} — prospect ${prospect.id} marked Do Not Contact`)
+  }
+
+  if (classification?.category !== 'ooo') {
+    await sendMachineNotice(prospect.companyId, `Reply from ${prospect.companyName}`, {
+      kicker: 'Outreach reply',
+      title: classification?.category === 'unsubscribe'
+        ? `${prospect.companyName} asked to stop hearing from us. Marked Do Not Contact.`
+        : `${prospect.companyName} replied`,
+      rows: [['From', fromEmail], ['Subject', subject ?? ''], ['Summary', classification?.summary ?? '']],
+      body: bodyText || 'The text could not be read here. Open it in the Communications Hub or Resend.',
+      ctaLabel: 'Open the Communications Hub',
+      ctaUrl: `${appBaseUrl()}/communications`,
+    })
   }
 
   if (actorId) {
