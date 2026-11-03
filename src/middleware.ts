@@ -246,6 +246,7 @@ export async function middleware(request: NextRequest) {
     { prefix: '/clients', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     { prefix: '/locations', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
     { prefix: '/team', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
+    { prefix: '/my-alerts', allow: ['SUPER_ADMIN', 'ADMIN', 'MANAGER'] },
   ]
 
   // Field pages an associate may open even though they sit under a

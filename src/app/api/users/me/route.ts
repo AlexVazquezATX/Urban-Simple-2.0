@@ -100,6 +100,9 @@ export async function PATCH(request: NextRequest) {
       }
       // Newly on, or on with a new number: confirm the opt-in by text.
       if (nextSms && (!current?.smsAlerts || toE164(nextPhone) !== toE164(current?.phone))) {
+        if (body.smsConsent !== true) {
+          return NextResponse.json({ error: 'Please check the box to agree to text alerts.' }, { status: 400 })
+        }
         confirmSmsTo = nextPhone
       }
     }

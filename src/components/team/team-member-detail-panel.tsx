@@ -467,7 +467,7 @@ export function TeamMemberDetailPanel({
                 id="smsAlerts"
                 checked={smsAlerts}
                 onCheckedChange={setSmsAlerts}
-                disabled={!canManage}
+                disabled={!canManage || !smsAlerts}
               />
             </div>
             {smsAlerts && !phone.trim() && (

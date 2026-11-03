@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { toE164 } from '@/lib/notify/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,15 +110,11 @@ export async function POST(request: NextRequest) {
       role,
       branchId,
       password, // Optional - if provided, will create Supabase auth user
-      smsAlerts,
       preferredLanguage,
     } = body
 
     if (preferredLanguage !== undefined && preferredLanguage !== 'en' && preferredLanguage !== 'es') {
       return NextResponse.json({ error: 'preferredLanguage must be en or es' }, { status: 400 })
-    }
-    if (smsAlerts === true && !toE164(phone)) {
-      return NextResponse.json({ error: 'Text alerts need a valid mobile number' }, { status: 400 })
     }
 
     if (!email || !firstName || !lastName || !role) {
@@ -201,7 +196,8 @@ export async function POST(request: NextRequest) {
         role: role as any,
         isActive: true,
         authId: authId || undefined,
-        smsAlerts: smsAlerts === true,
+        // Stays off until the person opts in themselves under My Alerts.
+        smsAlerts: false,
         preferredLanguage: preferredLanguage ?? 'en',
       },
       include: {

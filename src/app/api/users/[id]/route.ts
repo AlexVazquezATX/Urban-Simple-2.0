@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser } from '@/lib/auth'
-import { sendSms, toE164 } from '@/lib/notify/sms'
-import { SMS_OPT_IN_CONFIRMATION } from '@/lib/notify/sms-consent'
+import { toE164 } from '@/lib/notify/sms'
 
 export const dynamic = 'force-dynamic'
 
@@ -138,6 +137,16 @@ export async function PATCH(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Text alerts are opt-in: each person turns them on under My Alerts
+    // (PATCH /api/users/me), where they check the consent box. Here they can
+    // only be turned off.
+    if (smsAlerts === true && !existing.smsAlerts) {
+      return NextResponse.json(
+        { error: 'Each person turns on their own text alerts under My Alerts.' },
+        { status: 403 }
+      )
+    }
+
     // Update user
     const updateData: any = {}
     if (firstName !== undefined) updateData.firstName = firstName
@@ -151,11 +160,9 @@ export async function PATCH(
     if (smsAlerts !== undefined) updateData.smsAlerts = smsAlerts
     if (preferredLanguage !== undefined) updateData.preferredLanguage = preferredLanguage
 
-    // Text alerts go to the phone on file, so it has to be a usable number.
-    const nextSms = smsAlerts ?? existing.smsAlerts
-    const nextPhone = phone !== undefined ? phone : existing.phone
-    if (nextSms && !toE164(nextPhone)) {
-      return NextResponse.json({ error: 'Text alerts need a valid mobile number' }, { status: 400 })
+    // Consent was given for the old number, so a new one starts with texts off.
+    if (phone !== undefined && toE164(phone) !== toE164(existing.phone)) {
+      updateData.smsAlerts = false
     }
 
     // Provision a login for an existing member that doesn't have one yet.
@@ -245,11 +252,6 @@ export async function PATCH(
         },
       },
     })
-
-    // Newly on, or on with a new number: confirm the opt-in by text.
-    if (nextSms && (!existing.smsAlerts || toE164(nextPhone) !== toE164(existing.phone))) {
-      await sendSms({ companyId: updatedUser.companyId, to: nextPhone, body: SMS_OPT_IN_CONFIRMATION, userId: id })
-    }
 
     return NextResponse.json(updatedUser)
   } catch (error: any) {

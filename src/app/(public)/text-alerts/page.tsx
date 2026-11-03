@@ -6,8 +6,20 @@ export const metadata: Metadata = {
   title: 'Service Alert Text Messages',
 }
 
+function OptInScreen({ src, alt, caption }: { src: string; alt: string; caption: string }) {
+  return (
+    <figure className="not-prose my-4">
+      <a href={src} target="_blank" rel="noreferrer">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} loading="lazy" className="w-full rounded-md border border-cream-300" />
+      </a>
+      <figcaption className="mt-2 text-xs text-charcoal-500">{caption}</figcaption>
+    </figure>
+  )
+}
+
 // Public description of the SMS program. Opt-in itself happens behind a login
-// (client portal, staff profile), so this is the page carriers review for
+// (client portal Alerts, staff My Alerts), so this is the page carriers review for
 // A2P 10DLC: who gets texts, how they opt in, the exact consent wording.
 export default function TextAlertsPage() {
   return (
@@ -44,17 +56,41 @@ export default function TextAlertsPage() {
 
             <h2 className="text-lg font-semibold text-charcoal-900 mt-6">How to opt in</h2>
             <p>
-              <strong>Clients:</strong> sign in to the Urban Simple client portal, open <em>Alerts</em>, turn on text alerts, enter your mobile number and check this box:
+              Opt-in happens on web forms behind a login. Texts start only after the person checks the consent box and saves. The box is never pre-checked, and the first text is an opt-in confirmation. Nobody can opt in on another person&apos;s behalf. The screens below show each step, with sample data.
             </p>
+
+            <h3 className="text-base font-semibold text-charcoal-900 mt-4">Clients</h3>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Sign in to the Urban Simple client portal at www.urbansimple.net/portal/login.</li>
+              <li>Open <em>Alerts</em> (www.urbansimple.net/portal/alerts).</li>
+              <li>Turn on <em>Text alerts</em>, enter a mobile number, check the box and choose <em>Save settings</em>.</li>
+            </ol>
+            <p>The box reads:</p>
             <p className="rounded-md border border-cream-300 px-4 py-3">
-              &#9744; {SMS_CONSENT_TEXT}
+              &#9744; {SMS_CONSENT_TEXT} See our Terms and Privacy Policy.
             </p>
-            <p>
-              Texts start only after you check the box and save. The box is never pre-checked.
-            </p>
-            <p>
-              <strong>Staff:</strong> Urban Simple managers can turn on <em>Text me alerts</em> in their own profile in the Urban Simple app and add their mobile number. The same terms apply.
-            </p>
+            <OptInScreen
+              src="/text-alerts/1-portal-login.png"
+              alt="Urban Simple client portal sign-in page with email and password fields"
+              caption="Step 1: client portal sign-in."
+            />
+            <OptInScreen
+              src="/text-alerts/2-portal-alerts-consent.png"
+              alt="Client portal Alerts page with text alerts on, a mobile number entered, and the unchecked consent box with the full disclosure"
+              caption="Steps 2 and 3: the Alerts page in the client portal. The consent box is unchecked until the client checks it."
+            />
+
+            <h3 className="text-base font-semibold text-charcoal-900 mt-4">Urban Simple managers</h3>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Sign in to the Urban Simple app at www.urbansimple.net/login.</li>
+              <li>Open <em>My Alerts</em> in the menu.</li>
+              <li>Turn on <em>Text me alerts</em>, enter a mobile number, check the box with the same wording and choose <em>Save</em>.</li>
+            </ol>
+            <OptInScreen
+              src="/text-alerts/3-staff-my-alerts-consent.png"
+              alt="Urban Simple app My Alerts page with text alerts on, a mobile number entered, and the unchecked consent box with the full disclosure"
+              caption="The My Alerts page in the Urban Simple app. The consent box is unchecked until the manager checks it."
+            />
 
             <h2 className="text-lg font-semibold text-charcoal-900 mt-6">Frequency, cost and opting out</h2>
             <p>

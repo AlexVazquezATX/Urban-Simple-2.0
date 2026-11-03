@@ -5,6 +5,10 @@ export const SMS_PROGRAM_NAME = 'Urban Simple Service Alerts'
 export const SMS_CONSENT_TEXT =
   'I agree to receive service alert text messages from Urban Simple at this number. Message frequency varies. Msg & data rates may apply. Reply STOP to opt out, HELP for help.'
 
+// Same consent for Spanish-language staff on My Alerts.
+export const SMS_CONSENT_TEXT_ES =
+  'Acepto recibir mensajes de texto con alertas de servicio de Urban Simple en este número. La frecuencia de los mensajes varía. Pueden aplicar tarifas de mensajes y datos. Responde STOP para cancelar, HELP para ayuda.'
+
 // Sent once when someone opts in (CTIA asks for an opt-in confirmation).
 export const SMS_OPT_IN_CONFIRMATION =
   'Urban Simple Service Alerts: you are signed up for cleaning service alerts. Msg frequency varies. Msg & data rates may apply. Reply HELP for help, STOP to opt out.'

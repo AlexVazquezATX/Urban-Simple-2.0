@@ -2312,6 +2312,17 @@
       }
     },
     {
+      "path": "/api/cron/lead-machine-prep",
+      "methods": [
+        "GET"
+      ],
+      "handlers": {
+        "GET": {
+          "doc": "GET /api/cron/lead-machine-prep - nightly account prep (research, contacts, first drafts into the approval queue) for every company running the machine live. Scheduled at 08:00 and 09:00 UTC; each company runs only on the one that is 3 a.m. local, an hour after sourcing. Dry-run companies are skipped: sourcing adds nothing for them, so there is nothing to prep."
+        }
+      }
+    },
+    {
       "path": "/api/cron/ops-watch",
       "methods": [
         "GET",
@@ -2882,10 +2893,10 @@
       ],
       "handlers": {
         "GET": {
-          "doc": "GET /api/growth/machine - settings, recent runs, Places usage, machine-added counts."
+          "doc": "GET /api/growth/machine - settings, recent runs, Places and Findymail usage, machine-added counts, accounts researched and drafts waiting for approval."
         },
         "PATCH": {
-          "doc": "PATCH /api/growth/machine - { enabled?, dryRun?, dailyNewCap?, sourceCaps?, placesMonthlyCallCap?, briefEnabled?, notifyEmail? }"
+          "doc": "PATCH /api/growth/machine - { enabled?, dryRun?, dailyNewCap?, sourceCaps?, placesMonthlyCallCap?,   prepDailyCap?, findymailMonthlyCap?, briefEnabled?, notifyEmail? }"
         }
       }
     },
@@ -2899,13 +2910,16 @@
           "body": [
             "stage",
             "dryRun",
-            "forcePlaces"
+            "forcePlaces",
+            "prospectIds",
+            "limit",
+            "paid"
           ],
           "roles": [
             "SUPER_ADMIN",
             "ADMIN"
           ],
-          "doc": "POST /api/growth/machine/run - run a stage now. { stage: 'sourcing' | 'health' | 'brief' | 'brief_preview', dryRun?: boolean, forcePlaces?: boolean } Sourcing defaults to dry run here; pass dryRun:false to write for real."
+          "doc": "POST /api/growth/machine/run - run a stage now. { stage: 'sourcing' | 'prep' | 'health' | 'brief' | 'brief_preview', dryRun?: boolean, forcePlaces?: boolean,   prospectIds?: string[], limit?: number, paid?: boolean } Sourcing and prep default to dry run here; pass dryRun:false to write for real. A prep dry run still spends Google and Claude calls; Findymail only with paid:true."
         }
       }
     },
@@ -4997,8 +5011,7 @@
             "phone",
             "role",
             "branchId",
-            "password",
-            "preferredLanguage"
+            "password"
           ],
           "required": [
             "email, firstName, lastName, and role are required"
@@ -5066,7 +5079,8 @@
             "signatureLogoUrl",
             "phone",
             "smsAlerts",
-            "preferredLanguage"
+            "preferredLanguage",
+            "smsConsent"
           ],
           "doc": "PATCH /api/users/me Update the current user's own settings: email signature, phone, text alerts, field language. Nothing privileged (role, branch, active) here. Only the fields present in the body are changed."
         }
