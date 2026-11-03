@@ -24,8 +24,8 @@ email, else by subject → `replied` activity on the timeline → latest sent me
 4. **Reply text** — Resend's webhook carries metadata only, so the text is
    fetched from its Received Emails API, which a sending-only key can't read.
    Create a full-access key and set it as `RESEND_RECEIVING_API_KEY`. Without
-   it, replies are still recorded and routed, but with no text, no AI triage
-   and no unsubscribe detection.
+   it, replies are still recorded and routed, but triage and unsubscribe
+   detection only see the subject line.
 5. **Test** — send an outreach email to yourself, reply to it, and check the
    prospect's activity timeline for "Reply received from …".
 
@@ -41,8 +41,12 @@ email, else by subject → `replied` activity on the timeline → latest sent me
 - A reply cancels all still-pending messages for that prospect
   (`cancelPendingMessagesForProspect`, reason `prospect_replied`) — the same
   mechanism bounces and spam complaints use.
-- Anything else still goes to the Communications Hub as needing a reply, with a
-  notice to Alex (out-of-office replies are filed without one).
+- Anything else still goes to the Communications Hub as needing a reply.
+- Every reply sends Alex a notice (Telegram if configured, otherwise email),
+  except out-of-office replies. A redelivered webhook is ignored.
+- Triage (`src/lib/comms/classify.ts`) uses Claude through `ANTHROPIC_API_KEY`.
+  If it fails the reply is still recorded and alerted, but an unsubscribe
+  request won't be caught automatically, so read the alert.
 - The handler accepts both `email.received` and `inbound.email.received` event
   names; if the Resend dashboard shows deliveries failing, check the event
   name in the webhook logs first.
