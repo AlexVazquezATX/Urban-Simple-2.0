@@ -38,13 +38,35 @@ export type PrepOutcome = {
   notes: ResearchNotes | null
   /** Why no contact was found, for the brief and the next attempt. */
   noContactReason?: NoContactReason
+  /** Nothing to research, so Claude wasn't called and no nightly slot was used. */
+  researchSkipped?: boolean
   error?: string
 }
 
 // chain_site: a branded hotel whose only website is the brand's (marriott.com,
 // hyatt.com), so there is no property domain to search; the GM needs a
-// LinkedIn lookup by a person.
-export type NoContactReason = 'no_website' | 'chain_site' | 'nothing_found' | 'no_findymail'
+// LinkedIn lookup by a person. listing_site: anything else whose only website
+// is a listing or ordering page (Instagram, Toast). lookup_timeout: Findymail
+// didn't answer in time.
+export type NoContactReason = 'no_website' | 'chain_site' | 'listing_site' | 'nothing_found' | 'no_findymail' | 'lookup_timeout'
+
+const NO_NOTES: ResearchNotes = { decisionMaker: null, highlights: [], segmentNote: '', cautions: [] }
+
+/**
+ * No contact on file and no domain of its own: Findymail and the website reader
+ * both need one, so research can't lead to an email. Without a website this
+ * needs Google's listing to say so, so an outage or a spent Places budget can't
+ * mark the whole queue in one night.
+ */
+export function nothingToResearch(input: { website: string | null; placeFound: boolean; hasContact: boolean }): boolean {
+  if (input.hasContact) return false
+  return input.website ? !ownDomain(input.website) : input.placeFound
+}
+
+/** Nightly slots already used: accounts with nothing to research don't count. */
+export function slotsUsed(rows: Array<{ packet: unknown }>): number {
+  return rows.filter((r) => !(r.packet as { researchSkipped?: boolean } | null)?.researchSkipped).length
+}
 
 type ProspectForPrep = Prisma.ProspectGetPayload<{
   include: {
@@ -145,14 +167,17 @@ async function prepOne(p: ProspectForPrep, deps: {
   const name = renamed ?? p.companyName
 
   const website = p.website || place?.website || null
-  const site = website ? await readSite(website, { fetchImpl: deps.fetchImpl }) : null
-  const notes = await deps.claude.research(buildMaterial({ ...p, companyName: name }, segment, signals, place, site))
-  if (deps.signal.aborted) throw new OutOfTime('Out of time for this run')
-
   // Contacts already on file (with a usable address) win: no paid lookups.
   let found: FoundContact[] = []
   let recipient: { id?: string; firstName: string; lastName: string; title: string | null; email: string; emailVerificationStatus: string | null; emailSource: string | null } | null =
     pickRecipient(p.contacts.filter((c) => c.email)) as typeof recipient
+  const researchSkipped = nothingToResearch({ website, placeFound: !!place, hasContact: !!recipient })
+
+  const site = website ? await readSite(website, { fetchImpl: deps.fetchImpl }) : null
+  const notes = researchSkipped ? NO_NOTES : await deps.claude.research(buildMaterial({ ...p, companyName: name }, segment, signals, place, site))
+  if (deps.signal.aborted) throw new OutOfTime('Out of time for this run')
+
+  const timeoutsBefore = deps.findymail?.timeouts ?? 0
   if (!recipient) {
     found = await findContacts({
       segment,
@@ -169,13 +194,16 @@ async function prepOne(p: ProspectForPrep, deps: {
     : !website
       ? 'no_website'
       : !ownDomain(website)
-        ? 'chain_site'
+        ? segment === 'hotel' || segment === 'resort' ? 'chain_site' : 'listing_site'
         : !deps.findymail
           ? 'no_findymail'
-          : 'nothing_found'
+          : deps.findymail.timeouts > timeoutsBefore
+            ? 'lookup_timeout'
+            : 'nothing_found'
 
   const packet = {
     noContactReason: noContactReason ?? null,
+    researchSkipped,
     segment,
     signals,
     place,
@@ -199,6 +227,7 @@ async function prepOne(p: ProspectForPrep, deps: {
     problems: [],
     notes,
     noContactReason,
+    researchSkipped,
   }
 
   let draftFailed = false
@@ -286,7 +315,7 @@ async function prepOne(p: ProspectForPrep, deps: {
       : attempts >= MAX_ATTEMPTS
         ? null
         : outcome.status === 'no_contact'
-          ? new Date(deps.now.getTime() + 60 * DAY)
+          ? new Date(deps.now.getTime() + (noContactReason === 'lookup_timeout' ? 2 : 60) * DAY)
           : outcome.status === 'no_draft'
             ? new Date(deps.now.getTime() + (draftFailed ? 2 : 7) * DAY)
             : null
@@ -317,7 +346,9 @@ async function prepOne(p: ProspectForPrep, deps: {
                 ? 'Found a contact, but the draft broke the writing rules twice, so nothing was queued.'
                 : noContactReason === 'chain_site'
                   ? 'Chain hotel: the only website is the brand site, so the general manager needs a LinkedIn lookup.'
-                  : 'No contact email found yet. The machine will look again in about two months.',
+                  : noContactReason === 'lookup_timeout'
+                    ? 'The contact lookup did not answer in time. The machine will try again in two days.'
+                    : 'No contact email found yet. The machine will look again in about two months.',
           metadata: { highlights: notes.highlights, decisionMaker: notes.decisionMaker } as Prisma.InputJsonValue,
         },
       })
@@ -369,7 +400,7 @@ export async function runPrep(companyId: string, opts: {
     const dayStart = getStartOfLocalDay(now, branch?.timezone || 'America/Chicago')
     const doneToday = opts.prospectIds
       ? 0
-      : await prisma.prospectResearch.count({ where: { companyId, researchedAt: { gte: dayStart } } })
+      : slotsUsed(await prisma.prospectResearch.findMany({ where: { companyId, researchedAt: { gte: dayStart } }, select: { packet: true } }))
     const limit = Math.max(0, Math.min(opts.limit ?? Infinity, opts.prospectIds ? 25 : settings.prepDailyCap - doneToday))
 
     const include = {
@@ -412,6 +443,7 @@ export async function runPrep(companyId: string, opts: {
       fmKey && opts.paid !== false
         ? new Findymail(fmKey, { remaining: Math.max(0, settings.findymailMonthlyCap - (await findymailUsedThisMonth(companyId, now))) }, opts.fetchImpl)
         : null
+    if (findymail) findymail.deadline = started + HARD_DEADLINE_MS
     const placesKey = process.env.GOOGLE_PLACES_API_KEY ?? null
     const placesBudget = { remaining: Math.max(0, settings.placesMonthlyCallCap - (await placesCallsThisMonth(companyId, now))) }
     const stats = { placesCalls: 0 }
@@ -419,27 +451,29 @@ export async function runPrep(companyId: string, opts: {
 
     const outcomes: PrepOutcome[] = []
     let findymailStopped: string | null = null
-    const usage = () => ({ placesCalls: stats.placesCalls, findymail: findymail?.usage ?? null, findymailStopped, claude: claude.usage })
-    for (const p of queue.slice(0, limit)) {
-      if (Date.now() - started > START_BUDGET_MS) break
+    const usage = () => ({ placesCalls: stats.placesCalls, findymail: findymail?.usage ?? null, findymailTimeouts: findymail?.timeouts ?? 0, findymailStopped, claude: claude.usage })
+    let slots = limit
+    for (const p of queue) {
+      if (slots <= 0 || Date.now() - started > START_BUDGET_MS) break
       try {
-        outcomes.push(
-          await prepOne(p, {
-            write: !dryRun,
-            claude,
-            findymail: findymailStopped ? null : findymail,
-            placesKey,
-            placesBudget,
-            stats,
-            fetchImpl: opts.fetchImpl,
-            actorId,
-            now,
-            signal: timeUp.signal,
-          }),
-        )
+        const outcome = await prepOne(p, {
+          write: !dryRun,
+          claude,
+          findymail: findymailStopped ? null : findymail,
+          placesKey,
+          placesBudget,
+          stats,
+          fetchImpl: opts.fetchImpl,
+          actorId,
+          now,
+          signal: timeUp.signal,
+        })
+        outcomes.push(outcome)
+        if (!outcome.researchSkipped) slots--
       } catch (err) {
         // Out of time: leave the account untouched; it goes first next night.
         if (err instanceof OutOfTime) break
+        slots--
         if (err instanceof FindymailStopped) findymailStopped = err.message
         const error = err instanceof Error ? err.message : String(err)
         outcomes.push({ prospectId: p.id, name: p.companyName, status: 'failed', contact: null, draft: null, problems: [], notes: null, error })
@@ -496,6 +530,7 @@ function summaryStats(r: PrepResult) {
     noDraft: r.noDraft,
     failed: r.failed,
     left: r.left,
+    researchSkipped: r.outcomes.filter((o) => o.researchSkipped).length,
     chainHotels: r.outcomes.filter((o) => o.noContactReason === 'chain_site').map((o) => o.name),
     names: r.outcomes.map((o) => `${o.name}: ${o.status}${o.contact ? ` (${o.contact.email})` : o.noContactReason ? ` (${o.noContactReason.replace('_', ' ')})` : ''}`).slice(0, 50),
   }

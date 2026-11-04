@@ -5,7 +5,7 @@ import { bestSiteEmail, findContacts, splitName } from '../../src/lib/lead-machi
 import { Findymail, FindymailStopped } from '../../src/lib/lead-machine/prep/findymail'
 import { extractEmails, htmlToText, ownDomain } from '../../src/lib/lead-machine/prep/site'
 import { listingName, samePlace } from '../../src/lib/lead-machine/prep/places-lookup'
-import { buildMaterial } from '../../src/lib/lead-machine/prep/run'
+import { buildMaterial, nothingToResearch, slotsUsed } from '../../src/lib/lead-machine/prep/run'
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
@@ -168,6 +168,57 @@ test('Findymail: misses are free, the budget is respected, and a 402 stops the r
   assert.deepEqual(capped.calls, [], 'no budget, no call')
   const broke = fakeFindymail({ '/api/search/name': () => json({ error: 'no credits' }, 402) })
   await assert.rejects(broke.fm.findByName('A B', 'x.com'), FindymailStopped)
+})
+
+function slowFindymail(remaining = 10) {
+  let calls = 0
+  const fm = new Findymail('key', { remaining }, (_url, init) => {
+    calls++
+    return new Promise((_resolve, reject) => {
+      init?.signal?.addEventListener('abort', () => reject(new DOMException('This operation was aborted', 'AbortError')))
+    })
+  })
+  fm.timeoutMs = 5
+  return { fm, calls: () => calls }
+}
+
+test('Findymail: no answer in time is a miss that costs nothing, not an error', async () => {
+  const { fm } = slowFindymail(3)
+  assert.deepEqual(await fm.findEmployees('https://x.com', ['Owner']), [])
+  assert.equal(await fm.findByName('A B', 'x.com'), null)
+  assert.equal(await fm.verify('a@x.com'), null, 'unanswered is not the same as a failed check')
+  assert.equal(fm.timeouts, 3)
+  assert.equal(fm.usage.employeeLookups, 0)
+  assert.equal(fm.usage.finds, 0)
+})
+
+test('Findymail: past the run deadline it makes no call', async () => {
+  const { fm, calls } = slowFindymail()
+  fm.deadline = Date.now() - 1
+  assert.deepEqual(await fm.findEmployees('https://x.com', ['Owner']), [])
+  assert.equal(calls(), 0)
+  assert.equal(fm.timeouts, 1)
+})
+
+test('findContacts: a slow Findymail still falls back to the site inbox, held as unknown', async () => {
+  const { fm } = slowFindymail()
+  const found = await findContacts({ segment: 'resort', domain: 'kalahari.com', decisionMaker: null, siteEmails: ['info@kalahari.com'], findymail: fm })
+  assert.equal(found[0].email, 'info@kalahari.com')
+  assert.equal(found[0].emailVerificationStatus, 'unknown')
+})
+
+test('nothingToResearch: only when there is no contact and no domain of its own', () => {
+  const marriott = 'https://www.marriott.com/en-us/hotels/ausjw'
+  assert.equal(nothingToResearch({ website: marriott, placeFound: true, hasContact: false }), true, 'chain hotel')
+  assert.equal(nothingToResearch({ website: marriott, placeFound: false, hasContact: false }), true, 'chain hotel, website already on file')
+  assert.equal(nothingToResearch({ website: null, placeFound: true, hasContact: false }), true, 'Google says no website')
+  assert.equal(nothingToResearch({ website: null, placeFound: false, hasContact: false }), false, 'Google unavailable says nothing')
+  assert.equal(nothingToResearch({ website: 'https://temaatx.com', placeFound: true, hasContact: false }), false, 'own site')
+  assert.equal(nothingToResearch({ website: marriott, placeFound: true, hasContact: true }), false, 'a contact on file can get a draft')
+})
+
+test('slotsUsed counts every account except those with nothing to research', () => {
+  assert.equal(slotsUsed([{ packet: { researchSkipped: true } }, { packet: { researchSkipped: false } }, { packet: {} }, { packet: null }]), 3)
 })
 
 test('buildMaterial lists public records, the Google listing and the website text', () => {

@@ -57,6 +57,15 @@ days, three attempts at most. Chain hotels whose only website is the brand's
 (marriott.com, hyatt.com) can't be searched; they are listed in the brief as
 needing a GM name from LinkedIn.
 
+An account with no contact on file and no domain of its own (a brand site, or
+Google's listing shows no website) has nothing to research. It costs one Google
+call, skips Claude and doesn't use one of the nightly `prepDailyCap` slots.
+
+If Findymail doesn't answer within 40 seconds, the lookup counts as nothing
+found and the account moves on to the website's inbox. If that leaves no
+contact, the account is retried in 2 days (`lookup_timeout`), three attempts at
+most.
+
 **Costs**: Findymail is capped by `findymailMonthlyCap` (default 500 credits);
 Google calls count against the shared Places cap; Claude is two calls per
 account. A preview spends the same Google and Claude calls (Findymail only when asked) and writes nothing.
