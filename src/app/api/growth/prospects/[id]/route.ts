@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
-import { cancelPendingMessagesForProspect } from '@/lib/services/outreach-cancel'
+import { cancelPendingMessagesForProspect, statusStopsOutreach } from '@/lib/services/outreach-cancel'
 
 // GET /api/growth/prospects/[id] - Get prospect details
 export async function GET(
@@ -277,14 +277,7 @@ export async function PATCH(
       // status that means we are actively engaged or the deal is decided.
       // Stops outreach sequences from continuing to fire after a lead is
       // already in conversation, won, or lost.
-      const STOP_OUTREACH_STATUSES = new Set([
-        'engaged',
-        'qualified',
-        'proposal_sent',
-        'won',
-        'lost',
-      ])
-      if (STOP_OUTREACH_STATUSES.has(status)) {
+      if (statusStopsOutreach(status, existing.source)) {
         const cancelled = await cancelPendingMessagesForProspect(id, `status_${status}`, user.id)
         if (cancelled > 0) {
           await prisma.prospectActivity.create({

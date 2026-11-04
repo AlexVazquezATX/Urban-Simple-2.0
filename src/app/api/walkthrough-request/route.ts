@@ -1,158 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
-import { Resend } from 'resend'
+import { z } from 'zod'
+import { LeadConflictError, persistLead } from '@/lib/leads/intake'
+import type { BusinessType, LeadPayload } from '@/lib/leads/schema'
 
+export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
-// POST /api/walkthrough-request - Create walkthrough request from public form
+const requestSchema = z.object({
+  name: z.string().trim().min(1).max(160),
+  email: z.string().trim().email().max(160),
+  phone: z.string().trim().min(1).max(40),
+  company: z.string().trim().max(160).optional(),
+  propertyType: z.string().trim().max(80).optional(),
+  message: z.string().trim().max(2000).optional(),
+  website: z.string().max(200).optional(),
+})
+
+const BUSINESS_TYPE: Record<string, BusinessType> = {
+  Restaurant: 'restaurant',
+  'Hotel & Resort': 'hotel',
+  'Event Venue': 'event_space',
+}
+
+// POST /api/walkthrough-request - the home page forms. They ask for less than
+// the walkthrough landing page, but a lead from either gets the same treatment,
+// so both go through the same durable intake.
 export async function POST(request: NextRequest) {
+  let body: unknown
   try {
-    const body = await request.json()
-    const {
-      name,
-      email,
-      phone,
-      company,
-      propertyType,
-      message,
-    } = body
+    body = await request.json()
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+  const parsed = requestSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Name, email, and phone are required' }, { status: 400 })
+  }
+  const data = parsed.data
+  // Honeypot: tell the bot it worked and save nothing.
+  if (data.website?.trim()) return NextResponse.json({ success: true })
 
-    // Validate required fields
-    if (!name || !email || !phone) {
-      return NextResponse.json(
-        { error: 'Name, email, and phone are required' },
-        { status: 400 }
-      )
+  const notes = [
+    data.propertyType ? `Property type: ${data.propertyType}` : null,
+    data.message || null,
+  ].filter(Boolean).join('\n\n')
+  const payload: LeadPayload = {
+    source: 'urbansimple.net/home',
+    submitted_at: new Date().toISOString(),
+    name: data.name,
+    business_name: data.company || 'Not provided',
+    business_type: data.propertyType ? BUSINESS_TYPE[data.propertyType] ?? 'other' : undefined,
+    location: 'Not provided',
+    email: data.email.toLowerCase(),
+    phone: data.phone,
+    notes: notes || undefined,
+  }
+  try {
+    await persistLead(payload)
+    return NextResponse.json({ success: true, message: 'Walkthrough request submitted successfully' })
+  } catch (error) {
+    if (error instanceof LeadConflictError) {
+      return NextResponse.json({ error: 'Please try again.' }, { status: 409 })
     }
-
-    // Get the first company and branch (for public submissions)
-    const companyRecord = await prisma.company.findFirst({
-      where: { name: 'Urban Simple LLC' },
-    })
-
-    if (!companyRecord) {
-      return NextResponse.json(
-        { error: 'Company not found' },
-        { status: 500 }
-      )
-    }
-
-    const branch = await prisma.branch.findFirst({
-      where: {
-        companyId: companyRecord.id,
-        isActive: true,
-      },
-    })
-
-    // Map property type to industry/business type
-    const industryMap: Record<string, string> = {
-      'Restaurant': 'restaurant',
-      'Hotel & Resort': 'hospitality',
-      'Commercial Kitchen': 'restaurant',
-      'Event Venue': 'hospitality',
-      'Spa & Wellness': 'wellness',
-      'Other': 'other',
-    }
-
-    const businessTypeMap: Record<string, string> = {
-      'Restaurant': 'restaurant',
-      'Hotel & Resort': 'hotel',
-      'Commercial Kitchen': 'commercial_kitchen',
-      'Event Venue': 'event_venue',
-      'Spa & Wellness': 'spa',
-      'Other': 'other',
-    }
-
-    // Create prospect
-    const prospect = await prisma.prospect.create({
-      data: {
-        companyId: companyRecord.id,
-        branchId: branch?.id || null,
-        companyName: company || 'Not provided',
-        industry: propertyType ? industryMap[propertyType] || 'other' : null,
-        businessType: propertyType ? businessTypeMap[propertyType] || 'other' : null,
-        source: 'website',
-        sourceDetail: 'Walkthrough Request Form',
-        status: 'new',
-        priority: 'high', // Walkthrough requests are high priority
-        tags: ['Website Lead', 'Walkthrough Request'],
-        notes: `Walkthrough Request:
-- Property Type: ${propertyType || 'Not specified'}
-${message ? `\nDetails:\n${message}` : ''}`,
-        contacts: {
-          create: {
-            firstName: name.split(' ')[0] || name,
-            lastName: name.split(' ').slice(1).join(' ') || '',
-            email,
-            phone,
-            role: 'primary',
-            isDecisionMaker: true,
-          },
-        },
-      },
-      include: {
-        contacts: true,
-      },
-    })
-
-    // Send email notification
-    try {
-      const emailSubject = `New Walkthrough Request: ${company || name}`
-      const emailBody = `
-        <h2>New Walkthrough Request Received</h2>
-        <p><strong>Contact:</strong> ${name}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone}</p>
-        ${company ? `<p><strong>Company:</strong> ${company}</p>` : ''}
-        ${propertyType ? `<p><strong>Property Type:</strong> ${propertyType}</p>` : ''}
-        
-        ${message ? `<h3>Additional Details</h3><p>${message}</p>` : ''}
-        
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/growth/prospects/${prospect.id}">View Prospect in Dashboard</a></p>
-      `
-
-      // Send to Alex's inbox using the same env var the landing-page form
-      // uses. The old QUOTE_REQUEST_EMAIL fallback chain ended at
-      // info@urbansimple.net (not Alex's inbox), which is why home-page
-      // leads were going unnoticed.
-      const recipientEmail = process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'
-
-      // Send FROM a verified domain address. The previous fallback
-      // (onboarding@resend.dev) is Resend's sandbox sender — in production
-      // it only delivers to verified addresses on the account, which is
-      // why these failed silently.
-      const fromAddress = process.env.RESEND_FROM_EMAIL || 'Urban Simple Leads <leads@urbansimple.net>'
-
-      if (!process.env.RESEND_API_KEY) {
-        console.error('[walkthrough-request] RESEND_API_KEY is not set; skipping notification email')
-      } else {
-        const resend = new Resend(process.env.RESEND_API_KEY)
-        const { error: sendError } = await resend.emails.send({
-          from: fromAddress,
-          to: recipientEmail,
-          subject: emailSubject,
-          html: emailBody,
-        })
-        if (sendError) {
-          console.error('[walkthrough-request] notification email failed', sendError)
-        }
-      }
-    } catch (emailError) {
-      console.error('Failed to send email notification:', emailError)
-      // Don't fail the request if email fails
-    }
-
-    return NextResponse.json({
-      success: true,
-      prospectId: prospect.id,
-      message: 'Walkthrough request submitted successfully',
-    })
-  } catch (error: any) {
-    console.error('Error creating walkthrough request:', error)
+    console.error('[walkthrough-request] durable intake failed')
     return NextResponse.json(
-      { error: 'Failed to submit walkthrough request', details: error.message },
-      { status: 500 }
+      { error: 'We could not save your request. Please try again.' },
+      { status: 503, headers: { 'Retry-After': '30' } },
     )
   }
 }
-

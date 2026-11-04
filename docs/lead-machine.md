@@ -118,3 +118,13 @@ first verifier in the send gate (`outreach-recipient.ts`).
 | Who to write to | `prep/contacts.ts` |
 | Claude calls, writing rules | `prep/claude.ts`, `prep/copy.ts` |
 | Tests | `npm run test:machine` |
+
+## Website lead follow-ups
+
+Separate from the cold machine: these go to people who asked us for a walkthrough.
+
+- Every form goes through `persistLead`. A real lead gets the instant auto-reply, then follow-ups on days 2, 5 and 12 (Tuesday to Saturday send window from company settings), from alex@urbansimple.net with Alex's signature.
+- `src/lib/leads/junk.ts` flags vendor pitches and forms with no business name. Those still alert Alex but get no automatic email. The subject says "Possible junk".
+- Follow-ups stop on a reply, a bounce, an unsubscribe, a status change by a person (the "Mark contacted" button in the lead panel is one click) or a logged call or meeting. While they are scheduled the pipeline cron leaves the lead's status alone, so "contacted" always means a person.
+- Copy lives in the sequence template (Growth > Outreach > Sequences). `src/lib/leads/followups.ts` only seeds it. Pause the template to stop new enrollments; the nightly health check will mention it.
+- The health check also alerts on a missing template, follow-ups over 2 days late, and failed or stuck lead emails.

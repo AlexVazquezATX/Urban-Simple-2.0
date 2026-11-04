@@ -560,6 +560,31 @@ export function ProspectDetailPanel({
     }
   }
 
+  const handleMarkContacted = async () => {
+    if (!prospect) return
+
+    try {
+      const response = await fetch(`/api/growth/prospects/${prospect.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'contacted' }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to mark contacted')
+      }
+
+      const data = await response.json()
+      setFormData(prev => ({ ...prev, status: 'contacted' }))
+      toast.success('Marked contacted. Automatic follow-ups stopped.')
+      onSave(data)
+    } catch (error: any) {
+      console.error('Error marking contacted:', error)
+      toast.error(error.message || 'Failed to mark contacted')
+    }
+  }
+
   const handleFindEmail = async () => {
     const website = formData.website
     if (!website) {
@@ -738,6 +763,16 @@ export function ProspectDetailPanel({
               >
                 <ArrowRight className="h-3.5 w-3.5" />
                 Pipeline
+              </Button>
+            )}
+            {formData.status === 'new' && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleMarkContacted}
+              >
+                <Phone className="h-3.5 w-3.5" />
+                Mark contacted
               </Button>
             )}
             <Button

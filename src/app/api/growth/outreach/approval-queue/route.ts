@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
+import { prospectFromAddress } from '@/lib/services/sender-address'
 import {
   generateOutreachMessage,
   type ProspectData,
@@ -416,7 +417,7 @@ export async function POST(request: NextRequest) {
               continue
             }
 
-            const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+            const fromEmail = prospectFromAddress(msg.prospect?.source)
 
             const email = buildOutreachEmail({
               body: msg.body,

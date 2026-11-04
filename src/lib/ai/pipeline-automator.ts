@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db'
+import { isInboundSource } from '@/lib/services/outreach-recipient'
 
 /**
  * Automatically move prospects through pipeline stages based on engagement
@@ -21,6 +22,14 @@ export async function automatePipelineStage(prospectId: string): Promise<void> {
   })
 
   if (!prospect) return
+
+  // While a website lead has follow-ups scheduled, only a person moves its
+  // status. Otherwise the first automatic send would read as "contacted", and
+  // nobody could tell (or mark) that a human had actually reached out.
+  if (
+    isInboundSource(prospect.source) &&
+    prospect.outreachMessages.some((m) => m.status === 'pending' && m.approvalStatus === 'approved' && m.scheduledAt)
+  ) return
 
   const currentStatus = prospect.status
   let newStatus: string | null = null

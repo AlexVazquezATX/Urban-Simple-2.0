@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthenticatedUser } from '@/lib/api-key-auth'
 import { prisma } from '@/lib/db'
+import { cancelPendingMessagesForProspect, statusStopsOutreach } from '@/lib/services/outreach-cancel'
 
 // POST /api/growth/prospects/bulk-update - Update multiple prospects at once
 export async function POST(request: NextRequest) {
@@ -42,7 +43,7 @@ export async function POST(request: NextRequest) {
         companyId: user.companyId,
         deletedAt: null,
       },
-      select: { id: true },
+      select: { id: true, source: true },
     })
 
     const validIds = prospects.map(p => p.id)
@@ -71,6 +72,11 @@ export async function POST(request: NextRequest) {
           description: `Bulk update: Status changed to ${updateData.status.replace('_', ' ')}`,
         })),
       })
+      for (const p of prospects) {
+        if (statusStopsOutreach(updateData.status, p.source)) {
+          await cancelPendingMessagesForProspect(p.id, `status_${updateData.status}`, user.id)
+        }
+      }
     }
 
     return NextResponse.json({

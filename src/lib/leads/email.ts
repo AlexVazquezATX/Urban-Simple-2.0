@@ -1,6 +1,7 @@
 import { render } from '@react-email/components'
 import { NotificationToAlex } from '@/emails/NotificationToAlex'
 import { AutoResponder } from '@/emails/AutoResponder'
+import { leadReviewReason } from './junk'
 import {
   BUSINESS_TYPES, CURRENT_CLEANING_OPTIONS, SQUARE_FOOTAGE_BUCKETS,
   START_TIMING_OPTIONS, labelFor, type LeadPayload,
@@ -20,7 +21,9 @@ export async function buildLeadEmail(payload: LeadPayload, kind: LeadEmailKind):
     return {
       from: 'Alex Vazquez <alex@urbansimple.net>',
       to: [payload.email],
-      reply_to: 'alex@urbansimple.net',
+      // The reply address feeds the Comms Hub: it alerts Alex and stops the
+      // follow-ups. A reply straight to his inbox would do neither.
+      reply_to: process.env.OUTREACH_REPLY_TO || 'alex@urbansimple.net',
       subject: 'We got your walkthrough request - Urban Simple',
       html: await render(AutoResponder({
         firstName: payload.name.trim().split(/\s+/)[0] || 'there',
@@ -29,10 +32,11 @@ export async function buildLeadEmail(payload: LeadPayload, kind: LeadEmailKind):
     }
   }
   const businessTypeLabel = payload.business_type ? labelFor(BUSINESS_TYPES, payload.business_type) : ''
+  const review = leadReviewReason(payload)
   return {
     from: 'Urban Simple Leads <leads@urbansimple.net>',
     to: [process.env.NOTIFICATION_EMAIL || 'alex@urbansimple.net'],
-    subject: `New walkthrough request: ${payload.business_name}${businessTypeLabel ? ` (${businessTypeLabel})` : ''}`,
+    subject: `${review ? `Possible junk (${review}): ` : 'New walkthrough request: '}${payload.business_name}${businessTypeLabel ? ` (${businessTypeLabel})` : ''}`,
     html: await render(NotificationToAlex({
       name: payload.name,
       businessName: payload.business_name,

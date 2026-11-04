@@ -7,7 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "test:leads": "tsx --test scripts/tests/lead-intake.test.ts",
+    "test:leads": "tsx --test scripts/tests/lead-intake.test.ts scripts/tests/lead-followups.test.ts",
     "test:lead-analytics": "tsx --test scripts/tests/lead-analytics.test.ts",
     "test:ops": "tsx --test scripts/tests/ops-loop.test.ts",
     "test:outreach": "tsx --test scripts/tests/outreach-deliverability.test.ts",

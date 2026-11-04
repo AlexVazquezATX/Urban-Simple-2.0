@@ -1,4 +1,17 @@
 import { prisma } from '@/lib/db'
+import { isInboundSource } from './outreach-recipient'
+
+const STOP_OUTREACH_STATUSES = new Set(['engaged', 'qualified', 'proposal_sent', 'won', 'lost'])
+
+/**
+ * Does a person setting this status end the outreach? The deal has moved on or
+ * been decided. For someone who came to us, so does marking them contacted: a
+ * human has it now. A cold prospect's sequence keeps going, since "contacted"
+ * there only means the sequence itself has started.
+ */
+export function statusStopsOutreach(status: string, source: string | null | undefined): boolean {
+  return STOP_OUTREACH_STATUSES.has(status) || (status === 'contacted' && isInboundSource(source))
+}
 
 /**
  * Cancel all pending/scheduled outreach messages for a prospect.

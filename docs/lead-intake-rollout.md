@@ -41,13 +41,12 @@ handoff remain existing business procedures. This change sends no Slack alert.
    Without it, intake requires exactly one company named `Urban Simple LLC`.
    Optional `LEAD_BRANCH_ID` must be an active branch in that company; otherwise
    the active `AUS` branch is used if unambiguous, or the branch stays unassigned.
-3. Review optional `WALKTHROUGH_OUTREACH_SEQUENCE_ID` before enabling it. Intake
-   freezes that ID in its job. Enrollment is local, atomic, company checked,
-   duplicate guarded, and respects `doNotContact`. The existing sequence's
-   autopilot/approval rules still govern subsequent sends. For the approved QA
-   inquiry **hold enrollment before submitting** (e.g. leave this optional setting
-   unset for the approved rollout/test window). Do not rely on its label alone
-   to prevent outreach. Restore/enable a sequence only with explicit approval.
+3. Follow-ups: intake enrolls a lead when the "Website lead follow-ups" sequence
+   exists and is active on autopilot (`scripts/seed-lead-followups.ts`). The
+   old `WALKTHROUGH_OUTREACH_SEQUENCE_ID` setting is gone. Enrollment is local,
+   atomic, company checked, duplicate guarded, and respects `doNotContact`. To
+   submit a QA inquiry without enrolling it, pause the sequence first, or use a
+   business name of "Not provided" so it is flagged and gets no automatic email.
 4. Build and deploy the reviewed commit through the owning hosting account.
    `vercel.json` adds `GET /api/cron/lead-deliveries` every five minutes, with a
    60-second function budget. Confirm the hosting plan supports this cadence and

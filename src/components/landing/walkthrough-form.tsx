@@ -31,6 +31,7 @@ export function WalkthroughForm({ isOpen, onClose }: WalkthroughFormProps) {
     company: '',
     propertyType: '',
     message: '',
+    website: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -65,6 +66,7 @@ export function WalkthroughForm({ isOpen, onClose }: WalkthroughFormProps) {
       company: '',
       propertyType: '',
       message: '',
+      website: '',
     })
     setIsSubmitted(false)
   }
@@ -118,6 +120,17 @@ export function WalkthroughForm({ isOpen, onClose }: WalkthroughFormProps) {
               <div className="flex-1 overflow-y-auto px-8 pb-8">
                 {!isSubmitted ? (
                   <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Left empty by people; bots fill it in. */}
+                    <input
+                      type="text"
+                      name="website"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      aria-hidden="true"
+                      className="hidden"
+                      value={formData.website}
+                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                    />
                     {/* Property Type — Card Selection */}
                     <div>
                       <Label className="text-charcoal-700 mb-3 block text-sm font-medium">
@@ -195,10 +208,11 @@ export function WalkthroughForm({ isOpen, onClose }: WalkthroughFormProps) {
 
                       <div>
                         <Label htmlFor="wt-company" className="text-charcoal-700 mb-1.5 block text-sm font-medium">
-                          Company Name
+                          Company Name *
                         </Label>
                         <Input
                           id="wt-company"
+                          required
                           value={formData.company}
                           onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                           placeholder="Your business"
