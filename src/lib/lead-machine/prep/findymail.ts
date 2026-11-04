@@ -6,6 +6,8 @@
 import type { FetchLike } from '../sources/types'
 
 const BASE = 'https://app.findymail.com'
+// Employee searches have taken over 20 seconds on real accounts.
+const LOOKUP_TIMEOUT_MS = 40_000
 
 export type FindymailUsage = { finds: number; verifies: number; employeeLookups: number }
 
@@ -16,6 +18,11 @@ export class FindymailStopped extends Error {}
 
 export class Findymail {
   readonly usage: FindymailUsage = { finds: 0, verifies: 0, employeeLookups: 0 }
+  /** Lookups given up on because Findymail did not answer in time. */
+  timeouts = 0
+  timeoutMs = LOOKUP_TIMEOUT_MS
+  /** Stop waiting at this time, so a nightly run ends inside its limit. */
+  deadline = Infinity
 
   constructor(
     private apiKey: string,
@@ -27,9 +34,15 @@ export class Findymail {
     return this.budget.remaining
   }
 
+  /** Status 0 means no answer in time; callers treat it as nothing found. */
   private async call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<{ status: number; json: T | null }> {
+    const wait = Math.min(this.timeoutMs, this.deadline - Date.now())
+    if (wait <= 0) {
+      this.timeouts++
+      return { status: 0, json: null }
+    }
     const ctrl = new AbortController()
-    const timer = setTimeout(() => ctrl.abort(), 15_000)
+    const timer = setTimeout(() => ctrl.abort(), wait)
     try {
       const res = await this.fetchImpl(`${BASE}${path}`, {
         method,
@@ -48,6 +61,11 @@ export class Findymail {
       if (res.status === 404) return { status: 404, json: null }
       if (!res.ok) throw new Error(`Findymail ${path} returned HTTP ${res.status}`)
       return { status: res.status, json: (await res.json()) as T }
+    } catch (err) {
+      if (!ctrl.signal.aborted) throw err
+      this.timeouts++
+      console.warn(`[lead-machine] Findymail ${path} gave no answer within ${wait}ms`)
+      return { status: 0, json: null }
     } finally {
       clearTimeout(timer)
     }
@@ -87,11 +105,12 @@ export class Findymail {
     return people
   }
 
-  /** true = deliverable, false = not confirmed (bad or catch-all), null = no budget. */
+  /** true = deliverable, false = not confirmed (bad or catch-all), null = no budget or no answer. */
   async verify(email: string): Promise<boolean | null> {
     if (!this.spend()) return null
     this.usage.verifies++
-    const { json } = await this.call<{ verified?: boolean }>('POST', '/api/verify', { email })
+    const { status, json } = await this.call<{ verified?: boolean }>('POST', '/api/verify', { email })
+    if (status === 0) return null
     return json?.verified === true
   }
 
