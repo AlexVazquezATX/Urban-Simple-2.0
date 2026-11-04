@@ -8,9 +8,11 @@ import { toast } from 'sonner'
 export function InlineContactForm() {
   const [formData, setFormData] = useState({
     name: '',
+    company: '',
     email: '',
     phone: '',
     message: '',
+    website: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
@@ -18,7 +20,7 @@ export function InlineContactForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
 
-    if (!formData.name || !formData.email || !formData.phone) {
+    if (!formData.name || !formData.company || !formData.email || !formData.phone) {
       toast.error('Please fill in all required fields.')
       return
     }
@@ -33,10 +35,10 @@ export function InlineContactForm() {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          company: '',
+          company: formData.company,
           propertyType: '',
           message: formData.message,
-          sourceDetail: 'Inline Contact Form',
+          website: formData.website,
         }),
       })
 
@@ -95,6 +97,29 @@ export function InlineContactForm() {
           />
         </div>
       </div>
+      <div>
+        <label htmlFor="contact-company" className="sr-only">Business Name</label>
+        <input
+          id="contact-company"
+          type="text"
+          placeholder="Business Name *"
+          required
+          value={formData.company}
+          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+          className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder:text-charcoal-400 focus:outline-none focus:border-ocean-400 focus:ring-1 focus:ring-ocean-400 transition-colors"
+        />
+      </div>
+      {/* Left empty by people; bots fill it in. */}
+      <input
+        type="text"
+        name="website"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden="true"
+        className="hidden"
+        value={formData.website}
+        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+      />
       <div>
         <label htmlFor="contact-phone" className="sr-only">Phone</label>
         <input

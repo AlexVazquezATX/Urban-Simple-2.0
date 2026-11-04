@@ -106,7 +106,7 @@ export type CurrentCleaning = z.infer<typeof currentCleaningEnum>
 export type StartTiming = z.infer<typeof startTimingEnum>
 
 export type LeadPayload = {
-  source: 'urbansimple.net/walkthrough'
+  source: 'urbansimple.net/walkthrough' | 'urbansimple.net/home'
   submitted_at: string
   name: string
   business_name: string

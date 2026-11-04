@@ -14,7 +14,9 @@ import {
   resolveOutreachActorId,
 } from '@/lib/services/outreach-guards'
 import { logComm } from '@/lib/comms/log'
-import { checkSendable, resolveMessageRecipient } from '@/lib/services/outreach-recipient'
+import { checkSendable, isInboundSource, resolveMessageRecipient } from '@/lib/services/outreach-recipient'
+import { prospectFromAddress } from '@/lib/services/sender-address'
+import { followUpStopReason, HUMAN_TOUCH_TYPES } from '@/lib/leads/followups'
 import { buildOutreachEmail } from '@/lib/services/outreach-email'
 
 // Initialize Resend lazily
@@ -293,6 +295,21 @@ export async function POST(request: NextRequest) {
         continue
       }
 
+      // Automatic follow-ups to someone who came to us stop once a person has
+      // this lead, however they recorded it.
+      if (message.campaign?.autopilot && isInboundSource(message.prospect.source)) {
+        const humanTouch = await prisma.prospectActivity.findFirst({
+          where: { prospectId: message.prospectId, type: { in: HUMAN_TOUCH_TYPES }, createdAt: { gt: message.createdAt } },
+          select: { id: true },
+        })
+        const stop = followUpStopReason(message.prospect.status, !!humanTouch)
+        if (stop) {
+          await cancelPendingMessagesForProspect(message.prospectId, stop)
+          results.push({ messageId: message.id, action: 'skipped', reason: stop })
+          continue
+        }
+      }
+
       // Check if campaign is still active
       if (message.campaign && message.campaign.status !== 'active') {
         results.push({
@@ -414,7 +431,7 @@ export async function POST(request: NextRequest) {
             companyId: message.prospect.companyId,
             direction: 'outbound',
             category: 'outreach',
-            fromEmail: process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || null,
+            fromEmail: prospectFromAddress(message.prospect.source),
             toEmail: recipientEmail,
             subject: message.subject,
             body: message.body,
@@ -521,7 +538,7 @@ async function sendMessage(
       return { sent: false }
     }
 
-    const fromEmail = process.env.RESEND_OUTREACH_FROM_EMAIL || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
+    const fromEmail = prospectFromAddress(message.prospect?.source)
 
     // Sender's signature, if the campaign has a creator
     const sender = message.campaign?.createdById

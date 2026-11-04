@@ -70,7 +70,7 @@ export function buildCrmPayload(payload: LeadPayload) {
     status: 'new',
     priority: 'high',
     source: 'website',
-    sourceDetail: 'urbansimple.net/walkthrough',
+    sourceDetail: payload.source,
     notes: noteLines.join('\n'),
     contacts: [
       {

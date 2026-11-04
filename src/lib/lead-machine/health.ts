@@ -4,6 +4,7 @@
 
 import { prisma } from '@/lib/db'
 import { appBaseUrl } from '@/lib/notify/email'
+import { FOLLOWUP_SEQUENCE_NAME } from '@/lib/leads/followups'
 import { sendMachineNotice } from './notify'
 import { Findymail } from './prep/findymail'
 import { getSettings } from './settings'
@@ -66,6 +67,22 @@ export function findProblems(input: {
   return problems
 }
 
+// The last version of these follow-ups stopped in June and nobody knew until
+// November. Website leads are the warmest we get, so their emails get a watchdog.
+export function followUpProblems(input: {
+  sequenceActive: boolean
+  overdue: number
+  stuckDeliveries: number
+}): HealthProblem[] {
+  const problems: HealthProblem[] = []
+  if (!input.sequenceActive) {
+    problems.push(`Website leads are getting no follow-ups: the "${FOLLOWUP_SEQUENCE_NAME}" sequence is missing, paused or not on autopilot`)
+  }
+  if (input.overdue > 0) problems.push(`${input.overdue} website lead follow-ups are more than 2 days overdue`)
+  if (input.stuckDeliveries > 0) problems.push(`${input.stuckDeliveries} website lead emails or enrollments failed or are stuck`)
+  return problems
+}
+
 export async function checkHealth(companyId: string, now = new Date()): Promise<HealthProblem[]> {
   const settings = await getSettings(companyId)
   const runs = await prisma.leadMachineRun.findMany({
@@ -74,6 +91,32 @@ export async function checkHealth(companyId: string, now = new Date()): Promise<
     select: { stage: true, status: true, startedAt: true, error: true, stats: true, dryRun: true },
   })
   const problems = findProblems({ enabled: settings.enabled, dryRun: settings.dryRun, runs, now })
+
+  if (settings.enabled) {
+    const [sequence, overdue, stuckDeliveries] = await Promise.all([
+      prisma.outreachCampaign.findFirst({
+        where: { companyId, name: FOLLOWUP_SEQUENCE_NAME, prospectId: null, autopilot: true, status: 'active' },
+        select: { id: true },
+      }),
+      prisma.outreachMessage.count({
+        where: {
+          status: 'pending',
+          scheduledAt: { lt: new Date(now.getTime() - 2 * DAY) },
+          campaign: { companyId, name: FOLLOWUP_SEQUENCE_NAME, autopilot: true, status: 'active', prospectId: { not: null } },
+        },
+      }),
+      prisma.leadDelivery.count({
+        where: {
+          intake: { companyId },
+          OR: [
+            { status: 'failed', updatedAt: { gte: new Date(now.getTime() - 4 * DAY) } },
+            { status: 'pending', createdAt: { lt: new Date(now.getTime() - 6 * 3600_000) } },
+          ],
+        },
+      }),
+    ])
+    problems.push(...followUpProblems({ sequenceActive: !!sequence, overdue, stuckDeliveries }))
+  }
 
   if (settings.enabled && !settings.dryRun) {
     // Drafts nobody approves are the other way the machine goes quiet.

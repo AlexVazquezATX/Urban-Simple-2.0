@@ -141,7 +141,12 @@ export async function enrollProspectInSequence(args: {
       daysOfWeek: company!.autopilotSendDaysOfWeek,
     }
 
-    let previousSlot = nextSendSlot(now, win, { minLeadMinutes: 5 })
+    // A first step with a delay waits for it (website leads already got an
+    // instant auto-reply); cold sequences have none and send at the next slot.
+    const firstDelay = template.messages[0].delayDays
+    let previousSlot = firstDelay > 0
+      ? slotAfterDays(now, firstDelay, win)
+      : nextSendSlot(now, win, { minLeadMinutes: 5 })
     scheduledTimes.push(previousSlot)
     // Steps 2+: offset by delayDays from the PREVIOUS step's scheduled time.
     for (let i = 1; i < template.messages.length; i++) {

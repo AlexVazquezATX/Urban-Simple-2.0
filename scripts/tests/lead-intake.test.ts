@@ -30,6 +30,7 @@ let prior: Receipt | null = null
 let recent: Receipt | null = null
 let failOutbox = false
 let companies = [{ id: 'company-test' }]
+let sequence: { id: string } | null = null
 
 // A transaction double verifies that the route never succeeds after any write
 // fails and that all CRM/receipt/job writes share the transaction boundary.
@@ -38,6 +39,7 @@ const tx = {
   company: { findMany: async () => companies },
   branch: { findMany: async () => [{ id: 'austin-test' }] },
   user: { findFirst: async () => ({ id: 'owner-test' }) },
+  outreachCampaign: { findFirst: async () => sequence },
   prospect: { create: async ({ data }: { data: Record<string, unknown> }) => {
     writes.push({ model: 'prospect', data }); return { id: 'prospect-test' }
   } },
@@ -52,9 +54,9 @@ const tx = {
 }
 
 beforeEach(() => {
-  writes = []; prior = null; recent = null; failOutbox = false; companies = [{ id: 'company-test' }]
+  writes = []; prior = null; recent = null; failOutbox = false; companies = [{ id: 'company-test' }]; sequence = null
   delete process.env.LEAD_COMPANY_ID; delete process.env.LEAD_BRANCH_ID
-  delete process.env.LEAD_OWNER_USER_ID; delete process.env.WALKTHROUGH_OUTREACH_SEQUENCE_ID
+  delete process.env.LEAD_OWNER_USER_ID
   delete process.env.RESEND_API_KEY; delete process.env.CRON_SECRET
   mock.method(globalThis, 'fetch', async (...args: unknown[]) => { requests.push(args); throw new Error('network forbidden by offline test') })
   // Prisma exposes these through a proxy; node:test's descriptor-based
@@ -253,8 +255,8 @@ test('fingerprint ignores timestamp/email case and changes for campaign or notes
   assert.notEqual(leadFingerprint(payload), leadFingerprint({ ...payload, notes: 'new request' }))
 })
 
-test('configured enrollment is durable with the sequence ID frozen at receipt', async () => {
-  process.env.WALKTHROUGH_OUTREACH_SEQUENCE_ID = 'sequence-test'
+test('an active follow-up sequence enrolls durably with its ID frozen at receipt', async () => {
+  sequence = { id: 'sequence-test' }
   await POST(request())
   assert.deepEqual(writes[1].data.deliveries, { create: [
     { kind: 'notification' }, { kind: 'autoresponder' },

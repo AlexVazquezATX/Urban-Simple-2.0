@@ -19,6 +19,11 @@ export function outreachFromAddress(): string {
   return process.env.RESEND_OUTREACH_FROM_EMAIL || mainFromAddress()
 }
 
+/** Someone who asked to hear from us gets the main address, not the cold domain. */
+export function prospectFromAddress(source: string | null | undefined): string {
+  return isInboundSource(source) ? mainFromAddress() : outreachFromAddress()
+}
+
 /** A hub reply stays on the cold domain only for a prospect we emailed cold. */
 export function hubReplyFromAddress(thread: {
   clientId?: string | null

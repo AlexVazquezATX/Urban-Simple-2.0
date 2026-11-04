@@ -1,6 +1,8 @@
 import { createHash, randomUUID } from 'crypto'
 import { prisma } from '@/lib/db'
 import { buildCrmPayload } from './crm'
+import { FOLLOWUP_SEQUENCE_NAME } from './followups'
+import { leadReviewReason } from './junk'
 import type { LeadPayload } from './schema'
 
 export class LeadConflictError extends Error {}
@@ -60,12 +62,19 @@ export async function persistLead(payload: LeadPayload, submissionId: string = r
       if (!owner) throw new Error('lead_owner_configuration')
     }
     const crm = buildCrmPayload(payload)
+    // Flagged submissions alert Alex but get no automatic email.
+    const review = leadReviewReason(payload)
+    const sequence = review ? null : await tx.outreachCampaign.findFirst({
+      where: { companyId, name: FOLLOWUP_SEQUENCE_NAME, prospectId: null, autopilot: true, status: 'active' },
+      select: { id: true },
+    })
     const prospect = await tx.prospect.create({
       data: {
         ...crm, companyId,
         branchId: branches[0]?.id ?? null,
         assignedToId: ownerId || null,
-        tags: ['Website Lead', 'Walkthrough Request'],
+        notes: review ? `POSSIBLE JUNK (${review}). No automatic email sent.\n\n${crm.notes}` : crm.notes,
+        tags: ['Website Lead', 'Walkthrough Request', ...(review ? ['Possible Junk'] : [])],
         contacts: { create: crm.contacts },
       },
       select: { id: true },
@@ -76,10 +85,9 @@ export async function persistLead(payload: LeadPayload, submissionId: string = r
         payload: { ...payload, email: payload.email.toLowerCase() },
         deliveries: {
           create: [
-            { kind: 'notification' }, { kind: 'autoresponder' },
-            ...(process.env.WALKTHROUGH_OUTREACH_SEQUENCE_ID
-              ? [{ kind: 'enrollment', request: { sequenceId: process.env.WALKTHROUGH_OUTREACH_SEQUENCE_ID } }]
-              : []),
+            { kind: 'notification' },
+            ...(review ? [] : [{ kind: 'autoresponder' }]),
+            ...(sequence ? [{ kind: 'enrollment', request: { sequenceId: sequence.id } }] : []),
           ],
         },
       },
