@@ -31,6 +31,52 @@ export async function resolveOutreachActorId(companyId: string): Promise<string 
   return admin?.id ?? null
 }
 
+/**
+ * A first email to an address another account already got one at, in the last
+ * year. The same restaurant can sit in the CRM twice under two names (De Nada
+ * did), and the identical-body check doesn't catch two different drafts.
+ * Returns the other account's name.
+ */
+export async function findAddressEmailedForOtherProspect(email: string, prospectId: string): Promise<string | null> {
+  const other = await prisma.outreachMessage.findFirst({
+    where: {
+      prospectId: { not: prospectId },
+      sentAt: { not: null, gte: new Date(Date.now() - 365 * 86_400_000) },
+      recipientEmail: { equals: email.trim(), mode: 'insensitive' },
+    },
+    select: { prospect: { select: { companyName: true } } },
+  })
+  return other ? other.prospect?.companyName ?? 'another account' : null
+}
+
+/**
+ * The signature for an outreach email: the first of these users who has one,
+ * else the company's first super admin who does. Outreach always goes out as
+ * Alex, and agent users (Claude, Merc) have no signature of their own.
+ */
+export async function findSignature(
+  companyId: string,
+  preferredUserIds: Array<string | null | undefined>,
+): Promise<{ emailSignature: string | null; signatureLogoUrl: string | null } | null> {
+  const ids = preferredUserIds.filter((id): id is string => !!id)
+  if (ids.length) {
+    const users = await prisma.user.findMany({
+      where: { id: { in: ids }, emailSignature: { not: null } },
+      select: { id: true, emailSignature: true, signatureLogoUrl: true },
+    })
+    for (const id of ids) {
+      const u = users.find((x) => x.id === id)
+      if (u?.emailSignature?.trim()) return { emailSignature: u.emailSignature, signatureLogoUrl: u.signatureLogoUrl }
+    }
+  }
+  const admin = await prisma.user.findFirst({
+    where: { companyId, role: 'SUPER_ADMIN', isActive: true, emailSignature: { not: null } },
+    orderBy: { createdAt: 'asc' },
+    select: { emailSignature: true, signatureLogoUrl: true },
+  })
+  return admin?.emailSignature?.trim() ? admin : null
+}
+
 /** Matches unresolved merge tags like {{notes}} / {{ firstName }}. */
 export const MERGE_TAG_RE = /\{\{[^}]*\}\}/
 

@@ -273,7 +273,7 @@ export function describeSendCheck(reason: Exclude<SendCheck, { ok: true }>['reas
     case 'address_bounced': return `${email} has bounced before. Find a different contact`
     case 'address_opted_out': return `${email} has unsubscribed or is marked Do Not Contact`
     case 'address_known_bad': return `${email} failed verification (undeliverable). Find a different contact`
-    case 'address_risky': return `${email} is on a catch-all domain and can't be verified. Use LinkedIn or a drop-by instead`
+    case 'address_risky': return `${email} is on a catch-all domain and can't be verified. Find another contact or reach them on LinkedIn`
     case 'address_unverified': return `${email} could not be verified yet. Try again later or pick a different contact`
   }
 }

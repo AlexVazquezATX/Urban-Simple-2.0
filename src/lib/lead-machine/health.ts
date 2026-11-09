@@ -83,6 +83,10 @@ export function followUpProblems(input: {
   return problems
 }
 
+export function sendQueueProblems(lateSends: number): HealthProblem[] {
+  return lateSends > 0 ? [`${lateSends} approved emails are more than a day past their send time; the hourly sender may be stuck`] : []
+}
+
 export async function checkHealth(companyId: string, now = new Date()): Promise<HealthProblem[]> {
   const settings = await getSettings(companyId)
   const runs = await prisma.leadMachineRun.findMany({
@@ -116,6 +120,19 @@ export async function checkHealth(companyId: string, now = new Date()): Promise<
       }),
     ])
     problems.push(...followUpProblems({ sequenceActive: !!sequence, overdue, stuckDeliveries }))
+
+    // Approving now books a send instead of sending, so a stuck executor would
+    // quietly hold every approved email.
+    const lateSends = await prisma.outreachMessage.count({
+      where: {
+        status: 'pending',
+        approvalStatus: 'approved',
+        scheduledAt: { lt: new Date(now.getTime() - DAY) },
+        prospect: { companyId, deletedAt: null },
+        OR: [{ campaignId: null }, { campaign: { autopilot: false } }],
+      },
+    })
+    problems.push(...sendQueueProblems(lateSends))
   }
 
   if (settings.enabled && !settings.dryRun) {

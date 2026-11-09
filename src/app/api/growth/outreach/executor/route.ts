@@ -8,11 +8,15 @@ import {
   isWithinSendWindow,
 } from '@/lib/services/autopilot-schedule'
 import {
+  findAddressEmailedForOtherProspect,
   findDuplicateAlreadySent,
+  findSignature,
   findUnresolvedMergeTags,
   outreachReplyTo,
   resolveOutreachActorId,
 } from '@/lib/services/outreach-guards'
+import { COLD_FOLLOWUP_CAMPAIGN, queueColdFollowUps } from '@/lib/services/cold-followups'
+import { statusStopsOutreach } from '@/lib/services/outreach-cancel'
 import { logComm } from '@/lib/comms/log'
 import { checkSendable, isInboundSource, resolveMessageRecipient } from '@/lib/services/outreach-recipient'
 import { prospectFromAddress } from '@/lib/services/sender-address'
@@ -310,6 +314,23 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Cold follow-ups stop once a person has taken the account somewhere or
+      // logged a call or meeting.
+      if (message.campaign?.name === COLD_FOLLOWUP_CAMPAIGN && message.step > 1) {
+        const humanTouch = await prisma.prospectActivity.findFirst({
+          where: { prospectId: message.prospectId, type: { in: HUMAN_TOUCH_TYPES }, createdAt: { gt: message.createdAt } },
+          select: { id: true },
+        })
+        const stop = humanTouch
+          ? 'human_contact_logged'
+          : statusStopsOutreach(message.prospect.status, message.prospect.source) ? `status_${message.prospect.status}` : null
+        if (stop) {
+          await cancelPendingMessagesForProspect(message.prospectId, stop)
+          results.push({ messageId: message.id, action: 'skipped', reason: stop })
+          continue
+        }
+      }
+
       // Check if campaign is still active
       if (message.campaign && message.campaign.status !== 'active') {
         results.push({
@@ -384,8 +405,22 @@ export async function POST(request: NextRequest) {
         const check = await checkSendable(recipient, message.prospect, { verifyBudget })
         if (!check.ok) {
           console.warn(`[EXECUTOR GUARD] message ${message.id} skipped: ${check.reason} ${JSON.stringify(recipientEmail)}`)
+          // A booked first email that can't go stops retrying every hour and
+          // returns to Ready to Send, where Send shows the reason. Unverified
+          // just means the lookup budget ran out, so that one waits for next hour.
+          if (message.step === 1 && check.reason !== 'address_unverified') {
+            await prisma.outreachMessage.update({ where: { id: message.id }, data: { scheduledAt: null } })
+          }
           results.push({ messageId: message.id, action: 'skipped', reason: check.reason })
           continue
+        }
+        if (message.step === 1 && recipientEmail) {
+          const other = await findAddressEmailedForOtherProspect(recipientEmail, message.prospectId)
+          if (other) {
+            await prisma.outreachMessage.update({ where: { id: message.id }, data: { scheduledAt: null } })
+            results.push({ messageId: message.id, action: 'skipped', reason: 'address_already_emailed' })
+            continue
+          }
         }
       }
 
@@ -469,6 +504,13 @@ export async function POST(request: NextRequest) {
             },
           })
 
+          // A lead machine first email gets its two follow-ups now.
+          if (message.step === 1) {
+            await queueColdFollowUps(message.id).catch((err) => {
+              console.error(`[EXECUTOR] could not queue cold follow-ups for ${message.id}`, err)
+            })
+          }
+
           results.push({
             messageId: message.id,
             action: 'sent',
@@ -540,13 +582,9 @@ async function sendMessage(
 
     const fromEmail = prospectFromAddress(message.prospect?.source)
 
-    // Sender's signature, if the campaign has a creator
-    const sender = message.campaign?.createdById
-      ? await prisma.user.findUnique({
-          where: { id: message.campaign.createdById },
-          select: { emailSignature: true, signatureLogoUrl: true },
-        })
-      : null
+    // The campaign owner's signature, else the approver's, else Alex's. A
+    // queued first email has no campaign, and without this it went unsigned.
+    const sender = await findSignature(message.prospect.companyId, [message.campaign?.createdById, message.approvedById])
 
     const email = buildOutreachEmail({
       body: message.body,

@@ -100,7 +100,11 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
       if (!response.ok) throw new Error('Failed to approve')
       const data = await response.json()
 
-      toast.success(`Approved ${data.updated} message(s)`)
+      toast.success(
+        data.scheduled
+          ? `Approved ${data.updated}. ${data.scheduled} booked to send, the first ${new Date(data.first).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
+          : `Approved ${data.updated} message(s)`,
+      )
       setSelectedIds(new Set())
       fetchQueue()
     } catch (error) {
@@ -135,7 +139,7 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
   }
 
   const handleApproveAll = async () => {
-    if (!confirm('Approve all pending messages?')) return
+    if (!confirm('Approve all pending messages? They will be booked to send in the next send windows.')) return
 
     setApproving(true)
     try {
@@ -150,7 +154,11 @@ export function ApprovalQueue({ searchQuery = '' }: { searchQuery?: string }) {
       if (!response.ok) throw new Error('Failed to approve all')
       const data = await response.json()
 
-      toast.success(`Approved ${data.approved} messages`)
+      toast.success(
+        data.scheduled
+          ? `Approved ${data.approved}. ${data.scheduled} booked to send, the first ${new Date(data.first).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' })}`
+          : `Approved ${data.approved} messages`,
+      )
       fetchQueue()
     } catch (error) {
       console.error('Error approving all:', error)
