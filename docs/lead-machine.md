@@ -128,3 +128,11 @@ Separate from the cold machine: these go to people who asked us for a walkthroug
 - Follow-ups stop on a reply, a bounce, an unsubscribe, a status change by a person (the "Mark contacted" button in the lead panel is one click) or a logged call or meeting. While they are scheduled the pipeline cron leaves the lead's status alone, so "contacted" always means a person.
 - Copy lives in the sequence template (Growth > Outreach > Sequences). `src/lib/leads/followups.ts` only seeds it. Pause the template to stop new enrollments; the nightly health check will mention it.
 - The health check also alerts on a missing template, follow-ups over 2 days late, and failed or stuck lead emails.
+
+## Approving sends, and cold follow-ups
+
+- Approving a first email in Growth > Outreach books it into the send window (company settings: Tuesday to Saturday, 9 to 4 Central, at most `autopilotDailyCap` first emails a day). The hourly executor sends it. It moves from Ready to Send to Scheduled. Send still goes immediately.
+- A booked email that turns out unsendable (catch-all, bounced, opted out, or an address another account already got a first email at) goes back to Ready to Send so the reason shows on Send.
+- When a lead machine first email sends, two follow-ups are created (`src/lib/services/cold-followups.ts`): about 4 days later and about a week after that, as replies (`Re:` subject), same greeting and address, with Alex's signature. They stop on a reply, bounce, unsubscribe, Do Not Contact, a person setting a decided or engaged status, or a logged call or meeting.
+- Accounts emailed before this shipped: `npx tsx scripts/backfill-cold-followups.ts` (dry run; `--apply` creates them).
+- The nightly health check alerts when approved emails are more than a day late.

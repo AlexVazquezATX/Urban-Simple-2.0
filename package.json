@@ -10,7 +10,7 @@
     "test:leads": "tsx --test scripts/tests/lead-intake.test.ts scripts/tests/lead-followups.test.ts",
     "test:lead-analytics": "tsx --test scripts/tests/lead-analytics.test.ts",
     "test:ops": "tsx --test scripts/tests/ops-loop.test.ts",
-    "test:outreach": "tsx --test scripts/tests/outreach-deliverability.test.ts",
+    "test:outreach": "tsx --test scripts/tests/outreach-deliverability.test.ts scripts/tests/cold-followups.test.ts",
     "test:machine": "tsx --test scripts/tests/lead-machine.test.ts scripts/tests/lead-machine-prep.test.ts",
     "db:check": "tsx scripts/db-check.ts",
     "crew:logins": "node --use-system-ca --import tsx scripts/crew-logins.ts",

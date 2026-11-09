@@ -598,7 +598,7 @@ export function MessagesHub() {
               ) : (
                 <>
                   <p className="mb-4 text-sm text-foreground">
-                    {filteredScheduled.length}{searchQuery ? ` of ${scheduledMessages.length}` : ''} follow-up{filteredScheduled.length !== 1 ? 's' : ''} scheduled
+                    {filteredScheduled.length}{searchQuery ? ` of ${scheduledMessages.length}` : ''} email{filteredScheduled.length !== 1 ? 's' : ''} scheduled
                   </p>
 
                   {/* Bulk action bar for Scheduled tab */}

@@ -7,10 +7,14 @@ import {
   type ProspectData,
 } from '@/lib/ai/outreach-composer'
 import {
+  findAddressEmailedForOtherProspect,
   findDuplicateAlreadySent,
+  findSignature,
   findUnresolvedMergeTags,
   outreachReplyTo,
 } from '@/lib/services/outreach-guards'
+import { scheduleApprovedFirstEmails } from '@/lib/services/send-schedule'
+import { queueColdFollowUps } from '@/lib/services/cold-followups'
 import {
   checkSendable,
   describeSendCheck,
@@ -60,19 +64,19 @@ export async function GET(request: NextRequest) {
     const now = new Date()
 
     if (view === 'approved') {
-      // Only show messages that are actually ready to send RIGHT NOW
-      // Step 1 approved messages + follow-ups whose scheduled date has arrived
+      // Approved and not booked for later: unscheduled first emails (the
+      // executor can't send them) and anything whose time has come.
       where.approvalStatus = 'approved'
       where.status = 'pending'
       where.OR = [
-        { step: 1 },
-        { step: { gt: 1 }, scheduledAt: { lte: now } },
+        { step: 1, scheduledAt: null },
+        { scheduledAt: { lte: now } },
       ]
     } else if (view === 'scheduled') {
-      // Follow-up steps that are approved but not yet due
+      // Approved and booked for later: first emails waiting for their slot in
+      // the send window, and follow-ups not yet due.
       where.approvalStatus = 'approved'
       where.status = 'pending'
-      where.step = { gt: 1 }
       where.scheduledAt = { gt: now }
     } else if (view === 'sent') {
       // A message's `status` advances through its lifecycle as Resend webhooks
@@ -203,21 +207,28 @@ export async function POST(request: NextRequest) {
 
     // ── Approve All ──
     if (action === 'approve_all') {
-      const updated = await prisma.outreachMessage.updateMany({
+      const pending = await prisma.outreachMessage.findMany({
         where: {
           prospect: { companyId: user.companyId },
           approvalStatus: 'pending',
           step: 1,
           status: 'pending',
         },
+        select: { id: true },
+      })
+      const ids = pending.map((m) => m.id)
+      const updated = await prisma.outreachMessage.updateMany({
+        where: { id: { in: ids }, approvalStatus: 'pending', status: 'pending' },
         data: {
           approvalStatus: 'approved',
           approvedAt: new Date(),
           approvedById: user.id,
         },
       })
+      // Approval is the decision to send: book them into the send window.
+      const schedule = await scheduleApprovedFirstEmails(user.companyId, ids)
 
-      return NextResponse.json({ success: true, approved: updated.count })
+      return NextResponse.json({ success: true, approved: updated.count, ...schedule })
     }
 
     // ── Edit ──
@@ -410,6 +421,13 @@ export async function POST(request: NextRequest) {
               results.push({ messageId: msg.id, status: 'blocked', reason: `Identical message already sent to ${toEmail} (likely duplicate prospect record)` })
               continue
             }
+            if (msg.step === 1 && msg.prospectId) {
+              const other = await findAddressEmailedForOtherProspect(toEmail, msg.prospectId)
+              if (other) {
+                results.push({ messageId: msg.id, status: 'blocked', reason: `${toEmail} already got a first email for ${other}. Reject this one as a duplicate` })
+                continue
+              }
+            }
 
             const resendClient = getResend()
             if (!resendClient) {
@@ -419,9 +437,13 @@ export async function POST(request: NextRequest) {
 
             const fromEmail = prospectFromAddress(msg.prospect?.source)
 
+            // Agent users have no signature; outreach always goes out as Alex.
+            const signature = freshUser?.emailSignature?.trim()
+              ? freshUser
+              : await findSignature(user.companyId, [msg.approvedById, msg.campaign?.createdById])
             const email = buildOutreachEmail({
               body: msg.body,
-              signature: freshUser,
+              signature,
               prospectId: msg.prospectId!,
               contactId: recipient?.id,
             })
@@ -487,6 +509,11 @@ export async function POST(request: NextRequest) {
             await prisma.prospect.update({
               where: { id: msg.prospectId! },
               data: { lastContactedAt: new Date() },
+            })
+
+            // A lead machine first email gets its two follow-ups now.
+            await queueColdFollowUps(msg.id).catch((err) => {
+              console.error(`[SEND] could not queue cold follow-ups for ${msg.id}`, err)
             })
 
             results.push({ messageId: msg.id, status: 'sent', emailId: emailData?.id })
@@ -576,9 +603,15 @@ export async function POST(request: NextRequest) {
       data: updateData,
     })
 
+    // Approval is the decision to send: book first emails into the send window.
+    const schedule = action === 'approve'
+      ? await scheduleApprovedFirstEmails(user.companyId, messageIds)
+      : null
+
     return NextResponse.json({
       success: true,
       updated: updated.count,
+      ...(schedule ?? {}),
     })
   } catch (error) {
     console.error('Error updating messages:', error)
