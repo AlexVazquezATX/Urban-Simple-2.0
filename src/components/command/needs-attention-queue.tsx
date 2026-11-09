@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
-import { DollarSign, AlertTriangle, MessageSquare, Calendar, CheckCircle, Loader2 } from 'lucide-react'
+import { DollarSign, AlertTriangle, Mail, MessageSquare, Calendar, CheckCircle, Loader2, Bell } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
 interface AttentionItem {
   id: string
-  type: 'overdue_invoice' | 'quality_issue' | 'prospect_reply' | 'unassigned_shift'
+  type: 'overdue_invoice' | 'quality_issue' | 'prospect_reply' | 'unassigned_shift' | 'email_needs_reply'
   title: string
   subtitle: string
   urgency: 'high' | 'medium' | 'low'
@@ -19,12 +20,16 @@ interface AttentionItem {
   createdAt: string
 }
 
-const typeConfig = {
+const typeConfig: Record<AttentionItem['type'], { icon: LucideIcon; label: string; color: string }> = {
   overdue_invoice: { icon: DollarSign, label: 'Invoice', color: 'text-gold-600 dark:text-gold-400' },
   quality_issue: { icon: AlertTriangle, label: 'Quality', color: 'text-coral-600 dark:text-coral-300' },
   prospect_reply: { icon: MessageSquare, label: 'Reply', color: 'text-teal-600 dark:text-teal-300' },
   unassigned_shift: { icon: Calendar, label: 'Shift', color: 'text-muted-foreground' },
+  email_needs_reply: { icon: Mail, label: 'Email', color: 'text-teal-600 dark:text-teal-300' },
 }
+
+// Unknown types from a newer API fall back instead of crashing the page.
+const fallbackConfig = { icon: Bell, label: 'Item', color: 'text-muted-foreground' }
 
 const urgencyVariant: Record<AttentionItem['urgency'], 'coral' | 'gold' | 'neutral'> = {
   high: 'coral',
@@ -91,7 +96,7 @@ export function NeedsAttentionQueue() {
         ) : (
           <div className="max-h-[400px] space-y-2 overflow-y-auto">
             {visibleItems.map((item) => {
-              const config = typeConfig[item.type]
+              const config = typeConfig[item.type] ?? fallbackConfig
               const Icon = config.icon
 
               return (

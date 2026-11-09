@@ -3,14 +3,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Bell, Clock, Flag, MessageSquare, CalendarX, CheckCircle2, Loader2, X } from 'lucide-react'
+import { Bell, Clock, Flag, Mail, MessageSquare, CalendarX, CheckCircle2, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import type { LucideIcon } from 'lucide-react'
 
 interface AttentionItem {
   id: string
-  type: 'overdue_invoice' | 'quality_issue' | 'prospect_reply' | 'unassigned_shift'
+  type: 'overdue_invoice' | 'quality_issue' | 'prospect_reply' | 'unassigned_shift' | 'email_needs_reply'
   title: string
   subtitle: string
   urgency: 'high' | 'medium' | 'low'
@@ -25,7 +25,12 @@ const typeConfig: Record<AttentionItem['type'], { icon: LucideIcon; tone: Tone; 
   overdue_invoice: { icon: Clock, tone: 'gold', cta: 'Nudge' },
   unassigned_shift: { icon: CalendarX, tone: 'coral', cta: 'Assign' },
   prospect_reply: { icon: MessageSquare, tone: 'teal', cta: 'Reply' },
+  email_needs_reply: { icon: Mail, tone: 'teal', cta: 'Reply' },
 }
+
+// The API can add new item types before this card learns them. Fall back
+// instead of crashing the whole dashboard on an unknown type.
+const fallbackConfig = { icon: Bell, tone: 'gold' as Tone, cta: 'Open' }
 
 const toneTile: Record<Tone, string> = {
   coral: 'bg-coral-600/10 dark:bg-coral-300/12',
@@ -102,7 +107,7 @@ export function NeedsAttention() {
         ) : (
           <>
             {shownItems.map(item => {
-              const config = typeConfig[item.type]
+              const config = typeConfig[item.type] ?? fallbackConfig
               const Icon = config.icon
               const tone: Tone = item.urgency === 'high' ? 'coral' : config.tone
 
